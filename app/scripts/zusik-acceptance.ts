@@ -9,6 +9,7 @@ import { makeCertificatePdf, makeCertificateScan } from "./kamil-demo-docs";
 import { kamilCertificate } from "../src/lib/kamil/profile";
 import type { KamilView } from "../src/lib/kamil/contract";
 import type { MartaView } from "../src/lib/marta/types";
+import type { AskTurn } from "../src/lib/zusik/types";
 import type { SicknessView } from "../src/lib/sickness/types";
 
 const origin = new URL(process.argv[2] ?? "http://127.0.0.1:3129").origin;
@@ -79,6 +80,11 @@ async function testMarta(page: Page, missingRate: boolean) {
   assert.equal(pdf.status(),200,"Confirmed PDF returns HTTP 200");
   const text = await pdfText(await pdf.body());
   assert.ok(text.includes(firstName) && text.includes("15.02.2027") && text.includes(missingRate ? "aktach osobowych" : "kopia-fikcyjna.pdf"));
+  const preview = page.locator('iframe[title*="Wniosek"]');
+  await preview.first().waitFor();
+  const previewBlob = await preview.first().getAttribute("src");
+  const downloadedBlob = await page.getByRole("link",{name:"Pobierz wniosek PDF",exact:true}).first().getAttribute("href");
+  assert.equal(previewBlob?.split("#")[0], downloadedBlob);
   const previousVersion=v.version;
   v=await update(page,martaPath,{type:"submit",version:previousVersion});
   assert.ok(v.submittedAt);
@@ -123,6 +129,9 @@ async function testKamil(page: Page, correction: boolean) {
   const download=page.getByRole("link",{name:"Pobierz PDF do wydruku"});
   await download.waitFor({timeout:40000});
   const fileBytes=await download.evaluate(async node=>Array.from(new Uint8Array(await (await fetch((node as HTMLAnchorElement).href)).arrayBuffer())));
+  const previewUrl = await page.locator('iframe[title*="ZAM"]').first().getAttribute("src");
+  assert.equal(previewUrl?.split("#")[0], await download.getAttribute("href"));
+  assert.equal((await PDFDocument.load(new Uint8Array(fileBytes))).getPageCount(), 7);
   const text=await pdfText(new Uint8Array(fileBytes));
   assert.ok(text.includes(correction ? "16.12.2026" : "15.12.2026") && text.includes(correction ? "22.12.2026" : "21.12.2026"));
   await command({type:"simulate_submit"});
@@ -189,9 +198,51 @@ async function testCitations(page:Page) {
   await page.reload();
   await page.getByText(turn.question,{exact:true}).first().waitFor();
 }
+async function testNewQuestion(page: Page) {
+  await page.goto(origin + "/app");
+  await page.waitForFunction(() => Array.from(document.querySelectorAll("button")).some(b => b.textContent === "Porównaj warianty" && !b.disabled));
+  async function ask(question: string) {
+    const input = page.getByRole("textbox", {name: "Wiadomość do Zusika"});
+    await input.fill(question);
+    const received = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST", {timeout: 70000});
+    await input.press("Enter");
+    const response = await received;
+    assert.match(response.headers()["content-type"], /application\/x-ndjson/);
+    const frames = (await response.text()).trim().split("\n").map(line => JSON.parse(line));
+    assert.equal(frames[0].type, "activity");
+    assert.ok(frames.some(frame => frame.type === "delta"));
+    const last = frames.at(-1);
+    assert.equal(last.type, "result");
+    assert.equal(last.status, 200);
+    const turn = last.body.turn as AskTurn;
+    assert.equal(turn.status, "answered");
+    await page.getByRole("button", {name: /^Źródło /}).last().waitFor();
+    return turn;
+  }
+  await page.evaluate(() => {
+    const seen = new Set<string>();
+    new MutationObserver(() => {
+      const text = document.querySelector('p[aria-live="off"]')?.textContent;
+      if (text) seen.add(text);
+      document.body.dataset.partialSteps = String(seen.size);
+    }).observe(document.body, { subtree: true, childList: true, characterData: true });
+  });
+  const turn = await ask("Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?");
+  assert.ok(Number(await page.locator("body").getAttribute("data-partial-steps")) > 1, "Progressive text visible in the browser");
+  const citation = turn.citations.find(c => c.fragmentId === "uz-18-1");
+  assert.ok(citation && citation.page === 7 && /rehabilitac/i.test(citation.quote));
+  assert.match(turn.claims.map(c => c.text).join(" "), /12|dwunast/i);
+  await page.reload();
+  await page.getByText(turn.question, {exact:true}).waitFor();
+  const followUp = await ask("Skąd są te dane?");
+  assert.ok(followUp.citations.some(c => c.fragmentId === citation.fragmentId && c.url === citation.url));
+  await page.getByText(followUp.message, {exact:true}).last().waitFor();
+  await page.getByRole("button", {name: /^Źródło /}).last().click();
+  await page.getByRole("link", {name: /Otwórz dokument na s. 7/}).last().waitFor();
+}
 async function run() {
   const browser=await chromium.launch({channel:"chrome", headless:true});
-  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false]] as const;
+  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false]] as const;
   let failures=0;
   try {
     for (const [id,test,variation] of cases) {
