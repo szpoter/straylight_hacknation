@@ -22,7 +22,7 @@ Hero odpowiada na dwa pytania rodzica: „Co mi przysługuje?” i „Co muszę 
 
 Na komputerze po lewej znajdują się nagłówek, opis i ciemnozielony przycisk na jasnym, ciepłym tle. Po prawej pokazujemy podgląd tego, co rodzic dostanie po odpowiedzi na pytania. Na telefonie podgląd trafia pod główny przycisk.
 
-**Propozycja podglądu.** Jedna karta oznaczona „Przykład”, z zakładkami „Moja sytuacja” i „Mój plan”. Domyślnie widać plan, z krótkim kontekstem „Po narodzinach dziecka”. Zakładki przełącza się kliknięciem, dotykiem lub klawiaturą, we własnym tempie.
+**Uzgodniony podgląd.** Po prawej stronie Hero znajduje się jedna karta z zakładkami „Moja sytuacja” i „Mój plan”. Obie pokazują fikcyjny przypadek oznaczony jako „Przykład”. Proponowany widok początkowy to plan z krótkim kontekstem „Po narodzinach dziecka”. Zakładki przełącza się kliknięciem, dotykiem lub klawiaturą, we własnym tempie.
 
 - **Moja sytuacja** — „Urodziła nam się córka. Pracuję na etacie i chcę wziąć urlop ojcowski.” Przykład dotyczy narodzin w Polsce.
 - **Mój plan** — dwa wiersze. „Do załatwienia · Zgłoś urodzenie córki. Online lub w USC, w ciągu 21 dni od wystawienia karty urodzenia.” Drugi wiersz dotyczy wybranego uprawnienia. „Jeśli chcesz wziąć urlop ojcowski · Złóż wniosek u pracodawcy co najmniej 7 dni przed rozpoczęciem urlopu.” [Zgłoszenie urodzenia](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Urlop ojcowski](https://www.gov.pl/web/rodzina/urlop-ojcowski)
@@ -35,6 +35,33 @@ Na s. 13–14 opis zadania wymienia również symulację wypełniania wniosków 
 
 ## Pod Hero — wybór sytuacji rodzinnej
 
-**Propozycja do omówienia.** Bezpośrednio pod Hero pojawia się pytanie „Która sytuacja najlepiej Cię opisuje?”. „Sprawdź moją sytuację” przenosi do tego pytania i ustawia na nim fokus. Można też dotrzeć do niego, przewijając stronę. Wybór odpowiedzi rozpoczyna właściwą ścieżkę przewodnika.
+**Uzgodniony zakres.** Strona przed logowaniem pokazuje wartość przewodnika na gotowych przykładach. Wybór sytuacji zmienia wyłącznie widoczny przykład. Indywidualne sprawy, wyliczenia i wnioski należą do dalszej części produktu. W wersji konkursowej zarówno logowanie przez mObywatel, jak i automatyczne pobranie danych z ZUS po zalogowaniu są symulowane.
 
-Robocze odpowiedzi to „Planuję rodzicielstwo”, „Spodziewamy się dziecka”, „Dziecko jest już z nami” i „Adopcja lub rodzina zastępcza”. Obok nich widoczne jest dyskretne wejście „Potrzebuję wsparcia w trudnej sytuacji”.
+### Proponowana interakcja i treść
+
+„Sprawdź moją sytuację” przewija stronę do pytania **„Która sytuacja najlepiej Cię opisuje?”** i przenosi na nie fokus. Pod pytaniem widnieje wskazówka **„Wybierz sytuację, żeby zobaczyć przykładowy plan.”**
+
+Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Kliknięcie rozwija przy wybranej opcji jeden krótki przykład. Pozostałe opcje są wciąż dostępne. Po zmianie wyboru poprzedni przykład się zwija. Przyciski komunikują stan rozwinięcia również czytnikowi ekranu.
+
+| Opcja | Co pojawia się po kliknięciu |
+| --- | --- |
+| Planuję rodzicielstwo | „Rozważam zmianę pracy. Co warto sprawdzić wcześniej?” Przykładowy plan wskazuje, gdzie sprawdzić ciągłość ubezpieczenia i jakie informacje przygotować do oszacowania zasiłku. |
+| Spodziewam się dziecka | „Chcę przygotować się do porodu.” Przykładowa lista ma dwie części. Przed porodem pokazuje sprawy do omówienia z pracodawcą, a po narodzinach — zgłoszenie urodzenia i dokumenty do wybranego urlopu. |
+| Wychowuję dziecko | „Chcemy podzielić się opieką.” Przykładowa oś czasu pokazuje okresy opieki dwojga rodziców i moment złożenia wniosku u pracodawcy. |
+| Przygotowuję się do adopcji | „Dziecko zamieszka z nami przed zakończeniem sprawy w sądzie.” Przykład pokazuje osobno datę przyjęcia dziecka i etap postępowania oraz pytania o dokumenty do urlopu i zasiłku. |
+| Rodzina zastępcza | „Przyjmujemy dziecko do niezawodowej rodziny zastępczej.” Przykładowy plan zaczyna się od dokumentu potwierdzającego przyjęcie dziecka na wychowanie, a dalej pokazuje, jakie sprawy związane z opieką warto sprawdzić. |
+| Potrzebuję wsparcia w trudnej sytuacji | Link rozwija spokojny panel „Informacje i wsparcie” z przykładowymi tematami: pobyt dziecka w szpitalu, strata dziecka, pomoc dla rodziny. Można go przeczytać bez opisywania swojej historii. |
+
+## Pod wyborem sytuacji — pytania rodziców
+
+**Propozycja do omówienia.** Nagłówek **„Co najtrudniej ustalić samodzielnie?”**. Trzy krótkie pary pokazują problem słowami rodzica i konkretną pomoc przewodnika.
+
+| Pytanie rodzica | Co pokaże przewodnik |
+| --- | --- |
+| Czy muszę to złożyć, czy tylko wtedy, gdy chcę skorzystać z urlopu? | Przy każdej sprawie zobaczysz, czy jest obowiązkowa, czy wynika z Twojego wyboru. |
+| Do kogo z tym wnioskiem? | Przy dokumencie znajdziesz adresata, np. pracodawcę, ZUS albo urząd stanu cywilnego. |
+| Od którego dnia mam liczyć termin? | Obok terminu zobaczysz zdarzenie, od którego jest liczony, np. wystawienie karty urodzenia. |
+
+**Uzgodnione.** Maskotka przewodnika nosi imię **Zusik** i będzie widoczna na stronie. Proponowane miejsce pierwszej ilustracji to nagłówek tej sekcji. Obok Zusika pojawia się pierwsze pytanie rodzica, a pod nim odpowiedź. Sprawy związane ze stratą przedstawiamy spokojnym, rzeczowym językiem.
+
+Po sekcji z pytaniami proponujemy osobne przejście **„Wypróbuj logowanie przez mObywatel”** z informacją „Wersja demonstracyjna. Po zalogowaniu zobaczysz plan oparty na przykładowych danych z ZUS.” To pierwszy moment przejścia z publicznego podglądu do symulacji.
