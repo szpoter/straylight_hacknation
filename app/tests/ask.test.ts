@@ -109,10 +109,10 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
   ] as const)("resolves %s with a checkpoint offset of %d ms to %s", async (question, offset, expected) => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-01", days: 2,
       firstDaily: 101, secondDaily: 99, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
-    let savedAt: string | undefined;
-    const w = world({ readMarta: async () => ({ view, savedAt }) });
+    const snapshot = { view, savedAt: "" };
+    const w = world({ readMarta: async () => snapshot });
     const law = await w.ask().ask("m", Q_ODPIS, "req-law");
-    savedAt = new Date(Date.parse(law.turn!.completedAt!) + offset).toISOString();
+    snapshot.savedAt = new Date(Date.parse(law.turn!.completedAt!) + offset).toISOString();
     const { turn } = await w.ask().ask("m", question, "req-after-change");
     if (expected === "case") {
       expect(turn?.message.replace(/\s/g, " ")).toContain("400,00 zł brutto");
