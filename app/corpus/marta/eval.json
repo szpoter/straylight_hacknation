@@ -35,7 +35,7 @@
       "required": ["jeżeli|jeśli|o ile|czy"], "forbidden": ["zawsze musisz"], "forbiddenCitations": [] },
     { "id": "q11", "question": "Czy mogę oddać Pawłowi moje 9 tygodni?",
       "expected": [["kp-art182-1a-par4", "mrpips-nieprzenoszalna", "zus-czas-trwania-9-tygodni"]], "status": ["answered"],
-      "required": ["nie można|nie możesz|nie da się|nieprzenoszaln"], "forbidden": ["możesz (je )?(oddać|przekazać)"], "forbiddenCitations": [] },
+      "required": ["nie można|nie możesz|nie da się|nieprzenoszaln"], "forbidden": ["(?<!nie )możesz (je )?(oddać|przekazać)"], "forbiddenCitations": [] },
     { "id": "q12", "question": "Ile tygodni urlopu rodzicielskiego mamy łącznie przy jednym dziecku?",
       "expected": [["kp-art182-1a-par1"]], "status": ["answered"],
       "required": ["41"], "forbidden": [], "forbiddenCitations": [] },

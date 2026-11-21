@@ -102,6 +102,33 @@ export function parseModelAnswer(raw: string): ModelAnswer | null {
   return null;
 }
 
+/** Typographic quote marks are equivalent for matching („Za życiem” vs "Za życiem"). */
+function plainQuotes(text: string): string {
+  return text.replace(/[„”“"«»]/g, '"');
+}
+
+/**
+ * Finds the quote in the unit. An elided quote ("A […] B") matches when every piece occurs
+ * verbatim, in order, each at least MIN_QUOTE_CHARS long. Returns the matched display text or null.
+ */
+export function locateQuote(sourceText: string, rawQuote: string): string | null {
+  const source = plainQuotes(normalizeSpaces(sourceText));
+  const pieces = rawQuote
+    .split(/\[\s*(?:\.\.\.|…)\s*\]|\(\s*(?:\.\.\.|…)\s*\)|…|\.\.\./)
+    .map((p) => plainQuotes(cleanQuote(p)))
+    .filter((p) => p.length > 0);
+  if (pieces.length === 0 || pieces.some((p) => p.length < MIN_QUOTE_CHARS)) return null;
+  let from = 0;
+  const found: string[] = [];
+  for (const piece of pieces) {
+    const at = source.indexOf(piece, from);
+    if (at < 0) return null;
+    found.push(normalizeSpaces(sourceText).slice(at, at + piece.length));
+    from = at + piece.length;
+  }
+  return found.join(" […] ");
+}
+
 /** Strips wrapping quotes, ellipses and edge punctuation the model tends to add. */
 function cleanQuote(quote: string): string {
   return normalizeSpaces(quote)
@@ -112,11 +139,20 @@ function cleanQuote(quote: string): string {
 
 const MIN_QUOTE_CHARS = 12;
 const AMOUNT_IN_TEXT = /\d[\d\s]*(zł|złotych|PLN)(?![\p{L}])/iu;
+/**
+ * Exemption guard: a claim that releases the parent from something ("nie musisz", "nie trzeba",
+ * "nie dołącza") needs a quote that itself contains a negation. Catches "you don't have to attach it"
+ * cited to a unit that says "attach it".
+ */
+const EXEMPTION = /nie (musisz|musi|trzeba|dołącza|dołączasz|składa|ma potrzeby|jest konieczn|jest wymagan|wymaga)/iu;
+const NEGATIVE_QUOTE = /(?<![\p{L}])nie(?![\p{L}])/iu;
 
 export interface ValidationReport {
   removedClaims: number;
   /** Quotes are public corpus text; route logs keep only id and reason. */
   rejectedEvidence: Array<{ id: string; reason: "unknown_id" | "quote_not_found" | "quote_too_short"; quote?: string }>;
+  /** Exemption claims removed because none of their quotes contains a negation. */
+  polarityRemoved: number;
 }
 
 /**
@@ -132,7 +168,7 @@ export function validateAnswer(
 ): { answer: AskAnswer; report: ValidationReport } {
   const version = corpus.manifest.corpusVersion;
   const allowed = new Map(evidence.map((f) => [f.logicalId, f]));
-  const report: ValidationReport = { removedClaims: 0, rejectedEvidence: [] };
+  const report: ValidationReport = { removedClaims: 0, rejectedEvidence: [], polarityRemoved: 0 };
   const citations: AskCitation[] = [];
   const claims: AskClaim[] = [];
   let firstClaimRemoved = false;
@@ -145,12 +181,12 @@ export function validateAnswer(
         report.rejectedEvidence.push({ id: item.id, reason: "unknown_id" });
         continue;
       }
-      const quote = cleanQuote(item.quote);
-      if (quote.length < MIN_QUOTE_CHARS) {
+      if (cleanQuote(item.quote).length < MIN_QUOTE_CHARS) {
         report.rejectedEvidence.push({ id: item.id, reason: "quote_too_short" });
         continue;
       }
-      if (!normalizeSpaces(fragment.sourceText).includes(quote)) {
+      const quote = locateQuote(fragment.sourceText, item.quote);
+      if (!quote) {
         report.rejectedEvidence.push({ id: item.id, reason: "quote_not_found", quote: item.quote.slice(0, 300) });
         continue;
       }
@@ -173,7 +209,10 @@ export function validateAnswer(
       }
       if (!ids.includes(citation.id)) ids.push(citation.id);
     }
-    if (ids.length === 0 || AMOUNT_IN_TEXT.test(claim.text)) {
+    const quotes = ids.map((id) => citations.find((c) => c.id === id)!.quote);
+    const polarityMismatch = ids.length > 0 && EXEMPTION.test(claim.text) && !quotes.some((q) => NEGATIVE_QUOTE.test(q));
+    if (polarityMismatch) report.polarityRemoved += 1;
+    if (ids.length === 0 || AMOUNT_IN_TEXT.test(claim.text) || polarityMismatch) {
       report.removedClaims += 1;
       if (index === 0) firstClaimRemoved = true;
       return;

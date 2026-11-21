@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { validateAnswer, parseModelAnswer, type ModelAnswer } from "@/lib/rag/answer";
+import { locateQuote, validateAnswer, parseModelAnswer, type ModelAnswer } from "@/lib/rag/answer";
 import {
   buildCorpus,
   corpusDigest,
@@ -208,6 +208,49 @@ describe("answer validation", () => {
     });
     expect(answer.claims.map((c) => c.text)).toEqual(["Możecie korzystać z urlopu jednocześnie."]);
     expect(answer.message).toBe("");
+  });
+
+  it("rejects a negative claim whose only quote is affirmative (real Bielik output without § 22)", () => {
+    const ablated = withoutFragments(corpus, ["rozp-2025-322-par22"]);
+    const { answer, report } = validateAnswer(ablated, evidenceFor(["rozp-2025-322-par15-ust2-pkt1"], ablated), {
+      status: "answered",
+      message: "",
+      claims: [
+        {
+          text: "Jeśli kadry mają już odpis aktu urodzenia dziecka w Twoich aktach, nie musisz dołączać go ponownie do wniosku o urlop rodzicielski.",
+          evidence: [{ id: "rozp-2025-322-par15-ust2-pkt1", quote: "Do wniosku dołącza się: 1) odpis skrócony aktu urodzenia dziecka (dzieci)" }],
+        },
+      ],
+    });
+    expect(report.polarityRemoved).toBe(1);
+    expect(answer.status).toBe("insufficient_evidence");
+    // The same claim with the § 22 quote is published.
+    const ok = validateAnswer(corpus, evidenceFor(["rozp-2025-322-par22"]), {
+      status: "answered",
+      message: "",
+      claims: [{ text: "Nie musisz dołączać odpisu, który jest w aktach osobowych.", evidence: [{ id: "rozp-2025-322-par22", quote: "nie dołącza się dokumentów wymienionych w rozporządzeniu" }] }],
+    });
+    expect(ok.answer.status).toBe("answered");
+  });
+
+  it("accepts an elided quote only when every piece is verbatim and in order", () => {
+    const ust1 = corpus.fragments.get("rozp-2025-322-par15-ust1")!.sourceText;
+    expect(locateQuote(ust1, "§ 15. 1. Wniosek [...] zawiera: 1) imię i nazwisko pracownika; [...] 3) wskazanie okresu, na który ma być udzielony urlop rodzicielski")).toBe(
+      "§ 15. 1. Wniosek […] zawiera: 1) imię i nazwisko pracownika […] 3) wskazanie okresu, na który ma być udzielony urlop rodzicielski",
+    );
+    expect(locateQuote(ust1, "imię i nazwisko pracownika [...] podpis drugiego rodzica")).toBeNull();
+    expect(locateQuote(ust1, "3) wskazanie okresu [...] 1) imię i nazwisko pracownika")).toBeNull();
+    const pkt3 = corpus.fragments.get("rozp-2025-322-par15-ust2-pkt3")!.sourceText;
+    expect(locateQuote(pkt3, 'o wsparciu kobiet w ciąży i rodzin "Za życiem"')).toBe("o wsparciu kobiet w ciąży i rodzin „Za życiem");
+  });
+
+  it("keeps a true negative claim backed by an obligation (no false refusal)", () => {
+    const { answer } = validateAnswer(corpus, evidenceFor(["kp-art182-1d-par1"]), {
+      status: "answered",
+      message: "",
+      claims: [{ text: "Pracodawca nie może odmówić, jeśli złożysz wniosek w terminie.", evidence: [{ id: "kp-art182-1d-par1", quote: "Pracodawca jest obowiązany uwzględnić wniosek pracownika." }] }],
+    });
+    expect(answer.status).toBe("answered");
   });
 
   it("parses JSON wrapped in prose or fences and rejects malformed output", () => {

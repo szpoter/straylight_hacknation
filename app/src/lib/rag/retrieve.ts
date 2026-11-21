@@ -1,5 +1,8 @@
-import { DEFAULT_EMBED_MODEL, QDRANT_TIMEOUT_MS } from "../zusik/config";
+import { DEFAULT_EMBED_MODEL } from "../zusik/config";
 import { isPrimary, isValidOn, type Corpus, type Fragment } from "./corpus";
+
+/** Cloud Inference embeds the query; the first call after idle can take several seconds. */
+export const KNOWLEDGE_TIMEOUT_MS = 10_000;
 
 /** One vector hit as returned by Qdrant, before joining with the local corpus. */
 export interface VectorHit {
@@ -60,7 +63,7 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
             method: "POST",
             headers: { "content-type": "application/json", "api-key": settings.apiKey },
             body: JSON.stringify(body),
-            signal: AbortSignal.timeout(QDRANT_TIMEOUT_MS),
+            signal: AbortSignal.timeout(KNOWLEDGE_TIMEOUT_MS),
             cache: "no-store",
           },
         );

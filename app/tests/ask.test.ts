@@ -20,7 +20,7 @@ const ODPIS_MODEL: ModelAnswer = {
   claims: [
     {
       text: "Jeśli odpis jest już w Twoich aktach osobowych, nie dołączasz go ponownie.",
-      evidence: [{ id: "rozp-2025-322-par22", quote: "jeżeli dokumenty te znajdują się w aktach osobowych pracownika" }],
+      evidence: [{ id: "rozp-2025-322-par22", quote: "nie dołącza się dokumentów wymienionych w rozporządzeniu, jeżeli dokumenty te znajdują się w aktach osobowych pracownika" }],
     },
     {
       text: "Odpis lub jego kopia jest przewidzianym załącznikiem.",
