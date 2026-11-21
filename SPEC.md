@@ -110,11 +110,33 @@ Rozmowę i odpowiadające jej pole pokazujemy w tym samym kadrze. Na telefonie w
 
 ## Po bento — wejście do demo i stopka
 
-**Propozycja do omówienia.** Pod siatką powtarzamy przycisk **„Sprawdź moją sytuację”**. Prowadzi do tego samego ekranu logowania co przycisk w Hero. Towarzyszy mu krótka informacja „Wersja demonstracyjna. Logowanie przez mObywatel i pobranie danych z ZUS są symulowane.”
+**Uzgodnione.** Pod siatką powtarzamy przycisk **„Sprawdź moją sytuację”**. Prowadzi do tego samego ekranu logowania co przycisk w Hero. Towarzyszy mu krótka informacja „Wersja demonstracyjna. Logowanie przez mObywatel i pobranie danych z ZUS są symulowane.”
 
 Bezpośrednio pod przyciskiem znajduje się stopka z nazwą przewodnika i dwiema grupami odnośników.
 
 - **Oficjalne informacje** — [ZUS o zasiłku macierzyńskim](https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/komu-przysluguje), [ministerstwo o urlopie rodzicielskim](https://www.gov.pl/web/rodzina/urlop-rodzicielski) i [Państwowa Inspekcja Pracy o prawach rodziców](https://www.pip.gov.pl/dla-pracodawcow/porady-prawne/rodzicielstwo).
 - **Pomoc w trudnej sytuacji** — link otwiera istniejący panel „Informacje i wsparcie” także przed logowaniem. W panelu przy każdej organizacji podajemy, komu pomaga i gdzie uzyskać bezpłatne wsparcie. Przykładem jest pomoc dla rodziców po stracie lub w innej trudnej sytuacji okołoporodowej. [Fundacja Ernesta — jak pomagamy](https://fundacjaernesta.pl/jak-pomagamy/)
 
-**Do rozwinięcia w specyfikacji demo.** Po symulowanym logowaniu jury powinno móc wybrać przykładową sprawę lub wczytać testowy wniosek PDF, ustalić na jego podstawie status ubezpieczenia i sprawdzić wyliczenie kwoty oraz okresu świadczenia albo wyjaśnienie braku uprawnień. W dalszych sekcjach specyfikacji trzeba również opisać warianty opieki i pracy, ryzyko zmiany uprawnień, wymagane symulacje oraz edycję parametrów w panelu administracyjnym. Umieszczenie źródeł w stopce i ścieżki testowej po logowaniu to decyzje projektowe proponowane dla tego demo. [Opis zadania, s. 12–15](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
+## Po kliknięciu „Sprawdź moją sytuację” — logowanie i pierwszy ekran rodzica
+
+**Propozycja do omówienia.** Oba przyciski na stronie głównej otwierają ten sam widok. Logowanie przez mObywatel i pobranie danych z ZUS są w konkursie symulowane. Przez całą ścieżkę widoczne jest oznaczenie „Wersja demonstracyjna”. [Opis zadania, s. 12–15](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
+
+### 1. Logowanie przez mObywatel
+
+Na środku ekranu znajduje się jedna karta z nagłówkiem **„Zaloguj się przez mObywatel”**. Tekst pod nim brzmi „W tej demonstracji skorzystasz z fikcyjnego profilu. Po potwierdzeniu wczytamy jego przykładowe dane o ubezpieczeniu.” Przycisk **„Potwierdź logowanie w demo”** symuluje potwierdzenie tożsamości w obrębie przewodnika. Jedno kliknięcie wystarcza również na telefonie. Rodzic nie podaje PESEL-u ani danych logowania i nie potrzebuje aplikacji mObywatel. Link „Wróć do strony głównej” pozwala wyjść przed potwierdzeniem.
+
+### 2. Automatyczne wczytanie danych
+
+Po potwierdzeniu przewodnik wyświetla „Wczytujemy przykładowe dane z ZUS…”. Gdy dane profilu są gotowe, od razu otwiera podsumowanie. Jeśli wczytanie się nie powiedzie, rodzic pozostaje zalogowany w demo i ma do wyboru **„Spróbuj ponownie”** lub **„Wpisz dane samodzielnie”**.
+
+### 3. Pierwszy widok po wczytaniu — „Twoja sytuacja”
+
+Najpierw pokazujemy krótką kartę **„Dane z ZUS · przykład”**. W domyślnym fikcyjnym profilu pracownika widać trzy pozycje: „Ubezpieczenie chorobowe — aktywne”, „Tytuł ubezpieczenia — umowa o pracę” oraz „Początek okresu ubezpieczenia — 1 marca 2025 r.”. Akcja **„Uzupełnij lub popraw dane”** pozwala podać własny wariant na potrzeby symulacji. Wartości wpisane ręcznie są oznaczone jako „Podane przez Ciebie”.
+
+Pod kartą Zusik mówi **„Dane o ubezpieczeniu już mamy. Teraz wybierz sytuację, dla której chcesz sprawdzić formalności.”** Poniżej od razu widać pytanie **„Która sytuacja najlepiej Cię opisuje?”** i opcje opisane wcześniej pod Hero, w tym wejście do wsparcia w trudnej sytuacji. Tym razem wybór rozpoczyna własną ścieżkę w demo. Przykłady oglądane przed logowaniem nie uzupełniają odpowiedzi rodzica. Kolejny krok pyta tylko o informacje potrzebne dla wybranej sytuacji, np. datę urodzenia dziecka, jeśli rodzic chce zaplanować urlop ojcowski.
+
+Status w karcie odzwierciedla wczytany przypadek. Potwierdzony brak ubezpieczenia pokazujemy z okresem, którego dotyczy. Gdy informacji brakuje, pole ma opis „Brak danych” i możliwość uzupełnienia. W takim przypadku Zusik mówi „Możesz uzupełnić dane i wybrać sytuację, którą chcesz sprawdzić”. Ocenę prawa do konkretnego świadczenia i wyliczenie pokazujemy po zebraniu danych potrzebnych dla tej sprawy.
+
+Na dole widoku znajduje się drugorzędny link **„Przetestuj przykładową sprawę”**. Pozwala wybrać przygotowany przypadek lub wczytać testowy PDF i przejść do sprawdzenia ubezpieczenia oraz kalkulatora. Wybrana sprawa ma własny zestaw danych, odrębny od profilu startowego.
+
+**Do rozwinięcia w dalszych sekcjach.** Wynik sprawy obejmuje wyjaśnienie uprawnień, kwotę i okres świadczenia albo powód braku uprawnień. Osobnego opisu wymagają warianty opieki i pracy, ryzyko zmiany uprawnień, pozostałe symulacje oraz edycja parametrów w panelu administracyjnym.
