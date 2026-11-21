@@ -24,6 +24,8 @@ export const TRAVEL = {
   squash: 0.35,
   /** The arms are fully tucked into the body once the drop is this far formed. */
   armsGoneAt: 0.5,
+  /** Distance from the body centre down to the bottom of the body: the drop slims toward the ground, not toward its middle. */
+  ground: 598,
 };
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
@@ -35,15 +37,23 @@ export function travelWarp([x, y]: Point, amount: number, heading: number): Poin
   const [dx, dy] = [x - BODY_CENTER.x, y - BODY_CENTER.y];
   let along = dx * cos + dy * sin; // positive = in front of the centre
   let across = -dx * sin + dy * cos;
+  // where the bottom of the body lies across the heading: slimming and squashing pivot there, so the
+  // mascot keeps its feet on the ground instead of lifting off (no pivot when travelling straight up or down)
+  const ground = TRAVEL.ground * cos;
+  const scaleAcross = (value: number, factor: number) => ground + (value - ground) * factor;
 
   if (amount > 0) {
     // 0 at the centre line, 1 at the back edge; squared, so the round head flows smoothly into the tail
     const back = Math.max(0, -along / TRAVEL.radius) ** 2;
     along += amount * TRAVEL.radius * (TRAVEL.lead - TRAVEL.stretch * back);
-    across *= (1 - amount * TRAVEL.thin) * (1 - amount * TRAVEL.taper * back);
+    across = scaleAcross(across, 1 - amount * TRAVEL.thin);
+    const axis = scaleAcross(0, 1 - amount * TRAVEL.thin); // the drop's own centre line, after slimming
+    across = axis + (across - axis) * (1 - amount * TRAVEL.taper * back);
   } else {
-    along *= 1 + amount * TRAVEL.squash;
-    across *= 1 - amount * TRAVEL.squash * 0.8;
+    // landing: squash toward the ground along the heading too (matters for hops, which travel up and down)
+    const groundAlong = TRAVEL.ground * sin;
+    along = groundAlong + (along - groundAlong) * (1 + amount * TRAVEL.squash);
+    across = scaleAcross(across, 1 - amount * TRAVEL.squash * 0.8);
   }
   return [BODY_CENTER.x + along * cos - across * sin, BODY_CENTER.y + along * sin + across * cos];
 }

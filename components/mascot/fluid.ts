@@ -30,6 +30,10 @@ export const FLUID = {
   },
   /** Highlights are reflections on the surface, so they move with it, a bit less. */
   highlightShare: 0.7,
+  /** "Checking": one steady bulge circling the outline, the body's own loading indicator. */
+  orbit: { amount: 36, width: 30, seconds: 1.4 },
+  /** A keystroke while Zusik waits: a small quick ripple on the side facing the input. */
+  keystroke: { amount: 14, width: 26, seconds: 0.6, spread: 30 },
 };
 
 /**
@@ -66,6 +70,13 @@ export function randomWave(now: number, random = Math.random): Pulse[] {
   return [{ ...pulse, from: between([0, 360], random), travel: direction * between([200, 320], random) }];
 }
 
+/** A small ripple for one keystroke, starting on the side that faces `toward` (degrees). */
+export function keystrokeRipple(now: number, toward: number, random = Math.random): Pulse[] {
+  const { amount, width, seconds, spread } = FLUID.keystroke;
+  const from = toward + between([-spread, spread], random);
+  return [{ start: now, seconds, width, amount, from, travel: random() < 0.5 ? -spread : spread }];
+}
+
 /** Whether a pulse is still running at `time`. */
 export const isRunning = (pulse: Pulse, time: number) => time < pulse.start + pulse.seconds;
 
@@ -78,16 +89,23 @@ function pulseAt(pulse: Pulse, angle: number, time: number): number {
   return pulse.amount * Math.sin(Math.PI * progress) * Math.exp(-distance * distance);
 }
 
-/** How far a point is pushed at `time` by the breathing, the lean and the running pulses. */
-export function fluidOffset([x, y]: Point, time: number, pulses: readonly Pulse[]): Point {
+/**
+ * How far a point is pushed at `time` by the breathing, the lean and the running pulses.
+ * `calm` (0–1) scales the idle motion down; `orbit` (0–1) adds the circling bulge of the "checking" state.
+ */
+export function fluidOffset([x, y]: Point, time: number, pulses: readonly Pulse[], calm = 1, orbit = 0): Point {
   const theta = Math.atan2(y - BODY_CENTER.y, x - BODY_CENTER.x);
   const angle = (theta * 180) / Math.PI;
 
-  let radial = FLUID.breathe.amount * Math.cos(2 * theta) * Math.sin((TAU * time) / FLUID.breathe.seconds);
+  let radial = calm * FLUID.breathe.amount * Math.cos(2 * theta) * Math.sin((TAU * time) / FLUID.breathe.seconds);
   for (const pulse of pulses) radial += pulseAt(pulse, angle, time);
+  if (orbit > 0) {
+    const distance = angleDiff(angle, (360 * time) / FLUID.orbit.seconds) / FLUID.orbit.width;
+    radial += orbit * FLUID.orbit.amount * Math.exp(-distance * distance);
+  }
 
   const [slow, fast] = FLUID.lean.seconds;
-  const sway = FLUID.lean.amount * (0.7 * Math.sin((TAU * time) / slow) + 0.3 * Math.sin((TAU * time) / fast));
+  const sway = calm * FLUID.lean.amount * (0.7 * Math.sin((TAU * time) / slow) + 0.3 * Math.sin((TAU * time) / fast));
   const below = Math.max(0, (y - LEAN.from) / (LEAN.bottom - LEAN.from));
   const above = Math.max(0, (LEAN.counterFrom - y) / (LEAN.counterFrom - LEAN.top));
   const lean = sway * (below ** 1.5 - LEAN.counter * above);

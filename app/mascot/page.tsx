@@ -23,6 +23,9 @@ export default function MascotPreviewPage() {
             <Link href="/mascot/hero" className="underline">
               Demo: hero ze scrollem
             </Link>
+            <Link href="/mascot/zusik" className="underline">
+              Makieta: stany Zusika
+            </Link>
           </nav>
         </header>
 

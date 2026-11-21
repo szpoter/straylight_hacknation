@@ -3,7 +3,7 @@
  * Every part is its own element with a `data-part` name, so later states can animate parts independently.
  * (`data-part` instead of `id`: several mascots can share one page, and ids must be unique.)
  */
-import { ARM_LEFT, ARM_RIGHT, BODY, CRESCENT, DOTS, EYES, FACE_ORIGIN, MOUTH, SHADOW, type EyeSide } from "./geometry";
+import { ARM_LEFT, ARM_RIGHT, BODY, CRESCENT, DOTS, EYES, FACE_ORIGIN, MOUTH, MOUTH_OPEN, SHADOW, type EyeSide } from "./geometry";
 
 /** Flat grey ellipse on the ground; the gap above it makes the bubble levitate. */
 export function Shadow() {
@@ -75,6 +75,8 @@ export function Face() {
     <g data-part="face" transform={`translate(${FACE_ORIGIN.x} ${FACE_ORIGIN.y})`}>
       <Eye side="left" />
       <Eye side="right" />
+      {/* open mouth for talking: invisible in the static pose, grows downward from the smile line */}
+      <path data-part="mouth-open" d={MOUTH_OPEN} opacity={0} className="fill-babelek-ink origin-top transform-fill" />
       <path
         data-part="mouth"
         d={MOUTH.d}

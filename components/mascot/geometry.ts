@@ -178,3 +178,15 @@ export const MOUTH = {
   d: "M -78.6 156.6 C -29 195.5 36.5 194 78.6 156.6",
   width: 27.5,
 };
+
+/** Mouth shapes of the states. All use the same commands as the smile, so they morph point by point. */
+export const MOUTHS = {
+  smile: MOUTH.d,
+  /** Confirming: a wider, deeper smile. */
+  wide: "M -90 148 C -40 216 40 216 90 148",
+  /** Needs attention: almost flat, the corners slightly down. */
+  worried: "M -62 180 C -30 166 30 166 62 180",
+};
+
+/** Open mouth for talking: an ink-filled shape hanging under the smile. Hidden unless Zusik talks. */
+export const MOUTH_OPEN = "M -70 166 C -30 198 30 198 70 166 C 62 300 -62 300 -70 166 Z";

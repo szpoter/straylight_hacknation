@@ -105,8 +105,22 @@ The static `<Babelek />` is plain server-rendered SVG. With `animated`, the same
 
 `<Babelek animated travel={mv} heading={mv} />` takes two Motion values: `travel` (0 normal, 1 a full elongated drop, below 0 a landing squash) and `heading` (direction in degrees, 0 = right). `components/mascot/travel.ts` turns them into another warp of the drawing plane: the head stays round, the back is pulled into a tapering tail, the arms tuck in, and the face, highlights and shadow follow. The parent moves the mascot and drives `travel`:
 
-- `app/mascot/roadmap`: on a step change the drop forms (0.3 s), glides along a small arc, and lands with a spring (the overshoot below 0 is the jelly squash).
+- `app/mascot/roadmap`: on a step change the mascot glides to the step (ease in and out); `travel` is a spring following its speed, so the drop forms while it speeds up and wobbles back into shape on arrival (the overshoot below 0 is the jelly squash).
 - `app/mascot/hero`: scroll moves the mascot across the screen; `travel` is a spring following the scroll speed, so it stretches while scrolling and settles back into shape when the scroll stops.
+
+In both, the drop slims and squashes toward the ground line, so the mascot does not lift off while it changes shape.
+
+### Assistant states (implemented)
+
+In the product the mascot is called **Zusik**, an assistant for filling in ZUS applications. `<Babelek animated state="…" toward={deg} />` plays one of the states listed in `components/mascot/types.ts` (`ZusikState`): available, checking, reading, searching, calculating, writing, answering, confirming, waiting, attention. `toward` is the direction of the related UI (the bubble, the field, the input, the retry button); Zusik looks, leans, waves or points that way. `inviting`, `typingTick` and `entrance` trigger the invitation greeting, keystroke ripples and the entrance from below.
+
+Some states turn Zusik into an object, keeping its face: an open book that turns pages (reading), a folder with index cards popping up (searching), a calculator with running digits (calculating), a pencil that scribbles (writing; to write into a field on screen, the page moves the mascot there, with the pencil's tip `PENCIL_TIP` on the field), and short liquid accents: a tick (confirming), "?" (waiting) and "!" (attention). The body is resampled to 96 points evenly along its outline (`BODY_POINTS`), as is every shape, so the body flows into a shape point by point; the details (pages, cards, keys, the dot…) fade in once the shape has formed.
+
+- `components/mascot/useStateAnimation.ts`: the state animations (shapes, eyes, lids, mouth, arms, nods, hops) and their settings.
+- `components/mascot/shapes.ts`: the shapes' outlines, where the face sits on each, and the smooth path through the points.
+- `components/mascot/details.tsx`: the shapes' details (rendered only for the animated mascot).
+- `components/mascot/pose.ts`: arm bending (arms bend like tentacles at the body edge, so they stay attached) and the sag.
+- `app/mascot/zusik`: an interactive mockup with every state in the context of an application form.
 
 ## Prepare for phase 2 (do not implement yet)
 

@@ -27,8 +27,7 @@ export function HeroScrollDemo() {
   const section = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
 
-  const across = useTransform(scrollYProgress, CROSSING, [10, 90]);
-  const left = useTransform(across, (value) => `${value}%`);
+  const left = useTransform(scrollYProgress, CROSSING, ["10%", "90%"]);
 
   const velocity = useVelocity(scrollYProgress);
   const speed = useTransform(() => {

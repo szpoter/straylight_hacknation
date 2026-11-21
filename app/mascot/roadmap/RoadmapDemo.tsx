@@ -1,7 +1,16 @@
 "use client";
 
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
-import { useRef, useState } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+  useVelocity,
+} from "motion/react";
+import { useState } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 
 const STEPS = ["Krok 1", "Krok 2", "Krok 3", "Krok 4", "Krok 5"];
@@ -9,44 +18,44 @@ const STEPS = ["Krok 1", "Krok 2", "Krok 3", "Krok 4", "Krok 5"];
 /** Horizontal position of a step marker, in % of the track width. */
 const stepPosition = (step: number) => 8 + (84 * step) / (STEPS.length - 1);
 
-/** The move: the drop forms, glides along a small arc, then lands with a jelly wobble. */
-const MOVE = {
-  formSeconds: 0.3,
-  secondsPerStep: 0.35,
-  minSeconds: 0.7,
-  hop: 36,
-  land: { type: "spring", stiffness: 260, damping: 11 },
-} as const;
+/** A move takes a base time plus a little per step, with a soft start and stop. */
+const MOVE = { baseSeconds: 0.5, secondsPerStep: 0.18 };
+/** Speed (track % per second) at which Bąbelek is a full drop; slower moves stretch it less. */
+const FULL_DROP_SPEED = 60;
+/** The drop follows the speed through a spring: it forms as Bąbelek speeds up and wobbles back on arrival. */
+const SETTLE = { stiffness: 170, damping: 13 };
 
-/** Demo: Bąbelek sits at the current step of a roadmap and travels as a drop when the step changes. */
+/**
+ * Demo: Bąbelek sits at the current step of a roadmap. When the step changes it glides there and,
+ * like in the hero, the faster it goes the more it stretches into a drop.
+ */
 export function RoadmapDemo() {
   const [current, setCurrent] = useState(0);
-  const move = useRef(0);
   const reduceMotion = useReducedMotion();
 
   const position = useMotionValue(stepPosition(0));
-  const left = useTransform(position, (value) => `${value}%`);
-  const hop = useMotionValue(0);
-  const travel = useMotionValue(0);
-  const heading = useMotionValue(0);
+  const left = useTransform(position, [0, 100], ["0%", "100%"]);
 
-  async function goTo(step: number) {
+  const velocity = useVelocity(position);
+  const speed = useTransform(velocity, [-FULL_DROP_SPEED, 0, FULL_DROP_SPEED], [1, 0, 1]);
+  const travel = useSpring(speed, SETTLE);
+
+  // face where it is going; keep the last direction while standing still
+  const heading = useMotionValue(0);
+  useMotionValueEvent(velocity, "change", (value) => {
+    if (value > 0) heading.set(0);
+    else if (value < 0) heading.set(180);
+  });
+
+  function goTo(step: number) {
     if (step === current || step < 0 || step >= STEPS.length) return;
-    const from = current;
     setCurrent(step);
     if (reduceMotion) {
       position.jump(stepPosition(step));
       return;
     }
-
-    const id = ++move.current;
-    const seconds = Math.max(MOVE.minSeconds, MOVE.secondsPerStep * Math.abs(step - from));
-    heading.set(step > from ? 0 : 180);
-    animate(travel, 1, { duration: MOVE.formSeconds, ease: "easeOut" });
-    animate(hop, [0, -MOVE.hop, 0], { duration: seconds, ease: "easeInOut" });
-    await animate(position, stepPosition(step), { duration: seconds, ease: [0.45, 0, 0.25, 1] });
-    // land only if no newer move started meanwhile
-    if (id === move.current) animate(travel, 0, MOVE.land);
+    const seconds = MOVE.baseSeconds + MOVE.secondsPerStep * Math.abs(step - current);
+    animate(position, stepPosition(step), { duration: seconds, ease: "easeInOut" });
   }
 
   return (
@@ -74,7 +83,7 @@ export function RoadmapDemo() {
             {label}
           </button>
         ))}
-        <motion.div style={{ left, x: "-50%", y: hop }} className="absolute bottom-16 w-28">
+        <motion.div style={{ left, x: "-50%" }} className="absolute bottom-16 w-28">
           <Babelek animated travel={travel} heading={heading} title="Bąbelek" className="h-auto w-full" />
         </motion.div>
       </div>

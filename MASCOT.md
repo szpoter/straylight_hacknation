@@ -14,7 +14,8 @@ Nobody on the team draws or animates by hand. No external animation editors, no 
 ## Status (2026-11-21)
 
 - Phase 1 (the base pose below) is done: see `design/mascot/REPORT.md`.
-- Phase 2 has started: the idle life (`<Babelek animated />`: float, a fluid body with random waves running along the whole outline, blinking, glancing) is done, and so is the travelling drop (`travel`, `heading`) with two demos: `/mascot/roadmap` and `/mascot/hero`. Other states (hello, success, sorry, …) and switching between them are next; agree on the list of states with the team before building them.
+- Phase 2 has started: the idle life (`<Babelek animated />`: float, a fluid body with random waves running along the whole outline, blinking, glancing) is done, and so is the travelling drop (`travel`, `heading`) with two demos: `/mascot/roadmap` and `/mascot/hero`.
+- In the product the mascot is called **Zusik**. Its six assistant states (available, checking, entering a change, answering, waiting for the parent, needs attention) are implemented as `state` values; some turn Zusik into an object (book, folder, calculator, pencil) or a short liquid accent (tick, "?", "!"). Try them in the mockup at `/mascot/zusik`. See `docs/mascot/02-tech-stack.md`, "Assistant states".
 
 ## Phase 1 scope
 
