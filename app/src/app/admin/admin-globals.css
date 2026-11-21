@@ -1,0 +1,5 @@
+/* Scoped to pages that render the admin shell, so other (unstyled) routes stay untouched. */
+body:has([data-admin-shell]) {
+  margin: 0;
+  background: #f5faf7;
+}
