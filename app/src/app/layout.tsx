@@ -1,14 +1,29 @@
 import type { Metadata } from "next";
+import { Domine, Inter } from "next/font/google";
+import "./globals.css";
+
+// Kroje z DESIGN.md: Domine (szeryf, nagłówki) i Inter (interfejs). Oba z polskimi znakami.
+const domine = Domine({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-domine",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Zusik",
-  description: "Zusik — asystent rodzica",
+  title: "Przewodnik Rodzica · wersja demonstracyjna",
+  description:
+    "Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać.",
 };
 
-// Intentionally unstyled: the design system in design/ is not final yet.
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pl">
+    <html lang="pl" className={`${domine.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );

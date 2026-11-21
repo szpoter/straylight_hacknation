@@ -42,3 +42,6 @@ next-env.d.ts
 
 # playwright MCP screenshots and logs
 /.playwright-mcp/
+
+# oryginał filmu do hero (39 MB); strona używa lekkiej wersji z public/media
+/assets/*.mp4

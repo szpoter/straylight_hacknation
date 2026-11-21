@@ -1,0 +1,166 @@
+/*
+ * Ekran ładowania: kurtyna w kolorze primary (kolor marki na dużej płaszczyźnie, DESIGN.md),
+ * biały napis (kontrast 4,62:1). Logo: duże białe kółko i małe bursztynowe (tertiary).
+ */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  will-change: transform;
+  /* Bez JS: kurtyna sama zjeżdża po 3,5 s. Z JS faza "exiting" przejmuje wcześniej. */
+  animation: curtain-up 850ms cubic-bezier(0.65, 0, 0.35, 1) 3500ms forwards;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo {
+  overflow: visible;
+}
+
+.parent {
+  fill: var(--color-on-primary);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: parent-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Małe kółko wskakuje z góry do dużego, z lekkim odbiciem; obwódka w kolorze tła je oddziela */
+.child {
+  fill: var(--color-tertiary);
+  stroke: var(--color-primary);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: child-in 650ms cubic-bezier(0.34, 1.56, 0.64, 1) 280ms both;
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  animation: rise-in 600ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+}
+
+.track {
+  width: 160px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: var(--rounded-full);
+  background: color-mix(in srgb, var(--color-on-primary) 25%, transparent);
+}
+
+.fill {
+  width: 100%;
+  height: 100%;
+  background: var(--color-on-primary);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: fill 1280ms cubic-bezier(0.65, 0, 0.35, 1) 120ms forwards;
+}
+
+.wave {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  margin-top: -1px;
+  fill: var(--color-primary);
+}
+
+/* Wyjście: kurtyna (z falą) odjeżdża w górę, treść lekko ją wyprzedza */
+.loader[data-phase="exiting"] {
+  animation: curtain-up 850ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  pointer-events: none;
+}
+
+.loader[data-phase="exiting"] .content {
+  animation: content-out 500ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes parent-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes child-in {
+  from {
+    opacity: 0;
+    transform: translateY(-36px) scale(0.7);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes curtain-up {
+  to {
+    transform: translateY(calc(-100% - 64px));
+  }
+}
+
+@keyframes content-out {
+  to {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+
+/* Ograniczenie ruchu: bez animacji wejścia i kurtyny, na końcu tylko szybkie zniknięcie */
+@media (prefers-reduced-motion: reduce) {
+  .parent,
+  .child,
+  .name,
+  .content,
+  .fill {
+    animation: none;
+  }
+
+  .fill {
+    transform: scaleX(1);
+  }
+
+  /* Bez JS: znika sam po 3,5 s */
+  .loader {
+    animation: fade-out 200ms ease 3500ms forwards;
+  }
+
+  .loader[data-phase="exiting"] {
+    animation: fade-out 200ms ease forwards;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}

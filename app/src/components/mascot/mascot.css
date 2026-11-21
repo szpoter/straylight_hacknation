@@ -1,0 +1,78 @@
+/*
+ * Style maskotki w app/. W maskotka_kod komponenty korzystają z klas Tailwinda (fill-babelek-*,
+ * stroke-babelek-*, origin-*, transform-fill). app/ nie ma Tailwinda, więc te klasy są zdefiniowane
+ * tutaj, tylko wewnątrz <svg class="babelek">, żeby kod komponentów został taki sam jak w maskotka_kod.
+ * Kolory maskotki to jej własna paleta zmierzona z design/mascot/base.jpg (maskotka_kod/app/globals.css).
+ */
+.babelek {
+  --color-babelek-fill: #a3dab3;
+  --color-babelek-rim: #338c5c; /* obrys i ręce */
+  --color-babelek-ink: #1e3d5c; /* źrenice, usta */
+  --color-babelek-shine: #ffffff; /* odblaski, białka oczu */
+  --color-babelek-shadow: #d1d1d1; /* cień na ziemi */
+}
+
+.babelek .fill-babelek-fill {
+  fill: var(--color-babelek-fill);
+}
+
+.babelek .fill-babelek-rim {
+  fill: var(--color-babelek-rim);
+}
+
+.babelek .fill-babelek-ink {
+  fill: var(--color-babelek-ink);
+}
+
+.babelek .fill-babelek-shine {
+  fill: var(--color-babelek-shine);
+}
+
+.babelek .fill-babelek-shadow {
+  fill: var(--color-babelek-shadow);
+}
+
+.babelek .stroke-babelek-rim {
+  stroke: var(--color-babelek-rim);
+}
+
+.babelek .stroke-babelek-ink {
+  stroke: var(--color-babelek-ink);
+}
+
+.babelek .stroke-babelek-shine {
+  stroke: var(--color-babelek-shine);
+}
+
+.babelek .transform-fill {
+  transform-box: fill-box;
+}
+
+.babelek .origin-bottom {
+  transform-origin: bottom;
+}
+
+.babelek .origin-center {
+  transform-origin: center;
+}
+
+.babelek .origin-top {
+  transform-origin: top;
+}
+
+.babelek .origin-\[50\%_66\%\] {
+  transform-origin: 50% 66%;
+}
+
+/* Klasy na samym <svg> (np. z ZusikEntrance) */
+.babelek.block {
+  display: block;
+}
+
+.babelek.w-full {
+  width: 100%;
+}
+
+.babelek.h-auto {
+  height: auto;
+}
