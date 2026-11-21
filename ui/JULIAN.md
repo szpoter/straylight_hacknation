@@ -38,6 +38,12 @@
 
 **Scena do przeklikania.** Rodzic otwiera wniosek Oli i klika zaproszenie. Zusik pyta o początek urlopu. Po odpowiedzi „17 czerwca” ta data pojawia się w polu „Początek urlopu”. Rodzic wybiera przy nim „Zmień” i wpisuje 18 czerwca. Przy kolejnym pytaniu o początek urlopu odpowiedź Zusika ma być zgodna z wartością 18 czerwca. Maciej wykorzystuje tę scenę przy szkicu, a Nikodem może pokazać w jednym kadrze rozmowę i efekt poprawki.
 
+### Wybór daty w rozmowie
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Pod pytaniem „Od którego dnia chcesz zacząć urlop?” jest przycisk z ikoną kalendarza i etykietą „Wybierz datę” w stylu shadcn/ui. Otwiera kalendarz przy pytaniu. Wybranie dnia zamyka kalendarz i od razu dodaje po prawej wiadomość rodzica z pełną datą, np. „17 czerwca 2027”. Zamknięcie kalendarza bez wyboru pozwala wrócić do pytania. Rodzic może też wpisać odpowiedź własnymi słowami. Jeśli rok pozostaje niejasny, Zusik o niego pyta. [shadcn/ui — Date Picker](https://ui.shadcn.com/docs/components/radix/date-picker)
+
+**Scena do przeklikania.** Po wyborze 17 czerwca 2027 rodzic widzi swoją odpowiedź w rozmowie. Dopiero gdy zapis się powiedzie, Zusik potwierdza zmianę i wyróżnia pole „Początek urlopu” w szkicu Oli. Na komputerze pole widać po lewej, na telefonie nad rozmową. Wybrana data pozostaje czytelna w historii wątku.
+
 ### Historia rozmów
 
 **Julian · 21 listopada 2026 · Uzgodnione.** „Historia” w nagłówku Zusika otwiera listę w miejscu rozmowy. W widoku dzielonym rodzic nadal widzi formularz po lewej, a na telefonie fragment bieżącej sprawy nad listą. Samo otwarcie historii zachowuje bieżącą sprawę. [Linear Agent — wejście z paska czatu](https://linear.app/docs/linear-agent#chat-history)
