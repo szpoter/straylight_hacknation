@@ -33,8 +33,9 @@ function env(name: string, fallback?: string): string {
   return value;
 }
 
+type VectorParams = { size: number; distance: string };
 type CollectionInfo = {
-  result?: { config?: { params?: { vectors?: { size?: number; distance?: string } } } };
+  result?: { config?: { params?: { vectors?: VectorParams | Record<string, VectorParams> } } };
 };
 
 async function main() {
@@ -56,7 +57,8 @@ async function main() {
     console.log(`${OP}: created ${collection}`);
   } else if (existing.ok) {
     const vectors = ((await existing.json()) as CollectionInfo).result?.config?.params?.vectors;
-    if (vectors?.size !== 384 || vectors?.distance !== "Cosine") {
+    const defaultVector = vectors && ("" in vectors ? vectors[""] : vectors);
+    if (defaultVector?.size !== 384 || defaultVector?.distance !== "Cosine") {
       throw new Error(`collection ${collection} exists with incompatible vectors ${JSON.stringify(vectors)}`);
     }
     console.log(`${OP}: ${collection} exists, config compatible`);
