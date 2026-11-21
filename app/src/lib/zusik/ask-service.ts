@@ -37,6 +37,7 @@ export interface AnswerTrace {
   model: GenerationResult["status"] | "skipped";
   backend?: string;
   modelId?: string;
+  attemptId?: string;
   modelMs: number | null;
   /** Machine-readable distinction between a model proposal and the public application's answer. */
   proposedStatus: AskAnswer["status"] | null;
@@ -121,7 +122,8 @@ export async function answerQuestion(deps: AnswerDeps, question: string, onProgr
   const generated = await deps.generate(sanitized, fragments, corpus);
   onProgress?.("Sprawdzam cytaty i podstawę odpowiedzi…");
   trace.model = generated.status;
-  if ("backend" in generated && typeof generated.backend === "string") trace.backend = generated.backend;
+  trace.backend = generated.backend;
+  trace.attemptId = generated.attemptId;
   trace.modelId = generated.model;
   trace.modelMs = generated.ms;
   trace.proposedStatus = generated.output?.status ?? null;

@@ -228,10 +228,11 @@ async function testNewQuestion(page: Page) {
       document.body.dataset.partialSteps = String(seen.size);
     }).observe(document.body, { subtree: true, childList: true, characterData: true });
   });
-  const { turn, retrieval } = await ask("Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?");
+  const { turn, retrieval } = await ask("Wyczerpałam zasiłek chorobowy, nadal nie mogę pracować, a lekarz przewiduje powrót po leczeniu. Czy jest świadczenie na dalszy okres i na jak długo?");
   assert.ok(Number(await page.locator("body").getAttribute("data-partial-steps")) > 1, "Progressive text visible in the browser");
   const citation = turn.citations.find(c => c.fragmentId === "uz-18-1");
   assert.ok(retrieval?.top.includes("uz-18-1") && retrieval.evidence.includes("uz-18-1"));
+  if (retrieval.backend?.startsWith("local-")) assert.match(retrieval.attemptId, /^[a-f0-9-]{36}$/i);
   const article = loadCorpus("publiczne").fragments.get("uz-18-1");
   assert.ok(citation && citation.page === 7 && citation.quote.length > 15 && article?.sourceText.includes(citation.quote),
     "The displayed quotation must be verbatim from Article 18, page 7");

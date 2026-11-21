@@ -71,6 +71,7 @@ export async function POST(request: Request) {
         evidence: trace.evidenceIds,
         backend: trace.backend ?? null,
         model: trace.modelId ?? null,
+        attemptId: trace.attemptId ?? null,
         quoteReason: trace.quoteReason,
       } : null;
       return Response.json({ turn: result.turn, retrieval }, { status: result.status, headers: NO_STORE });

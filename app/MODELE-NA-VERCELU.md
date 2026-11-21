@@ -27,7 +27,9 @@ W teście awarii jedno zadanie pozostaje w otwartej transakcji, niewidoczne dla 
 
 ### Potwierdzenie próby produkcyjnej
 
-Zadaj świeże pytanie „Kiedy złożyć wniosek o urlop rodzicielski?” i otwórz logi funkcji dla tego wywołania. Wpis `rag_model_attempt` podaje `attemptId`, `backend`, `status` i czas. Na Macu sprawdź ten sam UUID w `~/Library/Application Support/ZusikModel/attempts.log`. Para `backend=local-bielik` lub `local-pllum`, `status=ok` po stronie Vercela i `state=generated` po stronie Maca potwierdza inferencję. `fallback=hosted` lub `source_only` wyjaśnia obsługę awarii. O publikacji odpowiedzi po walidacji informują pola `citations` i `quoteReason` w zdarzeniu `zusik_ask`. Powtórzenie tego samego requestId może odtworzyć zapisaną odpowiedź.
+W Chrome otwórz DevTools → Network, a następnie zadaj w czacie świeże pytanie „Kiedy złożyć wniosek o urlop rodzicielski?”. W żądaniu `ask` otwórz Response. W ostatnim wierszu strumienia odczytaj `body.retrieval.backend`, `attemptId` i `quoteReason`. Wartość `local-bielik` lub `local-pllum` oraz ten sam identyfikator w zdarzeniu `generated` w dzienniku Maca potwierdzają lokalną inferencję. Pole `quoteReason` informuje, kiedy aplikacja wybrała dosłowny cytat. Identyfikatory w `top`, `evidence` i `turn.citations` pozwalają prześledzić fragment ze zbioru trafień do końcowej odpowiedzi.
+
+Dziennik funkcji Vercel zawiera także zdarzenia `rag_model_attempt` z czasem i ewentualnym `fallback`. Powtórzenie tego samego requestId może odtworzyć zapisaną odpowiedź. W takim przypadku `retrieval` ma wartość `null`.
 
 ```sh
 launchctl print "gui/$(id -u)/pl.zusik.model-worker"
