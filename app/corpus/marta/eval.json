@@ -54,7 +54,7 @@
     { "id": "q17", "question": "Jakie dokumenty dołączyć do wniosku o rodzicielski?",
       "expected": [["rozp-2025-322-par15-ust2-pkt1"], ["rozp-2025-322-par15-ust2-pkt2"]], "status": ["answered"],
       "required": ["odpis|akt"], "forbidden": [], "forbiddenCitations": [] },
-    { "id": "q18", "question": "Biorę zasiłek za okres rodzicielskiego. Czy mąż może w tym czasie pójść na urlop rodzicielski?",
+    { "id": "q18", "requiredCitations": ["kp-art182-1a-par7", "mrpips-dzielenie-zasilek"], "question": "Biorę zasiłek za okres rodzicielskiego. Czy mąż może w tym czasie pójść na urlop rodzicielski?",
       "expected": [["kp-art182-1a-par7", "mrpips-dzielenie-zasilek"]], "status": ["answered"],
       "required": ["może"], "forbidden": [], "forbiddenCitations": [] },
     { "id": "q19", "question": "Ile tygodni zasiłku za rodzicielski jest zarezerwowane tylko dla taty?",

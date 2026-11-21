@@ -29,6 +29,7 @@ interface Case {
   required: string[];
   forbidden: string[];
   forbiddenCitations: string[];
+  requiredCitations?: string[];
 }
 interface Negative {
   id: string;
@@ -118,6 +119,7 @@ async function main() {
     const problems: string[] = [];
     if (!c.status.includes(answer.status)) problems.push(`status ${answer.status}`);
     if (answer.status === "answered") {
+      if (c.requiredCitations && !c.requiredCitations.some((id) => cited.includes(id))) problems.push("brak cytatu o właściwym rodzaju świadczenia");
       for (const r of c.required) if (!matches(r, text)) problems.push(`brak /${r}/`);
     }
     for (const f of c.forbidden) if (matches(f, text)) problems.push(`zakazane /${f}/`);
@@ -134,7 +136,7 @@ async function main() {
     rows.push(
       `| ${c.id}${c.main ? "★" : ""} | ${c.question} | ${c.expected.map((g) => g.join(" / ")).join(" + ")} | ${top.join("<br>")} | ${isHit ? "✓" : "✗"} | ${isComplete ? "✓" : "✗"} | ${retrievalOnly ? "—" : fmtAnswer(answer)} | ${auto} |`,
     );
-    raw.push({ id: c.id, question: c.question, sanitized: trace.sanitized, top: trace.vectorHits, evidence: trace.evidenceIds, answer, report: trace.report, model: trace.model, modelMs: trace.modelMs, finishReason: trace.finishReason });
+    raw.push({ id: c.id, question: c.question, sanitized: trace.sanitized, top: trace.vectorHits, evidence: trace.evidenceIds, answer, report: trace.report, modelProposedStatus: trace.proposedStatus, quoteReason: trace.quoteReason, model: trace.model, modelMs: trace.modelMs, finishReason: trace.finishReason });
     console.log(`${OP}: ${c.id} hit5=${isHit ? 1 : 0} complete=${isComplete ? 1 : 0} ${answer.status} ${auto} · model ${trace.model} ${trace.modelMs ?? "-"} ms ${trace.finishReason ?? ""}`);
   }
 

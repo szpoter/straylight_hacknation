@@ -212,7 +212,14 @@ export function validateAnswer(
     const quotes = ids.map((id) => citations.find((c) => c.id === id)!.quote);
     const polarityMismatch = ids.length > 0 && EXEMPTION.test(claim.text) && !quotes.some((q) => NEGATIVE_QUOTE.test(q));
     if (polarityMismatch) report.polarityRemoved += 1;
-    if (ids.length === 0 || AMOUNT_IN_TEXT.test(claim.text) || polarityMismatch) {
+    const citedTexts = ids.flatMap((id) => {
+      const citation = citations.find((c) => c.id === id);
+      const fragment = citation && allowed.get(citation.fragmentId);
+      return fragment ? [fragment.sourceText, fragment.locator] : [];
+    });
+    const sourceNumbers = new Set(citedTexts.join(" ").match(/\d+(?:[,.]\d+)?/g) ?? []);
+    const unsupportedNumber = (claim.text.match(/\d+(?:[,.]\d+)?/g) ?? []).some((value) => !sourceNumbers.has(value));
+    if (ids.length === 0 || AMOUNT_IN_TEXT.test(claim.text) || polarityMismatch || unsupportedNumber) {
       report.removedClaims += 1;
       if (index === 0) firstClaimRemoved = true;
       return;
@@ -232,12 +239,15 @@ export function validateAnswer(
   });
 
   if (output.status === "insufficient_evidence") {
-    return { answer: insufficient(message || NO_BASIS_MESSAGE), report };
+    return { answer: insufficient(), report };
   }
+  // Free-form model text must not smuggle an uncited eligibility verdict into a question.
+  const followUp = /^(?:Czy|Kiedy|Jak(?:i|ie|iego|iej|ą)?|Któr(?:y|e|ego|ej|ą)|Ile|Od kiedy|Do kiedy|Kto|Gdzie|Na jaki|W jakim)\s[^.!?]{1,190}\?$/iu.test(message)
+    && !/\d|przysługuje|należy ci się|masz prawo|odmow|odmaw/iu.test(message) ? message : "";
   if (output.status === "needs_clarification") {
-    if (!message.includes("?")) return { answer: insufficient(), report };
+    if (!followUp) return { answer: insufficient(), report };
     return {
-      answer: { status: "needs_clarification", message, claims, citations: usedCitations, corpusVersion: version },
+      answer: { status: "needs_clarification", message: followUp, claims, citations: usedCitations, corpusVersion: version },
       report,
     };
   }
@@ -247,7 +257,7 @@ export function validateAnswer(
     answer: {
       status: "answered",
       // Only a follow-up question may accompany the claims; legal content stays in claims.
-      message: message.endsWith("?") ? message : "",
+      message: followUp,
       claims,
       citations: usedCitations,
       corpusVersion: version,

@@ -56,6 +56,7 @@ async function main() {
       pass, rawHit, evidenceHit, version: answer.corpusVersion, status: !example.pack || example.generate ? answer.status : "not_measured",
       top5: trace.vectorIds, evidence: trace.evidenceIds, citations: example.generate ? answer.citations : [],
       claims: example.generate ? answer.claims : [], message: example.generate ? answer.message : undefined,
+      modelProposedStatus: example.generate ? trace.proposedStatus : undefined, quoteReason: example.generate ? trace.quoteReason : undefined,
       model: example.generate ? trace.model : undefined, modelMs: example.generate ? trace.modelMs : undefined,
     });
     console.log(example.id, pass ? "PASS" : "FAIL", "vector", rawHit, "evidence", evidenceHit, answer.status, cited.join(","));

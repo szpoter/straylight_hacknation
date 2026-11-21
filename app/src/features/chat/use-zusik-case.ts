@@ -31,7 +31,7 @@ export type AskOutcome =
 /** One entry of the visible conversation: a saved turn or a question still on its way. */
 export type ConversationItem = { requestId: string; question: string; state: LocalAsk["state"]; answer?: Answer };
 
-type Payload = { view?: ClientView; error?: string; variable?: string };
+type Payload = { documentCache?:string; view?: ClientView; error?: string; variable?: string };
 
 const ASK_TIMEOUT_MS = 30_000;
 const POLL_MS = 1_500;
@@ -75,6 +75,7 @@ export function mergeConversation(saved: Turn[], local: LocalAsk[]): Conversatio
 
 export function useZusikCase() {
   const [view, setView] = useState<ClientView | null>(null);
+  const [documentCache,setDocumentCache]=useState("");
   const [phase, setPhase] = useState<Phase>("restoring");
   const [error, setError] = useState<CaseError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -123,6 +124,7 @@ export function useZusikCase() {
     try {
       const session = await post("/api/zusik/session");
       if (session.status >= 400) return fail(errorFrom(session.status, session.body));
+      setDocumentCache(session.body.documentCache ?? "");
       const current = await readState();
       if (!current) return;
       if (current.state === "starting") {
@@ -276,6 +278,7 @@ export function useZusikCase() {
 
   return {
     view,
+    documentCache,
     phase,
     error,
     notice,

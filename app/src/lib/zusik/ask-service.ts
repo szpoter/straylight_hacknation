@@ -1,7 +1,7 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { relevantFragment } from "../rag/relevance";
-import { extractiveAnswer } from "../rag/excerpt";
+import { extractiveAnswer, needsStatutoryText } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
@@ -32,6 +32,9 @@ export interface AnswerTrace {
   search: "ok" | "error" | "skipped";
   model: GenerationResult["status"] | "skipped";
   modelMs: number | null;
+  /** Machine-readable distinction between a model proposal and the public application's answer. */
+  proposedStatus: AskAnswer["status"] | null;
+  quoteReason: "model_unavailable" | "claim_validation" | "statutory_conditions" | "model_abstained" | null;
   finishReason: string | null;
   report: ValidationReport | null;
   calls: { qdrant: number; sherlock: number };
@@ -55,6 +58,8 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
     search: "skipped",
     model: "skipped",
     modelMs: null,
+    proposedStatus: null,
+    quoteReason: null,
     finishReason: null,
     report: null,
     calls: { qdrant: 0, sherlock: 0 },
@@ -108,18 +113,25 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
   const generated = await deps.generate(sanitized, fragments, corpus);
   trace.model = generated.status;
   trace.modelMs = generated.ms;
+  trace.proposedStatus = generated.output?.status ?? null;
   trace.finishReason = generated.finishReason ?? null;
   if (generated.status !== "ok" || !generated.output) {
     // An unusable generation can still leave an exact, reviewed statute already retrieved.
     const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
+    if (quote) trace.quoteReason = "model_unavailable";
     return { answer: quote ?? plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   }
 
   const { answer, report } = validateAnswer(corpus, fragments, generated.output);
   trace.report = report;
-  if (answer.status === "insufficient_evidence") {
+  if (answer.status === "insufficient_evidence" || (answer.status === "answered" && needsStatutoryText(projected, answer))) {
     const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
-    if (quote) return { answer: quote, trace };
+    if (quote) {
+      if (answer.status === "answered") trace.quoteReason = "statutory_conditions";
+      else trace.quoteReason = generated.output.status === "insufficient_evidence" ? "model_abstained" : "claim_validation";
+      return { answer: quote, trace };
+    }
+    if (answer.status === "answered") return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
   }
   return { answer, trace };
 }

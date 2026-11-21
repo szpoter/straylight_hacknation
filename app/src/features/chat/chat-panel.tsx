@@ -177,7 +177,7 @@ function Thread(props: Props) {
   };
 
   const newAnswer = !reader.atBottom && signature !== reader.seen;
-  const showStarters = conversation.length === 0;
+  const showStarters = conversation.length === 0 && (props.starters ?? STARTERS).length > 0;
 
   return (
     <>

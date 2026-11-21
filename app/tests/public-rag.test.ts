@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { loadCorpus } from "@/lib/rag/corpus-fs";
 import { citationUrl } from "@/lib/rag/corpus";
+import { validateAnswer } from "@/lib/rag/answer";
 import { publicQuestion } from "@/lib/rag/public-query";
 import { assembleEvidence } from "@/lib/rag/retrieve";
 import { answerQuestion } from "@/lib/zusik/ask-service";
@@ -96,6 +97,34 @@ describe("public knowledge partitions", () => {
     expect(result.answer.status).toBe("answered");
     expect(result.answer.message).toContain("Cytuję");
     expect(result.answer.claims[0].text).toBe(f.sourceText);
+  });
+
+  it("replaces a paraphrase turning the post-coverage exception into a universal condition", async () => {
+    const ordinary = corpus.fragments.get("uz-art6-ust1")!;
+    const later = corpus.fragments.get("uz-art7")!;
+    const result = await answerQuestion({
+      corpus, selectCorpus: loadCorpus,
+      search: { search: async () => ({ status: "ok", ms: 0, hits: [ordinary,later].map(f => ({logicalId:f.logicalId,fragmentSha256:f.fragmentSha256,score:0.9})) }) },
+      generate: async () => ({ status:"ok", ms:0, model:"test", output:{ status:"answered", message:"", claims:[{
+        text:"Niezdolność do pracy musi powstać po ustaniu ubezpieczenia.",
+        evidence:[{id:later.logicalId,quote:"po ustaniu tytułu ubezpieczenia chorobowego"}],
+      }] } }),
+    }, "Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego?");
+    expect(result.trace.proposedStatus).toBe("answered");
+    expect(result.trace.quoteReason).toBe("statutory_conditions");
+    expect(result.answer.claims.map(c=>c.text)).toEqual([ordinary.sourceText, later.sourceText]);
+    expect(result.answer.message).toContain("Cytuję");
+  });
+
+  it("drops an invented number and a verdict hidden in an uncited abstention message", () => {
+    const fragment = corpus.fragments.get("uz-art6-ust1")!;
+    const model = validateAnswer(corpus, [fragment], {
+      status: "answered", message: "", claims: [{ text: "Masz 999 dni ochrony.",
+        evidence: [{ id: fragment.logicalId, quote: "w czasie trwania ubezpieczenia chorobowego" }] }],
+    });
+    expect(model.answer.status).toBe("insufficient_evidence");
+    const no = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "Zasiłek za ten okres Ci nie przysługuje.", claims: [] });
+    expect(no.answer.message).not.toContain("nie przysługuje");
   });
 
   it("preserves conditions or asks for a case when a date or a second title matters", () => {
