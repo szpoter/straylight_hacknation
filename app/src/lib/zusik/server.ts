@@ -80,7 +80,7 @@ export function askService(): AskService {
     turns: new PgTurnStore(db),
     readMarta: async (sessionId) => {
       const { readMarta } = await import("../marta/server");
-      return (await readMarta(sessionId)).view ?? null;
+      return readMarta(sessionId);
     },
     corpus,
     selectCorpus: (name) => loadCorpus(name),

@@ -6,10 +6,10 @@ import type { AskAnswer, AskTurn } from "./types";
 
 export function sourceIntent(question: string): "case" | "previous" | "auto" | null {
   const q = question.trim().toLocaleLowerCase("pl").replace(/[?!.]+$/u, "").trim();
+  if (/^(?:podaj|pokaż|wskaż|na jakiej podstawie|skąd).*(?:poprzedni|ostatni).*(?:odpowied|wiadomoś)/u.test(q)) return "previous";
   if (/^(?:a )?(?:skąd|jak (?:obliczono|wyliczono)|z czego wynikają)/u.test(q)
       && /(?:te |nasze |moje )(?:kwoty|stawki|wyliczenia)|(?:kalkulator|formularz|porównani|dane rodziny|dane marty|dane (?:w|z) (?:mojej|tej) spraw)/u.test(q)) return "case";
   if (/^(?:podaj|pokaż|wskaż) (?:mi )?(?:cytat[y]?|źródł[ao]|podstawę prawną)(?: (?:do|z) (?:tej|poprzedniej|ostatniej) odpowiedzi)?$/u.test(q)) return "previous";
-  if (/^(?:na jakiej podstawie|skąd).*(?:poprzedni|ostatni).*(?:odpowied|wiadomoś)/u.test(q)) return "previous";
   return /^(?:a )?(?:skąd (?:są |masz |pochodzą |wziąłeś )?(?:te |takie )?(?:dane|informacje|to|kwoty|stawki)|skąd (?:to |o tym )?wiesz|jakie (?:jest |są )?źródł[oa]|na jakiej podstawie|źródł[oa])$/u.test(q) ? "auto" : null;
 }
 

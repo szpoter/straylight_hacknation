@@ -9,7 +9,10 @@ import { answerQuestion } from "@/lib/zusik/ask-service";
 const corpus = loadCorpus("publiczne");
 
 describe("public knowledge partitions", () => {
-  it("grounds a new rehabilitation question in the exact article, even when the model abstains", async () => {
+  it.each([
+    "Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?",
+    "Wyczerpałam zasiłek chorobowy, nadal nie mogę pracować, a lekarz przewiduje powrót po leczeniu. Czy jest świadczenie na dalszy okres i na jak długo?",
+  ])("grounds the parent's wording in the exact article: %s", async question => {
     const fragment = corpus.fragments.get("uz-18-1")!;
     const { answer, trace } = await answerQuestion({
       corpus: loadCorpus("marta"), selectCorpus: loadCorpus,
@@ -17,13 +20,22 @@ describe("public knowledge partitions", () => {
         expect(corpusVersion).toBe(corpus.manifest.corpusVersion);
         return { status: "ok", ms: 1, hits: [{ logicalId: fragment.logicalId, fragmentSha256: fragment.fragmentSha256, score: 0.9 }] };
       } },
-      generate: async () => ({ status: "ok", model: "test", ms: 1, output: { status: "insufficient_evidence", message: "", claims: [] } }),
-    }, "Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?");
+      generate: async () => ({ status: "ok", model: "test", backend: "test-provider", ms: 1, output: { status: "insufficient_evidence", message: "", claims: [] } }),
+    }, question);
+    expect(trace).toMatchObject({ backend: "test-provider", modelId: "test", quoteReason: "model_abstained" });
     expect(trace.vectorIds).toEqual(["uz-18-1"]);
     expect(answer).toMatchObject({ status: "answered", citations: [{ fragmentId: "uz-18-1", locator: "art. 18",
       url: "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf#page=7", quote: fragment.sourceText }] });
     expect(answer.claims[0].text).toContain("dalsze leczenie lub rehabilitacja lecznicza rokują odzyskanie zdolności do pracy");
     expect(answer.claims[0].text).toContain("12 miesięcy");
+  });
+
+  it("asks about prognosis when the same symptoms are reported without an expected return to work", async () => {
+    const fail = vi.fn((): never => { throw new Error("unexpected provider call"); });
+    const { answer } = await answerQuestion({ corpus, search: { search: fail }, generate: fail },
+      "Wyczerpałam zasiłek chorobowy, nadal nie mogę pracować, a lekarz nie przewiduje powrotu po leczeniu. Czy jest świadczenie na dalszy okres i na jak długo?");
+    expect(answer).toMatchObject({ status: "needs_clarification", citations: [] });
+    expect(fail).not.toHaveBeenCalled();
   });
 
   it("requires relevant evidence for rehabilitation and distinguishes the tax relief and personal entitlement", async () => {

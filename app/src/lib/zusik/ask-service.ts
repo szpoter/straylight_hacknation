@@ -35,6 +35,8 @@ export interface AnswerTrace {
   evidenceIds: string[];
   search: "ok" | "error" | "skipped";
   model: GenerationResult["status"] | "skipped";
+  backend?: string;
+  modelId?: string;
   modelMs: number | null;
   /** Machine-readable distinction between a model proposal and the public application's answer. */
   proposedStatus: AskAnswer["status"] | null;
@@ -119,6 +121,8 @@ export async function answerQuestion(deps: AnswerDeps, question: string, onProgr
   const generated = await deps.generate(sanitized, fragments, corpus);
   onProgress?.("Sprawdzam cytaty i podstawę odpowiedzi…");
   trace.model = generated.status;
+  if ("backend" in generated && typeof generated.backend === "string") trace.backend = generated.backend;
+  trace.modelId = generated.model;
   trace.modelMs = generated.ms;
   trace.proposedStatus = generated.output?.status ?? null;
   trace.finishReason = generated.finishReason ?? null;
@@ -152,7 +156,7 @@ export interface AskResult {
 export interface AskServiceDeps extends AnswerDeps {
   store: CaseStore;
   turns: TurnStore;
-  readMarta?(sessionId: string): Promise<MartaView | null>;
+  readMarta?(sessionId: string): Promise<{ view?: MartaView | null; savedAt?: string }>;
   /** How long a duplicate request waits for the first one to finish. */
   pendingWaitMs?: number;
   now?: () => Date;
@@ -194,9 +198,12 @@ export class AskService {
       const intent = sourceIntent(question);
       if (intent) {
         const previous = intent === "case" ? undefined : (await this.deps.turns.list(threadId, requestId)).at(-1);
-        const answer = previous || intent === "previous"
+        const snapshot = intent === "previous" ? undefined : await this.deps.readMarta?.(sessionId);
+        const newerCase = snapshot?.view && snapshot.savedAt && previous &&
+          Date.parse(snapshot.savedAt) > Date.parse(previous.completedAt ?? previous.createdAt);
+        const answer = intent === "previous" || (previous && !newerCase)
           ? previousSources(previous, this.deps.corpus.manifest.corpusVersion)
-          : caseSources(await this.deps.readMarta?.(sessionId) ?? null, this.deps.corpus);
+          : caseSources(snapshot?.view ?? null, this.deps.corpus);
         result = { answer, trace: null };
       } else {
         result = await answerQuestion(this.deps, question, onProgress);

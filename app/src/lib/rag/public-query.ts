@@ -48,7 +48,16 @@ function routeTopic(input: string): PublicQuestion | null {
     return generic("Jak wygląda wniosek ZAM o zasiłek macierzyński za okres urlopu ojcowskiego?", ["rz:33:1"]);
   }
 
-  if (/(?:świadcze\p{L}*|zasił\p{L}*)\s+rehabilitacyjn/u.test(q)) {
+  const afterSickness = /(?:wyczerp|wykorzyst|kończy|skończy).{0,45}(?:chorobow|okres zasiłkow)/u.test(q)
+    && !/nie (?:wyczerp|wykorzyst|kończy|skończy)/u.test(q)
+    && /(?:nadal|dalej|wciąż).{0,30}(?:nie mogę pracować|niezdoln|nie mogę wrócić do pracy)/u.test(q)
+    && /(?:świadczeni|zasił|pieni[ąę]dz).{0,25}(?:dalsz|kolejn)|co dalej/u.test(q);
+  const namedRehabilitation = /(?:świadcze\p{L}*|zasił\p{L}*)\s+rehabilitacyjn/u.test(q);
+  if (afterSickness && !namedRehabilitation && (!/leczen|rehabilitac/u.test(q) || !/powr[oó][ct]|odzysk/u.test(q)
+      || /(?:nie przewiduje|brak szans|nie rokuj|nie ma szans)/u.test(q))) {
+    return { ...generic(""), clarify: "Chcesz poznać warunki świadczenia rehabilitacyjnego czy szukasz innego świadczenia po zakończeniu chorobowego?" };
+  }
+  if (namedRehabilitation || afterSickness) {
     if (/dokument|załącz|dołącz|formularz/u.test(q))
       return generic("Jakie dokumenty są potrzebne do świadczenia rehabilitacyjnego?", ["rz:11"]);
     if (/procent|stawka|podstaw[ayę] wymiaru/u.test(q))

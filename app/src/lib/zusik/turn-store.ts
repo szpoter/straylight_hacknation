@@ -38,6 +38,7 @@ interface TurnRow {
   status: string;
   response: AskAnswer | null;
   created_at: Date;
+  completed_at: Date | null;
   lease_expired: boolean;
 }
 
@@ -47,6 +48,7 @@ function toTurn(row: TurnRow): AskTurn {
     requestId: row.request_id,
     question: row.question,
     createdAt: row.created_at.toISOString(),
+    completedAt: row.completed_at?.toISOString(),
     status: response.status,
     message: response.message,
     claims: response.claims,
@@ -69,7 +71,7 @@ export class PgTurnStore implements TurnStore {
     if (inserted.rowCount === 1) return { kind: "claimed", token };
 
     const { rows } = await this.pool.query<TurnRow>(
-      `SELECT request_id, question_hash, question, status, response, created_at,
+      `SELECT request_id, question_hash, question, status, response, created_at, completed_at,
               (lease_until IS NULL OR lease_until < now()) AS lease_expired
        FROM ${T} WHERE thread_id = $1 AND request_id = $2`,
       [threadId, requestId],
@@ -92,7 +94,7 @@ export class PgTurnStore implements TurnStore {
       `UPDATE ${T} SET status = $4, response = $5::jsonb, corpus_version = $6, completed_at = now(),
               op_token = NULL, lease_until = NULL
        WHERE thread_id = $1 AND request_id = $2 AND op_token = $3 AND status = 'pending'
-       RETURNING request_id, question_hash, question, status, response, created_at, false AS lease_expired`,
+       RETURNING request_id, question_hash, question, status, response, created_at, completed_at, false AS lease_expired`,
       [threadId, requestId, token, answer.status, JSON.stringify(answer), answer.corpusVersion],
     );
     return rows[0] ? toTurn(rows[0]) : null;
@@ -108,7 +110,7 @@ export class PgTurnStore implements TurnStore {
   async list(threadId: string, beforeRequestId?: string): Promise<AskTurn[]> {
     try {
       const { rows } = await this.pool.query<TurnRow>(
-        `SELECT request_id, question_hash, question, status, response, created_at, false AS lease_expired
+        `SELECT request_id, question_hash, question, status, response, created_at, completed_at, false AS lease_expired
          FROM ${T} WHERE thread_id = $1 AND status <> 'pending'
          AND ($2::text IS NULL OR id < (SELECT id FROM ${T} WHERE thread_id = $1 AND request_id = $2)) ORDER BY id`,
         [threadId, beforeRequestId ?? null],

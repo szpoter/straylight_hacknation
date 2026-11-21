@@ -84,6 +84,7 @@ export class MemoryTurnStore implements TurnStore {
     token: string | null;
     answer: AskAnswer | null;
     createdAt: Date;
+    completedAt?: Date;
   }> = [];
   failComplete = false;
 
@@ -103,6 +104,7 @@ export class MemoryTurnStore implements TurnStore {
     const row = this.rows.find((r) => r.threadId === threadId && r.requestId === requestId && r.token === token);
     if (!row || row.answer) return null;
     row.answer = answer;
+    row.completedAt = new Date();
     row.token = null;
     return this.toTurn(row);
   }
@@ -115,6 +117,6 @@ export class MemoryTurnStore implements TurnStore {
     return rows.filter((r) => r.threadId === threadId && r.answer).map((r) => this.toTurn(r));
   }
   private toTurn(row: MemoryTurnStore["rows"][number]): AskTurn {
-    return { ...row.answer!, requestId: row.requestId, question: row.question, createdAt: row.createdAt.toISOString() };
+    return { ...row.answer!, requestId: row.requestId, question: row.question, createdAt: row.createdAt.toISOString(), completedAt: row.completedAt?.toISOString() };
   }
 }

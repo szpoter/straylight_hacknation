@@ -95,4 +95,5 @@ export interface AskTurn extends AskAnswer {
   requestId: string;
   question: string;
   createdAt: string;
+  completedAt?: string;
 }

@@ -28,7 +28,7 @@ export async function readMarta(session: string, command?: Command) {
   try {
     const snapshot = await graph.getState(config);
     const view: MartaView | null = snapshot.values.view ?? null;
-    if (!command) return { status: 200, view };
+    if (!command) return { status: 200, view, savedAt: snapshot.createdAt };
     const result = applyMarta(view, command);
     if (result.status === 200) await graph.invoke({ view: result.view }, config);
     return result;
