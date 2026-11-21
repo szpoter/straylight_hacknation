@@ -22,6 +22,8 @@
     "@langchain/langgraph-checkpoint": "^1.2.3",
     "@langchain/langgraph-checkpoint-postgres": "^1.1.4",
     "ai": "^7.0.179",
+    "flubber": "^0.4.2",
+    "motion": "^14.14.0",
     "next": "^16.4.6",
     "pg": "^8.23.1",
     "react": "^19.3.0",
@@ -29,6 +31,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/flubber": "^0.4.0",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
