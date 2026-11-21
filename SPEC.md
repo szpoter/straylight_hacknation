@@ -6,7 +6,7 @@ W tym pliku zapisujemy specyfikacje kolejnych części projektu w miarę ich oma
 
 ### Uzgodnione
 
-Hero odpowiada na dwa pytania rodzica: „Co mi przysługuje?” i „Co muszę załatwić?”. Przewodnik ma wskazywać, które formalności są obowiązkowe w danej sytuacji, a które stają się potrzebne, jeśli rodzic chce skorzystać z wybranego świadczenia lub urlopu. Główny przycisk ma etykietę **„Sprawdź moją sytuację”**. Po jego wybraniu użytkownik zaczyna od wyboru sytuacji rodzinnej.
+Hero odpowiada na dwa pytania rodzica: „Co mi przysługuje?” i „Co muszę załatwić?”. Przewodnik ma wskazywać, które formalności są obowiązkowe w danej sytuacji, a które stają się potrzebne, jeśli rodzic chce skorzystać z wybranego świadczenia lub urlopu.
 
 **Cel.** Osoba planująca rodzicielstwo, oczekująca dziecka lub już sprawująca opiekę powinna od razu wiedzieć, czego może się dowiedzieć i od czego zacząć. Język ma pasować również do ojca, rodzica adopcyjnego, rodziny zastępczej i osoby po stracie.
 
@@ -16,7 +16,7 @@ Hero odpowiada na dwa pytania rodzica: „Co mi przysługuje?” i „Co muszę 
 | --- | --- | --- |
 | Nagłówek główny | Co Ci przysługuje i co musisz załatwić? | Rodzic widzi, że przewodnik obejmuje zarówno uprawnienia, jak i obowiązki. |
 | Opis | Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać. Dowiesz się, co wypełnić, gdzie złożyć dokumenty i do kiedy. | Zapowiada odpowiedź dopasowaną do sytuacji rodzica. |
-| Główny przycisk | Sprawdź moją sytuację | Otwiera wybór sytuacji rodzinnej. To pierwszy krok również dla osób planujących rodzicielstwo, adopcję lub przyjęcie dziecka do rodziny zastępczej. |
+| Główny przycisk | Sprawdź moją sytuację | Prowadzi bezpośrednio do ekranu logowania przez mObywatel. W wersji konkursowej ekran ten pokazuje symulację logowania. |
 
 ### Proponowany wygląd — do omówienia
 
@@ -33,13 +33,13 @@ Opis zadania (s. 11–15) wskazuje na indywidualną ocenę sytuacji, oszacowanie
 
 Na s. 13–14 opis zadania wymienia również symulację wypełniania wniosków o urlopy i świadczenia oraz złożenia wniosku o odpis aktu urodzenia. Zakres obowiązkowych formalności, które przewodnik pokaże w poszczególnych sytuacjach rodzinnych, pozostaje do ustalenia.
 
-## Pod Hero — wybór sytuacji rodzinnej
+## Pod Hero — przykładowe sytuacje rodzinne
 
 **Uzgodniony zakres.** Strona przed logowaniem pokazuje wartość przewodnika na gotowych przykładach. Wybór sytuacji zmienia wyłącznie widoczny przykład. Indywidualne sprawy, wyliczenia i wnioski należą do dalszej części produktu. W wersji konkursowej zarówno logowanie przez mObywatel, jak i automatyczne pobranie danych z ZUS po zalogowaniu są symulowane.
 
 ### Proponowana interakcja i treść
 
-„Sprawdź moją sytuację” przewija stronę do pytania **„Która sytuacja najlepiej Cię opisuje?”** i przenosi na nie fokus. Pod pytaniem widnieje wskazówka **„Wybierz sytuację, żeby zobaczyć przykładowy plan.”**
+Po przewinięciu strony rodzic trafia na publiczną sekcję **„Która sytuacja najlepiej Cię opisuje?”** ze wskazówką **„Wybierz sytuację, żeby zobaczyć przykładowy plan.”** Wszystkie przykłady można przeglądać przed logowaniem.
 
 Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Kliknięcie rozwija przy wybranej opcji jeden krótki przykład. Pozostałe opcje są wciąż dostępne. Po zmianie wyboru poprzedni przykład się zwija. Przyciski komunikują stan rozwinięcia również czytnikowi ekranu.
 
@@ -52,7 +52,7 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 | Rodzina zastępcza | „Przyjmujemy dziecko do niezawodowej rodziny zastępczej.” Przykładowy plan zaczyna się od dokumentu potwierdzającego przyjęcie dziecka na wychowanie, a dalej pokazuje, jakie sprawy związane z opieką warto sprawdzić. |
 | Potrzebuję wsparcia w trudnej sytuacji | Link rozwija spokojny panel „Informacje i wsparcie” z przykładowymi tematami: pobyt dziecka w szpitalu, strata dziecka, pomoc dla rodziny. Można go przeczytać bez opisywania swojej historii. |
 
-## Pod wyborem sytuacji — pytania rodziców
+## Pod przykładami — pytania rodziców
 
 **Propozycja do omówienia.** Nagłówek **„Co najtrudniej ustalić samodzielnie?”**. Trzy krótkie pary pokazują problem słowami rodzica i konkretną pomoc przewodnika.
 
@@ -64,4 +64,4 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 
 **Uzgodnione.** Maskotka przewodnika nosi imię **Zusik** i będzie widoczna na stronie. Proponowane miejsce pierwszej ilustracji to nagłówek tej sekcji. Obok Zusika pojawia się pierwsze pytanie rodzica, a pod nim odpowiedź. Sprawy związane ze stratą przedstawiamy spokojnym, rzeczowym językiem.
 
-Po sekcji z pytaniami proponujemy osobne przejście **„Wypróbuj logowanie przez mObywatel”** z informacją „Wersja demonstracyjna. Po zalogowaniu zobaczysz plan oparty na przykładowych danych z ZUS.” To pierwszy moment przejścia z publicznego podglądu do symulacji.
+Po sekcji z pytaniami proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do tego samego ekranu logowania. Rodzic może rozpocząć demonstrację także po przeczytaniu przykładów.
