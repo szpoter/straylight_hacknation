@@ -177,7 +177,9 @@ export function composeReply(before: KamilView, after: KamilCase, view: KamilVie
   const periodChanged =
     !!r.period && (before.result.period?.start !== r.period.start || before.result.period?.end !== r.period.end);
   if (i.asksEligibility && !r.period) {
-    if (r.missing.includes("insurance_confirmed")) parts.push("Sprawdzę to. Najpierw jedno pytanie o ubezpieczenie.");
+    if (r.missing[0] === "insurance_confirmed") parts.push("Sprawdzę to. Najpierw jedno pytanie o ubezpieczenie.");
+    else if (r.missing.some((k) => k !== "request_start" && k !== "request_days"))
+      parts.push("Sprawdzę to. Potrzebuję jeszcze kilku danych.");
     else
       parts.push(
         "Tak. Przy potwierdzonych danych możesz otrzymać zasiłek za okres ojcowski: 2 tygodnie, do ukończenia przez syna 12 miesięcy. Wniosek złożysz w ZUS.",
