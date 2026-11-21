@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Babelek } from "@/components/mascot/Babelek";
+import { useRef, useState } from "react";
+import { CaseChatWindow } from "../chat/case-chat-window";
+import { coverageAnswers as answers, sicknessInput } from "./chat-input";
 import type { SicknessView } from "@/lib/sickness/types";
 import { useCaseResource } from "@/features/chat/use-case-resource";
 import { SicknessImport } from "./sickness-import";
@@ -11,12 +12,6 @@ function formatDate(iso: string | null) {
   return iso ? iso.split("-").reverse().join(".") : "data do ustalenia";
 }
 
-const answers = [
-  { value: "no", text: "Nie, nie miałam żadnego innego ubezpieczenia chorobowego" },
-  { value: "yes", text: "Tak, miałam też inny tytuł" },
-  { value: "unknown", text: "Nie wiem" },
-] as const;
-
 export function SicknessWorkspace() {
   const { view, setView, busy, loaded, error, reload, send } = useCaseResource<SicknessView>(
     "/api/zusik/sickness",
@@ -25,20 +20,33 @@ export function SicknessWorkspace() {
   );
   const [editing, setEditing] = useState(false);
   const assessment = view?.assessment;
+  const [notice, setNotice] = useState<string | null>(null);
+  const documents = useRef<HTMLDetailsElement>(null);
+  async function onMessage(text: string) {
+    setNotice(null);
+    const action = sicknessInput(text, view, editing);
+    if (action.type === "help") {
+      setNotice(!view ? "Napisz, że chcesz sprawdzić zasiłek chorobowy." :
+        assessment?.asksOtherCoverage || editing ? "Czy był inny tytuł ubezpieczenia? Napisz „Tak”, „Nie” albo „Nie wiem”." :
+        "Możesz otworzyć dokumenty, poprawić odpowiedź o ubezpieczeniu lub skorzystać z proponowanego kroku.");
+      return false;
+    }
+    if (action.type === "sources") {
+      if (documents.current) {
+        documents.current.open = true;
+        documents.current.querySelector("summary")?.focus();
+      }
+      return true;
+    }
+    const saved = await send(action);
+    if (saved) setEditing(false);
+    return saved;
+  }
   return (
-    <main className={s.page}>
-      <header className={s.heading}>
-        <p>Sprawa demonstracyjna</p>
-        <h1>Chorobowe w ciąży</h1>
-      </header>
-      <div className={s.grid}>
+    <CaseChatWindow scenario="chorobowe" label="Chorobowe w ciąży · Ocena prawa do zasiłku"
+      busy={busy || !loaded} notice={notice} onMessage={onMessage}>
         <section className={s.card} aria-labelledby="sick-chat">
-          <div className={s.identity}>
-            <div aria-hidden="true">
-              <Babelek state={busy ? "searching" : "available"} />
-            </div>
-            <h2 id="sick-chat">Rozmowa z Zusikiem</h2>
-          </div>
+          <h1 id="sick-chat">Chorobowe w ciąży</h1>
           {!view ? (
             <>
               <p>Przejrzymy zwolnienie i ustalenia o ubezpieczeniu za te same dni.</p>
@@ -54,7 +62,7 @@ export function SicknessWorkspace() {
                   <p className={s.period}>
                     Badany okres · {formatDate(assessment.period?.from)} – {formatDate(assessment.period?.to)}
                   </p>
-                  <p className={s.result} aria-live="polite">
+                  <p className={s.result} aria-live="polite" data-chat-reply>
                     {assessment.summary}
                   </p>
                   {assessment.reasons.length > 0 && (
@@ -83,7 +91,7 @@ export function SicknessWorkspace() {
                     <>
                       {assessment.question && (
                         <p>
-                          <strong>{assessment.question}</strong>
+                          <strong data-chat-reply>{assessment.question}</strong>
                         </p>
                       )}
                       {(editing || assessment.asksOtherCoverage) && (
@@ -114,7 +122,7 @@ export function SicknessWorkspace() {
                       )}
                     </>
                   }
-                  {view.closed && <p role="status">Ocena zakończona.</p>}
+                  {view.closed && <p role="status" data-chat-reply>Ocena zakończona.</p>}
                 </>
               )}
             </>
@@ -130,8 +138,8 @@ export function SicknessWorkspace() {
           )}
         </section>
         {view && (
-          <aside className={s.card} aria-labelledby="evidence-title">
-            <h2 id="evidence-title">Dokumenty sprawy</h2>
+          <details className={s.card} ref={documents} open>
+            <summary>Dokumenty sprawy</summary>
             <ul>
               {view.evidence.map((e) => (
                 <li key={e.id}>
@@ -153,9 +161,8 @@ export function SicknessWorkspace() {
               </button>
             )}
             <SicknessImport version={view.version} onSaved={setView} />
-          </aside>
+          </details>
         )}
-      </div>
-    </main>
+    </CaseChatWindow>
   );
 }

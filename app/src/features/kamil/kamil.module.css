@@ -264,8 +264,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 460px;
-  overflow-y: auto;
   padding-right: 4px;
 }
 .bubbleKamil {
@@ -394,3 +392,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.caseTools { display: grid; gap: 12px; --answer-ink: #21342d; }
+.caseTools > details > summary { padding: 10px 0; font-weight: 600; }
+.caseTools > button { justify-self: start; }

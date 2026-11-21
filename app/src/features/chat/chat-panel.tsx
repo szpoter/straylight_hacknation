@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { ScenarioMenu, type Scenario } from "./scenario-nav";
 import { CASE_LABEL } from "./case-data";
 import { CaseSteps, type CaseStepsProps } from "./case-steps";
 import { TurnView } from "./turn-view";
@@ -31,25 +32,32 @@ type Props = {
 export function ChatPanel(props: Props) {
   return (
     <section className={s.chat} aria-label="Czat z Zusikiem">
-      <ChatHeader {...props} />
+      <ChatHeader label={CASE_LABEL} scenario="marta" fullscreen={props.fullscreen} onFullscreen={props.onFullscreen} onCollapse={props.onCollapse} />
       <Thread {...props} />
     </section>
   );
 }
 
-function ChatHeader({ fullscreen, onFullscreen, onCollapse }: Props) {
+export function ChatHeader({ label, scenario, fullscreen, onFullscreen, onCollapse }: {
+  label: string;
+  scenario: Scenario;
+  fullscreen?: boolean;
+  onFullscreen?: () => void;
+  onCollapse?: () => void;
+}) {
   return (
     <header className={s.chatHead}>
       <div className={s.chatHeadTitle}>
         <p className={s.chatName}>Zusik · asystent AI</p>
-        <p className={s.chatCase}>{CASE_LABEL}</p>
+        <p className={s.chatCase}>{label}</p>
       </div>
-      <button type="button" className={s.iconButton} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
+      <ScenarioMenu current={scenario} label="Zmień sprawę" />
+      {onFullscreen && <button type="button" className={s.iconButton} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
         {fullscreen ? <SplitIcon /> : <ExpandIcon />}
-      </button>
-      <button type="button" className={s.iconButton} aria-label="Zwiń czat" onClick={onCollapse}>
+      </button>}
+      {onCollapse && <button type="button" className={s.iconButton} aria-label="Zwiń czat" onClick={onCollapse}>
         <MinusIcon />
-      </button>
+      </button>}
     </header>
   );
 }

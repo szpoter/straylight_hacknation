@@ -993,3 +993,12 @@
     animation: none;
   }
 }
+
+.caseWindow {
+  width: min(100%, 900px);
+  min-height: 0;
+  align-self: center;
+  border-inline: 1px solid var(--outline);
+}
+.caseWindow summary { cursor: pointer; }
+.caseWindow .chatHead { position: relative; z-index: 2; }

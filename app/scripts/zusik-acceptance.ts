@@ -96,6 +96,16 @@ async function testMarta(page: Page, missingRate: boolean) {
   const other=await page.context().browser()!.newContext();
   try {assert.equal((await other.request.get(origin+martaPath+"/pdf")).status(),404);} finally {await other.close();}
 }
+async function sendCaseMessage<T>(page: Page, path: string, text: string): Promise<T> {
+  const chat = page.getByRole("region", { name: "Czat z Zusikiem" });
+  await chat.getByRole("textbox", { name: "Wiadomość do Zusika" }).fill(text);
+  const [response] = await Promise.all([
+    page.waitForResponse(r => r.url().endsWith(path) && r.request().method() === "POST"),
+    chat.getByRole("button", { name: "Wyślij", exact: true }).click(),
+  ]);
+  assert.equal(response.status(), 200, path);
+  return (await response.json()).view;
+}
 async function testKamil(page: Page, correction: boolean) {
   await page.goto(origin+"/app/kamil");
   const data = {...kamilCertificate("2026-05-23"), childFirstName:correction ? "JAN" : "ADAM",childLastName:"ŻUREK"};
@@ -114,8 +124,10 @@ async function testKamil(page: Page, correction: boolean) {
   assert.equal(surname.value,"ŻUREK");
   async function command(c:Record<string,unknown>){v=await update(page,kamilPath,{expectedVersion:v.version,command:{...c,opKey:randomUUID()}});}
   for (const c of v.candidates) await command({type:"confirm",key:c.key,value:c.value,origin:c.origin});
-  await command({type:"chat",text:"Od 15 grudnia 2026. Jeden tydzień, drugi zostawię na później"});
-  await command({type:"chat",text:"Nie"});
+  // Restore the version just confirmed by the OCR fixture before using the chat.
+  await page.reload();
+  await sendCaseMessage<KamilView>(page, kamilPath, "Od 15 grudnia 2026. Jeden tydzień, drugi zostawię na później");
+  v = await sendCaseMessage<KamilView>(page, kamilPath, "Nie");
   await command({type:"create_draft"});
   if(correction) {
     await command({type:"chat",text:"Jednak od 16 grudnia 2026, jeden tydzień"});
@@ -160,8 +172,14 @@ async function evidencePdf(partial:boolean) {
   return Buffer.from(await pdf.save());
 }
 async function testSickness(page:Page,partial:boolean) {
-  await page.goto(origin+"/app/chorobowe");
-  await page.getByRole("button",{name:/Czy za dni zwolnienia/}).click();
+  await page.goto(origin + "/app");
+  const chat = page.getByRole("region", { name: "Czat z Zusikiem" });
+  await chat.getByText("Zmień sprawę", { exact: true }).click();
+  await chat.getByRole("link", { name: /Chorobowe w ciąży/ }).click();
+  await page.waitForURL("**/app/chorobowe");
+  await chat.getByRole("heading", { name: "Chorobowe w ciąży" }).waitFor();
+  await sendCaseMessage<SicknessView>(page, sickPath, "Czy za dni zwolnienia dostanę zasiłek?");
+
   const file=page.locator('input[type=file]');
   await file.setInputFiles({name:"strony.pdf",mimeType:"application/pdf",buffer:await evidencePdf(partial)});
   const confirm=page.getByRole("button",{name:/Potwierdzam odczyt/});
@@ -170,9 +188,11 @@ async function testSickness(page:Page,partial:boolean) {
   let v=await read<SicknessView>(page,sickPath);
   assert.equal(v.assessment.period.from,"2026-11-03");
   if(!partial) {
-    v=await update(page,sickPath,{type:"confirm",version:v.version,answer:"no"});
+    v = await sendCaseMessage<SicknessView>(page, sickPath, "Nie");
     assert.equal(v.assessment.status,"not_entitled_for_period");
     assert.ok(v.assessment.law.length>=2);
+    v = await sendCaseMessage<SicknessView>(page, sickPath, "Zakończ ocenę");
+    assert.equal(v.closed, true);
     assert.equal(v.evidence.find(e=>e.title.includes("e-ZLA"))?.page,2);
     const receipt=await page.request.get(origin+v.evidence[0].url,{headers:await browserHeaders(page)});
     assert.equal(receipt.status(),200);
