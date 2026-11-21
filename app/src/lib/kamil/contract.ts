@@ -95,7 +95,13 @@ export const origin = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("chat"), quote: z.string().max(600) }),
   z.object({ kind: z.literal("profile"), source: z.string().max(120) }),
-  z.object({ kind: z.literal("user_edit"), previous: z.string().max(200).nullable() }),
+  z.object({
+    kind: z.literal("user_edit"),
+    previous: z.string().max(200).nullable(),
+    /** Page and place of the corrected document value, so the crop stays next to the correction. */
+    page: z.number().int().min(1).optional(),
+    box: box.optional(),
+  }),
 ]);
 export type Origin = z.infer<typeof origin>;
 

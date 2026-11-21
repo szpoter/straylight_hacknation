@@ -77,7 +77,9 @@ function FieldRow({ fieldKey, value, origin, confirmed, needsReview, reason, pag
   const [editing, setEditing] = useState(needsReview && !confirmed);
   const [draft, setDraft] = useState(value);
   const label = FIELD_LABELS[fieldKey];
-  const page = origin.kind === "document" ? pages?.find((p) => p.page === origin.page) : undefined;
+  const place =
+    origin.kind === "document" ? { page: origin.page, box: origin.box } : origin.kind === "user_edit" && origin.box ? { page: origin.page ?? 1, box: origin.box } : null;
+  const page = place ? pages?.find((p) => p.page === place.page) : undefined;
   const inputId = `field-${fieldKey}`;
 
   const save = async (next: string) => {
@@ -93,8 +95,8 @@ function FieldRow({ fieldKey, value, origin, confirmed, needsReview, reason, pag
 
   return (
     <li className={`${s.field} ${needsReview && !confirmed ? s.fieldReview : ""} ${confirmed ? s.fieldDone : ""}`}>
-      {origin.kind === "document" ? (
-        <Crop page={page} box={origin.box} label={label} />
+      {place ? (
+        <Crop page={page} box={place.box} label={label} />
       ) : (
         <div className={`${s.crop} ${s.cropMissing}`}>Brak wycinka: wartość nie pochodzi z dokumentu</div>
       )}

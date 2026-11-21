@@ -246,8 +246,14 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
         // Kamil corrected the value read from the document.
         origin = { kind: "user_edit", previous: candidate.value };
       }
-      if (origin.kind === "user_edit" && !origin.previous) {
-        origin = { kind: "user_edit", previous: kase.facts[command.key]?.value ?? candidate?.value ?? null };
+      if (origin.kind === "user_edit") {
+        const known = kase.facts[command.key];
+        const source = candidate?.origin ?? known?.origin;
+        const place =
+          source?.kind === "document" || (source?.kind === "user_edit" && source.box)
+            ? { page: source.page, box: source.box }
+            : {};
+        origin = { ...origin, previous: origin.previous ?? known?.value ?? candidate?.value ?? null, ...place };
       }
       kase = setFact(kase, command.key, command.value, origin, clock);
       break;

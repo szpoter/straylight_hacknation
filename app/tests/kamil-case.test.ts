@@ -135,7 +135,7 @@ describe("step 2–4 · Kamil's case on the session", () => {
     expect(r.status).toBe(200);
     const reloaded = await make().getView("s1");
     expect(reloaded.facts.child_birth_place?.value).toBe("KRAKÓW-PODGÓRZE");
-    expect(reloaded.facts.child_birth_place?.origin).toEqual({ kind: "user_edit", previous: "KRAKÓW" });
+    expect(reloaded.facts.child_birth_place?.origin).toMatchObject({ kind: "user_edit", previous: "KRAKÓW", page: 1 });
     const date = reloaded.candidates.find((c) => c.key === "child_birth_date");
     expect(date?.origin.kind === "document" && date.origin.page).toBe(1);
   });
