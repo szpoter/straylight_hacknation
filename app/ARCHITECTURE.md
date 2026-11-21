@@ -2,7 +2,7 @@
 
 **Stan z 21.11.2026.** `app/` jest docelowym miejscem aplikacji Zusika. Wchodzi tu tylko kod produkcyjny: przejrzany, z testami i bez eksperymentów. Prototypy powstają poza nią: maskotka w `maskotka_kod/`, makiety w `Przewodnik-Rodzica.html` i `ui/`. Kod przenosimy do `app/` dopiero po akceptacji.
 
-**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [DESIGN.md](../DESIGN.md). Tokeny z DESIGN.md są w `src/app/globals.css` jako `@theme` Tailwinda v4; domyślna paleta Tailwinda jest wyłączona, więc w klasach działają tylko kolory z tokenów.
+**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [DESIGN.md](../DESIGN.md). Tokeny z DESIGN.md są w `src/app/globals.css` jako `@theme` Tailwinda v4; domyślna paleta Tailwinda jest wyłączona, więc w klasach działają tylko kolory z tokenów. Wyjątek: panel administracyjny ma własne style (CSS Modules w `features/admin/admin.module.css`) i przykładowe dane (`features/admin/mock-data.ts`).
 
 ## Stos
 

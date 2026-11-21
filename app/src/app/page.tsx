@@ -9,6 +9,7 @@ export default function Home() {
       <ul className="mt-8 flex flex-col gap-2 underline underline-offset-4">
         <li><Link href="/start">Onboarding po zalogowaniu</Link></li>
         <li><Link href="/plan">Mój plan</Link></li>
+        <li><Link href="/zusik">Zusik (czat)</Link></li>
         <li><Link href="/demo/polaczenia">Próba połączeń (etap 1, krok 1)</Link></li>
       </ul>
     </main>

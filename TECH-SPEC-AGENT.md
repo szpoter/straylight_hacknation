@@ -20,6 +20,8 @@
 
 [Plan wdrożenia dla Opusa — krok 1, konta, Vercel Preview i test wznowienia sprawy](PLAN-ETAP-1-KROK-1.md)
 
+[Plan dla Opusa — krok 2, korpus Marty, import i odbiór odpowiedzi z przypisami](PLAN-ETAP-1-KROK-2.md) · [Zadanie dla Claude Code — pełny widok agenta i integracja API](ui/PROMPT-AGENT-PRODUKCYJNY.md)
+
 **Efekt na Vercel Preview.** Na fikcyjnym profilu Marty rodzic pyta o urlop razem lub kolejno, widzi obie osie, kwoty i podstawę ze źródła. Wybiera wariant, odświeża stronę, potwierdza oświadczenie i dostaje ten sam szkic z właściwym terminem. To pierwszy przebieg od rozmowy do dokumentu. Sceny Kamila i chorobowego oraz import skanów mają własne, późniejsze etapy.
 
 **Po co LangGraph.js?** W tym przebiegu agent dwukrotnie oddaje kontrolę rodzicowi: przy wyborze wariantu i przy potwierdzeniu oświadczenia. Graf zapisuje etap i dane w Neon przed zakończeniem żądania. Kliknięcie lub kolejna wiadomość wznawia ten sam wątek osobnym żądaniem HTTP. LangGraph steruje krokami, model interpretuje tekst, a funkcja TypeScript odpowiada za obliczenia. [Interrupt i resume](https://docs.langchain.com/oss/javascript/langgraph/interrupts) · [Trwała pamięć](https://docs.langchain.com/oss/javascript/langgraph/add-memory)
