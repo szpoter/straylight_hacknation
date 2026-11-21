@@ -126,6 +126,9 @@ export function nextQuestion(kase: KamilCase, view: KamilView): { key: AskedKey;
   if (r.status === "needs_info" && r.question) {
     const key = r.missing[0] ?? "request_start";
     if (key === "child_birth_date") {
+      if (kase.candidates.some((c) => c.key === "child_birth_date")) {
+        return { key: "child_birth_date", text: "Sprawdź dane odczytane z odpisu i potwierdź je albo popraw. Wtedy policzę okres i termin." };
+      }
       return { key: "child_birth_date", text: "Dodaj odpis aktu urodzenia syna albo napisz, kiedy się urodził. Odczytam datę i dane." };
     }
     return { key, text: r.question };
