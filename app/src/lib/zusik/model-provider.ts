@@ -12,3 +12,11 @@ export function chatModel(baseURL: string, apiKey: string, id: string) {
   return createOpenAICompatible({ name: "sherlock", baseURL, apiKey, headers: modelHeaders(baseURL),
     fetch: (input, init) => fetch(input, { ...init, redirect: "error" }) })(id);
 }
+
+/** Only the public RAG caller supplies the queue. Other model calls keep their provider. */
+export function localRagModel(value = process.env.ZUSIK_RAG_MODEL) {
+  if (!value || value === "bielik") return "bielik";
+  if (value === "pllum") return "pllum";
+  if (value === "hosted") return null;
+  throw new Error("Unknown ZUSIK_RAG_MODEL");
+}

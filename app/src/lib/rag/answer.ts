@@ -1,4 +1,6 @@
-import { chatModel } from "../zusik/model-provider";
+import type { Pool } from "pg";
+import { localCompletion, publicQueueEvidence } from "./local-queue";
+import { chatModel, localRagModel } from "../zusik/model-provider";
 import { generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { classifySherlockError } from "../zusik/sherlock";
@@ -273,6 +275,8 @@ export interface GenerationResult {
   ms: number;
   /** Diagnostics only (e.g. "stop", "length"); never the model text. */
   finishReason?: string;
+  backend?: string;
+  attemptId?: string;
 }
 
 export interface AnswerModelSettings {
@@ -280,6 +284,7 @@ export interface AnswerModelSettings {
   apiKey: string;
   model: string;
   languageModel?: LanguageModel;
+  queue?: Pool;
 }
 
 /** Total model budget per question; leaves room for Qdrant and Neon inside maxDuration 60 s. */
@@ -298,11 +303,26 @@ export async function generateAnswer(
   evidence: Fragment[],
 ): Promise<GenerationResult> {
   const started = Date.now();
-  const model =
-    settings.languageModel ??
-    chatModel(settings.baseURL, settings.apiKey, settings.model);
+  const local = settings.queue && localRagModel();
   const prompt = buildPrompt(corpus, question, evidence);
-  let last: GenerationResult = { status: "error", output: null, model: settings.model, ms: 0 };
+  let attemptId: string | undefined;
+  if (local && settings.queue && publicQueueEvidence(corpus, question, evidence)) {
+    const result = await localCompletion(settings.queue, local, prompt);
+    attemptId = result.id;
+    const output = result.text ? parseModelAnswer(result.text) : null;
+    const status = result.status === "ok" && !output ? "invalid_json" : result.status;
+    const backend = "local-" + local;
+    const ms = Date.now() - started;
+    const fallback = output ? undefined : ms + MIN_RETRY_WINDOW_MS < ASK_MODEL_BUDGET_MS ? "hosted" : "source_only";
+    console.info(JSON.stringify({ event: "rag_model_attempt", attemptId, backend, status, fallback, ms }));
+    if (output) return { status: "ok", output, model: local, backend, attemptId, ms };
+    if (fallback === "source_only") return { status: "error", output: null, model: local, backend, attemptId, ms };
+  } else if (local) {
+    console.info(JSON.stringify({ event: "rag_model_attempt", status: "outside_queue_allowlist", fallback: "hosted" }));
+  }
+  const backend = "hosted";
+  const model = settings.languageModel ?? chatModel(settings.baseURL, settings.apiKey, settings.model);
+  let last: GenerationResult = { status: "error", output: null, model: settings.model, backend, attemptId, ms: 0 };
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     const remaining = ASK_MODEL_BUDGET_MS - (Date.now() - started);
     if (attempt > 1 && remaining < MIN_RETRY_WINDOW_MS) break;
@@ -317,14 +337,17 @@ export async function generateAnswer(
         abortSignal: AbortSignal.timeout(Math.min(ASK_TIMEOUT_MS, remaining)),
       });
       const output = parseModelAnswer(text);
-      last = { status: output ? "ok" : "invalid_json", output, model: settings.model, ms: Date.now() - started, finishReason };
-      if (output) return last;
+      last = { status: output ? "ok" : "invalid_json", output, model: settings.model, backend, attemptId, ms: Date.now() - started, finishReason };
+      if (output) {
+        if (settings.queue) console.info(JSON.stringify({ event: "rag_model_attempt", attemptId, backend, status: "ok", ms: last.ms }));
+        return last;
+      }
       console.error(JSON.stringify({ event: "ask_model_invalid_json", attempt, finishReason, chars: text.length }));
     } catch (error) {
       const status = classifySherlockError(error);
       console.error(JSON.stringify({ event: "ask_model_error", attempt, status, ms: Date.now() - started, error: (error as Error)?.name }));
       const mapped = status === "rate_limited" || status === "timeout" ? status : "error";
-      last = { status: mapped, output: null, model: settings.model, ms: Date.now() - started };
+      last = { status: mapped, output: null, model: settings.model, backend, attemptId, ms: Date.now() - started };
       // A timeout used the budget; a 429 will not clear within this request.
       if (mapped === "timeout" || mapped === "rate_limited") return last;
     }

@@ -85,7 +85,7 @@ export function askService(): AskService {
     corpus,
     selectCorpus: (name) => loadCorpus(name),
     search: qdrantKnowledgeSearch(knowledgeSettings()),
-    generate: (question, evidence, activeCorpus) => generateAnswer(sherlockSettings(), activeCorpus, question, evidence),
+    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db }, activeCorpus, question, evidence),
   });
 }
 

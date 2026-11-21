@@ -1,4 +1,42 @@
-# Bielik lub PLLuM z własnego komputera
+# Lokalny Bielik i PLLuM dla Vercela
+
+## Działająca konfiguracja z Neonem
+
+Vercel wysyła publiczne zadanie RAG do prywatnego schematu `zusik_model`. LaunchAgent użytkownika na Macu utrzymuje wychodzące połączenie TLS z Neonem i przekazuje zadanie do Ollamy na `127.0.0.1:11434`. Komputer musi być aktywny, użytkownik zalogowany, a Ollama uruchomiona. Stałe połączenie i odczyty mogą utrzymywać aktywny compute Neon.
+
+Domyślny model to lokalny Bielik. Serwerowa zmienna `ZUSIK_RAG_MODEL=pllum` wybiera PLLuM dla całego wdrożenia, a `hosted` wybiera skonfigurowany model Sherlock. Po zmianie zmiennej w Vercelu wykonaj ponowny deploy. Aktualne poświadczenia Sherlock i rola `zusik_runtime` nadal obsługują aplikację.
+
+Kolejka przyjmuje pytanie, które dokładnie odpowiada wynikowi ponownej projekcji na publiczny wzorzec, oraz fragmenty wczytane z tego samego zatwierdzonego korpusu. Projekcje, które przy drugim przebiegu zmieniają treść, obsługuje dotychczasowa ścieżka hostowana z pierwszą publiczną projekcją. Do tabeli trafiają tylko losowy UUID, wybrany model, publiczny prompt oraz tymczasowe pola wyniku i dzierżawy. Akta, oryginalne pytanie, identyfikatory sesji i rozmowy pozostają poza kolejką.
+
+Worker pobiera zadanie atomowo, odnawia 9-sekundową dzierżawę i może ponowić pracę najwyżej raz. Po 42 sekundach wynik wygasa. Odczytany wynik aplikacja usuwa od razu. Osierocone wpisy usuwa kolejny odbiór lub zapis. Oczekiwanie na wolnego workera trwa około 3,5 sekundy, a cała próba lokalna ma limit 38 sekund. Wczesna awaria pozostawia czas na hostowanego Bielika. Po późnej awarii aplikacja używa dotychczasowej ścieżki cytatu źródłowego lub informuje o niedostępności. Model lokalny i hostowany dzielą budżet 45 sekund i przechodzą ten sam walidator cytatów.
+
+### Instalacja i odbiór
+
+Z katalogu `app` z zależnościami z lockfile i Node 24 wykonaj kolejno:
+
+```sh
+node --env-file=.env.local --import tsx workers/install-queue.mts
+python3 workers/install-launch-agent.py
+node --env-file=.env.local --import tsx scripts/zusik-smoke-queue.mts
+node --env-file=.env.local --import tsx scripts/zusik-smoke-queue.mts --outage
+```
+
+Instalator używa `MIGRATION_DATABASE_URL`, zachowuje istniejące hasła i sprawdza uprawnienia ról. Konto aplikacji może zlecać, odczytywać i usuwać zadanie według losowego UUID. Osobna rola workera może wyłącznie pobierać, odnawiać i kończyć zadania w kolejce. Konfiguracja workera jest w pliku `~/Library/Application Support/ZusikModel/worker.json` z prawami 0600. Ponów instalację po zmianach workera, promptu systemowego lub ścieżki Node. Instalacja LaunchAgenta obejmuje bieżącego użytkownika macOS.
+
+W teście awarii jedno zadanie pozostaje w otwartej transakcji, niewidoczne dla workera. Próba przechodzi przez rzeczywisty fallback przy zachowaniu dostępności pozostałych zadań. Oba testy używają wyłącznie stałego publicznego pytania.
+
+### Potwierdzenie próby produkcyjnej
+
+Zadaj świeże pytanie „Kiedy złożyć wniosek o urlop rodzicielski?” i otwórz logi funkcji dla tego wywołania. Wpis `rag_model_attempt` podaje `attemptId`, `backend`, `status` i czas. Na Macu sprawdź ten sam UUID w `~/Library/Application Support/ZusikModel/attempts.log`. Para `backend=local-bielik` lub `local-pllum`, `status=ok` po stronie Vercela i `state=generated` po stronie Maca potwierdza inferencję. `fallback=hosted` lub `source_only` wyjaśnia obsługę awarii. O publikacji odpowiedzi po walidacji informują pola `citations` i `quoteReason` w zdarzeniu `zusik_ask`. Powtórzenie tego samego requestId może odtworzyć zapisaną odpowiedź.
+
+```sh
+launchctl print "gui/$(id -u)/pl.zusik.model-worker"
+tail -n 10 "$HOME/Library/Application Support/ZusikModel/attempts.log"
+```
+
+## Alternatywna konfiguracja z własną domeną
+
+Dla poniższego wariantu ustaw `ZUSIK_RAG_MODEL=hosted`, aby aplikacja użyła wskazanego endpointu zgodnego z OpenAI.
 
 Aplikacja na Vercelu wywołuje jeden wybrany model czatu zgodny z OpenAI Chat Completions. Wektory dla Qdrant nadal liczy ten sam model embeddingowy co przy imporcie. Działający adres hostowanego Bielika można zachować do czasu odbioru laptopa na Preview.
 
