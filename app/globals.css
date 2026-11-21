@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  /* Bąbelek mascot: values measured from design/mascot/base.jpg */
+  --color-babelek-fill: #A3DAB3;
+  --color-babelek-rim: #338C5C;      /* rim and arms */
+  --color-babelek-ink: #1E3D5C;      /* pupils, mouth */
+  --color-babelek-shine: #FFFFFF;    /* highlights, eye whites, catchlights */
+  --color-babelek-shadow: #D1D1D1;   /* ground shadow */
+
+  /* Optional idle float: the bubble bobs up a little and its shadow shrinks in sync. */
+  --animate-babelek-float: babelek-float 3.2s ease-in-out infinite;
+  --animate-babelek-float-shadow: babelek-float-shadow 3.2s ease-in-out infinite;
+
+  @keyframes babelek-float {
+    50% {
+      transform: translateY(-24px); /* in viewBox units: ≈ 2 % of the body height */
+    }
+  }
+
+  @keyframes babelek-float-shadow {
+    50% {
+      transform: scale(0.92);
+      opacity: 0.75;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
