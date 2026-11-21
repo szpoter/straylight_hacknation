@@ -1,5 +1,6 @@
 import type { LeaveRequest, MissingKey, PaternityResult, PriorPart, RuleReason } from "../kamil/contract";
 import { addDays, addMonths, daysBetween, formatLong, formatRange, isValidIso } from "./dates";
+import { valueOn, weeksLabel, type RuleSchedule } from "./parameters";
 
 /**
  * Maternity benefit for the paternity-leave period, insured person who is not an employee
@@ -23,6 +24,11 @@ export interface PaternityInput {
   priorParts: PriorPart[];
   request: LeaveRequest | null;
   today: string;
+  /**
+   * Values published in the admin panel. `paternity.totalDays` valid on the first day of the requested
+   * period replaces TOTAL_DAYS (today's date while no start is chosen). Omitted = built-in defaults.
+   */
+  schedule?: RuleSchedule;
 }
 
 export const QUESTIONS: Record<MissingKey, string> = {
@@ -46,7 +52,8 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
   const missing: MissingKey[] = [];
   const daysUsedBefore = input.priorParts.reduce((sum, part) => sum + partDays(part), 0);
   const partsUsed = input.priorParts.length;
-  const available = Math.max(0, TOTAL_DAYS - daysUsedBefore);
+  const totalDays = valueOn(input.schedule, "paternity.totalDays", input.request?.start ?? input.today, TOTAL_DAYS).value;
+  const available = Math.max(0, totalDays - daysUsedBefore);
 
   const finish = (
     status: PaternityResult["status"],
@@ -109,7 +116,7 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
     reasons.push({
       ruleId: "R4-czesci",
       ok: false,
-      text: `Wykorzystałeś już ${daysUsedBefore} dni w ${partsUsed} ${partsUsed === 1 ? "części" : "częściach"}. Okres ojcowski to 2 tygodnie w najwyżej 2 częściach.`,
+      text: `Wykorzystałeś już ${daysUsedBefore} dni w ${partsUsed} ${partsUsed === 1 ? "części" : "częściach"}. Okres ojcowski to ${weeksLabel(totalDays)} w najwyżej ${MAX_PARTS} częściach.`,
       citationId: "zus-ojcowski-niepracownik",
     });
     return finish("not_eligible", null, { daysLeftAfter: 0 });
@@ -154,7 +161,7 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
     reasons.push({
       ruleId: "R4-czesci",
       ok: false,
-      text: `Zostało Ci ${available} dni okresu ojcowskiego, więc ta część może trwać najwyżej tydzień.`,
+      text: `Zostało Ci ${available} dni okresu ojcowskiego, więc ta część może trwać najwyżej ${weeksLabel(available)}.`,
       citationId: "zus-ojcowski-niepracownik",
     });
     return finish("needs_info", `Zostało Ci ${available} dni. Wpisać tydzień od ${formatLong(start)}?`, {

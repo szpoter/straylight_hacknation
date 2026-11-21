@@ -1,6 +1,7 @@
 import { buildZamValues } from "../forms/zam-map";
 import { formatLong, formatRange, weekday } from "../rules/dates";
 import { evaluatePaternity } from "../rules/paternity";
+import type { RuleSchedule } from "../rules/parameters";
 import type { AskedKey, ChatTurn, Command, Fact, FieldKey, KamilCase, KamilView, Origin, PaternityResult } from "./contract";
 import { FIELD_LABELS } from "./contract";
 import { EMPTY, type Interpretation } from "./interpret";
@@ -16,6 +17,8 @@ export interface Clock {
   now: string;
   today: string;
   newId: () => string;
+  /** Rule values published in the admin panel for this demo session. */
+  schedule?: RuleSchedule;
 }
 
 /** A chat command after interpretation (done outside, so the reducer stays pure). */
@@ -54,7 +57,7 @@ const DOCUMENT_KEYS: FieldKey[] = [
   "mother_last_name",
 ];
 
-export function evaluate(kase: KamilCase, today: string): PaternityResult {
+export function evaluate(kase: KamilCase, today: string, schedule?: RuleSchedule): PaternityResult {
   const fact = (key: FieldKey) => kase.facts[key]?.value ?? null;
   const bool = (key: FieldKey) => (fact(key) === "tak" ? true : fact(key) === "nie" ? false : null);
   return evaluatePaternity({
@@ -64,11 +67,12 @@ export function evaluate(kase: KamilCase, today: string): PaternityResult {
     priorParts: kase.priorParts,
     request: kase.request,
     today,
+    schedule,
   });
 }
 
-export function toView(kase: KamilCase, today: string): KamilView {
-  const result = evaluate(kase, today);
+export function toView(kase: KamilCase, today: string, schedule?: RuleSchedule): KamilView {
+  const result = evaluate(kase, today, schedule);
   const zam = buildZamValues({ facts: kase.facts, result }, today);
   const citationIds = new Set(result.citationIds);
   for (const turn of kase.chat) for (const id of turn.citationIds ?? []) citationIds.add(id);
@@ -249,7 +253,7 @@ export interface ApplyOutcome {
 
 export function applyCommand(input: KamilCase, command: Prepared, clock: Clock): ApplyOutcome {
   if (input.ops.includes(command.opKey)) return { kase: input };
-  const before = toView(input, clock.today);
+  const before = toView(input, clock.today, clock.schedule);
   let kase: KamilCase = input;
   let rejected: ApplyOutcome["rejected"];
 
@@ -272,7 +276,7 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
         const fact = kase.facts[c.key];
         if (fact?.origin.kind === "chat" && fact.value !== c.value && !c.needsReview) {
           kase = { ...kase, conflict: { key: c.key, documentValue: c.value, chatValue: fact.value, chatQuote: fact.origin.quote } };
-          kase = say(kase, composeReply(before, kase, toView(kase, clock.today), EMPTY, []).text, clock);
+          kase = say(kase, composeReply(before, kase, toView(kase, clock.today, clock.schedule), EMPTY, []).text, clock);
         }
       }
       break;
@@ -311,7 +315,7 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
           : setFact(kase, conflict.key, conflict.chatValue, { kind: "chat", quote: conflict.chatQuote }, clock);
       kase = { ...kase, conflict: null };
       const chosen = command.pick === "document" ? (doc?.value ?? conflict.documentValue) : conflict.chatValue;
-      const reply = composeReply(before, kase, toView(kase, clock.today), EMPTY, [
+      const reply = composeReply(before, kase, toView(kase, clock.today, clock.schedule), EMPTY, [
         `Zapisuję ${formatLong(chosen)} (${command.pick === "document" ? "z dokumentu" : "z rozmowy"}).`,
       ]);
       kase = say({ ...kase, asked: reply.asked }, reply.text, clock, { citationIds: reply.citationIds });
@@ -360,7 +364,7 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
           );
         }
       }
-      let view = toView(kase, clock.today);
+      let view = toView(kase, clock.today, clock.schedule);
       if (i.reminderDate) {
         const deadline = view.result.deadline;
         if (!deadline) extra.push("Przypomnienie ustawię, gdy będzie znany termin złożenia.");
@@ -380,14 +384,14 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
       if (i.wantsSend) {
         extra.push("Wysyłkę uruchamia przycisk „Wyślij w symulacji” pod podglądem. To tylko symulacja, nic nie trafia do ZUS.");
       }
-      view = toView(kase, clock.today);
+      view = toView(kase, clock.today, clock.schedule);
       const reply = composeReply(before, kase, view, i, extra);
       kase = say({ ...kase, asked: reply.asked }, reply.text, clock, { citationIds: reply.citationIds });
       break;
     }
 
     case "create_draft": {
-      if (!toView(kase, clock.today).readyForDraft) {
+      if (!toView(kase, clock.today, clock.schedule).readyForDraft) {
         rejected = "not_ready";
         break;
       }
@@ -396,7 +400,7 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
     }
 
     case "set_reminder": {
-      const deadline = toView(kase, clock.today).result.deadline;
+      const deadline = toView(kase, clock.today, clock.schedule).result.deadline;
       if (command.date === null) kase = { ...kase, reminder: null };
       else if (!deadline || command.date > deadline || command.date < clock.today) rejected = "reminder_out_of_range";
       else kase = { ...kase, reminder: { date: command.date, setAt: clock.now } };
@@ -404,7 +408,7 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
     }
 
     case "simulate_submit": {
-      const view = toView(kase, clock.today);
+      const view = toView(kase, clock.today, clock.schedule);
       if (!kase.draft || view.draft?.stale || view.result.status !== "eligible" || !view.result.deadline) {
         rejected = "draft_not_reviewed";
         break;

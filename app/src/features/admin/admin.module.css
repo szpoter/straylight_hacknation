@@ -865,6 +865,14 @@ button.tileActive:hover {
   margin: 0 0 4px;
 }
 
+.readonlyField {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--rounded-sm);
+  background: var(--color-background);
+  font-size: 15px;
+}
+
 /* ---------- Impact card ---------- */
 
 .impactHighlight {

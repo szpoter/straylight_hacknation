@@ -13,6 +13,7 @@ const STATE_CLASS: Record<RuleState, string> = {
   Zaplanowana: s.badgePlanned,
   Szkic: s.badgeDraft,
   Historyczna: s.badgeHistoric,
+  Wycofana: s.badgeHistoric,
 };
 
 export function StateBadge({ state }: { state: RuleState }) {

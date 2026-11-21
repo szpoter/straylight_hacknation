@@ -222,8 +222,8 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
 
 export const SPEC_PARAMETERS: Parameter[] = SPEC_VALUES.map((p) => ({ ...p, origin: "spec" }));
 
-/** Illustrative entries until rule versions are stored (SPEC §8). */
-export const HISTORY: HistoryEntry[] = [
+/** Illustrative entries shown after the publications of the session (SPEC §8). */
+const SAMPLE_HISTORY: HistoryEntry[] = [
   {
     id: "H-05",
     parameterId: "rate-parental",
@@ -305,6 +305,8 @@ export const HISTORY: HistoryEntry[] = [
     tests: "8 / 8 zgodnych",
   },
 ];
+
+export const HISTORY: HistoryEntry[] = SAMPLE_HISTORY.map((h) => ({ ...h, sample: true }));
 
 export function formatDate(iso: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

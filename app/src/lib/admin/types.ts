@@ -1,6 +1,6 @@
 // Shared shapes of the admin panel catalogue (SPEC-PANEL-ADMINISTRACYJNY.md §3, §5, §6, §8).
 
-export type RuleState = "Szkic" | "Zaplanowana" | "Obowiązuje" | "Historyczna";
+export type RuleState = "Szkic" | "Zaplanowana" | "Obowiązuje" | "Historyczna" | "Wycofana";
 
 export const PARAMETER_GROUPS = [
   "Stawki",
@@ -44,6 +44,10 @@ export interface Parameter {
   /** Defaults to all cases of the benefit when omitted. */
   scope?: string;
   planned?: { value: string; from: string };
+  /** Unpublished draft prepared in the panel. */
+  draft?: { value: string; from: string };
+  /** True when the panel can change the value for real (draft, check, publish from a date). */
+  editable?: boolean;
   history: ParameterVersion[];
   origin: ValueOrigin;
   /** For "app" values: the module and rule version they are read from. */
@@ -84,6 +88,10 @@ export interface HistoryEntry {
   reason: string;
   source: string;
   tests: string;
+  /** Illustrative entry, not a publication from this session. */
+  sample?: boolean;
+  /** Id of the stored version, for withdrawing a scheduled change. */
+  versionId?: string;
 }
 
 /** One official document the assistant answers from (SPEC §5, "Źródła wiedzy agenta"). */

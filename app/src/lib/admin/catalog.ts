@@ -1,11 +1,12 @@
 import { CITATIONS, ZAM_FORM } from "../kamil/sources";
-import type { PaternityResult } from "../kamil/contract";
 import { citationUrl, type Corpus } from "../rag/corpus";
 import { loadCorpus } from "../rag/corpus-fs";
-import { formatRange, formatShort } from "../rules/dates";
-import { MAX_PARTS, PATERNITY_RULES_VERSION, TOTAL_DAYS, evaluatePaternity, type PaternityInput } from "../rules/paternity";
+import { formatShort } from "../rules/dates";
+import { RULE_PARAMETERS, valueOn } from "../rules/parameters";
+import { MAX_PARTS, PATERNITY_RULES_VERSION, TOTAL_DAYS } from "../rules/paternity";
 import { LAW_IDS, assessedOn } from "../rules/sickness";
-import type { KnowledgePackage, KnowledgeSource, Parameter, ParameterGroup, TestCase } from "./types";
+import { EMPTY_STATE, draftFor, labelOf, scheduleOf, type RuleVersionsState } from "./rule-versions";
+import type { HistoryEntry, KnowledgePackage, KnowledgeSource, Parameter, ParameterGroup, ParameterVersion } from "./types";
 
 /**
  * Read-only view of what the parent application applies today, for the admin panel.
@@ -28,7 +29,34 @@ function tryCorpus(name: string): Corpus | null {
 
 /* ---------- parameters ---------- */
 
-function paternityParameters(): Parameter[] {
+const days = (n: number) => `${n} dni`;
+
+/** The paternity total with its published versions; the only parameter changeable from the panel so far. */
+function paternityTotal(state: RuleVersionsState, today: string): Pick<Parameter, "value" | "from" | "planned" | "draft" | "history"> {
+  const schedule = scheduleOf(state);
+  const current = valueOn(schedule, "paternity.totalDays", today, TOTAL_DAYS);
+  const published = state.versions
+    .filter((v) => v.parameter === "paternity.totalDays" && v.status === "published")
+    .sort((a, b) => b.validFrom.localeCompare(a.validFrom));
+  const next = [...published].reverse().find((v) => v.validFrom > today);
+  const draft = draftFor(state, "paternity.totalDays");
+  return {
+    value: days(current.value),
+    from: current.validFrom ?? "—",
+    planned: next ? { value: days(next.value), from: next.validFrom } : undefined,
+    draft: draft ? { value: days(draft.value), from: draft.validFrom } : undefined,
+    history: [
+      ...published.map((v) => ({
+        value: days(v.value),
+        from: v.validFrom,
+        state: labelOf(v, state, today) as ParameterVersion["state"],
+      })),
+      { value: days(TOTAL_DAYS), from: "—", state: current.validFrom ? "Historyczna" : "Obowiązuje" },
+    ],
+  };
+}
+
+function paternityParameters(state: RuleVersionsState, today: string): Parameter[] {
   const period = CITATIONS["zam-info-okres"];
   const parts = CITATIONS["zus-ojcowski-niepracownik"];
   const common = {
@@ -44,13 +72,17 @@ function paternityParameters(): Parameter[] {
     {
       ...common,
       id: "app-paternity-total",
-      name: "Zasiłek za okres urlopu ojcowskiego: łączny wymiar",
-      value: `${TOTAL_DAYS} dni`,
+      name: RULE_PARAMETERS["paternity.totalDays"].label,
+      ...paternityTotal(state, today),
+      editable: true,
       source: period.title,
       sourceUrl: period.url,
       quote: period.quote,
-      details: [{ label: "Fragment pobrano", value: formatShort(period.fetchedAt) }],
-      history: [{ value: `${TOTAL_DAYS} dni`, from: "—", state: "Obowiązuje" }],
+      details: [
+        { label: "Wartość w kodzie", value: days(TOTAL_DAYS) },
+        { label: "O wartości decyduje", value: RULE_PARAMETERS["paternity.totalDays"].event },
+        { label: "Fragment pobrano", value: formatShort(period.fetchedAt) },
+      ],
     },
     {
       ...common,
@@ -129,9 +161,40 @@ function formParameters(): Parameter[] {
   ];
 }
 
-/** Parameters the application applies, read from its code. */
-export function appParameters(): Parameter[] {
-  return [...paternityParameters(), ...sicknessParameters(tryCorpus("publiczne")), ...formParameters()];
+/** Parameters the application applies, read from its code, with versions published in this demo session. */
+export function appParameters(state: RuleVersionsState = EMPTY_STATE, today = new Date().toISOString().slice(0, 10)): Parameter[] {
+  return [...paternityParameters(state, today), ...sicknessParameters(tryCorpus("publiczne")), ...formParameters()];
+}
+
+/* ---------- change history ---------- */
+
+function warsawTime(iso: string): string {
+  // "YYYY-MM-DD HH:MM" in Polish time; sv-SE formats dates as ISO.
+  return new Date(iso).toLocaleString("sv-SE", { timeZone: "Europe/Warsaw" }).slice(0, 16);
+}
+
+/** Publications of this demo session, newest first (SPEC-PANEL §8). Drafts are not history yet. */
+export function historyEntries(state: RuleVersionsState, today: string): HistoryEntry[] {
+  return state.versions
+    .filter((v) => v.status !== "draft" && v.publishedAt)
+    .sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""))
+    .map((v) => ({
+      id: v.id.slice(0, 6).toUpperCase(),
+      versionId: v.id,
+      parameterId: "app-paternity-total",
+      scope: "Okresy zasiłku zaczynające się od daty obowiązywania",
+      publishedAt: warsawTime(v.publishedAt!),
+      parameter: RULE_PARAMETERS[v.parameter].label,
+      group: "Wymiary",
+      oldValue: days(v.previousValue),
+      newValue: days(v.value),
+      author: v.author,
+      state: labelOf(v, state, today),
+      from: v.validFrom,
+      reason: v.reason || "—",
+      source: v.source,
+      tests: v.checks ?? "—",
+    }));
 }
 
 /* ---------- knowledge sources ---------- */
@@ -169,148 +232,6 @@ export function knowledgeSources(): { packages: KnowledgePackage[]; sources: Kno
   return { packages, sources };
 }
 
-/* ---------- test cases computed by the rule ---------- */
+/* ---------- test cases: see scenarios.ts ---------- */
 
-/** Kamil's profile from TECH-SPEC-AGENT.md, scenario 2: fictional data, as in tests/kamil-rules.test.ts. */
-const KAMIL: PaternityInput = {
-  childBirthDate: "2026-05-20",
-  insuranceConfirmed: true,
-  noArrears: true,
-  priorParts: [],
-  request: { start: "2026-12-08", days: 7 },
-  today: "2026-11-21",
-};
-
-const STATUS_LABEL: Record<PaternityResult["status"], string> = {
-  eligible: "przysługuje",
-  not_eligible: "nie przysługuje",
-  needs_info: "wymaga uzupełnienia",
-};
-
-interface Expectation {
-  status: PaternityResult["status"];
-  period?: string;
-  deadline?: string;
-  part?: string;
-}
-
-interface Scenario {
-  id: string;
-  title: string;
-  tag: string;
-  input: PaternityInput;
-  expect: Expectation;
-}
-
-/** Scenarios and expected results mirror the assertions in tests/kamil-rules.test.ts. */
-const PATERNITY_SCENARIOS: Scenario[] = [
-  {
-    id: "K-01",
-    title: "Pierwszy tydzień od 8 grudnia",
-    tag: "Przykład demo",
-    input: KAMIL,
-    expect: { status: "eligible", period: "8–14 grudnia 2026 r.", deadline: "07.12.2026", part: "1" },
-  },
-  {
-    id: "K-02",
-    title: "Druga część po wcześniejszym tygodniu",
-    tag: "Części urlopu",
-    input: { ...KAMIL, priorParts: [{ start: "2026-07-01", end: "2026-07-07" }] },
-    expect: { status: "eligible", period: "8–14 grudnia 2026 r.", part: "2" },
-  },
-  {
-    id: "K-03",
-    title: "Wniosek dokładnie na limicie 12 miesięcy",
-    tag: "Limit",
-    input: { ...KAMIL, request: { start: "2027-05-13", days: 7 } },
-    expect: { status: "eligible", period: "13–19 maja 2027 r." },
-  },
-  {
-    id: "K-04",
-    title: "Wniosek po ukończeniu przez dziecko 12 miesięcy",
-    tag: "Limit",
-    input: { ...KAMIL, request: { start: "2027-05-14", days: 7 } },
-    expect: { status: "needs_info" },
-  },
-  {
-    id: "K-05",
-    title: "Termin złożenia ZAM już minął",
-    tag: "Termin",
-    input: { ...KAMIL, today: "2026-12-08" },
-    expect: { status: "needs_info" },
-  },
-  {
-    id: "K-06",
-    title: "Brak ubezpieczenia chorobowego",
-    tag: "Odmowa",
-    input: { ...KAMIL, insuranceConfirmed: false },
-    expect: { status: "not_eligible" },
-  },
-  {
-    id: "K-07",
-    title: "Wykorzystane już 14 dni",
-    tag: "Odmowa",
-    input: { ...KAMIL, priorParts: [{ start: "2026-06-01", end: "2026-06-14" }] },
-    expect: { status: "not_eligible" },
-  },
-  {
-    id: "K-08",
-    title: "Brak potwierdzenia ubezpieczenia",
-    tag: "Brakujące dane",
-    input: { ...KAMIL, insuranceConfirmed: null },
-    expect: { status: "needs_info" },
-  },
-];
-
-const PROFILE_FIELDS = new Set(["child_birth_date", "insurance_confirmed", "no_arrears"]);
-
-const yesNo = (v: boolean | null) => (v === null ? "brak potwierdzenia" : v ? "tak" : "nie");
-
-function inputRows(input: PaternityInput) {
-  const parts = input.priorParts.map((p) => formatRange(p.start, p.end)).join(", ");
-  const request = input.request?.start
-    ? `od ${formatShort(input.request.start)}${input.request.days ? `, ${input.request.days} dni` : ""}`
-    : "—";
-  return [
-    { label: "Data urodzenia dziecka", value: input.childBirthDate ? formatShort(input.childBirthDate) : "—" },
-    { label: "Dobrowolne ubezpieczenie chorobowe", value: yesNo(input.insuranceConfirmed) },
-    { label: "Składki bez zaległości", value: yesNo(input.noArrears) },
-    { label: "Wcześniej wykorzystane części", value: parts || "brak" },
-    { label: "Wniosek", value: request },
-    { label: "Dzień oceny", value: formatShort(input.today) },
-  ];
-}
-
-function resultValues(r: PaternityResult): Required<Omit<Expectation, "status">> & { status: string } {
-  return {
-    status: STATUS_LABEL[r.status],
-    period: r.period ? formatRange(r.period.start, r.period.end) : "—",
-    deadline: r.deadline ? formatShort(r.deadline) : "—",
-    part: r.partNumber ? String(r.partNumber) : "—",
-  };
-}
-
-const ROW_LABELS = { status: "Wynik", period: "Okres", deadline: "Termin ZAM", part: "Część urlopu" } as const;
-
-export function paternityTestCases(): TestCase[] {
-  return PATERNITY_SCENARIOS.map((s) => {
-    const r = evaluatePaternity(s.input);
-    const actual = resultValues(r);
-    const expected = { ...s.expect, status: STATUS_LABEL[s.expect.status] };
-    const keys = (Object.keys(ROW_LABELS) as (keyof typeof ROW_LABELS)[]).filter((k) => expected[k] !== undefined);
-    const matches = keys.every((k) => expected[k] === actual[k]);
-    const missingProfile = r.status === "needs_info" && PROFILE_FIELDS.has(r.missing[0] ?? "");
-    return {
-      id: s.id,
-      title: s.title,
-      tag: s.tag,
-      status: missingProfile && matches ? "brak-danych" : matches ? "zgodna" : "niezgodna",
-      inputs: inputRows(s.input),
-      expected: keys.map((k) => ({ label: ROW_LABELS[k], value: expected[k] as string })),
-      result: keys.map((k) => ({ label: ROW_LABELS[k], value: actual[k] })),
-      missing: missingProfile ? (r.question ?? undefined) : undefined,
-      reasons: r.reasons.map((reason) => reason.text),
-      computedBy: `lib/rules/paternity.ts · ${r.rulesVersion}`,
-    };
-  });
-}
+export { PATERNITY_SCENARIOS, paternityTestCases, scenarioOutcome, type Scenario } from "./scenarios";

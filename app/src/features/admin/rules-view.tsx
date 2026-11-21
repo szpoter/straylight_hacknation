@@ -2,19 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { TestCase } from "@/lib/admin/types";
-import { HISTORY, PARAMETER_GROUPS, formatDate, type Parameter, type ParameterGroup } from "./mock-data";
+import type { HistoryEntry, TestCase } from "@/lib/admin/types";
+import { PARAMETER_GROUPS, formatDate, type Parameter, type ParameterGroup } from "./mock-data";
 import { Card, Drawer, OriginBadge, OriginNote, PillTabs, SourceLink, StatTile, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
-export function RulesView({ parameters, cases }: { parameters: Parameter[]; cases: TestCase[] }) {
+export function RulesView({
+  parameters,
+  cases,
+  history,
+}: {
+  parameters: Parameter[];
+  cases: TestCase[];
+  history: HistoryEntry[];
+}) {
   const [group, setGroup] = useState<ParameterGroup>("Stawki");
   const [selected, setSelected] = useState<Parameter | null>(null);
 
   const active = parameters.filter((p) => p.state === "Obowiązuje");
   const appliedByApp = active.filter((p) => p.origin === "app").length;
   const planned = parameters.filter((p) => p.planned).sort((a, b) => a.planned!.from.localeCompare(b.planned!.from));
-  const drafts = parameters.filter((p) => p.state === "Szkic").length;
+  const drafts = parameters.filter((p) => p.state === "Szkic" || p.draft).length;
   const passing = cases.filter((c) => c.status === "zgodna").length;
   const rows = parameters.filter((p) => p.group === group);
 
@@ -77,6 +85,11 @@ export function RulesView({ parameters, cases }: { parameters: Parameter[]; case
                     <div className={s.originRow}>
                       <OriginBadge origin={p.origin} />
                     </div>
+                    {p.draft ? (
+                      <div className={cx(s.small, s.muted)}>
+                        szkic: {p.draft.value} od {formatDate(p.draft.from)}
+                      </div>
+                    ) : null}
                     {p.planned ? (
                       <div className={cx(s.small, s.muted)}>
                         od {formatDate(p.planned.from)}: {p.planned.value}
@@ -119,10 +132,10 @@ export function RulesView({ parameters, cases }: { parameters: Parameter[]; case
 
         <Card title="Ostatnie publikacje" id="recent" meta={<Link href="/admin/historia">Cała historia</Link>}>
           <p className={cx(s.small, s.muted)} style={{ margin: "0 0 12px" }}>
-            Dane przykładowe do czasu zapisu wersji reguł.
+            Publikacje z tej sesji, a pod nimi wpisy przykładowe.
           </p>
           <ul className={s.list}>
-            {HISTORY.slice(0, 3).map((h) => (
+            {history.slice(0, 3).map((h) => (
               <li key={h.id} className={s.listItem}>
                 <div className={s.listRow}>
                   <span className={cx(s.small, s.muted)}>{formatDate(h.publishedAt)}</span>
