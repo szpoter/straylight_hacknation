@@ -80,6 +80,9 @@ function routeTopic(input: string): PublicQuestion | null {
   if (/odda|przekaz|wyłączn|zarezerwowa|dziewięć|\b9\b/u.test(q)) return marta("Czy 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica można przekazać drugiemu?");
   if (/napisać o|wpisać|oświadcz|o drugim|o niej|tym czasie.{0,24}(napisać|wnios)/u.test(q))
     return marta(/nie (bierze|korzysta|planuje)/u.test(q) ? "Co oświadczyć we wniosku, jeśli drugi rodzic nie korzysta z urlopu rodzicielskiego?" : "Co wpisać o drugim rodzicu, skoro też bierze urlop rodzicielski?");
+  if (/zasił/iu.test(q) && /rodziciel/iu.test(q) && /w tym czasie|jednocze|wspólni|razem|może.*(?:urlop|korzystać)/iu.test(q)) {
+    return { ...marta("Czy w okresie pobierania zasiłku macierzyńskiego za okres urlopu rodzicielskiego przez jednego rodzica drugi może korzystać z urlopu rodzicielskiego?"), locators: ["art182^1a§7"] };
+  }
   if (/razem|jednocze|równocze|oboje|wspólni|samym (czasie|miesiącu)|tych samych|w tym czasie/u.test(q)) return marta("Czy oboje rodzice mogą być jednocześnie na urlopie rodzicielskim w tych samych tygodniach?");
   if (/pół etatu|niepełn|łącz.{0,20}prac/u.test(q)) return marta("Jak połączyć pracę na pół etatu z urlopem rodzicielskim i kiedy złożyć wniosek?");
   if (/wysłać.{0,20}elektr|elektronicz|mailem|przez internet|online/u.test(q)) return marta("Czy wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie?");

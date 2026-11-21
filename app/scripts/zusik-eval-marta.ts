@@ -29,6 +29,7 @@ interface Case {
   required: string[];
   forbidden: string[];
   forbiddenCitations: string[];
+  requiredCitations?: string[];
 }
 interface Negative {
   id: string;
@@ -118,6 +119,7 @@ async function main() {
     const problems: string[] = [];
     if (!c.status.includes(answer.status)) problems.push(`status ${answer.status}`);
     if (answer.status === "answered") {
+      if (c.requiredCitations && !c.requiredCitations.some((id) => cited.includes(id))) problems.push("brak cytatu o właściwym rodzaju świadczenia");
       for (const r of c.required) if (!matches(r, text)) problems.push(`brak /${r}/`);
     }
     for (const f of c.forbidden) if (matches(f, text)) problems.push(`zakazane /${f}/`);

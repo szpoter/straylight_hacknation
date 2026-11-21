@@ -214,7 +214,8 @@ export function validateAnswer(
     if (polarityMismatch) report.polarityRemoved += 1;
     const citedTexts = ids.flatMap((id) => {
       const citation = citations.find((c) => c.id === id);
-      return citation ? [allowed.get(citation.fragmentId)?.sourceText ?? ""] : [];
+      const fragment = citation && allowed.get(citation.fragmentId);
+      return fragment ? [fragment.sourceText, fragment.locator] : [];
     });
     const sourceNumbers = new Set(citedTexts.join(" ").match(/\d+(?:[,.]\d+)?/g) ?? []);
     const unsupportedNumber = (claim.text.match(/\d+(?:[,.]\d+)?/g) ?? []).some((value) => !sourceNumbers.has(value));

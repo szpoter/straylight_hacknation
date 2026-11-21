@@ -20,6 +20,7 @@ export function extractiveAnswer(
     [projected.question.startsWith("Skąd wiadomo, ile części"), ["kp-art182-1d-par2"]],
     [projected.question.startsWith("Kadry mają już odpis"), ["rozp-2025-322-par22", "rozp-2025-322-par15-ust2-pkt1"]],
     [projected.question.startsWith("Ile wcześniej i do kogo"), ["kp-art182-1d-par1"]],
+    [projected.locators?.includes("art182^1a§7") === true, ["kp-art182-1a-par7"]],
     [projected.question.startsWith("Czy oboje rodzice mogą"), ["kp-art182-1a-par6"]],
     [/^Co (?:wpisać o drugim rodzicu|oświadczyć we wniosku)/u.test(projected.question), ["rozp-2025-322-par15-ust2-pkt2"]],
   ];
@@ -47,6 +48,8 @@ export function extractiveAnswer(
 /** The current-title rule and the exception after coverage ended are alternatives.
  * Authentic citations alone did not prevent a model from calling the exception mandatory. */
 export function needsStatutoryText(projected: PublicQuestion, answer: AskAnswer): boolean {
+  if (projected.locators?.includes("art182^1a§7"))
+    return !answer.citations.some((c) => c.fragmentId === "kp-art182-1a-par7" || c.fragmentId === "mrpips-dzielenie-zasilek");
   const current = projected.question.startsWith("Czy samo zwolnienie");
   const previous = projected.question.startsWith("Kiedy można pobierać zasiłek chorobowy po ustaniu");
   if (!current && !previous) return false;
