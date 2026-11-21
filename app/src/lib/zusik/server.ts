@@ -3,7 +3,12 @@ import { cookies } from "next/headers";
 import { Pool } from "pg";
 import { CHECKPOINT_SCHEMA, ConfigError, DEFAULT_EMBED_MODEL, requireEnv } from "./config";
 import { SESSION_COOKIE } from "./constants";
+import { generateAnswer } from "../rag/answer";
+import { loadCorpus } from "../rag/corpus-fs";
+import { qdrantKnowledgeSearch } from "../rag/retrieve";
+import { AskService } from "./ask-service";
 import { PgCaseStore } from "./case-store";
+import { PgTurnStore } from "./turn-store";
 import { queryQdrant } from "./qdrant";
 import { ProbeService } from "./service";
 import { decodeSession } from "./session";
@@ -33,6 +38,16 @@ function qdrantSettings() {
   };
 }
 
+/** Knowledge collection (zusik_marta_v1) with its own read-scoped key; the probe keeps its own. */
+function knowledgeSettings() {
+  return {
+    url: requireEnv("QDRANT_URL"),
+    apiKey: requireEnv("QDRANT_KNOWLEDGE_READ_KEY"),
+    collection: requireEnv("QDRANT_KNOWLEDGE_COLLECTION"),
+    model: process.env.QDRANT_EMBED_MODEL?.trim() || DEFAULT_EMBED_MODEL,
+  };
+}
+
 function sherlockSettings() {
   return {
     baseURL: requireEnv("SHERLOCK_BASE_URL"),
@@ -47,11 +62,31 @@ export function assertProviderConfig(): void {
   sherlockSettings();
 }
 
+/** /ask calls this first, so a missing variable is reported by name. */
+export function assertAskConfig(): void {
+  knowledgeSettings();
+  sherlockSettings();
+}
+
+/** Informational answers with citations, saved on the session's thread. */
+export function askService(): AskService {
+  const { pool: db } = runtime();
+  const corpus = loadCorpus("marta");
+  return new AskService({
+    store: new PgCaseStore(db),
+    turns: new PgTurnStore(db),
+    corpus,
+    search: qdrantKnowledgeSearch(knowledgeSettings()),
+    generate: (question, evidence) => generateAnswer(sherlockSettings(), corpus, question, evidence),
+  });
+}
+
 /** Reading state and resuming need only Neon; provider settings resolve on call. */
 export function probeService(): ProbeService {
   const { pool: db, checkpointer: saver } = runtime();
   return new ProbeService({
     store: new PgCaseStore(db),
+    turns: new PgTurnStore(db),
     checkpointer: saver,
     providers: {
       retrieve: (query) => queryQdrant(qdrantSettings(), query),

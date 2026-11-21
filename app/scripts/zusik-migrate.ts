@@ -32,6 +32,23 @@ async function migrate(ownerPool: Pool, runtimeRole: string) {
       op_token      text,
       lease_until   timestamptz
     )`);
+  // Ask turns (step 2): one row per (thread, requestId); response holds the verified answer and citations.
+  await ownerPool.query(`
+    CREATE TABLE IF NOT EXISTS ${S}.ask_turns (
+      id             bigserial PRIMARY KEY,
+      thread_id      text NOT NULL REFERENCES ${S}.demo_cases(thread_id) ON DELETE CASCADE,
+      request_id     text NOT NULL,
+      question_hash  text NOT NULL,
+      question       text NOT NULL,
+      status         text NOT NULL,
+      response       jsonb,
+      corpus_version text,
+      op_token       text,
+      lease_until    timestamptz,
+      created_at     timestamptz NOT NULL DEFAULT now(),
+      completed_at   timestamptz,
+      UNIQUE (thread_id, request_id)
+    )`);
   const role = await ownerPool.query("SELECT 1 FROM pg_roles WHERE rolname = $1", [runtimeRole]);
   if (role.rowCount !== 1) throw new Error(`runtime role ${runtimeRole} does not exist on this branch`);
   const r = `"${runtimeRole}"`;

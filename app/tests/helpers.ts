@@ -2,7 +2,8 @@ import { MemorySaver } from "@langchain/langgraph";
 import type { RunnableConfig } from "@langchain/core/runnables";
 import type { Checkpoint, CheckpointMetadata } from "@langchain/langgraph";
 import { newThreadId, type CaseStore, type DemoCase } from "@/lib/zusik/case-store";
-import type { ProbeProviders, QuestionResult, RetrievalResult } from "@/lib/zusik/types";
+import { newTurnToken, type ClaimResult, type TurnStore } from "@/lib/zusik/turn-store";
+import type { AskAnswer, AskTurn, ProbeProviders, QuestionResult, RetrievalResult } from "@/lib/zusik/types";
 
 /** Same contract as PgCaseStore: unique session binding + conditional lease. */
 export class MemoryCaseStore implements CaseStore {
@@ -71,4 +72,47 @@ export function fakeProviders(overrides: Partial<{ retrieval: RetrievalResult; q
     },
   };
   return { providers, calls };
+}
+
+/** Same contract as PgTurnStore: unique (thread, requestId), claim token, ordered list. */
+export class MemoryTurnStore implements TurnStore {
+  private rows: Array<{
+    threadId: string;
+    requestId: string;
+    hash: string;
+    question: string;
+    token: string | null;
+    answer: AskAnswer | null;
+    createdAt: Date;
+  }> = [];
+  failComplete = false;
+
+  async claim(threadId: string, requestId: string, hash: string, question: string): Promise<ClaimResult> {
+    const row = this.rows.find((r) => r.threadId === threadId && r.requestId === requestId);
+    if (!row) {
+      const token = newTurnToken();
+      this.rows.push({ threadId, requestId, hash, question, token, answer: null, createdAt: new Date() });
+      return { kind: "claimed", token };
+    }
+    if (row.hash !== hash) return { kind: "conflict" };
+    if (row.answer) return { kind: "done", turn: this.toTurn(row) };
+    return { kind: "pending" };
+  }
+  async complete(threadId: string, requestId: string, token: string, answer: AskAnswer) {
+    if (this.failComplete) throw Object.assign(new Error("connection terminated"), { name: "NeonWriteError" });
+    const row = this.rows.find((r) => r.threadId === threadId && r.requestId === requestId && r.token === token);
+    if (!row || row.answer) return null;
+    row.answer = answer;
+    row.token = null;
+    return this.toTurn(row);
+  }
+  async release(threadId: string, requestId: string, token: string) {
+    this.rows = this.rows.filter((r) => !(r.threadId === threadId && r.requestId === requestId && r.token === token && !r.answer));
+  }
+  async list(threadId: string) {
+    return this.rows.filter((r) => r.threadId === threadId && r.answer).map((r) => this.toTurn(r));
+  }
+  private toTurn(row: MemoryTurnStore["rows"][number]): AskTurn {
+    return { ...row.answer!, requestId: row.requestId, question: row.question, createdAt: row.createdAt.toISOString() };
+  }
 }

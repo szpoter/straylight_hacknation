@@ -1,0 +1,5 @@
+/* Scoped to the /zusik workspace, so other (unstyled) routes stay untouched. */
+body:has([data-zusik-workspace]), body:has([data-zusik-demo]) {
+  margin: 0;
+  background: #f5faf7;
+}

@@ -1,4 +1,4 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { chatModel } from "./model-provider";
 import { APICallError, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { SHERLOCK_TIMEOUT_MS } from "./config";
@@ -30,7 +30,7 @@ export function parseQuestion(raw: string): string | null {
   }
 }
 
-function classify(error: unknown): QuestionResult["status"] {
+export function classifySherlockError(error: unknown): QuestionResult["status"] {
   const seen = new Set<unknown>();
   let current: unknown = error;
   while (current && !seen.has(current)) {
@@ -48,7 +48,7 @@ export async function askSherlock(settings: SherlockSettings, fragmentText: stri
   const started = Date.now();
   const model =
     settings.languageModel ??
-    createOpenAICompatible({ name: "sherlock", baseURL: settings.baseURL, apiKey: settings.apiKey })(settings.model);
+    chatModel(settings.baseURL, settings.apiKey, settings.model);
   try {
     const { text } = await generateText({
       model,
@@ -66,7 +66,7 @@ export async function askSherlock(settings: SherlockSettings, fragmentText: stri
       ms: Date.now() - started,
     };
   } catch (error) {
-    const status = classify(error);
+    const status = classifySherlockError(error);
     console.error(JSON.stringify({ event: "sherlock_error", status }));
     return { status, question: null, model: settings.model, ms: Date.now() - started };
   }
