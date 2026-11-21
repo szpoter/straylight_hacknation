@@ -9,6 +9,7 @@ import { makeCertificatePdf, makeCertificateScan } from "./kamil-demo-docs";
 import { kamilCertificate } from "../src/lib/kamil/profile";
 import type { KamilView } from "../src/lib/kamil/contract";
 import type { MartaView } from "../src/lib/marta/types";
+import { loadCorpus } from "../src/lib/rag/corpus-fs";
 import type { AskTurn } from "../src/lib/zusik/types";
 import type { SicknessView } from "../src/lib/sickness/types";
 
@@ -217,7 +218,7 @@ async function testNewQuestion(page: Page) {
     const turn = last.body.turn as AskTurn;
     assert.equal(turn.status, "answered");
     await page.getByRole("button", {name: /^Źródło /}).last().waitFor();
-    return turn;
+    return { turn, retrieval: last.body.retrieval };
   }
   await page.evaluate(() => {
     const seen = new Set<string>();
@@ -227,17 +228,22 @@ async function testNewQuestion(page: Page) {
       document.body.dataset.partialSteps = String(seen.size);
     }).observe(document.body, { subtree: true, childList: true, characterData: true });
   });
-  const turn = await ask("Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?");
+  const { turn, retrieval } = await ask("Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?");
   assert.ok(Number(await page.locator("body").getAttribute("data-partial-steps")) > 1, "Progressive text visible in the browser");
   const citation = turn.citations.find(c => c.fragmentId === "uz-18-1");
-  assert.ok(citation && citation.page === 7 && /rehabilitac/i.test(citation.quote));
+  assert.ok(retrieval?.top.includes("uz-18-1") && retrieval.evidence.includes("uz-18-1"));
+  const article = loadCorpus("publiczne").fragments.get("uz-18-1");
+  assert.ok(citation && citation.page === 7 && citation.quote.length > 15 && article?.sourceText.includes(citation.quote),
+    "The displayed quotation must be verbatim from Article 18, page 7");
   assert.match(turn.claims.map(c => c.text).join(" "), /12|dwunast/i);
   await page.reload();
   await page.getByText(turn.question, {exact:true}).waitFor();
-  const followUp = await ask("Skąd są te dane?");
+  const { turn: followUp, retrieval: followUpRetrieval } = await ask("Skąd są te dane?");
+  assert.equal(followUpRetrieval, null);
   assert.ok(followUp.citations.some(c => c.fragmentId === citation.fragmentId && c.url === citation.url));
   await page.getByText(followUp.message, {exact:true}).last().waitFor();
-  await page.getByRole("button", {name: /^Źródło /}).last().click();
+  const index = followUp.citations.findIndex(c => c.fragmentId === "uz-18-1");
+  await page.getByRole("button", {name: new RegExp("^Źródło " + (index + 1) + ":")}).last().click();
   await page.getByRole("link", {name: /Otwórz dokument na s. 7/}).last().waitFor();
 }
 async function run() {

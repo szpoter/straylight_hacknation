@@ -65,7 +65,15 @@ export async function POST(request: Request) {
       if (result.status === 202) {
         return Response.json({ pending: true, retry: true }, { status: 202, headers: NO_STORE });
       }
-      return Response.json({ turn: result.turn }, { status: result.status, headers: NO_STORE });
+      // Only public source IDs and provider metadata belong in the browser's retrieval receipt.
+      const retrieval = trace?.search === "ok" ? {
+        top: trace.vectorIds,
+        evidence: trace.evidenceIds,
+        backend: trace.backend ?? null,
+        model: trace.modelId ?? null,
+        quoteReason: trace.quoteReason,
+      } : null;
+      return Response.json({ turn: result.turn, retrieval }, { status: result.status, headers: NO_STORE });
     };
     if (!request.headers.get("accept")?.includes(ASK_STREAM)) return await run();
 
