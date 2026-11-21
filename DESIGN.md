@@ -19,19 +19,19 @@ colors:
   outline: "#D4D7DD"
 typography:
   display:
-    fontFamily: Literata
+    fontFamily: Domine
     fontSize: 86.4px
     fontWeight: 400
     lineHeight: 0.93
     letterSpacing: -0.02em
   headline:
-    fontFamily: Literata
+    fontFamily: Domine
     fontSize: 48px
     fontWeight: 400
     lineHeight: 1
     letterSpacing: -0.015em
   title:
-    fontFamily: Literata
+    fontFamily: Domine
     fontSize: 24px
     fontWeight: 400
     lineHeight: 1.05
@@ -102,9 +102,9 @@ Kolory ZUS zmierzono w computed styles na zus.pl (strona główna i strona o zas
 
 ## Typography
 
-Dwa kroje o wyraźnie podzielonych rolach. Szeryfowy niesie treść redakcyjną: nagłówki, liczby w cenach, cytaty. Bezszeryfowy obsługuje wszystko, co jest interfejsem: tekst ciągły, przyciski, nawigację, etykiety. Źródło używa licencjonowanych krojów. Literata i Inter to zamienniki wybrane wzrokowo. Oba mają polskie znaki i cyrylicę, więc obsłużą też wersję ukraińską.
+Dwa kroje o wyraźnie podzielonych rolach. Szeryfowy niesie treść redakcyjną: nagłówki, liczby w cenach, cytaty. Bezszeryfowy obsługuje wszystko, co jest interfejsem: tekst ciągły, przyciski, nawigację, etykiety. Źródło używa licencjonowanych krojów (Quadrant i Melange). Domine i Inter to zamienniki wybrane wzrokowo: Domine łamie nagłówek źródła w te same linie i ma podobną szerokość, ciężar i szeryfy. Oba mają polskie znaki. Domine nie ma cyrylicy, więc wersja ukraińska będzie potrzebować osobnego kroju szeryfowego.
 
-- **Display:** nagłówek hero, jeden na stronę. W źródle rośnie płynnie z szerokością okna: od 48 px na telefonie (390 px) do 86,4 px przy 1440 px, przy tej samej interlinii i światłach. Przy polskich wielkich literach z akcentami interlinia 0,93 może być za ciasna, wtedy tendencja jest raczej ku 1,0 niż ku mniejszemu rozmiarowi.
+- **Display:** nagłówek hero, jeden na stronę. W źródle ma 48 px na telefonie, 72 px od 640 px szerokości okna, a od 1024 px 6vw w granicach 68–110 px (86,4 px przy 1440 px), przy tej samej interlinii i światłach. Szerokość nagłówka to 6,5 em. Przy polskich wielkich literach z akcentami interlinia 0,93 może być za ciasna, wtedy tendencja jest raczej ku 1,0 niż ku mniejszemu rozmiarowi.
 - **Headline:** tytuły sekcji. Na telefonie źródło używa 36 px z interlinią 40 px. Pojedyncze hasła-przerywniki bywają znacznie większe (zmierzono 60, 108 i 160 px), ale to wyjątki, a nie stopień skali.
 - **Title:** nagłówki kart, kroków i pytań w FAQ. Duże ceny i cytaty też są szeryfowe, w rozmiarach 30–36 px.
 - **Body:** tekst ciągły. Lead pod nagłówkiem bywa większy (zmierzono 18–22 px), czasem w lżejszej grubości 300.
