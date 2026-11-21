@@ -2,7 +2,7 @@
 
 Ten plik rozwijamy dla części produktu po uwierzytelnieniu. Punktem wejścia jest koniec symulowanego pobierania danych z ZUS opisanego w [specyfikacji strony publicznej](SPEC.md). Aktualny kierunek pierwszego wejścia to onboarding, a następnie pełny widok produktu.
 
-**Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Podział pozostałej części nawigacji pozostaje otwarty. Poniższe pytania, karty i kolejność modułów to propozycja do omówienia.
+**Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Podział pozostałej części nawigacji pozostaje otwarty. Pod mapą są kolejno „Najbliższa sprawa” i kalkulator. Szczegóły interakcji oraz dalsze moduły to propozycje do omówienia.
 
 ## Pierwsze wejście — krótka rozmowa z Zusikiem
 
@@ -52,12 +52,52 @@ Na głównej linii są czynności wymagające działania w danej sytuacji. Obok 
 
 **Co pokazuje pojedynczy przystanek.** Na mapie wystarczą nazwa czynności, status i termin. Kliknięcie otwiera szczegóły sprawy. Na komputerze mapa wskazuje kartę bezpośrednio pod ścieżką, a na telefonie ten sam widok otwiera się od dołu. Karta pokazuje, dla którego dziecka, dlaczego sprawa się pojawia, do kiedy i od jakiego zdarzenia liczymy czas, dokumenty, kto składa i do kogo, źródło oraz jedno działanie. Dla formularza to „Przygotuj szkic”, dla programu NFZ „Sprawdź, gdzie wykonać badanie”, dla wykonanej czynności „Zobacz szczegóły”. Statusy „Do zrobienia”, „Szkic”, „Oznaczone jako załatwione” i „Wysłano w symulacji” mają odrębne znaczenie. Jeśli nie znamy daty bazowej, zamiast odliczania proponujemy „Uzupełnij datę”. Sprawy rodzica i wspólne okresy opieki są powiązane z rodziną lub porodem, więc zmiana profilu bliźniaka nie tworzy dodatkowego urlopu.
 
-## Co pod mapą — proponowana kolejność
+## Pod mapą — najbliższa sprawa i kalkulator
 
 1. **Najbliższa sprawa.** Jedna rozwinięta karta wybrana według obowiązku i terminu. Przykład: „Zgłoś urodzenie Oli”, „Urząd stanu cywilnego”, termin wraz z podstawą i przycisk „Zobacz, jak zgłosić”. To domyślnie wybrany przystanek. Po wskazaniu innego kroku karta przyjmuje jego nazwę i treść. Przycisk „Wróć do najbliższej sprawy” przywraca priorytet. Gdy brakuje danych dla pilnej sprawy, tu pojawia się konkretne pytanie. Gdy wszystkie obowiązki są załatwione, karta informuje o tym i wskazuje najbliższą opcjonalną możliwość.
 2. **Ile czasu i jaki zasiłek?** Porównanie dwóch wariantów opieki dla tej rodziny na jednej osi: okres każdego rodzica, przewidywana kwota i założenia kalkulatora. Rodzic może symulować opiekę kolejno, równocześnie i pracę na część etatu. Przy braku podstawy wymiaru pokazujemy, jakiej wartości potrzeba. Liczy kalkulator według reguł, a agent wyjaśnia wynik ze źródłem. [ZUS o wysokości zasiłku](https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-macierzynski/wysokosc)
-3. **Wnioski i dokumenty dziecka.** W jednym miejscu szkice, wymagane załączniki, odbiorca i status. Akcja „Dokończ z Zusikiem” wraca do konkretnego szkicu. Agent wykorzystuje znane pola, pyta o braki, wskazuje podstawę odpowiedzi i pokazuje zmiany do zatwierdzenia. W demo wysłanie jest symulowane. W trudnej sytuacji obok dokumentów pojawia się bezpośrednie wejście do bezpłatnego wsparcia.
+3. **Propozycja dalszego modułu: wnioski i dokumenty dziecka.** W jednym miejscu szkice, wymagane załączniki, odbiorca i status. Akcja „Dokończ z Zusikiem” wraca do konkretnego szkicu. Agent wykorzystuje znane pola, pyta o braki, wskazuje podstawę odpowiedzi i pokazuje zmiany do zatwierdzenia. W demo wysłanie jest symulowane. W trudnej sytuacji obok dokumentów pojawia się bezpośrednie wejście do bezpłatnego wsparcia.
+
+## Kalkulator „Ile czasu i jaki zasiłek?”
+
+**Uzgodnione miejsce.** Druga karta pod mapą, bezpośrednio pod „Najbliższą sprawą”. **Proponowany wygląd i zachowanie** opisano poniżej. To jeden kalkulator zasiłku macierzyńskiego dla wybranego dziecka lub planu. Przystanek dotyczący urlopu otwiera ten sam kalkulator z odpowiednim okresem. [Wymagania ZUS, s. 12–15](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf)
+
+### Pierwszy widok
+
+Nagłówek **„Ile czasu i jaki zasiłek?”** i krótkie określenie zakresu, np. „Ola · urlop rodzicielski · planowane okresy”. Największe liczby to **„Czas opieki w kalendarzu”** i **„Szacowany zasiłek łącznie · brutto”** za pokazany okres. Pod nimi są dwie podpisane linie czasu na wspólnej skali, po jednej dla każdego uczestniczącego rodzica, z datami, czasem i kwotą danej osoby. Jednego rodzica można policzyć samodzielnie. Paski mają etykiety tekstowe także wtedy, gdy się pokrywają. Pensja za pracę pozostaje poza sumą zasiłków.
+
+Jeśli rodzic ma już zapisany plan, karta otwiera jego wynik. Gdy dopiero zaczyna i nie wskazał okresów, widzi pytanie „Jaki okres opieki chcesz sprawdzić?” i przycisk „Ułóż wariant”. Przed porodem daty wynikające z przewidywanego terminu są podpisane „planowane”. Gdy brakuje tylko podstawy wymiaru, oś czasu pozostaje widoczna, a miejsce kwoty zajmuje np. „Uzupełnij podstawę drugiego rodzica”. Znana część ma własną nazwę i kwotę, suma rodziny czeka na komplet danych. Przy ustalonym braku uprawnienia pokazujemy okres, którego dotyczy, przyczynę i źródło.
+
+### Edycja i porównanie
+
+1. **„Zmień wariant”.** Rodzic wybiera rodzaj okresu i uczestniczące osoby. Przy każdym odcinku można wskazać osobę, początek i koniec albo długość. Dla wspólnej opieki podpowiedzi „Kolejno” i „W tym samym czasie” ustawiają początek drugiego odcinka. Daty pozostają edytowalne. Przełącznik „Łączę urlop rodzicielski z pracą” dodaje wymiar etatu i okres pracy u pracodawcy udzielającego urlopu. Po zatwierdzeniu poprawnej zmiany przeliczają się zarówno kwota, jak i długość oraz data zakończenia. [Łączenie urlopu z pracą](https://www.gov.pl/web/rodzina/urlop-rodzicielski)
+2. **„Porównaj wariant”.** Drugi wariant powstaje jako kopia pierwszego. Rodzic zmienia jedną decyzję, np. przechodzi z opieki kolejno na równoczesną. Oba wyniki obejmują te same kategorie świadczeń, z własnym zakresem dat. Podsumowanie pokazuje różnicę w kwocie brutto i czasie kalendarzowym. Obok osi widać ile puli już wykorzystano, ile zużywa wariant i ile pozostaje, w tym część zastrzeżoną dla każdej osoby. Przedziały równoczesne zużywają pulę obojga rodziców, a wspólny dzień na osi kalendarza liczymy raz. Przy przerwach osobno widać dni opieki i daty całego planu.
+3. **„Skąd ta kwota?”** Rozwinięcie pokazuje dla każdej osoby źródło danych, przyjętą podstawę wymiaru, właściwą stawkę, liczbę dni i sumę za odcinek. Dla okresów z różnymi stawkami podaje oddzielne wiersze. Zusik może wyjaśnić konkretną różnicę z odnośnikiem do podstawy. Oba warianty korzystają z tego samego kalkulatora reguł. [Wysokość zasiłku według ZUS](https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-macierzynski/wysokosc)
+4. **„Użyj tego wariantu w planie”.** Dopiero ten przycisk zapisuje wybór i aktualizuje odpowiednie terminy na mapie, potrzebne dokumenty i odbiorcę. Powrót bez zatwierdzenia zachowuje dotychczasowy plan. Jeśli istnieje szkic wniosku oparty na wcześniejszych datach, rodzic widzi informację, które pola wymagają sprawdzenia. Wysłanie dokumentu w demo jest osobną czynnością.
+
+Na komputerze porównanie ma dwie kolumny ze wspólną skalą dat. Na telefonie podsumowanie różnic pozostaje widoczne nad przełącznikiem „Wariant A / Wariant B”. Szczegóły aktywnego wariantu mieszczą się w jednej kolumnie. Każdy odcinek da się ustawić polami daty i długości, również klawiaturą.
+
+### Dane i reguły, które wpływają na ekran
+
+| Dane z profilu, sprawy testowej lub podane przez rodzica | Co robi kalkulator |
+| --- | --- |
+| Tytuł i okres ubezpieczenia oraz indywidualna podstawa każdego rodzica | Wykorzystuje znaną podstawę albo ustala ją z odpowiednich danych o wynagrodzeniach lub podstawach składek, okresach i przerwach zależnie od tytułu. Pokazuje pochodzenie danych i pozwala wprowadzić własną podstawę do symulacji. Dane drugiego rodzica uzupełniamy, gdy jego odcinek ma wejść do obliczeń. |
+| Narodziny, adopcja lub niezawodowa piecza zastępcza, wiek i liczba dzieci urodzonych albo przyjętych jednocześnie | Wybiera właściwe rodzaje okresów i limity. Pyta warunkowo o datę przyjęcia, etap postępowania, zaświadczenie „Za życiem” albo dane do uzupełniającego urlopu po hospitalizacji. Dla bliźniąt pula tego samego porodu jest wspólna. |
+| Rodzaj okresu, wykorzystana pula, daty i decyzje obojga rodziców, data wniosku, praca podczas urlopu | Rozróżnia okres macierzyński lub na jego warunkach, uzupełniający, rodzicielski i ojcowski. Uwzględnia różne stawki, warunki stawki uśrednionej, część nieprzenoszalną, limity części oraz wydłużenie przy łączeniu pracy z urlopem. Przy sprzeczności wskazuje konkretny odcinek do poprawy i wstrzymuje zapis wariantu. |
+
+### Przykład do makiety i odbioru
+
+Dwoje uprawnionych pracowników planuje po 4 tygodnie urlopu rodzicielskiego w ramach dostępnej puli. Rozpatrujemy tylko te dwa odcinki. Przyjmujemy fikcyjne, już ustalone stawki dzienne zasiłku: 140 zł brutto dla pierwszej osoby i 105 zł dla drugiej. W obu wariantach wykorzystują po 28 dni, bez pracy podczas urlopu.
+
+| Wynik | A · kolejno, bez przerwy | B · jednocześnie od tego samego dnia |
+| --- | ---: | ---: |
+| Dni kalendarzowe objęte opieką | 56 | 28 |
+| Zasiłek pierwszej osoby | 3 920 zł | 3 920 zł |
+| Zasiłek drugiej osoby | 2 940 zł | 2 940 zł |
+| Łącznie brutto za pokazane odcinki | 6 860 zł | 6 860 zł |
+
+Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodnie. Łączna kwota zasiłku za wybrane okresy pozostaje taka sama.”** Do odbioru reguł potrzebne są ponadto sprawy konkursowe z dokumentami i oczekiwanym wynikiem, w tym brak uprawnienia, niepełne dane, różne podstawy rodziców, praca na część etatu, adopcja i piecza. Parametry stawek i limitów wybieramy według daty sprawy z ustawień administracyjnych.
 
 ## Zakres konkursowy do dalszego rozpisania
 
-W kolejnych sekcjach tej specyfikacji rozwiniemy reguły poszczególnych przypadków, wzory i wyjątki terminów, porównania kalkulatora oraz urzędowe formularze i załączniki. W ścieżce testowej wybór sprawy lub testowego PDF prowadzi do ustalenia ubezpieczenia, kwoty i okresu albo przyczyny braku uprawnień. Dla odpowiednich profili potrzebne są symulacje stanu zadłużenia składkowego, e-ZLA, połączenia z PUE/eZUS, wniosków do pracodawcy lub ZUS i odpisu aktu urodzenia. Parametry prawne podlegają aktualizacji w panelu administracyjnym. Moduły zdrowotne i rodzinne to proponowane rozszerzenie przewodnika. Nazwy programów, daty obowiązywania i reguły kierowania do instytucji wymagają utrzymywania aktualnych źródeł. [Pełna treść zadania, s. 11–15](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf)
+W kolejnych sekcjach tej specyfikacji rozwiniemy reguły poszczególnych przypadków, wzory i wyjątki terminów, weryfikację wyliczeń na dokumentach testowych oraz urzędowe formularze i załączniki. W ścieżce testowej wybór sprawy lub testowego PDF prowadzi do ustalenia ubezpieczenia, kwoty i okresu albo przyczyny braku uprawnień. Dla odpowiednich profili potrzebne są symulacje stanu zadłużenia składkowego, e-ZLA, połączenia z PUE/eZUS, wniosków do pracodawcy lub ZUS i odpisu aktu urodzenia. Parametry prawne podlegają aktualizacji w panelu administracyjnym. Moduły zdrowotne i rodzinne to proponowane rozszerzenie przewodnika. Nazwy programów, daty obowiązywania i reguły kierowania do instytucji wymagają utrzymywania aktualnych źródeł. [Pełna treść zadania, s. 11–15](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf)
