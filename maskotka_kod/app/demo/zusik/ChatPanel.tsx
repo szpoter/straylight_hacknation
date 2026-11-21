@@ -158,10 +158,10 @@ function Thread(props: Props) {
   const { messages, draft, phone, busy, mascot, actions, starters } = props;
   const list = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
-  const answers = messages.filter((m) => m.role === "assistant").length;
-  const [view, setView] = useState({ atBottom: true, seenAnswers: answers });
   const latestAnswer = [...messages].reverse().find((m) => m.role === "assistant");
-  const signature = `${messages.length}:${latestAnswer && "revealed" in latestAnswer ? latestAnswer.revealed : 0}:${latestAnswer && "status" in latestAnswer ? latestAnswer.status : ""}`;
+  /** Changes whenever Zusik's latest answer grows; compared with what the reader has seen. */
+  const signature = `${messages.length}:${latestAnswer && "revealed" in latestAnswer ? `${latestAnswer.id}:${latestAnswer.revealed}:${latestAnswer.status}` : ""}`;
+  const [view, setView] = useState({ atBottom: true, seen: signature });
 
   // restore the reading place of this thread when it opens again
   useLayoutEffect(() => {
@@ -184,7 +184,11 @@ function Thread(props: Props) {
     const bottom = el.scrollHeight - el.scrollTop - el.clientHeight < 32;
     atBottom.current = bottom;
     props.onScrollSave(el.scrollTop);
-    setView((v) => (v.atBottom === bottom && (!bottom || v.seenAnswers === answers) ? v : { atBottom: bottom, seenAnswers: bottom ? answers : v.seenAnswers }));
+    // at the bottom everything is seen; leaving the bottom remembers what was there at that moment
+    setView((v) => {
+      if (bottom) return v.atBottom && v.seen === signature ? v : { atBottom: true, seen: signature };
+      return v.atBottom ? { atBottom: false, seen: signature } : v;
+    });
   };
 
   const toBottom = () => {
@@ -193,10 +197,10 @@ function Thread(props: Props) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     el.scrollTo({ top: el.scrollHeight, behavior: reduce ? "auto" : "smooth" });
     atBottom.current = true;
-    setView({ atBottom: true, seenAnswers: answers });
+    setView({ atBottom: true, seen: signature });
   };
 
-  const newAnswer = !view.atBottom && answers > view.seenAnswers;
+  const newAnswer = !view.atBottom && signature !== view.seen;
   const lastIndex = messages.length - 1;
 
   return (

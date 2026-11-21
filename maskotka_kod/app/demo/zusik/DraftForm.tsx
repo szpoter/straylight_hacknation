@@ -117,8 +117,12 @@ function DateField({ field, draft, changed, onSave }: { field: FieldKey; draft: 
       ) : (
         <div className={`zd-field__box${value ? "" : " zd-field__box--empty"}`} aria-labelledby={`${id}-label`} role="group">
           <span data-value>{value ? formatDate(value) : "Brakuje daty"}</span>
-          {changed && <span className="zd-field__note">✓ Zaktualizowano</span>}
         </div>
+      )}
+      {changed && !editing && (
+        <span className="zd-field__note" role="status">
+          ✓ Zaktualizowano
+        </span>
       )}
     </div>
   );

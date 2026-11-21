@@ -218,26 +218,32 @@ export default function ZusikDemo() {
     [],
   );
 
+  /** Writes a field and updates the ref at once, so the reply planned right after sees the new value. */
   const writeField = useCallback((draftId: DraftId, field: FieldKey, value: string, source: "zusik" | "parent") => {
-    setDrafts((all) => {
-      const d = all[draftId];
-      const f = d.fields[field];
-      const next = { ...d, fields: { ...d.fields, [field]: { value, version: f.version + 1, source } } };
-      draftsRef.current = { ...all, [draftId]: next };
-      return draftsRef.current;
-    });
+    const all = draftsRef.current;
+    const d = all[draftId];
+    const updated = { ...all, [draftId]: { ...d, fields: { ...d.fields, [field]: { value, version: d.fields[field].version + 1, source } } } };
+    draftsRef.current = updated;
+    setDrafts(updated);
   }, []);
 
   /** Zusik's change lands: the form blurs for a moment, then the changed field gets the green beam. */
+  const highlight = useCallback((field: FieldKey) => {
+    const key = Date.now();
+    setChanged({ field, key });
+    // the outline fades after a few seconds; a newer highlight keeps its own timer
+    window.setTimeout(() => setChanged((current) => (current?.key === key ? null : current)), 5000);
+  }, []);
+
   const showChange = useCallback(
     (field: FieldKey) => {
       setFocus(field);
-      setChanged({ field, key: Date.now() });
+      highlight(field);
       if (reduceMotion) return;
       setBlur(true);
       window.setTimeout(() => setBlur(false), 260);
     },
-    [reduceMotion],
+    [highlight, reduceMotion],
   );
 
   // ---- the pencil: Zusik flies from the margin to a visible field and back ---------------------
@@ -442,16 +448,16 @@ export default function ZusikDemo() {
   // ---- actions inside messages -----------------------------------------------------------------
 
   const showTarget = useCallback(
-    (target: PlanTarget, highlight: boolean) => {
+    (target: PlanTarget, withHighlight: boolean) => {
       setFocus(target);
       setFullscreen(false);
       setShowHistory(false);
-      if (highlight && (target === "start" || target === "end")) setChanged({ field: target, key: Date.now() });
+      if (withHighlight && (target === "start" || target === "end")) highlight(target);
       window.requestAnimationFrame(() =>
         document.querySelector(`[data-field="${target}"]`)?.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" }),
       );
     },
-    [reduceMotion],
+    [highlight, reduceMotion],
   );
 
   const actions: MessageActions = {
