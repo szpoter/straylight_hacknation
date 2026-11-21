@@ -4,6 +4,56 @@ Ten plik rozwijamy dla części produktu po uwierzytelnieniu. Punktem wejścia j
 
 **Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Osobna karta paska to „Dokumenty i wnioski”. Propozycja całego paska to „Mój plan”, „Dokumenty i wnioski” oraz „Profil rodziny”, z dotychczasowym selektorem dziecka. Pod mapą są kolejno „Najbliższa sprawa” i kalkulator. Szczegóły interakcji oraz dalsze moduły to propozycje do omówienia.
 
+## Słownik
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+| Termin | Znaczenie |
+| --- | --- |
+| **Karta** | Pozycja w górnym pasku: „Mój plan”, „Dokumenty i wnioski”, „Profil rodziny”. |
+| **Ścieżka** (mapa) | Oś czterech etapów w karcie „Mój plan”. Na komputerze poziomo, na telefonie pionowo. |
+| **Etap** | „Przed narodzinami”, „Ciąża”, „Narodziny”, „Po narodzinach”. Przy adopcji i pieczy te same nazwy z podpisem wariantu. |
+| **Przystanek** | Punkt na ścieżce. Jeden przystanek odpowiada jednej sprawie. |
+| **Sprawa** | Czynność do załatwienia lub sprawdzenia. W „Dokumentach i wnioskach” ta sama sprawa jest jednym wierszem. |
+
+## Skąd pochodzą dane
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Pobieranie danych opisuje część strony publicznej. Ta sekcja ustala, co do aplikacji dociera, a o co pyta onboarding lub konkretna sprawa.
+
+| ZUS zna (w demo symulujemy) | Do czego służy |
+| --- | --- |
+| Tytuł ubezpieczenia, rodzaj ubezpieczenia chorobowego (obowiązkowe lub dobrowolne), okresy | Prawo do zasiłku, okres wyczekiwania 30 lub 90 dni, wybór formularza. |
+| Płatnik i liczba zgłaszanych ubezpieczonych (powyżej 20) | Kto wypłaca zasiłek: płatnik czy ZUS. [Zadanie, przypis 1](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf) |
+| Miesięczne podstawy wymiaru składek | Szacunek podstawy zasiłku (minus 13,71%). Przy pracowniku podpis „szacunek”, bo składniki wynagrodzenia podaje pracodawca w Z-3. |
+| Zadłużenie składkowe | Przy działalności i współpracy zadłużenie powyżej 1% minimalnego wynagrodzenia w dniu powstania prawa wstrzymuje świadczenie do spłaty; brak spłaty w 6 miesięcy powoduje przedawnienie prawa (art. 2a ustawy zasiłkowej). |
+| e-ZLA, w tym kod „B” (ciąża) | Zasiłek chorobowy w ciąży 100%, okres zasiłkowy do 270 dni. |
+| Pobrane świadczenia i okresy | Wykorzystana pula urlopów. |
+| Członkowie rodziny zgłoszeni do ubezpieczenia zdrowotnego | Podpowiedź o dziecku w profilu. Lista nie musi być kompletna. |
+
+ZUS nie zna ciąży ani przewidywanej daty porodu (zadanie, s. 2), roli rodzica w planie, adopcji lub pieczy, liczby dzieci w ciąży, planów zatrudnienia ani danych drugiego rodzica. O te informacje pyta onboarding. Dane drugiego rodzica, „Za życiem”, tydzień ciąży, masa urodzeniowa, hospitalizacja i plany urlopowe pojawiają się w konkretnej sprawie lub w kalkulatorze.
+
+### Trzy źródła wartości
+
+| Źródło | Przykład | Edycja |
+| --- | --- | --- |
+| **Urzędowe** (ikona kłódki, „ZUS · symulacja” lub „Rejestr”) | Data urodzenia dziecka, tytuł ubezpieczenia | Zablokowane. Link „Dane są błędne? Jak je poprawić w urzędzie”. |
+| **Podane przez Ciebie** | Przewidywany termin porodu, data przyjęcia, liczba osób zatrudnionych u pracodawcy | W Profilu rodziny i w miejscu użycia. Zmiana aktualizuje plan. |
+| **Założenie do symulacji** | Hipotetyczna data porodu, własna podstawa, warianty urlopu | Tylko w kalkulatorze. Plan zmienia dopiero „Użyj tego wariantu w planie”. |
+
+Zmiana decyzji (podział urlopu, sposób wypłaty) to wariant B w kalkulatorze. Zmiana faktu, którego nie można edytować (np. „a gdyby to były bliźnięta?”), tworzy przez „Sprawdź inny scenariusz” osobny plan symulacyjny w selektorze dziecka.
+
+| Sytuacja | Zachowanie |
+| --- | --- |
+| Termin porodu minął, brak danych urzędowych | Rodzic potwierdza narodziny i podaje datę jako „Podane przez Ciebie”. |
+| Dane urzędowe różnią się od podanych | Wygrywają urzędowe. Komunikat „Zaktualizowano z rejestru: 14 → 16 maja”. Zależne szkice dostają „Sprawdź po zmianie danych”. |
+| Dziecko dodane ręcznie pojawia się w rejestrze | Pytanie „Czy to to samo dziecko?” i scalenie planów. |
+| Bliźnięta | Dwie pozycje w selektorze, jeden kontekst porodu, wspólna pula w kalkulatorze z podpisem „Dotyczy: Ola i Ela”. |
+| Kolejna ciąża | Nowy plan. Pula rodzicielskiego starszego dziecka zostaje w jego planie. |
+| Sprawa testowa, plan przykładowy | Osobne plany z plakietką, wszystkie pola edytowalne, bez łączenia z danymi rodzica. |
+| Adopcja | Data przyjęcia i data urodzenia dziecka „Podane przez Ciebie” do czasu dokumentów. |
+
 ## Pierwsze wejście — krótka rozmowa z Zusikiem
 
 Jedno pytanie na ekranie. Zusik wita rodzica dymkiem „Pomogę Ci ułożyć plan. Zacznijmy od tego, na jakim jesteś etapie”. Znane informacje są dostępne pod „Sprawdź dane startowe”, z oznaczeniem źródła: „Profil demonstracyjny”, „ZUS · symulacja” albo „Podane przez Ciebie”. Ubezpieczenie chorobowe rodzica, zgłoszenie dziecka do ubezpieczenia zdrowotnego i stan rodzinnych formalności to trzy odrębne informacje. Brak wpisu oznacza „Brak danych”. Rodzic może poprawić dane w swoim wariancie demo.
@@ -19,6 +69,14 @@ Końcowy przycisk **„Pokaż mój plan”** otwiera mapę na aktualnym etapie. 
 
 Pytania o dochód, dokładne daty urlopu, dokument sądowy, hospitalizację lub zaświadczenie „Za życiem” zadajemy w konkretnej sprawie. Jeśli dane profilu są niepełne, brak istotnego pola blokuje wyłącznie wynik, który go wymaga. Testowy PDF i wybór gotowej sprawy są dostępne w demo po logowaniu jako osobny sposób zasilenia przykładu.
 
+### Uzupełnienia onboardingu
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+- Przy adopcji i pieczy obok daty przyjęcia pytamy o **datę urodzenia dziecka**. Wyznacza ona limity wieku i etap.
+- Ostatnie, opcjonalne pytanie: **„Czy przed porodem lub przyjęciem dziecka planujesz zmianę pracy albo koniec umowy?”** (Tak / Nie / Nie wiem, „Pomiń”). Pokazujemy je, gdy profil zawiera tytuł ubezpieczenia. Odpowiedź „Tak” włącza ostrzeżenie o braku ubezpieczenia w dniu porodu.
+- Na pierwszym ekranie pod kaflami link **„Najpierw rozejrzę się bez dopasowania”**. Prowadzi od razu do karty „Mój plan” z planem przykładowym oznaczonym „Przykład” i paskiem „Dopasuj plan do siebie”. Do profilu nic się nie zapisuje, dopóki rodzic nie wybierze dopasowania.
+
 ## Ekran główny i wybór dziecka
 
 U góry pływający pasek. W nim widoczna nazwa aktywnego planu, np. **„Ola ▾”**. Po otwarciu listy widać imiona lub nazwy planów oraz krótkie rozróżnienie, np. „Ola · 2 miesiące”, „Oczekiwane dziecko · maj” i „Dodaj dziecko lub plan”. Na zmianę dziecka reagują równocześnie mapa, najbliższy krok, wyliczenia, dokumenty i kontekst rozmowy. Zmiana nie oznacza spraw jako wykonanych. Przy pierwszym wejściu po terminie porodu rodzic potwierdza narodziny, zanim zmienimy etap. Przy planowaniu i ciąży aplikacja działa już przed nadaniem dziecku imienia.
@@ -31,26 +89,106 @@ U góry pływający pasek. W nim widoczna nazwa aktywnego planu, np. **„Ola �
 | Stan każdej sprawy, kto go wskazał, powiązany dokument i podstawa terminu | Data karty urodzenia, potwierdzenie rejestracji w USC, zgłoszenie do ubezpieczenia i wybór POZ. Przy adopcji i pieczy zamiast danych porodowych pytamy o daty przyjęcia, właściwego orzeczenia lub wniosku do sądu. [Rejestracja urodzenia](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Dokumenty ZUS](https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty) |
 | Dostęp do edycji i informacji o źródle | Tylko dla odpowiedniego wyliczenia: liczba dzieci z jednego porodu lub przyjętych jednocześnie, okresy wykorzystane przez rodziców, wymiar pracy, informacja o zaświadczeniu „Za życiem”. Przy uzupełniającym urlopie mogą mieć znaczenie tydzień ciąży w dniu porodu, masa urodzeniowa i okresy pobytu w szpitalu. [ZUS o uzupełniającym urlopie](https://psz.zus.pl/web/guest/swiadczenia/zasilki/zasilek-macierzynski/prawo-do-zasilku-i-okres-przyslugiwania/za-okres-uzupelniajacego-urlopu-macierzynskiego) |
 
+### Lista w selektorze
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Lista w selektorze rozróżnia rodzaj planu:
+
+```
+Ola · 2 miesiące                      🔒 dane z rejestru
+Oczekiwane dziecko · maj 2027         planowane
+Sprawa testowa · Alicja T.            [Test]
+Przykład · rodzina Kowalskich         [Przykład]
++ Dodaj dziecko lub plan
++ Wczytaj przykładową sprawę
+```
+
 ## Mapa — cztery etapy, jedna najbliższa sprawa
 
-Ścieżka z przystankami jest inspirowana Duolingo. Aktualny przystanek wyróżnia się podpisem **„Teraz”** i obecnością Zusika. Pozostałe etapy można oglądać od razu. Na komputerze przewijamy mapę poziomo gestem lub przyciskami „Poprzedni etap” i „Następny etap”. Na telefonie przystanki biegną pionowo w naturalnym przewijaniu strony. Skrót „Przejdź do najbliższej sprawy” omija długą ścieżkę. Aktywność medyczna ani złożenie wniosku nie daje punktów. W trudnej sytuacji można przejść do spokojnego widoku listy z formalnościami i wsparciem.
+Ścieżka z przystankami jest inspirowana Duolingo. Aktualny przystanek wyróżnia się podpisem **„Teraz”** i obecnością Zusika. Pozostałe etapy można oglądać od razu. Na komputerze przewijamy mapę poziomo gestem lub przyciskami „Poprzedni etap” i „Następny etap”. Na telefonie przystanki biegną pionowo w naturalnym przewijaniu strony. Pływający przycisk „↑ Teraz” wraca do bieżącego przystanku (uzgodnione 21.11.2026). Aktywność medyczna ani złożenie wniosku nie daje punktów. W trudnej sytuacji można przejść do spokojnego widoku listy z formalnościami i wsparciem.
 
 Zachowujemy nazwy **„Przed narodzinami → Ciąża → Narodziny → Po narodzinach”**. Proponowane znaczenie pierwszego etapu to przygotowania podczas planowania rodzicielstwa. Drugi zaczyna się, gdy rodzic wybierze ciążę. W adopcji i pieczy pokazujemy właściwe kamienie milowe — przygotowania, postępowanie, przyjęcie dziecka, opiekę — z pominięciem pytań o przebieg ciąży. Przy stracie rodzic sam decyduje o przejściu na ścieżkę wsparcia, która wycisza kolejne przypomnienia rozwojowe. [Bezpłatne wsparcie Fundacji Ernesta](https://fundacjaernesta.pl/jak-pomagamy/)
 
-### Katalog startowy przystanków
+### Etapy i katalog przystanków
 
-Na głównej linii są czynności wymagające działania w danej sytuacji. Obok znajdują się sprawy **„Na wniosek”**, **„Program zdrowotny”** i **„Informacja”**. Obowiązek powstający po decyzji rodzica ma widoczny warunek. Przy każdym przystanku podajemy właściwą instytucję i link do źródła.
+**Uzgodnione 21.11.2026 (Maciej).** Nazwy etapów pozostają. „Przed narodzinami” obejmuje przygotowania i starania o dziecko, także sprawy zdrowotne spoza ZUS. Rodzic, który zaczyna od ciąży, widzi ten etap zwinięty i może go otworzyć.
 
-| Etap | Co konkretnie pojawia się na mapie |
+#### Katalog przystanków
+
+Typy: **Obowiązek**, **Na wniosek** („Jeśli chcesz skorzystać”), **Informacja**, **Program zdrowotny**, **Dzieje się samo** (np. „Pracodawca przekaże Z-3 do ZUS — nic nie musisz robić”), **Ryzyko** (ostrzeżenie przy przystanku). W nawiasie wiersz wymagań z zadania (s. 12–14).
+
+| Etap | Przystanki |
 | --- | --- |
-| **Przed narodzinami** | „Sprawdź swoje ubezpieczenie chorobowe” otwiera podsumowanie, tytuł i okres ubezpieczenia. „Planuję zmianę pracy” uruchamia wariant porównawczy z pytaniem o datę zmiany i wpływ na możliwe uprawnienia. To czynności przygotowawcze. [Opis wyzwania, s. 11–13](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf) |
-| **Ciąża** | „Sprawdź świadczenia w razie choroby” prowadzi do zasiłku chorobowego, warunkowo do świadczenia rehabilitacyjnego lub zasiłku w wysokości zasiłku macierzyńskiego przy określonej utracie zatrudnienia. „Zapytaj o badania prenatalne” otwiera kartę programu NFZ ze skierowaniem, etapem ciąży i odnośnikiem do realizatorów. Program obejmuje badania nieinwazyjne, a pogłębiona diagnostyka genetyczna zależy od wskazań i kwalifikacji lekarskiej. Przy zainteresowaniu becikowym osobno wyjaśniamy warunek dotyczący opieki medycznej matki od odpowiedniego momentu ciąży i wyjątki dla opiekunów. [ZUS o chorobowym](https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-chorobowy/z-ubezpieczenia-chorobowego/prawo-do-zasilku-i-okres-przyslugiwania) · [Program prenatalny NFZ](https://pacjent.gov.pl/program-profilaktyczny/program-badan-prenatalnych) · [Becikowe](https://www.gov.pl/web/gov/uzyskaj-becikowe) |
-| **Narodziny** | „Zgłoś urodzenie w Polsce” — obowiązek, USC, w typowej sytuacji żywego urodzenia 21 dni od wystawienia karty urodzenia. „Sprawdź dokumenty z USC” opisuje odpis aktu, nadanie PESEL-u i meldunek, jeśli dotyczą dziecka. Dodatkowy odpis można zamówić w symulacji. „Zgłoś dziecko do ubezpieczenia zdrowotnego” pojawia się, gdy zachodzi obowiązek i nikt jeszcze dziecka nie zgłosił. Pracownik informuje płatnika, osoba samodzielnie zgłaszająca rodzinę korzysta z ZUS ZCNA. „Badania przesiewowe noworodka” to informacja o programie Ministerstwa Zdrowia realizowanym w opiece medycznej. [USC](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Ubezpieczenie członków rodziny](https://www.zus.pl/pracujacy/ubezpieczenie-zdrowotne-w-polsce/zasady-podlegania-ubezpieczeniu-zdrowotnemu/ubezpieczenie-czlonkow-rodziny) · [Program badań przesiewowych 2019–2026](https://www.gov.pl/web/zdrowie/program-badan-przesiewowych-noworodkow-w-polsce-na-lata-2019-2026) |
-| **Po narodzinach — urlopy i wypłaty** | „Zaplanuj urlop i zasiłek” dobiera dokumenty do zatrudnienia, roli i wybranego okresu: macierzyńskiego, uzupełniającego, rodzicielskiego lub ojcowskiego. Dla pracownika oddziela wniosek urlopowy do pracodawcy od dokumentów do wypłaty zasiłku przez właściwego płatnika. W razie hospitalizacji otwiera pytania o zaświadczenie ze szpitala. Przy podziale opieki i powrocie do pracy prowadzi do wspólnego kalkulatora. [Dokumenty ZUS](https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty) · [Urlop rodzicielski](https://www.gov.pl/web/rodzina/urlop-rodzicielski) |
-| **Po narodzinach — świadczenia na wniosek** | „Sprawdź 800+” — dla noworodka wniosek w ciągu 3 miesięcy od urodzenia pozwala uzyskać wypłatę od urodzenia. „Sprawdź program Aktywny Rodzic” — wariant według wieku i formy opieki. „Sprawdź becikowe” — ocena warunków i odbiorca w gminie. Przy właściwym zaświadczeniu pokazujemy także ścieżkę „Za życiem”. Każda karta określa instytucję, warunki i skutki terminu. [800+](https://www.zus.pl/pl/swiadczenia/swiadczenia-dla-rodzin/swiadczenie-wychowawcze-800-plus) · [Aktywny Rodzic](https://www.zus.pl/pl/aktywnyrodzic) · [Becikowe](https://www.gov.pl/web/gov/uzyskaj-becikowe) · [Za życiem](https://www.gov.pl/web/rodzina/program-za-zyciem) |
-| **Po narodzinach — zdrowie** | „Wybierz przychodnię dla dziecka” prowadzi do deklaracji wyboru POZ. „Sprawdź kalendarz szczepień” odsyła do aktualnego programu z oznaczeniami szczepień obowiązkowych i zalecanych. W karcie są instytucja, źródło i kolejny krok do omówienia w POZ. [Deklaracje POZ](https://pacjent.gov.pl/jak-wybrac-lub-zmienic-swiadczeniodawce-poz) · [Kalendarz na 2026 r.](https://pacjent.gov.pl/kalendarz-szczepien-dzieci-i-mlodziezy-na-2026-rok) |
+| **Przed narodzinami** | *Zdrowie przed ciążą* — „Wizyta kontrolna przed staraniem się o dziecko”, „Sprawdź szczepienia dorosłego”, „Suplementacja i styl życia”, „Zdrowie drugiego rodzica”. Krótkie karty z jednym zdaniem, źródłem (pacjent.gov.pl, NFZ) i dopiskiem „Omów z lekarzem”. Bez porad generowanych. *Twoje ubezpieczenie* — „Sprawdź swoje ubezpieczenie chorobowe” (tytuł, ciągłość, okres wyczekiwania 30 lub 90 dni) (a); „Dobrowolne ubezpieczenie chorobowe” tylko przy zleceniu lub działalności (h); „Zaległe składki” tylko przy działalności lub współpracy (h); „Planuję zmianę pracy” z neutralną informacją, że ZUS może sprawdzić, czy umowa i podstawa odpowiadają rzeczywistości (h). *Pieniądze* — „Od czego zależy wysokość zasiłku” z szacunkiem z danych ZUS (b, f). |
+| **Ciąża** | „Zasiłek chorobowy w ciąży” z podglądem e-ZLA (a); „Świadczenie rehabilitacyjne” warunkowo, gdy suma zwolnień zbliża się do 270 dni (a); „Zasiłek w wysokości zasiłku macierzyńskiego” warunkowo, przy końcu zatrudnienia w ciąży z powodu upadłości, likwidacji lub śmierci pracodawcy albo naruszenia prawa stwierdzonego prawomocnym wyrokiem (a); „Ochrona pracownicy w ciąży” z przedłużeniem umowy terminowej do porodu po 3. miesiącu ciąży (h); „Urlop macierzyński przed porodem” — najwyżej 6 tygodni przed przewidywaną datą (g); „Zaplanuj urlopy i sposób wypłaty” — kalkulator z porównaniem 81,5% i 100%/70%, bo wniosek o 81,5% składa się do 21 dni po porodzie (b, d); badania prenatalne i warunek becikowego jako Program zdrowotny i Informacja. |
+| **Narodziny** | „Zgłoś urodzenie” (Obowiązek, USC, 21 dni); „Zamów odpis aktu urodzenia” (Na wniosek, symulacja); „Zgłoś dziecko do ubezpieczenia zdrowotnego” (Obowiązek warunkowy); „Wniosek o urlop i zasiłek macierzyński” (g); „Urlop ojcowski” (g); sytuacje szczególne: uzupełniający urlop macierzyński przy wcześniactwie lub hospitalizacji, „Za życiem”, martwe urodzenie lub zgon dziecka z widokiem „Wsparcie” (b, i); badania przesiewowe (Program zdrowotny). |
+| **Po narodzinach** | „Urlop rodzicielski” — pula, części, równocześnie lub kolejno (d); „Drugi rodzic przejmuje część macierzyńskiego” po 14 tygodniach (d); „Łączę urlop rodzicielski z pracą” (c); „Urlop ojcowski” do 12. miesiąca życia dziecka (g); „Powrót do pracy i ochrona przed zwolnieniem” (h); 800+, Aktywny Rodzic, becikowe, wybór POZ, kalendarz szczepień. |
+
+**Do sprawdzenia:** terminy i warunki spraw spoza ZUS (USC, 800+, becikowe, NFZ, POZ) według aktualnych stron gov.pl przed zapisem.
+
+#### Adopcja i niezawodowa piecza zastępcza
+
+Te same etapy z podpisem wariantu, np. **„Narodziny · Przyjęcie dziecka”**. Nagłówek ścieżki pokazuje „Plan adopcyjny” lub „Plan rodziny zastępczej”, żeby rodzic widział, że ścieżka jest dla niego.
+
+| Etap | Adopcja | Piecza zastępcza niezawodowa |
+| --- | --- | --- |
+| Przed narodzinami · Przygotowanie | Ośrodek adopcyjny, szkolenie, kwalifikacja; ubezpieczenie jak w ścieżce biologicznej | Organizator pieczy, szkolenie, kwalifikacja; ubezpieczenie |
+| Ciąża · Oczekiwanie | Postępowanie, dobór dziecka | Oczekiwanie na umieszczenie dziecka |
+| Narodziny · Przyjęcie dziecka | Przyjęcie i wniosek do sądu opiekuńczego o przysposobienie. Wniosek pracownika o urlop na warunkach urlopu macierzyńskiego w 7 dni od przyjęcia; urlop zaczyna się najpóźniej 21 dni od przyjęcia (KP). | Przyjęcie dziecka; te same terminy |
+| Po narodzinach · Opieka | Urlop na warunkach urlopu macierzyńskiego (20–37 tygodni według liczby dzieci, nie krócej niż 9 tygodni), rodzicielski, ojcowski w 12 miesięcy od uprawomocnienia przysposobienia, nie później niż do 14 lat dziecka | Urlop na warunkach urlopu macierzyńskiego, rodzicielski |
+
+Limity wieku: adopcja do 14 lat, piecza do 7 lat, do 10 przy odroczeniu obowiązku szkolnego. Poza limitem karta pokazuje brak uprawnienia z przyczyną. Zawodowa rodzina zastępcza nie ma prawa do zasiłku macierzyńskiego i karta to wyjaśnia.
 
 **Co pokazuje pojedynczy przystanek.** Na mapie wystarczą nazwa czynności, status i termin. Kliknięcie otwiera szczegóły sprawy. Na komputerze mapa wskazuje kartę bezpośrednio pod ścieżką, a na telefonie ten sam widok otwiera się od dołu. Karta pokazuje, dla którego dziecka, dlaczego sprawa się pojawia, do kiedy i od jakiego zdarzenia liczymy czas, dokumenty, kto składa i do kogo, źródło oraz jedno działanie. Dla formularza to „Przygotuj szkic”, dla programu NFZ „Sprawdź, gdzie wykonać badanie”, dla wykonanej czynności „Zobacz szczegóły”. Statusy „Do zrobienia”, „Szkic”, „Oznaczone jako załatwione” i „Wysłano w symulacji” mają odrębne znaczenie. Jeśli nie znamy daty bazowej, zamiast odliczania proponujemy „Uzupełnij datę”. Sprawy rodzica i wspólne okresy opieki są powiązane z rodziną lub porodem, więc zmiana profilu bliźniaka nie tworzy dodatkowego urlopu.
+
+### Zusik na ścieżce
+
+**Uzgodnione 21.11.2026 (Maciej).** Zusik jest pionkiem. Stoi na ostatnim przystanku, przed którym wszystkie sprawy są załatwione, odhaczone albo oznaczone „Nie korzystam”. Sprawa zrobiona poza kolejnością dostaje ptaszek, ale pionek nie przeskakuje niezałatwionego obowiązku. Przy pionku jest dymek z następnym krokiem i terminem. Kliknięcie pionka otwiera czat z kontekstem przystanku. Przystanki „Informacja” i „Program zdrowotny” rodzic może prywatnie odhaczyć. Układ ścieżki opisuje [ui/MACIEJ.md](ui/MACIEJ.md).
+
+### Karta sprawy — blok „Jak złożyć”
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Każda sprawa urlopowa i zasiłkowa ma cztery stałe wiersze: **Co** (nazwa po ludzku i symbol formularza), **Do kogo** (z jednym zdaniem dlaczego), **Do kiedy** (data i podstawa terminu), **Załączniki** (tylko dotyczące rodzica). Ten sam blok widać w wierszu „Dokumentów i wniosków”.
+
+| Sytuacja | Wniosek o urlop | Wniosek o zasiłek | Wypłaca |
+| --- | --- | --- | --- |
+| Pracownik, płatnik zgłasza powyżej 20 ubezpieczonych | Do pracodawcy | Ten sam wniosek | Pracodawca |
+| Pracownik, płatnik do 20 ubezpieczonych | Do pracodawcy | Pracodawca przekazuje Z-3 do ZUS | ZUS |
+| Zleceniobiorca z chorobowym | — | ZAM, płatnik dołącza Z-3a | Płatnik powyżej 20 albo ZUS |
+| Działalność, współpraca | — | ZAM do ZUS | ZUS |
+
+Gdy liczba ubezpieczonych u płatnika jest nieznana, pytamy „Ile osób zatrudnia Twój pracodawca?”. Odpowiedź „Nie wiem” daje tekst „Zapytaj pracodawcę, kto wypłaci zasiłek”.
+
+Terminy: macierzyński przed porodem najwyżej 6 tygodni przed przewidywaną datą; wniosek o 81,5% do 21 dni po porodzie; rodzicielski i uzupełniający — wniosek co najmniej 21 dni przed rozpoczęciem; ojcowski — co najmniej 7 dni przed; rezygnacja z części macierzyńskiego po 14 tygodniach — co najmniej 7 dni przed powrotem do pracy; podjęcie pracy w czasie rodzicielskiego — wniosek co najmniej 21 dni wcześniej (KP).
+
+Od 24.10.2026 ZUR i ZAO połączono z ZAM, a Z-3b zlikwidowano (zadanie, s. 12). Używamy ZAM, Z-3, Z-3a, ZAS-53 i ZAS-12. Wnioski urlopowe do pracodawcy projektujemy na podstawie rozporządzenia o wnioskach. Karty urlopów linkują do ZUS, MRPiPS i PIP.
+
+### Ostrzeżenia o ryzyku
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Ostrzeżenie ma kolor `warning`, pojawia się przy przystanku, którego dotyczy, oraz w „Najbliższej sprawie”, gdy dotyczy rodzica teraz. „Sprawdź dane startowe” pokazuje licznik aktywnych ostrzeżeń. Nie ma zbiorczej listy. Każde ostrzeżenie mówi, co może się stać, dlaczego dotyczy tego rodzica i jakie jest jedno działanie.
+
+| Ryzyko | Wyzwalacz | Działanie |
+| --- | --- | --- |
+| Brak ubezpieczenia chorobowego przy zleceniu lub działalności | Tytuł bez chorobowego | „Sprawdź, jak przystąpić” |
+| Brak ubezpieczenia w dniu porodu | Odpowiedź „Tak” w onboardingu albo koniec umowy przed terminem porodu | Wyjaśnienie, przedłużenie umowy terminowej do porodu, kalkulator |
+| Zadłużenie składkowe | Działalność lub współpraca, kwota powyżej progu | Kwota, termin 6 miesięcy, „Wystaw zaświadczenie (symulacja)” |
+| Ochrona przed zwolnieniem | Pracownica w ciąży lub na urlopie | Informacja i link do PIP |
+
+Umowy dla pozoru i podwyższenia podstawy nie wykrywamy z danych. Wyjaśnia je wyłącznie neutralna informacja w przystanku „Planuję zmianę pracy”.
+
+### Widok „Wsparcie”
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Spokojny widok bez animacji, podzielony według sytuacji: strata dziecka lub poronienie, wcześniak, ciężka choroba dziecka („Za życiem”), trudna sytuacja rodzica. Organizacja ma nazwę, rodzaj pomocy, odbiorców, informację o bezpłatności, kontakt i link. Wyłącznie podmioty charytatywne (zadanie, s. 13). Pod organizacjami, w drugiej kolejności, sprawy formalne danej sytuacji.
+
+Wejścia: link w onboardingu, przełącznik spokojnego widoku na ścieżce, stopka każdej karty, karta sprawy po podaniu martwego urodzenia, wcześniactwa lub „Za życiem”. Przy stracie aplikacja proponuje przełączenie na ścieżkę wsparcia, a rodzic sam decyduje.
+
+**Do sprawdzenia:** lista 4–6 organizacji z weryfikacją źródeł.
 
 ## Pod mapą — najbliższa sprawa i kalkulator
 
@@ -97,6 +235,37 @@ Dwoje uprawnionych pracowników planuje po 4 tygodnie urlopu rodzicielskiego w r
 
 Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodnie. Łączna kwota zasiłku za wybrane okresy pozostaje taka sama.”** Do odbioru reguł potrzebne są ponadto sprawy konkursowe z dokumentami i oczekiwanym wynikiem, w tym brak uprawnienia, niepełne dane, różne podstawy rodziców, praca na część etatu, adopcja i piecza. Parametry stawek i limitów wybieramy według daty sprawy z ustawień administracyjnych.
 
+### Reguły i uzupełnienia kalkulatora
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+#### Reguły
+
+| Reguła | Wartość |
+| --- | --- |
+| Urlop macierzyński i na warunkach urlopu macierzyńskiego | 20 / 31 / 33 / 35 / 37 tygodni według liczby dzieci, 100%. Matka wykorzystuje co najmniej 14 tygodni po porodzie, przed porodem najwyżej 6 tygodni. Na warunkach macierzyńskiego nie krócej niż 9 tygodni. |
+| Uzupełniający urlop macierzyński | Tydzień za tydzień hospitalizacji, limit 8 lub 15 tygodni według tygodnia ciąży i masy urodzeniowej, 100%, jednorazowo. |
+| Urlop rodzicielski | 41 tygodni (1 dziecko), 43 (więcej), 65 / 67 przy „Za życiem”, 70%. Po 9 tygodni nieprzenoszalnych dla każdego rodzica. Najwyżej 5 części, do końca roku kalendarzowego, w którym dziecko kończy 6 lat. |
+| Urlop ojcowski | 2 tygodnie, 100%, jednorazowo lub w dwóch częściach po co najmniej tydzień. Nie zużywa puli rodzicielskiego. |
+| Sposób wypłaty 81,5% | Wniosek do 21 dni po porodzie: 81,5% za macierzyński i rodzicielski, z wyjątkiem 9 tygodni drugiego rodzica (70%). Bez dnia rodzicielskiego w pierwszym roku życia dziecka rodzicielski wynosi 70%, a na wniosek przysługuje wyrównanie macierzyńskiego do 100% (art. 31 ust. 3–4). |
+| Kwota minimalna | Zasiłek niższy od świadczenia rodzicielskiego podnosi się do jego wysokości (art. 31 ust. 3a). |
+| Praca podczas rodzicielskiego | Do połowy etatu. Urlop wydłuża się proporcjonalnie, najwyżej do 82 / 86 tygodni. Zasiłek maleje proporcjonalnie do wymiaru pracy (art. 31 ust. 4a). |
+| Kwota dzienna | 1/30 miesięcznego zasiłku. |
+| Podstawa | Średnia z 12 miesięcy minus 13,71%. Minimalna w 2026 r. około 4 147 zł. Maksymalna dla niebędących pracownikami 20 321,30 zł. |
+
+**Do sprawdzenia:** kwota świadczenia rodzicielskiego, wymiar rodzicielskiego przy adopcji dziecka z „Za życiem” (KP, art. 1821a), dokładna minimalna podstawa 2026.
+
+#### Ekran
+
+- **Założenia** — zwinięty pasek nad osią, np. „1 dziecko · bez „Za życiem” · bez hospitalizacji · zmień”, wypełniony z planu. Rozwinięcie: liczba dzieci, „Za życiem”, hospitalizacja lub wcześniactwo z pytaniami o tydzień ciąży, masę i pobyt w szpitalu.
+- **Sposób wypłaty** — przełącznik „81,5% przez cały okres” / „100%, potem 70%” z informacją o 21 dniach i wyrównaniu. Porównanie obu sposobów działa w „Porównaj wariant”.
+- **Praca w trakcie** — przy odcinku rodzicielskim przełącznik „Pracuję w tym czasie” z opcjami ¼, ⅓, ½ i „Inny” (najwyżej ½). Odcinek wydłuża się z podpisem, np. „+4 tyg. dzięki pracy na ½ etatu”. Karta dopisuje wniosek do pracodawcy.
+- **Pula** — pasek pod osiami: wykorzystano, zarezerwowane dla każdej osoby, pozostało. Ojcowski na osobnym torze.
+- **Walidacja** zatrzymuje zapis wariantu i wskazuje odcinek: mniej niż 14 tygodni matki po porodzie, więcej niż 5 części, odcinek po roku, w którym dziecko kończy 6 lat, przekroczona pula, wiek dziecka poza limitem przy adopcji lub pieczy.
+- Brak podstawy drugiego rodzica: odcinek z napisem „Uzupełnij podstawę”, bez liczenia na minimum.
+- Adopcja i piecza: ten sam kalkulator, zdarzeniem startowym jest data przyjęcia, data urodzenia dziecka wyznacza limity.
+- W planowaniu bez podanej daty kalkulator przyjmuje hipotetyczną datę porodu, oznaczoną „planowane” i edytowalną.
+
 ## Zusik — czat dostępny w całej aplikacji po zalogowaniu
 
 **Uzgodnione.** W prawym dolnym rogu każdego ekranu jest mały bąbelek Zusika z etykietą „Otwórz czat z Zusikiem”. Pozostaje w zasięgu podczas przewijania. Otwiera po prawej panel agenta z historią rozmów, polem wiadomości i trzema propozycjami rozpoczęcia rozmowy dopasowanymi do sytuacji na stronie. „Pełny ekran” rozszerza tę samą rozmowę. „Podziel ekran” przywraca obok niej bieżący widok aplikacji. Akcja „Dokończ z Zusikiem” otwiera ten panel przy odpowiednim szkicu wniosku.
@@ -142,6 +311,31 @@ Na komputerze wiersz ma tytuł sprawy językiem rodzica, status, odbiorcę, term
 
 **„Pliki dziecka”** pokazują dokumenty źródłowe i załączniki (np. zaświadczenie ze szpitala), kopie wniosków, potwierdzenia oraz pisma przychodzące. Wiersz podaje nazwę, rodzaj, datę i powiązaną sprawę. Otwarcie pokazuje podgląd i link do sprawy. Szkic można edytować. Wysłaną wersję zachowujemy do odczytu. Uzupełnienie po wezwaniu tworzy kolejne pismo lub załącznik powiązany z tą samą sprawą. Dla pisma do pracodawcy lub USC pokazujemy sposób przekazania i dostępne potwierdzenie właściwe dla odbiorcy. UPP z eZUS jest przypisane do przesyłki złożonej do ZUS.
 
+### Jeden model statusów
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Jeden stan sprawy w danych, dwa poziomy prezentacji: skrót na ścieżce, pełna etykieta w „Dokumentach i wnioskach”.
+
+| Stan sprawy | Ścieżka | Dokumenty: grupa · etykieta |
+| --- | --- | --- |
+| Warunek nie zaszedł | Przed Tobą | Na później |
+| Aktualna, nierozpoczęta | Do zrobienia | Do załatwienia · Do rozpoczęcia |
+| Szkic | W trakcie | Do załatwienia · Szkic |
+| Wypełniony | W trakcie | Do załatwienia · Wypełniony · do sprawdzenia |
+| Zatwierdzony | W trakcie | Do załatwienia · Zatwierdzony · do przekazania |
+| Wysłano, potwierdzono wpływ, w rozpatrywaniu | Wysłane | Wysłane i w toku |
+| Wezwanie | Wymaga uwagi | Do załatwienia · Do uzupełnienia po wezwaniu |
+| Odmowa w terminie na odwołanie | Wymaga uwagi | Zakończone z flagą „Wymaga uwagi” i możliwością odwołania zgodnie z pouczeniem |
+| Przyznano, odmowa po terminie, oznaczone jako załatwione | Załatwione | Zakończone |
+| Rezygnacja ze sprawy dobrowolnej („Nie korzystam”) | Załatwione · Nie korzystasz | Zakończone · Nie korzystasz (odwracalne) |
+
+Flagi niezależne od stanu: „Termin minął”, „Sprawdź po zmianie danych”, źródło, „Jeśli chcesz skorzystać”.
+
+Przystanki „Informacja” i „Program zdrowotny” nie mają statusu urzędowego. Rodzic może je prywatnie oznaczyć jako „Odhaczone” — przystanek na ścieżce zmienia wtedy wygląd. Oznaczenie nie wpływa na „Dokumenty i wnioski”.
+
+**Odpis aktu urodzenia** należy do „Rejestracji i ubezpieczenia”: rodzaj (zupełny, skrócony), liczba, cel, sposób odbioru, „Wyślij w symulacji”, potem „Odpis gotowy” z demonstracyjnym PDF w „Plikach dziecka”, gotowym do dołączenia do innej sprawy.
+
 ### Po kliknięciu „Dokończ z Zusikiem”
 
 1. **Powrót do miejsca przerwania.** Otwiera się widok dzielony. Po lewej widoczny jest zapisany formularz z pierwszym brakującym polem, po prawej rozmowa dotycząca tego szkicu. Nagłówek identyfikuje dziecko, dokument i odbiorcę, np. „Ola · Wniosek o urlop ojcowski · Pracodawca”. Na telefonie nad czatem widać edytowane pole. Przy pierwszej rozmowie działają trzy ustalone propozycje startu, przy wznowieniu widać dotychczasowe wiadomości.
@@ -183,6 +377,47 @@ Na komputerze wiersz ma tytuł sprawy językiem rodzica, status, odbiorcę, term
 | **Dane od rodzica.** Informacje potrzebne do wyboru ścieżki. | Rola w konkretnym planie, planowane zmiany zatrudnienia lub opieki, brakujące daty. Dane drugiego opiekuna tylko w zakresie podanym do wspólnej symulacji. | Możliwość dodania, poprawienia i zapisania przy właściwej osobie lub planie. Szczegółowe dane medyczne, finansowe i załączniki mają wejście przez odpowiednią sprawę. |
 
 **Po zapisaniu zmiany** rodzic widzi jej skutek, np. „Zmieniono przewidywany termin porodu. Zaktualizowano daty w planie Oli”. Szkic zależny od zmienionego pola dostaje oznaczenie „Sprawdź po zmianie danych”. Wysłane dokumenty zachowują treść z chwili wysyłki. Przy błędzie zapisu formularz zachowuje wpisane wartości. Korekta lokalnego założenia i przywrócenie wartości źródłowej są dostępne w miejscu użycia tej wartości.
+
+### Moje konto w ZUS
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Nowa sekcja **„Moje konto w ZUS (symulacja eZUS)”**, tylko do odczytu, ze źródłem i datą pobrania: tytuły i okresy ubezpieczenia, płatnicy, podstawy składek, członkowie rodziny zgłoszeni do ubezpieczenia zdrowotnego, e-ZLA, przyznane świadczenia, stan zadłużenia. „Odśwież dane” symuluje ponowne pobranie.
+
+**„Zapytaj ZUS”** zapisuje wiadomość jako „Wysłano w symulacji” w korespondencji w „Dokumentach i wnioskach”. Nic nie opuszcza aplikacji. Wizualnie odróżnia się od czatu Zusika. Roboczo: bez symulowanej odpowiedzi, z informacją „W prawdziwej usłudze odpowiedź przyjdzie do skrzynki eZUS” (do potwierdzenia).
+
+Podgląd e-ZLA znajduje się w karcie „Zasiłek chorobowy w ciąży”. Zadłużenie przy działalności lub współpracy widać w karcie sprawy zasiłkowej i w tej sekcji, z akcją „Wystaw zaświadczenie (symulacja)”.
+
+### Przetestuj przykładową sprawę
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Wejścia: przycisk widoczny po zalogowaniu, „Wczytaj przykładową sprawę” w selektorze dziecka i sekcja w Profilu rodziny.
+
+1. **„Wgraj PDF”.** W publicznym demo wyłącznie upload. Udostępnione przez ZUS dokumenty nie są rozpowszechniane (zadanie, s. 11–12). Zestaw spraw zostaje w prywatnym repozytorium do testów zespołu.
+2. **„Wczytujemy dokumenty…”**, potem lista odczytanych pól ze wskazaniem dokumentu i strony, np. „Podstawa: 6 812,40 zł · Z-3, s. 4”. Odczyt ma plakietkę AI. Każde pole można poprawić przed wyliczeniem.
+3. **Wynik**: ubezpieczenie (tytuł, okres lub brak) → prawo do świadczenia → okres i kwota w kalkulatorze albo przyczyna braku uprawnienia.
+4. **„Zgodne z decyzją ZUS”** albo wskazanie różnicy, gdy sprawa zawiera decyzję.
+5. **„Otwórz jako plan”** dodaje do selektora „Sprawa testowa · …” z plakietką.
+
+Przypadki referencyjne: Agnieszka Wa_05 (łączenie z pracą), Jolanta Poz_9 (troje dzieci, „Za życiem”, praca), Justyna Toruńska (bliźnięta, wcześniaki), Agnieszka Poz (uzupełniający, masa poniżej 1000 g), Barbara Ra (rezygnacja po 14 tygodniach), Tomasz Po_11 (odmowa za 6. część), Andrzej El, Marek Wro, Ryszard Ra (9 tygodni drugiego rodzica), Natalia Ko_5 (macierzyński przed porodem), Janina Poz_2 (podwyższenie kwoty), Zuzanna Le, Anna Ko_4, Dagmara Chrz, Justyna Wa I_4 (chorobowy w ciąży), Anna Wro_6, Dorota Wa, Katarzyna Łó 4, Joanna Łód_3 (zasiłek w wysokości macierzyńskiego), Julia Gd, Agnieszka War, Jolanta Go (adopcja i piecza), Krystyna Zab, Ewa Łód_5, Małgorzata Rze, Paulina Po, Helena Gd, Piotr Cho, Joanna Wa I_5 (odmowy).
+
+### Pusty stan — „Planuję rodzicielstwo”
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+| Karta | Widok |
+| --- | --- |
+| Mój plan | Aktywny etap „Przed narodzinami”, kolejne etapy oglądalne bez dat, z zasadą liczenia. |
+| Kalkulator | „Sprawdź, ile możesz dostać” z podstawą z danych ZUS i hipotetyczną datą porodu. |
+| Dokumenty i wnioski | „Na teraz nic nie musisz składać”. „Na później” pokazuje sprawy z warunkiem, np. „Po potwierdzeniu ciąży”. |
+| Profil rodziny | Plan bez nazwy, „Moje dane”, konto w ZUS. |
+
+### Oznaczenie funkcji AI
+
+**Uzgodnione 21.11.2026 (Maciej).**
+
+Wymóg formalny (zadanie, s. 14). Wspólna plakietka „AI” przy odczycie dokumentów w sprawie testowej i przy treściach generowanych przez Zusika. Wygląd plakietki w czacie ustala zakres Juliana.
 
 ### Proponowany komplet kart
 

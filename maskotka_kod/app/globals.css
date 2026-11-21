@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  /* Bąbelek mascot: values measured from design/mascot/base.jpg */
+  --color-babelek-fill: #A3DAB3;
+  --color-babelek-rim: #338C5C;      /* rim and arms */
+  --color-babelek-ink: #1E3D5C;      /* pupils, mouth */
+  --color-babelek-shine: #FFFFFF;    /* highlights, eye whites, catchlights */
+  --color-babelek-shadow: #D1D1D1;   /* ground shadow */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
