@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { TEST_CASES, type CaseStatus, type TestCase } from "./mock-data";
+import { caseSearchFields, searchItems } from "./search";
 import { Badge, Card, StatTile, cx } from "./ui";
 import s from "./admin.module.css";
 
@@ -23,11 +24,10 @@ export function CasesView() {
   const uploadId = useId();
 
   const count = (status: CaseStatus) => TEST_CASES.filter((c) => c.status === status).length;
-  const q = query.trim().toLowerCase();
-  const visible = TEST_CASES.filter(
-    (c) =>
-      (filter === "wszystkie" || c.status === filter) &&
-      (!q || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q)),
+  const visible = searchItems(
+    TEST_CASES.filter((c) => filter === "wszystkie" || c.status === filter),
+    query,
+    caseSearchFields,
   );
   const selected = visible.find((c) => c.id === selectedId) ?? visible[0] ?? null;
 
@@ -74,7 +74,7 @@ export function CasesView() {
           <input
             className={s.input}
             type="search"
-            placeholder="Szukaj po nazwie lub numerze"
+            placeholder="Nazwa, numer lub dane sprawy"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -101,7 +101,7 @@ export function CasesView() {
             ))}
           </ul>
         ) : (
-          <p className={s.empty}>Brak spraw dla tego filtra.</p>
+          <p className={s.empty}>{query.trim() ? `Brak spraw pasujących do „${query.trim()}”.` : "Brak spraw dla tego filtra."}</p>
         )}
 
         <div className={s.upload}>

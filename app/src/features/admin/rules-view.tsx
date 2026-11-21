@@ -168,6 +168,8 @@ function ParameterDetails({ parameter: p }: { parameter: Parameter }) {
       ) : null}
 
       <dl className={s.dl}>
+        <dt>Zakres spraw</dt>
+        <dd>{p.scope ?? "Wszystkie sprawy tego świadczenia"}</dd>
         <dt>Podstawa</dt>
         <dd>{p.source}</dd>
         <dt>Gdzie działa u rodzica</dt>
