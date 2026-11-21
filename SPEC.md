@@ -4,7 +4,9 @@ W tym pliku zapisujemy specyfikacje kolejnych części projektu w miarę ich oma
 
 ## Hero — pierwszy ekran strony głównej
 
-**Status roboczy · do omówienia**
+### Uzgodnione
+
+Hero odpowiada przede wszystkim na pytanie „Co mi przysługuje?”. Główny przycisk ma etykietę **„Sprawdź moją sytuację”**. Po jego wybraniu użytkownik zaczyna od wyboru sytuacji rodzinnej.
 
 **Cel.** Osoba planująca rodzicielstwo, oczekująca dziecka lub już sprawująca opiekę powinna od razu wiedzieć, czego może się dowiedzieć i od czego zacząć. Język ma pasować również do ojca, rodzica adopcyjnego, rodziny zastępczej i osoby po stracie.
 
@@ -13,14 +15,16 @@ W tym pliku zapisujemy specyfikacje kolejnych części projektu w miarę ich oma
 | Element | Tekst na ekranie | Rola |
 | --- | --- | --- |
 | Nagłówek główny | Z jakich zasiłków i urlopów możesz skorzystać? | Rodzic rozpoznaje swoją sprawę bez znajomości nazw świadczeń. |
-| Opis | Odpowiedz na kilka pytań o swoją sytuację. Sprawdź, ile może wynieść zasiłek, jak długo możesz go pobierać i jakie dokumenty przygotować. | Wyjaśnia, co trzeba zrobić i co da odpowiedź. |
+| Opis | Odpowiedz na kilka pytań o swoją sytuację. Dowiesz się, jakie wnioski wypełnić, gdzie je złożyć i do kiedy. | Zapowiada konkretną pomoc w formalnościach. Właściwe terminy pojawiają się po uwzględnieniu sytuacji rodzica. |
 | Główny przycisk | Sprawdź moją sytuację | Otwiera wybór sytuacji rodzinnej. To pierwszy krok również dla osób planujących rodzicielstwo, adopcję lub przyjęcie dziecka do rodziny zastępczej. |
 | Link obok przycisku | Zobacz przykład | Pokazuje przykładową sytuację rodzica i jej wynik na fikcyjnych danych. Pozwala ocenić przydatność przewodnika przed podaniem własnych informacji. |
 
-Na telefonie przycisk i link umieszczamy pod opisem, jeden pod drugim. Na komputerze mogą być obok siebie. Etykietę „Przykład” pokazujemy również przy przykładowym wyniku, tak aby było jasne, do kogo odnosi się wyliczenie.
+### Proponowany wygląd — do omówienia
+
+Na komputerze proponujemy jasne, ciepłe tło i jeden blok tekstu wyrównany do lewej. Duży, ciemny nagłówek zajmuje około dwóch wierszy. Tuż pod nim znajduje się opis, a niżej ciemnozielony przycisk z białym tekstem i spokojniejszy, podkreślony link „Zobacz przykład”. Po prawej zostawiamy wolną przestrzeń.
+
+Na telefonie zachowujemy tę samą kolejność. Główny przycisk zajmuje szerokość kolumny, a link znajduje się pod nim. Etykietę „Przykład” pokazujemy również przy przykładowym wyniku, tak aby było jasne, do kogo odnosi się wyliczenie.
 
 ### Podstawa w materiałach konkursowych
 
-Opis zadania (s. 11–15) wskazuje na indywidualną ocenę sytuacji, oszacowanie kwoty i okresu zasiłku, pomoc z dokumentami oraz możliwość sprawdzenia przykładów w responsywnej demonstracji. Regulamin (§ 2) odsyła do kryteriów w opisie zadania. Teksty Hero i wybór pierwszej akcji są propozycją zespołu.
-
-**Decyzja do podjęcia.** Czy główny przycisk ma zaczynać od sytuacji rodzinnej, czy od razu otwierać kalkulator zasiłku? Obecny szkic przyjmuje pierwszy wariant.
+Opis zadania (s. 11–15) wskazuje na indywidualną ocenę sytuacji, oszacowanie kwoty i okresu zasiłku, pomoc z dokumentami i terminami oraz możliwość sprawdzenia przykładów w responsywnej demonstracji. Regulamin (§ 2) odsyła do kryteriów w opisie zadania.
