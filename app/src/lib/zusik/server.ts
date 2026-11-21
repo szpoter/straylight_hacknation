@@ -78,6 +78,10 @@ export function askService(): AskService {
   return new AskService({
     store: new PgCaseStore(db),
     turns: new PgTurnStore(db),
+    readMarta: async (sessionId) => {
+      const { readMarta } = await import("../marta/server");
+      return (await readMarta(sessionId)).view ?? null;
+    },
     corpus,
     selectCorpus: (name) => loadCorpus(name),
     search: qdrantKnowledgeSearch(knowledgeSettings()),

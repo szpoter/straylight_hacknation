@@ -109,8 +109,10 @@ export class MemoryTurnStore implements TurnStore {
   async release(threadId: string, requestId: string, token: string) {
     this.rows = this.rows.filter((r) => !(r.threadId === threadId && r.requestId === requestId && r.token === token && !r.answer));
   }
-  async list(threadId: string) {
-    return this.rows.filter((r) => r.threadId === threadId && r.answer).map((r) => this.toTurn(r));
+  async list(threadId: string, beforeRequestId?: string) {
+    const end = beforeRequestId && this.rows.findIndex(r => r.threadId === threadId && r.requestId === beforeRequestId);
+    const rows = typeof end === "number" ? this.rows.slice(0, Math.max(end, 0)) : this.rows;
+    return rows.filter((r) => r.threadId === threadId && r.answer).map((r) => this.toTurn(r));
   }
   private toTurn(row: MemoryTurnStore["rows"][number]): AskTurn {
     return { ...row.answer!, requestId: row.requestId, question: row.question, createdAt: row.createdAt.toISOString() };

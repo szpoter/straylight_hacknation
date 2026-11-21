@@ -9,6 +9,38 @@ import { answerQuestion } from "@/lib/zusik/ask-service";
 const corpus = loadCorpus("publiczne");
 
 describe("public knowledge partitions", () => {
+  it("grounds a new rehabilitation question in the exact article, even when the model abstains", async () => {
+    const fragment = corpus.fragments.get("uz-18-1")!;
+    const { answer, trace } = await answerQuestion({
+      corpus: loadCorpus("marta"), selectCorpus: loadCorpus,
+      search: { search: async ({ corpusVersion }) => {
+        expect(corpusVersion).toBe(corpus.manifest.corpusVersion);
+        return { status: "ok", ms: 1, hits: [{ logicalId: fragment.logicalId, fragmentSha256: fragment.fragmentSha256, score: 0.9 }] };
+      } },
+      generate: async () => ({ status: "ok", model: "test", ms: 1, output: { status: "insufficient_evidence", message: "", claims: [] } }),
+    }, "Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?");
+    expect(trace.vectorIds).toEqual(["uz-18-1"]);
+    expect(answer).toMatchObject({ status: "answered", citations: [{ fragmentId: "uz-18-1", locator: "art. 18",
+      url: "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf#page=7", quote: fragment.sourceText }] });
+    expect(answer.claims[0].text).toContain("dalsze leczenie lub rehabilitacja lecznicza rokują odzyskanie zdolności do pracy");
+    expect(answer.claims[0].text).toContain("12 miesięcy");
+  });
+
+  it("requires relevant evidence for rehabilitation and distinguishes the tax relief and personal entitlement", async () => {
+    const wrong = corpus.fragments.get("uz-art7")!;
+    const generate = vi.fn((): never => { throw new Error("unexpected generation"); });
+    const search = vi.fn(async () => ({ status: "ok" as const, ms: 0,
+      hits: [{ logicalId: wrong.logicalId, fragmentSha256: wrong.fragmentSha256, score: 0.99 }] }));
+    const deps = { corpus, selectCorpus: loadCorpus, generate, search: { search } };
+    const wrongHit = await answerQuestion(deps, "Kiedy można uzyskać świadczenie rehabilitacyjne po zakończeniu umowy?");
+    expect(wrongHit.answer).toMatchObject({ status: "insufficient_evidence", citations: [] });
+    const tax = await answerQuestion(deps, "Czy mogę odliczyć ulgę rehabilitacyjną w PIT?");
+    expect(tax.answer).toMatchObject({ status: "insufficient_evidence", citations: [] });
+    const personal = await answerQuestion(deps, "Czy przysługuje mi świadczenie rehabilitacyjne?");
+    expect(personal.answer.status).toBe("needs_clarification");
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(generate).not.toHaveBeenCalled();
+  });
   it("loads primary law for both the current and earlier title and distinguishes the pregnancy rate", () => {
     for (const [id, page, phrase] of [
       ["uz-art6-ust1", 4, "w czasie trwania ubezpieczenia"],

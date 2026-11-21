@@ -22,7 +22,7 @@ export interface TurnStore {
   complete(threadId: string, requestId: string, token: string, answer: AskAnswer): Promise<AskTurn | null>;
   /** Drops a pending claim (e.g. provider outage) so the same request can be retried. */
   release(threadId: string, requestId: string, token: string): Promise<void>;
-  list(threadId: string): Promise<AskTurn[]>;
+  list(threadId: string, beforeRequestId?: string): Promise<AskTurn[]>;
 }
 
 export function newTurnToken(): string {
@@ -105,12 +105,13 @@ export class PgTurnStore implements TurnStore {
     );
   }
 
-  async list(threadId: string): Promise<AskTurn[]> {
+  async list(threadId: string, beforeRequestId?: string): Promise<AskTurn[]> {
     try {
       const { rows } = await this.pool.query<TurnRow>(
         `SELECT request_id, question_hash, question, status, response, created_at, false AS lease_expired
-         FROM ${T} WHERE thread_id = $1 AND status <> 'pending' ORDER BY id`,
-        [threadId],
+         FROM ${T} WHERE thread_id = $1 AND status <> 'pending'
+         AND ($2::text IS NULL OR id < (SELECT id FROM ${T} WHERE thread_id = $1 AND request_id = $2)) ORDER BY id`,
+        [threadId, beforeRequestId ?? null],
       );
       return rows.map(toTurn);
     } catch (error) {

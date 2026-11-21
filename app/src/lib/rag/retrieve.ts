@@ -144,7 +144,7 @@ export function assembleEvidence(
   const vectorIds: string[] = [];
   for (const hit of hits.slice(0, TOP_K)) {
     const f = corpus.fragments.get(hit.logicalId);
-    if (!f || f.fragmentSha256 !== hit.fragmentSha256) continue;
+    if (!usable(f) || f.fragmentSha256 !== hit.fragmentSha256) continue;
     vectorIds.push(f.logicalId);
   }
   for (const id of vectorIds) {

@@ -4,6 +4,8 @@ import { loadCorpus } from "@/lib/rag/corpus-fs";
 import type { Fragment } from "@/lib/rag/corpus";
 import type { KnowledgeSearch, VectorSearchResult } from "@/lib/rag/retrieve";
 import { AskService, UNAVAILABLE_MESSAGE } from "@/lib/zusik/ask-service";
+import { applyMarta } from "@/lib/marta/case";
+import type { MartaView } from "@/lib/marta/types";
 import { ProbeService } from "@/lib/zusik/service";
 import { FlakySaver, MemoryCaseStore, MemoryTurnStore, fakeProviders } from "./helpers";
 
@@ -29,7 +31,7 @@ const ODPIS_MODEL: ModelAnswer = {
   ],
 };
 
-function world(options: { search?: VectorSearchResult; model?: GenerationResult; slowModelMs?: number } = {}) {
+function world(options: { search?: VectorSearchResult; model?: GenerationResult; slowModelMs?: number; readMarta?: (session: string) => Promise<MartaView | null> } = {}) {
   const store = new MemoryCaseStore();
   const turns = new MemoryTurnStore();
   const saver = new FlakySaver();
@@ -48,7 +50,7 @@ function world(options: { search?: VectorSearchResult; model?: GenerationResult;
     if (options.slowModelMs) await new Promise((r) => setTimeout(r, options.slowModelMs));
     return options.model ?? { status: "ok", output: ODPIS_MODEL, model: "bielik-test", ms: 30 };
   };
-  const ask = () => new AskService({ store, turns, corpus, search, generate, asOf: () => "2026-11-21", pendingWaitMs: 2_000 });
+  const ask = () => new AskService({ store, turns, corpus, search, generate, readMarta: options.readMarta, asOf: () => "2026-11-21", pendingWaitMs: 2_000 });
   const probe = () => {
     const fake = fakeProviders();
     return new ProbeService({ store, turns, checkpointer: saver, providers: fake.providers, leaseWaitMs: 2_000 });
@@ -59,6 +61,61 @@ function world(options: { search?: VectorSearchResult; model?: GenerationResult;
 const Q_ODPIS = "Kadry mają już odpis aktu Oli w moich aktach. Mam dać drugi?";
 
 describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
+  it("explains the saved calculator inputs, separates the legal deadline and preserves missing rates", async () => {
+    const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-10", days: 3,
+      firstDaily: 123.45, secondDaily: null, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
+    const w = world({ readMarta: async session => session === "calculator" ? view : null });
+    const result = await w.ask().ask("calculator", "Skąd są te dane?", "req-case-context");
+    const message = result.turn?.message.replace(/\s/g, " ");
+    expect(message).toContain("Anna — 3 dni × 123,45 zł dziennie = 370,35 zł brutto");
+    expect(message).toContain("Jan — brakuje stawki");
+    expect(message).toContain("2027-02-10");
+    expect(result.turn?.citations.map(c => c.fragmentId)).toEqual(["kp-art182-1d-par1"]);
+    expect(result.turn?.claims.map(c => c.text).join(" ")).not.toMatch(/123|370|brutto/u);
+    const fresh = await w.ask().ask("fresh", "Skąd te kwoty?", "req-case-context");
+    expect(fresh.turn?.message).toMatch(/przykładowe dane rodziny/u);
+    expect(fresh.turn?.message).not.toContain("Anna");
+    expect(w.calls).toEqual({ sherlock: 0, qdrant: 0 });
+  });
+
+  it("reuses only the immediately preceding turn's saved citations, including after a restart", async () => {
+    const w = world();
+    const first = await w.ask().ask("m", Q_ODPIS, "req-original");
+    const follow = await w.ask().ask("m", "Skąd są te dane?", "req-followup");
+    expect(follow.turn?.citations).toEqual(first.turn?.citations);
+    expect(follow.turn?.claims).toEqual(first.turn?.citations.map(c => ({ text: c.quote, citationIds: [c.id] })));
+    await w.ask().ask("m", "Co trzeba wysłać?", "req-no-citation");
+    const absent = await w.ask().ask("m", "Pokaż źródła", "req-followup-empty");
+    expect(absent.turn).toMatchObject({ status: "insufficient_evidence", citations: [], message: expect.stringContaining("nie było cytatu") });
+    const other = await w.ask().ask("other", "Pokaż źródła", "req-followup");
+    expect(other.turn?.citations).toEqual([]);
+    expect(w.calls).toEqual({ sherlock: 1, qdrant: 1 });
+  });
+
+  it("explains a calculator total requested explicitly after a legal answer, including a zero rate", async () => {
+    const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-01-11", days: 4,
+      firstDaily: 0, secondDaily: 51.25, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
+    const w = world({ readMarta: async () => view });
+    await w.ask().ask("m", Q_ODPIS, "req-law");
+    const { turn } = await w.ask().ask("m", "Skąd są te kwoty?", "req-total");
+    expect(turn?.message.replace(/\s/g, " ")).toContain("Łączna kwota z kalkulatora wynosi 205,00 zł brutto");
+    expect(turn?.message).not.toContain("brakuje");
+    expect(w.calls).toEqual({ sherlock: 1, qdrant: 1 });
+  });
+
+  it("emits progress for work performed and publishes the checked turn before saving", async () => {
+    const w = world();
+    const events: string[] = [];
+    const res = await w.ask().ask("m", Q_ODPIS, "req-progress", s => events.push(s), turn => {
+      expect(turn.citations[0].fragmentId).toBe("rozp-2025-322-par22");
+      events.push("verified");
+    });
+    expect(events).toEqual(["Sprawdzam kontekst pytania…", "Szukam w źródłach urzędowych…",
+      "Przygotowuję odpowiedź na podstawie źródeł…", "Sprawdzam cytaty i podstawę odpowiedzi…",
+      "Zapisuję odpowiedź w rozmowie…", "verified"]);
+    const onRetry = () => { throw new Error("cached answer ran the pipeline again"); };
+    expect((await w.ask().ask("m", Q_ODPIS, "req-progress", onRetry, onRetry)).turn).toEqual(res.turn);
+  });
   it("answers with verified citations, saves the turn, and F5 reads it without providers", async () => {
     const w = world();
     const res = await w.ask().ask("session-marta", Q_ODPIS, "req-odpis-0001");

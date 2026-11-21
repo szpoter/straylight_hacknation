@@ -13,6 +13,8 @@ export function extractiveAnswer(
     [projected.corpus === "oferta" && projected.locators?.[0] === "program:dobry-start", ["dobry-start"]],
     [projected.question.startsWith("Kiedy można pobierać zasiłek chorobowy po ustaniu"), ["uz-art7", "uz-art13-ust1"]],
     [projected.question.startsWith("Czy samo zwolnienie"), ["uz-art6-ust1", "uz-art7"]],
+    [/^Kiedy (?:i na jak długo )?przysługuje świadczenie rehabilitacyjne\?$/u.test(projected.question), ["uz-18-1"]],
+    [projected.question.startsWith("Jakie uprawnienia wyłączają prawo do świadczenia rehabilitacyjnego"), ["uz-18-3"]],
     [projected.locators?.includes("rz:33:1") === true, ["rz-par33-ust1"]],
     [projected.locators?.includes("kp:1823:1") === true, ["kp-ojcowski"]],
     [projected.locators?.includes("uz:11:2") === true, ["uz-art11-ust2-pkt1", "uz-art6-ust1"]],
@@ -48,6 +50,14 @@ export function extractiveAnswer(
 /** The current-title rule and the exception after coverage ended are alternatives.
  * Authentic citations alone did not prevent a model from calling the exception mandatory. */
 export function needsStatutoryText(projected: PublicQuestion, answer: AskAnswer): boolean {
+  if (/^Kiedy (?:i na jak długo )?przysługuje świadczenie rehabilitacyjne\?$/u.test(projected.question)) {
+    const text = answer.claims.map(c => c.text).join(" ");
+    return !answer.citations.some(c => c.fragmentId === "uz-18-1") ||
+      (projected.question.includes("jak długo") && !/(?:12|dwunast\p{L}*) miesi/iu.test(text)) ||
+      !/wyczerp|wykorzyst/iu.test(text) || !/niezdoln/iu.test(text) || !/odzysk|powr[oó][ct]/iu.test(text);
+  }
+  if (projected.question.startsWith("Jakie uprawnienia wyłączają prawo do świadczenia rehabilitacyjnego"))
+    return !answer.citations.some(c => c.fragmentId === "uz-18-3");
   if (projected.locators?.includes("art182^1a§7"))
     return !answer.citations.some((c) => c.fragmentId === "kp-art182-1a-par7" || c.fragmentId === "mrpips-dzielenie-zasilek");
   const current = projected.question.startsWith("Czy samo zwolnienie");

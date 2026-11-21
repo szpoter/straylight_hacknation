@@ -17,6 +17,7 @@ function routeTopic(input: string): PublicQuestion | null {
   const q = input.toLocaleLowerCase("pl").normalize("NFC");
   const generic = (question: string, locators?: string[]): PublicQuestion => ({ corpus: "publiczne", question, locators });
   const marta = (question: string): PublicQuestion => ({ corpus: "marta", question });
+  if (/ulg[aięą]\s+rehabilitacyjn/u.test(q)) return null;
 
   const offer = (id: string, question: string): PublicQuestion => ({ corpus: "oferta", question, locators: ["program:" + id] });
   if (/800\s*(?:\+|plus)|świadczenie wychowawcze/u.test(q)) return offer("800-plus", "Jak ZUS opisuje program 800+ i kiedy można złożyć wniosek na nowy okres?");
@@ -47,13 +48,23 @@ function routeTopic(input: string): PublicQuestion | null {
     return generic("Jak wygląda wniosek ZAM o zasiłek macierzyński za okres urlopu ojcowskiego?", ["rz:33:1"]);
   }
 
+  if (/(?:świadcze\p{L}*|zasił\p{L}*)\s+rehabilitacyjn/u.test(q)) {
+    if (/dokument|załącz|dołącz|formularz/u.test(q))
+      return generic("Jakie dokumenty są potrzebne do świadczenia rehabilitacyjnego?", ["rz:11"]);
+    if (/procent|stawka|podstaw[ayę] wymiaru/u.test(q))
+      return generic("Jaki procent podstawy wymiaru wynosi świadczenie rehabilitacyjne?", ["uz:19"]);
+    if (/emeryt|rent[ęay]|bezrobotn|uprawnienia wyłączają/u.test(q))
+      return generic("Jakie uprawnienia wyłączają prawo do świadczenia rehabilitacyjnego?", ["uz:18"]);
+    if (/jak długo|ile (?:miesi|dni)|na jaki okres|maksymaln/u.test(q))
+      return generic("Kiedy i na jak długo przysługuje świadczenie rehabilitacyjne?", ["uz:18"]);
+    return generic("Kiedy przysługuje świadczenie rehabilitacyjne?", ["uz:18"]);
+  }
   if (/po ustaniu|po zakończeniu|po rozwiązaniu|po zwolnieniu|skończyła się umowa|koniec umowy|umow.{0,14}(skończy|wygas)/iu.test(q))
     return generic("Kiedy można pobierać zasiłek chorobowy po ustaniu tytułu ubezpieczenia i jakie są wyłączenia?", ["uz:7", "uz:13:1"]);
 
   if (/w ciąż|ciąży|kod b/iu.test(q) && /procent|wysoko|stawk|100\s*%/iu.test(q))
     return generic("Jaki procent podstawy wymiaru wynosi zasiłek chorobowy w okresie ciąży i od czego zależy samo prawo?", ["uz:11:2", "uz:6:1"]);
 
-  if (/rehabilitacyjn/u.test(q)) return generic("Kiedy przysługuje świadczenie rehabilitacyjne?", ["uz:18"]);
   if (/zwolnien|e-zla|niezdolno|chorobow/iu.test(q)) {
     if (/opie[kc]|chore.{0,8}dziec/iu.test(q)) return generic("Jak uzyskać zasiłek opiekuńczy na chore dziecko?");
     if (/wyczeki|jak długo.{0,25}ubezpie|od ilu dni|muszę (być|podlegać)|od kiedy/iu.test(q))
@@ -117,13 +128,13 @@ export function publicQuestion(input: string): PublicQuestion | null {
   if (/(?:moje dziecko|mój syn|moja córka|dziecko ma).{0,32}\d+\s*(?:miesię|lat|rok)/iu.test(input) && topic) {
     return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Wybierz sprawę i potwierdź datę urodzenia.");
   }
-  if (/czy (?:mi |nam )?przysługuje|czy (?:mi |nam )?należy się|czy dostanę|czy mam prawo/iu.test(input) &&
+  if (/czy (?:mi |nam )(?:przysługuje|należy się)|czy (?:przysługuje|należy się) (?:mi|nam)\b|czy dostanę|czy mam prawo/iu.test(input) &&
       !/800|300|aktywny rodzic/u.test(input) && topic?.corpus === "publiczne") {
     return limited("Chcesz sprawdzić własne uprawnienie? Wskaż rodzaj świadczenia i tytuł ubezpieczenia w swojej sprawie.");
   }
   const terms = OTHER_TOPICS.filter(([pattern]) => pattern.test(input)).map(([, label]) => label);
   if (terms.length && !(terms.length === 1 && topic?.question.includes("pół etatu"))
-    && !(terms.length === 1 && topic?.locators?.includes("uz:11:2"))) {
+    && !(terms.length === 1 && (topic?.locators?.includes("uz:11:2") || topic?.locators?.includes("uz:19")))) {
     const context = /rodzicielsk/iu.test(input) ? "urlop rodzicielski" : /ojcowsk/iu.test(input) ? "urlop ojcowski" :
       /macierzyń/iu.test(input) ? "zasiłek macierzyński" : /chorobow|niezdoln/iu.test(input) ? "zasiłek chorobowy" : "";
     const intent = /termin|kiedy|do kiedy/iu.test(input) ? "termin" : /dokument|dołącz|wniosek/iu.test(input) ? "potrzebne dokumenty" : "warunki i zasady";

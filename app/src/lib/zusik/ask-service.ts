@@ -8,6 +8,10 @@ import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from ".
 import type { CaseStore } from "./case-store";
 import type { TurnStore } from "./turn-store";
 import type { AskAnswer, AskTurn } from "./types";
+import type { MartaView } from "../marta/types";
+import { caseSources, previousSources, sourceIntent } from "./context-answer";
+
+type Progress = (status: string) => void;
 
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
 
@@ -43,7 +47,7 @@ export interface AnswerTrace {
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** Question → scope gate → privacy rewrite → search → evidence → Bielik → validation. */
-export async function answerQuestion(deps: AnswerDeps, question: string): Promise<{ answer: AskAnswer; trace: AnswerTrace }> {
+export async function answerQuestion(deps: AnswerDeps, question: string, onProgress?: Progress): Promise<{ answer: AskAnswer; trace: AnswerTrace }> {
   const projected = publicQuestion(question);
   const corpus = projected && deps.selectCorpus ? deps.selectCorpus(projected.corpus) : deps.corpus;
   const version = corpus.manifest.corpusVersion;
@@ -86,6 +90,7 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
   if (!projected) return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
   trace.expanded = projected.corpus === "marta" ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
+  onProgress?.("Szukam w źródłach urzędowych…");
   const found = await deps.search.search({ query: sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
   trace.search = found.status;
   if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
@@ -110,7 +115,9 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
   }
 
   trace.calls.sherlock += 1;
+  onProgress?.("Przygotowuję odpowiedź na podstawie źródeł…");
   const generated = await deps.generate(sanitized, fragments, corpus);
+  onProgress?.("Sprawdzam cytaty i podstawę odpowiedzi…");
   trace.model = generated.status;
   trace.modelMs = generated.ms;
   trace.proposedStatus = generated.output?.status ?? null;
@@ -145,6 +152,7 @@ export interface AskResult {
 export interface AskServiceDeps extends AnswerDeps {
   store: CaseStore;
   turns: TurnStore;
+  readMarta?(sessionId: string): Promise<MartaView | null>;
   /** How long a duplicate request waits for the first one to finish. */
   pendingWaitMs?: number;
   now?: () => Date;
@@ -164,7 +172,7 @@ export function questionHash(question: string): string {
 export class AskService {
   constructor(private readonly deps: AskServiceDeps) {}
 
-  async ask(sessionId: string, question: string, requestId: string): Promise<AskResult> {
+  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void): Promise<AskResult> {
     const demoCase = await this.deps.store.findOrCreate(sessionId);
     const threadId = demoCase.threadId;
     const hash = questionHash(question);
@@ -180,9 +188,19 @@ export class AskService {
       else await sleep(200);
     }
 
-    let result: { answer: AskAnswer; trace: AnswerTrace };
+    let result: { answer: AskAnswer; trace: AnswerTrace | null };
     try {
-      result = await answerQuestion(this.deps, question);
+      onProgress?.("Sprawdzam kontekst pytania…");
+      const intent = sourceIntent(question);
+      if (intent) {
+        const previous = intent === "case" ? undefined : (await this.deps.turns.list(threadId, requestId)).at(-1);
+        const answer = previous || intent === "previous"
+          ? previousSources(previous, this.deps.corpus.manifest.corpusVersion)
+          : caseSources(await this.deps.readMarta?.(sessionId) ?? null, this.deps.corpus);
+        result = { answer, trace: null };
+      } else {
+        result = await answerQuestion(this.deps, question, onProgress);
+      }
     } catch (error) {
       await this.deps.turns.release(threadId, requestId, token).catch(() => undefined);
       throw error;
@@ -195,6 +213,8 @@ export class AskService {
       return { status: 503, turn, trace: result.trace };
     }
     try {
+      onProgress?.("Zapisuję odpowiedź w rozmowie…");
+      onVerified?.({ ...result.answer, requestId, question, createdAt: (this.deps.now?.() ?? new Date()).toISOString() });
       const saved = await this.deps.turns.complete(threadId, requestId, token, result.answer);
       if (!saved) return { status: 409, turn: null, trace: result.trace };
       return { status: 200, turn: saved, trace: result.trace };
