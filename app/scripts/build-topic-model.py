@@ -46,12 +46,13 @@ CONCEPTS = {
     "monthly": ["comiesięczny", "co miesiąc", "miesięcznie"],
     "upbringing": ["wychowanie", "utrzymanie dzieci", "wychowawcze"],
     "child": ["dziecko", "dzieci", "maluch", "pociecha", "syn", "córka"],
-    "aid": ["dofinansowanie", "dopłaca", "pomoc finansowa", "dopłacają", "pieniądze", "zapomoga", "dopłata", "świadczenie pieniężne", "wsparcie finansowe", "zasiłek", "ZUS"],
+    "aid": ["dofinansowanie", "dofinansować", "współfinansować", "dopłaca", "pomoc finansowa", "dopłacają", "pieniądze", "zapomoga", "dopłata", "świadczenie pieniężne", "wsparcie finansowe", "zasiłek"],
+    "contribute": ["dorzucić", "dorzucać", "dołożyć", "dokładać"],
     "channel": ["smartfon", "telefon", "aplikacja mobilna", "komórka", "komputer", "tablet", "elektronicznie", "internet"],
     "deadline": ["deadline", "termin końcowy", "data graniczna", "nabór", "przyjmowanie zgłoszeń"],
     "closure": ["zakończyć", "zamknięcie", "ostatni dzień", "koniec", "upływa", "zamykać"],
     "action": ["załatwić", "wysłać", "przesłać", "złożyć", "ogarnąć", "zrobić", "wypełnić"],
-    "other": ["kredyt hipoteczny", "pożyczka", "bank", "podatek", "PIT", "odpis podatkowy", "wycieczka", "wspinaczka", "turystyka", "przedszkole", "cena detaliczna", "naprawa", "leczenie", "lekarstwo", "sport", "piłkarski", "studia", "uczelnia", "stypendium", "alimenty"],
+    "other": ["kredyt hipoteczny", "pożyczka", "bank", "podatek", "PIT", "odpis podatkowy", "wycieczka", "wspinaczka", "turystyka", "przedszkole", "cena detaliczna", "naprawa", "leczenie", "lekarstwo", "sport", "piłkarski", "studia", "uczelnia", "stypendium", "alimenty", "koszyk", "rabat"],
 }
 SOURCE = Path(sys.argv[1])
 OUTPUT = Path(__file__).resolve().parents[1] / "src/lib/zusik/topic-projection.json"

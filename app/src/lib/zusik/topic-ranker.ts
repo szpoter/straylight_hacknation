@@ -16,7 +16,7 @@ function weight(word: string, axis: Axis): number {
 function tokens(text: string): string[] {
   // A personal calculation, dated case or message with an identifier needs its own path.
   if (text.length > MAX_QUESTION_LENGTH || /[\d@]|https?:|pesel|\bnip\b|\bpit\b|zarabiam|wynagrodzeni/iu.test(text)) return [];
-  return [...new Set(fold(text).match(/[a-z]+/g) ?? [])];
+  return fold(text).match(/[a-z]+/g) ?? [];
 }
 
 function strongest(words: string[], axis: Axis): number {
@@ -27,7 +27,11 @@ function strongest(words: string[], axis: Axis): number {
 // crosses into Qdrant/generation. The numeric cutoffs are cosine similarities × 100.
 export function suggestTopic(text: string): PublicQuestion | null {
   const words = tokens(text);
-  const aid = strongest(words, "aid");
+  // The reflexive verb in "dorzucić się" expresses sharing costs. The same verb
+  // without "się" can mean putting a notebook in a bag or a shopping cart.
+  const sharedCost = words.some((word, index) => weight(word, "contribute") >= 75 &&
+    (words[index + 1] === "sie" || words[index - 1] === "sie"));
+  const aid = Math.max(strongest(words, "aid"), sharedCost ? 75 : 0);
   if (aid < 52 || strongest(words, "other") >= 67) return null;
   const school = strongest(words, "school");
   // 'dziecko' is close to childcare, but identifies no specific care arrangement.

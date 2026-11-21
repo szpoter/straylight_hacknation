@@ -5,6 +5,8 @@ import { suggestSubmissionFacet, suggestTopic } from "../src/lib/zusik/topic-ran
 describe("local semantic projection of an otherwise unrecognized question", () => {
   it.each([
     ["Czy na zakup zeszytów i podręczników mogę liczyć na pomoc finansową?", "Dobry Start"],
+    ["Syn zaczyna pierwszą klasę. Podręczniki i zeszyty już kupione. Czy ZUS może dorzucić się do tego wydatku?", "Dobry Start"],
+    ["Tyle poszło na zeszyty dla córki. Ktoś współfinansuje taki wydatek?", "Dobry Start"],
     ["Wydatki na plecak dla córki są spore. ZUS coś dopłaca?", "Dobry Start"],
     ["Kto doplaca do zeszytow uczniom?", "Dobry Start"],
     ["Chcemy wynająć opiekunkę dla malucha. Czy są dopłaty?", "Aktywny Rodzic"],
@@ -21,6 +23,12 @@ describe("local semantic projection of an otherwise unrecognized question", () =
 
   it.each([
     "Dlaczego na szlaku nosi się plecak turystyczny? ZUS coś dopłaca?",
+    "Syn potrzebuje zeszytów i podręczników. Gdzie kupić je najtaniej?",
+    "Obok oddziału ZUS sprzedają podręczniki dla dzieci. Czy sklep jest otwarty?",
+    "Kto dorzuci się do zakupu plecaka turystycznego?",
+    "Dorzucić synowi do koszyka jeszcze zeszyty?",
+    "Dorzucę podręczniki do zamówienia. Który sklep polecasz?",
+    "Czy mam dorzucić do plecaka jeszcze parę zeszytów?",
     "Czy ZUS zapłaci za klub piłkarski dla dziecka?",
     "Lekarstwo dla dziecka co miesiąc kosztuje majątek. Jest pomoc?",
     "Dopłata do studiów albo podręczników?",
