@@ -31,6 +31,8 @@ export interface Parameter {
   state: RuleState;
   source: string;
   usedIn: string;
+  /** Defaults to all cases of the benefit when omitted. */
+  scope?: string;
   planned?: { value: string; from: string };
   history: ParameterVersion[];
 }
@@ -369,6 +371,8 @@ export const TEST_CASES: TestCase[] = [
 
 export interface HistoryEntry {
   id: string;
+  parameterId: string;
+  scope: string;
   publishedAt: string;
   parameter: string;
   group: ParameterGroup;
@@ -385,6 +389,8 @@ export interface HistoryEntry {
 export const HISTORY: HistoryEntry[] = [
   {
     id: "H-05",
+    parameterId: "rate-parental",
+    scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-11-20 14:12",
     parameter: "Zasiłek za okres urlopu rodzicielskiego",
     group: "Stawki",
@@ -399,6 +405,8 @@ export const HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-04",
+    parameterId: "base-min-wage",
+    scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-11-18 09:40",
     parameter: "Płaca minimalna",
     group: "Podstawa",
@@ -413,6 +421,8 @@ export const HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-03",
+    parameterId: "form-zam",
+    scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-10-23 16:05",
     parameter: "ZAM obejmuje dawne ZUR i ZAO",
     group: "Formularze",
@@ -427,6 +437,8 @@ export const HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-02",
+    parameterId: "form-z3b",
+    scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-10-23 16:01",
     parameter: "Z-3b",
     group: "Formularze",
@@ -441,6 +453,8 @@ export const HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-01",
+    parameterId: "base-min-wage",
+    scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2025-12-30 11:20",
     parameter: "Płaca minimalna",
     group: "Podstawa",
@@ -458,4 +472,9 @@ export const HISTORY: HistoryEntry[] = [
 export function formatDate(iso: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   return match ? `${match[3]}.${match[2]}.${match[1]}` : iso;
+}
+
+export function formatDateTime(value: string): string {
+  const time = /\d{2}:\d{2}$/.exec(value)?.[0];
+  return time ? `${formatDate(value)}, ${time}` : formatDate(value);
 }

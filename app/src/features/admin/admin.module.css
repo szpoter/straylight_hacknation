@@ -1094,8 +1094,9 @@ button.tileActive:hover {
   }
 }
 
+/* The demo label stays visible on phones (SPEC §13 B); the avatar gives way instead. */
 @media (max-width: 480px) {
-  .demoBadge {
+  .account {
     display: none;
   }
 }
