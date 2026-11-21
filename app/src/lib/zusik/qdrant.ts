@@ -28,6 +28,7 @@ export async function queryQdrant(settings: QdrantSettings, text: string, limit 
         headers: { "content-type": "application/json", "api-key": settings.apiKey },
         body: JSON.stringify({
           query: { text, model: settings.model ?? DEFAULT_EMBED_MODEL },
+          filter: { must: [{ is_empty: { key: "corpusVersion" } }] },
           limit,
           with_payload: true,
         }),

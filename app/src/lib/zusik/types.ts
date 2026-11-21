@@ -49,4 +49,51 @@ export interface CaseView {
   providers: { qdrant: QdrantStatus | null; sherlock: SherlockStatus | null };
   checkpointId: string | null;
   interruptId: string | null;
+  /** Saved answers with citations, oldest first. An older case has an empty list. */
+  turns: AskTurn[];
+}
+
+/**
+ * Contract of POST /api/zusik/ask and view.turns (shared with the /zusik screen).
+ * Legal content lives only in `claims`; `message` carries questions and notices.
+ */
+export type AskStatus = "conversation" | "answered" | "needs_clarification" | "insufficient_evidence" | "unavailable";
+
+export interface AskClaim {
+  text: string;
+  /** Ids from `citations` of the same turn. Every published claim has at least one. */
+  citationIds: string[];
+}
+
+export interface AskCitation {
+  /** Unique within the turn, e.g. "c1". */
+  id: string;
+  /** Corpus unit, e.g. "rozp-2025-322-par22". */
+  fragmentId: string;
+  title: string;
+  locator: string;
+  /** PDF: opens the page via #page=N. HTML: the official page. */
+  url: string;
+  /** Verbatim excerpt of the official text (whitespace normalised). */
+  quote: string;
+  /** HTML sources: heading path the parent looks for on the page. */
+  headingPath: string[];
+  page: number | null;
+  authority: "statute" | "regulation" | "ministry_guidance" | "zus_guidance";
+  corpusVersion: string;
+}
+
+export interface AskAnswer {
+  status: AskStatus;
+  message: string;
+  claims: AskClaim[];
+  citations: AskCitation[];
+  corpusVersion: string;
+}
+
+export interface AskTurn extends AskAnswer {
+  requestId: string;
+  question: string;
+  createdAt: string;
+  completedAt?: string;
 }

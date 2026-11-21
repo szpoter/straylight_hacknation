@@ -1,0 +1,25 @@
+ZUSIK DEMO / 1
+Dokument: e-ZLA
+Osoba: DEMO-A
+Płatnik: A
+Tytuł: pracownik
+Okres: 2026-11-02 / 2026-11-13
+Początek ciągłej niezdolności: 2026-11-02
+Ustalenie: niezdolność do pracy
+Kod: B
+--- STRONA ---
+ZUSIK DEMO / 1
+Dokument: ustalenie tytułu
+Osoba: DEMO-A
+Płatnik: A
+Tytuł: pracownik
+Okres: 2026-11-01 / 2026-11-30
+Ustalenie: brak ubezpieczenia z tego tytułu
+--- STRONA ---
+ZUSIK DEMO / 1
+Dokument: historia ubezpieczenia
+Osoba: DEMO-A
+Płatnik: wszystkie
+Tytuł: wszystkie
+Okres: 2026-11-02 / 2026-11-13
+Ustalenie: nigdy wcześniej nie podlegała ubezpieczeniu chorobowemu

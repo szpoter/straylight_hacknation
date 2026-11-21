@@ -33,8 +33,9 @@ function env(name: string, fallback?: string): string {
   return value;
 }
 
+type VectorParams = { size: number; distance: string };
 type CollectionInfo = {
-  result?: { config?: { params?: { vectors?: { size?: number; distance?: string } } } };
+  result?: { config?: { params?: { vectors?: VectorParams | Record<string, VectorParams> } } };
 };
 
 async function main() {
@@ -56,7 +57,8 @@ async function main() {
     console.log(`${OP}: created ${collection}`);
   } else if (existing.ok) {
     const vectors = ((await existing.json()) as CollectionInfo).result?.config?.params?.vectors;
-    if (vectors?.size !== 384 || vectors?.distance !== "Cosine") {
+    const defaultVector = vectors && ("" in vectors ? vectors[""] : vectors);
+    if (defaultVector?.size !== 384 || defaultVector?.distance !== "Cosine") {
       throw new Error(`collection ${collection} exists with incompatible vectors ${JSON.stringify(vectors)}`);
     }
     console.log(`${OP}: ${collection} exists, config compatible`);
@@ -80,7 +82,7 @@ async function main() {
   const count = await fetch(`${base}/points/count`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ exact: true }),
+    body: JSON.stringify({ exact: true, filter: { must: [{ is_empty: { key: "corpusVersion" } }] } }),
   });
   const total = ((await count.json()) as { result?: { count?: number } }).result?.count;
   if (total !== PROBE_POINTS.length) throw new Error(`expected ${PROBE_POINTS.length} points, found ${total}`);
