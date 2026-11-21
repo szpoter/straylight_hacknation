@@ -101,6 +101,13 @@ type BabelekProps = {
 
 The static `<Babelek />` is plain server-rendered SVG. With `animated`, the same markup is handed to `components/mascot/AnimatedSvg.tsx`, a client component that uses Motion's `useAnimate` to animate parts by their `data-part` names: the character floats and its shadow shrinks, the eyeballs squash to blink, and the pupils glance around while the catchlights barely move. The body is fluid: every frame (Motion's `useAnimationFrame`), the body, rim and arms are rebuilt from a warp of the drawing plane defined in `components/mascot/fluid.ts`. It combines a gentle squash and stretch, an irregular sideways lean, and random waves that start every 1–2 s and travel along the whole outline (from the top down both sides, from the bottom up, or once around; sometimes as a dent). Arms are warped with the same field, so they ride on the body and stay attached; curves are split into shorter pieces before warping so body and arms bend exactly alike. The highlights move with the surface. Flubber is not needed, because the paths are computed directly. With reduced motion the mascot keeps its base pose. Timings and distances are constants at the top of `AnimatedSvg.tsx` and `fluid.ts`.
 
+### Travelling drop (implemented)
+
+`<Babelek animated travel={mv} heading={mv} />` takes two Motion values: `travel` (0 normal, 1 a full elongated drop, below 0 a landing squash) and `heading` (direction in degrees, 0 = right). `components/mascot/travel.ts` turns them into another warp of the drawing plane: the head stays round, the back is pulled into a tapering tail, the arms tuck in, and the face, highlights and shadow follow. The parent moves the mascot and drives `travel`:
+
+- `app/mascot/roadmap`: on a step change the drop forms (0.3 s), glides along a small arc, and lands with a spring (the overshoot below 0 is the jelly squash).
+- `app/mascot/hero`: scroll moves the mascot across the screen; `travel` is a spring following the scroll speed, so it stretches while scrolling and settles back into shape when the scroll stops.
+
 ## Prepare for phase 2 (do not implement yet)
 
 Structure the code so states can be added later without a rewrite:

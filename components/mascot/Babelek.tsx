@@ -8,17 +8,15 @@ import type { BabelekProps } from "./types";
  * Static by default (plain server-rendered SVG, no client JavaScript). With `animated`, the same
  * drawing is handed to a small client component that brings it to life (see AnimatedSvg).
  */
-export function Babelek({ size, className, title, animated = false, frame = "tight" }: BabelekProps) {
-  const Svg = animated ? AnimatedSvg : "svg";
-  const a11y = title ? { role: "img", "aria-label": title } : { "aria-hidden": true };
-
-  return (
-    <Svg
-      viewBox={VIEWBOX[frame]}
-      style={size === undefined ? undefined : { width: size }}
-      className={className}
-      {...a11y}
-    >
+export function Babelek({ size, className, title, animated = false, frame = "tight", travel, heading }: BabelekProps) {
+  const svgProps = {
+    viewBox: VIEWBOX[frame],
+    style: size === undefined ? undefined : { width: size },
+    className,
+    ...(title ? { role: "img", "aria-label": title } : { "aria-hidden": true }),
+  };
+  const drawing = (
+    <>
       <Shadow />
       <g data-part="character">
         <Arms />
@@ -26,6 +24,14 @@ export function Babelek({ size, className, title, animated = false, frame = "tig
         <Highlights />
         <Face />
       </g>
-    </Svg>
+    </>
+  );
+
+  return animated ? (
+    <AnimatedSvg {...svgProps} travel={travel} heading={heading}>
+      {drawing}
+    </AnimatedSvg>
+  ) : (
+    <svg {...svgProps}>{drawing}</svg>
   );
 }

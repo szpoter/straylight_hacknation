@@ -7,7 +7,7 @@
  * On top of a gentle breathing and lean, random waves travel along the outline: from the top down both
  * sides, from the bottom up, or once around the body. Distances are in viewBox units, times in seconds.
  */
-import { BODY_CENTER, DOTS, outlinePath, type Outline, type Point } from "./geometry";
+import { BODY_CENTER, DOTS, type Point } from "./geometry";
 
 type Range = readonly [min: number, max: number];
 
@@ -93,14 +93,6 @@ export function fluidOffset([x, y]: Point, time: number, pulses: readonly Pulse[
   const lean = sway * (below ** 1.5 - LEAN.counter * above);
 
   return [radial * Math.cos(theta) + lean, radial * Math.sin(theta)];
-}
-
-/** Path data of an outline (the body or an arm) warped by the fluid motion at `time`. */
-export function fluidPath(outline: Outline, time: number, pulses: readonly Pulse[]): string {
-  return outlinePath(outline, (point) => {
-    const [dx, dy] = fluidOffset(point, time, pulses);
-    return [point[0] + dx, point[1] + dy];
-  });
 }
 
 /** Points that drag each highlight along (keys are `data-part` names): the middle of the crescent and each dot's centre. */

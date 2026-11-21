@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { Babelek } from "@/components/mascot/Babelek";
 import reference from "@/design/mascot/base.jpg";
 
@@ -15,6 +16,14 @@ export default function MascotPreviewPage() {
         <header>
           <h1 className="text-2xl font-semibold">Bąbelek</h1>
           <p className="text-slate-600">Komponent SVG obok obrazu referencyjnego (design/mascot/base.jpg).</p>
+          <nav className="mt-2 flex gap-4 text-sm">
+            <Link href="/mascot/roadmap" className="underline">
+              Demo: roadmapa
+            </Link>
+            <Link href="/mascot/hero" className="underline">
+              Demo: hero ze scrollem
+            </Link>
+          </nav>
         </header>
 
         <section className="grid gap-6 md:grid-cols-3">
