@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { appParameters, knowledgeSources, paternityTestCases } from "@/lib/admin/catalog";
 import { ZAM_FORM } from "@/lib/kamil/sources";
 import { OFFICIAL_HOSTS } from "@/lib/rag/corpus";
+import { loadCorpus } from "@/lib/rag/corpus-fs";
 import { MAX_PARTS, TOTAL_DAYS } from "@/lib/rules/paternity";
 import { LAW_IDS } from "@/lib/rules/sickness";
 
@@ -41,7 +42,8 @@ describe("admin catalogue · parameters read from the app", () => {
 describe("admin catalogue · knowledge sources", () => {
   it("covers the three corpus packages and only official hosts", () => {
     const { packages, sources } = knowledgeSources();
-    expect(packages.map((p) => p.version)).toEqual(["marta-v1", "rodzina-2026-11-v1", "programy-2026-11-v1"]);
+    const expected = (["marta", "publiczne", "oferta"] as const).map(name => loadCorpus(name).manifest.corpusVersion);
+    expect(packages.map(p => p.version)).toEqual(expected);
     expect(sources.length).toBe(packages.reduce((n, p) => n + p.documents, 0));
     for (const s of sources) expect(OFFICIAL_HOSTS).toContain(new URL(s.url).host);
   });
