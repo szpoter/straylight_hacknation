@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&amp;display=swap">
 <style>
-/* Przewodnik Rodzica · arkusz strony: tokeny (design/tokeny.md §9) + receptury components/bundle.css + komponenty strony */
+/* Przewodnik Rodzica · arkusz strony: tokeny (design/tokeny.md §9) + receptury components/bundle.css + komponenty strony + restyling */
 /* Reset: wszystkie wymiary systemu zakładają border-box  [wykryte] */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -893,6 +893,119 @@ details > summary:focus-visible { outline: var(--focus-ring-width) solid var(--c
   .zp.is-split .zp__sep:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
 }
 .save-err { display: grid; gap: var(--space-xs); padding: var(--space-sm); border: var(--border-width) solid var(--color-status-error-edge); border-radius: var(--radius-md); background: var(--color-status-error-surface); }
+
+
+/* =====================================================================
+   Restyling (tylko CSS): płaskie ramki 2px, mięta zamiast limonki, bez cieni,
+   bez dolnej krawędzi klawiszy i bez przesuwania przy naciśnięciu.
+   Kolory od zespołu; tam gdzie nie było tokenu, nadpisujemy istniejące.
+   ===================================================================== */
+:root {
+  --color-surface-page: #ffffff;
+  --color-surface-brand: #A3DAB3;
+  --color-surface-info: #DDF4FF;            /* do weryfikacji: jasne tło zaznaczenia pod #3F84D2 */
+  --color-text-display: #1E3D5C;
+  --color-text-primary: #4B4B4B;
+  --color-text-link: #00416E;
+  --color-text-link-on-info: #00416E;
+  --color-text-on-brand: #1E3D5C;
+  --color-border-default: #BEC3CE;
+  --color-border-focus: #3F84D2;
+  --color-focus-ring: #1E3D5C;
+  --color-action-primary-fill: #A3DAB3;
+  --color-action-primary-edge: #338C5C;
+  --color-action-primary-text: #1E3D5C;
+  --color-action-secondary-border: #BEC3CE;
+  --color-action-secondary-edge: #BEC3CE;
+  --color-action-secondary-text: #00416E;
+  --color-status-success-fill: #A3DAB3;
+  --color-status-success-edge: #338C5C;
+  --color-status-success-surface: #A3DAB3;
+  --color-status-info-edge: #3F84D2;
+  --color-status-info-surface: #DDF4FF;
+  --color-status-warning-fill: #FFB34F;
+  --color-status-warning-edge: #FFB34F;
+  /* płasko: bez dolnej krawędzi i bez przesunięcia */
+  --edge-height: 0px;
+  --edge-height-outline: 0px;
+  --border-width-card-bottom: 2px;
+}
+/* Pola formularza zachowują --color-border-field (#777): #BEC3CE na białym ma ok. 1,8:1, poniżej 3:1 wymaganego dla obrysu pola (WCAG 1.4.11). Do weryfikacji. */
+
+*, *::before, *::after { box-shadow: none !important; text-shadow: none !important; background-image: none; }
+
+/* ---------- przyciski: równa ramka 2px, bez wciśnięcia ---------- */
+.btn { border: 0; }
+.btn::before { inset: 0; border: var(--border-width) solid var(--btn-border, var(--color-action-primary-edge)); }
+.btn { --btn-border: var(--color-action-primary-edge); }
+.btn--secondary, .btn--neutral { --btn-border: var(--color-action-secondary-border); border-width: 0; }
+.btn--secondary::before, .btn--neutral::before { inset: 0; border: var(--border-width) solid var(--btn-border); }
+.btn:active, .btn.is-active, .sel:active, .node:active, .pion:active, .fab:active, .nav-bot__item:active, .starter:active { transform: none; }
+.btn:disabled, .btn[aria-disabled="true"] { --btn-border: var(--color-border-default); }
+.tab[aria-current="page"]::before, .tab[aria-pressed="true"]::before, .tab[aria-selected="true"]::before { border-color: var(--color-border-focus); background: var(--color-surface-info); }
+.tab[aria-current="page"], .tab[aria-pressed="true"], .tab[aria-selected="true"] { --btn-text: var(--color-text-display); }
+
+/* ---------- nagłówki ---------- */
+.t-page, .t-h2, .t-h3, .t-h4, .next__title, .bubble__text, .zp__title, .diff__head, .date__legend, .brand, .sel__name, .alert__title, .case__name, .stop__name, .kpi__v, .track__name, .t-big { color: #1E3D5C; }
+
+/* ---------- karty, panele, komunikaty: płaska ramka 2px ---------- */
+.card, .panel, .case, .notice, .alert, .stage, .bubble, .choice-card, .assume, .diff, .cal, .sel, .sel-menu, .segcard, .example-bar, .loading, .ask-form, .inline-edit, .annot, .flag-line, .save-err, .starter, .kpi, .nav-bot__item, .node, .pion, .fab { border-width: var(--border-width); border-style: solid; }
+.kpi, .loading { border-color: var(--color-border-default); }
+.example-bar, .ask-form { border-color: var(--color-border-default); }
+.notice { border-color: var(--color-status-info-edge); }
+.notice--success { border-color: var(--color-status-success-edge); color: #1E3D5C; }
+.notice--warning, .alert { border-color: var(--color-status-warning-edge); }
+.notice--error, .save-err { border-color: var(--color-status-error-edge); }
+.next.is-sheet { border-bottom-width: 0; }
+.card--info { border-color: var(--color-border-focus); }
+
+/* ---------- tekst na mięcie ---------- */
+.badge--ok, .msg--me, .sum__row.is-changed, .diff, .node--done, .notice--success span, .notice--success strong { color: #1E3D5C; }
+.badge--ok { border: var(--border-width) solid var(--color-status-success-edge); }
+.sum__row.is-changed { border: var(--border-width) solid var(--color-status-success-edge); }
+.msg--me { border: var(--border-width) solid var(--color-status-success-edge); }
+
+/* ---------- plakietki: ramka zamiast imitacji cieniem ---------- */
+.badge { border: var(--border-width) solid transparent; }
+.badge--example, .badge--muted { border-color: var(--color-border-default); }
+.badge--todo { border-color: var(--color-border-focus); }
+.badge--warn, .badge--test { border-color: var(--color-status-warning-edge); }
+.count { background: #FFB34F; color: #1E3D5C; }
+
+/* ---------- ścieżka ---------- */
+.node--done { background: var(--color-status-success-fill); border-color: var(--color-status-success-edge); }
+.node--next { background: var(--color-surface-info); border-color: var(--color-border-focus); }
+.node--warn { background: var(--color-status-warning-surface); border-color: #FFB34F; }
+.node--warn .node__mark { background: #FFB34F; color: #1E3D5C; }
+.node--info { border-color: var(--color-border-default); }
+.pion, .fab { border-color: var(--color-status-success-edge); }
+.blob { border: var(--border-width) solid var(--color-status-success-edge); }
+.stage { border-color: var(--color-border-focus); }
+.path__stage { border-left-color: var(--color-border-default); }
+
+/* ---------- wypełnienia postępu: zieleń zamiast limonki ---------- */
+.progress__bar, .meter__fill { background: var(--color-status-success-edge); }
+.seg--b { background: var(--color-status-success-surface); border-color: var(--color-status-success-edge); }
+.seg--o { border-color: #FFB34F; }
+.tl--done .tl__dot { background: var(--color-status-success-fill); border-color: var(--color-status-success-edge); color: #1E3D5C; }
+.tl--now .tl__dot { border-color: #FFB34F; }
+
+/* ---------- wybór i fokus: rozróżnialne ---------- */
+.choice-card[aria-checked="true"], .sel-item[aria-current="true"], .nav-bot__item[aria-current="page"] { border-color: var(--color-border-focus); background: var(--color-surface-info); color: #1E3D5C; }
+.choice-card[aria-checked="true"] .choice-card__check { border-color: var(--color-border-focus); color: #1E3D5C; }
+.field:focus-within { border-color: var(--color-border-focus); }
+.composer.is-busy { border-color: var(--color-status-success-edge); }
+.case__miss .ic { color: #1E3D5C; }
+
+/* Zachowanie rozmiarów: dolna ramka zeszła z 4px do 2px, więc oddajemy 2px w dolnym odstępie wewnętrznym */
+.choice-card--q { padding-bottom: calc(var(--space-sm) + var(--border-width)); }
+.card:not(.pool):not(.card--flat) { padding-bottom: calc(var(--space-xl) + var(--border-width)); }
+.card--flat { padding-bottom: calc(var(--space-md) + var(--border-width)); }
+.case, .notice, .diff { padding-bottom: calc(var(--space-md) + var(--border-width)); }
+.alert, .bubble, .segcard, .example-bar, .cal { padding-bottom: calc(var(--space-sm) + var(--border-width)); }
+.stage, .sel-menu { padding-bottom: calc(var(--space-xs) + var(--border-width)); }
+.panel:not(.pool) { padding-bottom: calc(var(--space-xl) + var(--border-width)); }
+.pool { padding-bottom: var(--border-width); }
 
 body{margin:0}
 </style>
