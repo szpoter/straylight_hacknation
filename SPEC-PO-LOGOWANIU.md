@@ -98,6 +98,26 @@ Dwoje uprawnionych pracowników planuje po 4 tygodnie urlopu rodzicielskiego w r
 
 Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodnie. Łączna kwota zasiłku za wybrane okresy pozostaje taka sama.”** Do odbioru reguł potrzebne są ponadto sprawy konkursowe z dokumentami i oczekiwanym wynikiem, w tym brak uprawnienia, niepełne dane, różne podstawy rodziców, praca na część etatu, adopcja i piecza. Parametry stawek i limitów wybieramy według daty sprawy z ustawień administracyjnych.
 
+## Zusik — czat dostępny w całej aplikacji po zalogowaniu
+
+**Uzgodnione.** W prawym dolnym rogu każdego ekranu jest mały bąbelek Zusika z etykietą „Otwórz czat z Zusikiem”. Pozostaje w zasięgu podczas przewijania. Otwiera po prawej panel agenta z historią rozmów, polem wiadomości i trzema propozycjami rozpoczęcia rozmowy dopasowanymi do sytuacji na stronie. „Pełny ekran” rozszerza tę samą rozmowę. „Podziel ekran” przywraca obok niej bieżący widok aplikacji. Akcja „Dokończ z Zusikiem” otwiera ten panel przy odpowiednim szkicu wniosku.
+
+**Proponowany układ panelu i sterowanie**
+
+- **Nagłówek.** „Zusik · asystent AI” oraz kontekst, np. „Ola · Kalkulator · Wariant B”. Pod ręką są „Historia”, „Nowa rozmowa”, przełącznik pełnego lub dzielonego widoku i „Zwiń czat”. Historia pokazuje rozmowy zalogowanego rodzica z tytułem, dzieckiem lub planem oraz datą ostatniej wiadomości. Wybranie pozycji wznawia rozmowę w jej pierwotnym kontekście.
+- **Rozmowa.** Gdy rodzic zaczyna nowy czat, widzi dokładnie trzy krótkie pytania. Wybranie pytania przenosi je do pola wiadomości, gdzie można je zmienić i wysłać. W toku rozmowy w tym miejscu pojawiają się wiadomości, źródła odpowiedzi oraz podgląd proponowanych zmian w konkretnym szkicu.
+- **Pole wiadomości.** Wielowierszowe „Zapytaj Zusika…”, „Dołącz dokument” z możliwością usunięcia załącznika przed wysłaniem i „Wyślij”. Podczas generowania dostępne jest „Zatrzymaj odpowiedź”, a po błędzie „Spróbuj ponownie”. Wysłanie wiadomości i zatwierdzenie wniosku to osobne czynności.
+
+| Miejsce otwarcia | Trzy przykładowe początki rozmowy |
+| --- | --- |
+| Mapa lub najbliższa sprawa | „Co mam teraz załatwić?” · „Od czego liczy się ten termin?” · „Jakie dokumenty przygotować?” |
+| Kalkulator z dwoma wariantami | „Skąd ta kwota?” · „Czym różnią się moje warianty?” · „Co się zmieni, jeśli wrócę na część etatu?” |
+| Szkic wniosku | „Czego brakuje we wniosku?” · „Jak poprawić datę?” · „Do kogo mam go złożyć?” |
+
+Pytania odpowiadają rzeczywistemu stanowi ekranu. Przykładowo przy jednym wariancie drugie pytanie w kalkulatorze brzmi „Jak dodać drugi wariant?”, a przy brakującej podstawie pierwsze brzmi „Jakich danych brakuje do wyliczenia?”. Przed wyborem dziecka podpowiedzi dotyczą aktualnego kroku onboardingu. Po zmianie dziecka panel przywołuje rozmowę dla nowego planu albo oferuje rozpoczęcie nowej. Poprzedni czat zachowuje swoją historię, niewysłany tekst i załączniki przy właściwym dziecku.
+
+**Przejścia między widokami.** Na komputerze panel zwęża obszar roboczy tak, aby rodzic widział obok np. zmieniane pole formularza. Na wąskim telefonie proponujemy podział pionowy: fragment bieżącej sprawy u góry, rozmowa i pole wiadomości niżej. „Pełny ekran” oddaje całą dostępną przestrzeń rozmowie, a „Podziel ekran” odtwarza podział. Zwijanie przywraca bąbelek. Każde przejście zachowuje aktywną rozmowę, niewysłaną wiadomość, załączniki, generowaną odpowiedź oraz miejsce rodzica na stronie. Pole pozostaje dostępne po otwarciu klawiatury ekranowej. Wszystkie kontrolki mają nazwy dla czytnika ekranu, a zwinięcie zwraca fokus na przycisk otwierający.
+
 ## Zakres konkursowy do dalszego rozpisania
 
 W kolejnych sekcjach tej specyfikacji rozwiniemy reguły poszczególnych przypadków, wzory i wyjątki terminów, weryfikację wyliczeń na dokumentach testowych oraz urzędowe formularze i załączniki. W ścieżce testowej wybór sprawy lub testowego PDF prowadzi do ustalenia ubezpieczenia, kwoty i okresu albo przyczyny braku uprawnień. Dla odpowiednich profili potrzebne są symulacje stanu zadłużenia składkowego, e-ZLA, połączenia z PUE/eZUS, wniosków do pracodawcy lub ZUS i odpisu aktu urodzenia. Parametry prawne podlegają aktualizacji w panelu administracyjnym. Moduły zdrowotne i rodzinne to proponowane rozszerzenie przewodnika. Nazwy programów, daty obowiązywania i reguły kierowania do instytucji wymagają utrzymywania aktualnych źródeł. [Pełna treść zadania, s. 11–15](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf)
