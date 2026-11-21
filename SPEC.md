@@ -6,7 +6,7 @@ W tym pliku zapisujemy specyfikacje kolejnych części projektu w miarę ich oma
 
 ### Uzgodnione
 
-Hero odpowiada przede wszystkim na pytanie „Co mi przysługuje?”. Główny przycisk ma etykietę **„Sprawdź moją sytuację”**. Po jego wybraniu użytkownik zaczyna od wyboru sytuacji rodzinnej.
+Hero odpowiada na dwa pytania rodzica: „Co mi przysługuje?” i „Co muszę załatwić?”. Przewodnik ma wskazywać, które formalności są obowiązkowe w danej sytuacji, a które stają się potrzebne, jeśli rodzic chce skorzystać z wybranego świadczenia lub urlopu. Główny przycisk ma etykietę **„Sprawdź moją sytuację”**. Po jego wybraniu użytkownik zaczyna od wyboru sytuacji rodzinnej.
 
 **Cel.** Osoba planująca rodzicielstwo, oczekująca dziecka lub już sprawująca opiekę powinna od razu wiedzieć, czego może się dowiedzieć i od czego zacząć. Język ma pasować również do ojca, rodzica adopcyjnego, rodziny zastępczej i osoby po stracie.
 
@@ -14,8 +14,8 @@ Hero odpowiada przede wszystkim na pytanie „Co mi przysługuje?”. Główny p
 
 | Element | Tekst na ekranie | Rola |
 | --- | --- | --- |
-| Nagłówek główny | Z jakich zasiłków i urlopów możesz skorzystać? | Rodzic rozpoznaje swoją sprawę bez znajomości nazw świadczeń. |
-| Opis | Odpowiedz na kilka pytań o swoją sytuację. Dowiesz się, jakie wnioski wypełnić, gdzie je złożyć i do kiedy. | Zapowiada konkretną pomoc w formalnościach. Właściwe terminy pojawiają się po uwzględnieniu sytuacji rodzica. |
+| Nagłówek główny | Co Ci przysługuje i co musisz załatwić? | Rodzic widzi, że przewodnik obejmuje zarówno uprawnienia, jak i obowiązki. |
+| Opis | Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać. Dowiesz się, co wypełnić, gdzie złożyć dokumenty i do kiedy. | Zapowiada odpowiedź dopasowaną do sytuacji rodzica. |
 | Główny przycisk | Sprawdź moją sytuację | Otwiera wybór sytuacji rodzinnej. To pierwszy krok również dla osób planujących rodzicielstwo, adopcję lub przyjęcie dziecka do rodziny zastępczej. |
 | Link obok przycisku | Zobacz przykład | Pokazuje przykładową sytuację rodzica i jej wynik na fikcyjnych danych. Pozwala ocenić przydatność przewodnika przed podaniem własnych informacji. |
 
@@ -28,3 +28,5 @@ Na telefonie zachowujemy tę samą kolejność. Główny przycisk zajmuje szerok
 ### Podstawa w materiałach konkursowych
 
 Opis zadania (s. 11–15) wskazuje na indywidualną ocenę sytuacji, oszacowanie kwoty i okresu zasiłku, pomoc z dokumentami i terminami oraz możliwość sprawdzenia przykładów w responsywnej demonstracji. Regulamin (§ 2) odsyła do kryteriów w opisie zadania.
+
+Na s. 13–14 opis zadania wymienia również symulację wypełniania wniosków o urlopy i świadczenia oraz złożenia wniosku o odpis aktu urodzenia. Zakres obowiązkowych formalności, które przewodnik pokaże w poszczególnych sytuacjach rodzinnych, pozostaje do ustalenia.
