@@ -31,7 +31,7 @@ export async function pdfjs() {
   return lib;
 }
 
-async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progress): Promise<OcrWord[]> {
+export async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progress): Promise<OcrWord[]> {
   progress("Rozpoznaję tekst na skanie (OCR)…");
   const { createWorker } = await import("tesseract.js");
   const worker = await createWorker("pol", 1, {
@@ -51,7 +51,7 @@ async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progr
   }
 }
 
-async function loadImage(file: Blob): Promise<HTMLImageElement> {
+export async function loadImage(file: Blob): Promise<HTMLImageElement> {
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();
