@@ -1,15 +1,18 @@
 # Design: indeks
 
-Ten folder jest **jedynym źródłem prawdy o wyglądzie** Przewodnika Rodzica i zastępuje `DESIGN.md`. Opisuje język wizualny przeniesiony z istniejącej strony: rytm, skale, zasady i budowę elementów, bez brandingu. Dostosowaliśmy go do WCAG 2.1 AA.
+Ten folder jest **jedynym źródłem prawdy o wyglądzie** Przewodnika Rodzica i zastępuje `DESIGN.md`. Opisuje język wizualny przeniesiony z istniejącej strony: rytm, skale, zasady i budowę elementów, bez brandingu. Paletę wzięliśmy z maskotki Zusika i palety ZUS. System spełnia WCAG 2.1 AA.
+
+Gotowy przykład użycia: [przyklad.html](przyklad.html). Otwórz go w przeglądarce.
 
 ## Statusy
 
-Każda wartość i zasada w tym folderze ma jeden z czterech statusów.
+Każda wartość i zasada w tym folderze ma jeden z pięciu statusów.
 
 | Status | Znaczenie | Jak traktować |
 | --- | --- | --- |
 | `wykryte` | Zmierzone w computed styles strony źródłowej (sama strona, pseudo-elementy, stany). | Używaj bez zmian. |
 | `wykryte (CSS var)` | Wartość jest zdefiniowana w zmiennych CSS źródła, ale nie zaobserwowano jej użycia na stronach publicznych. | Używaj w opisanej roli. Rola jest zwykle wywnioskowana. |
+| `zespół` | Wartość z materiałów zespołu: tokeny maskotki (`maskotka_kod/app/globals.css`) albo paleta ZUS (`maskotka_kod/docs/mascot/01-design-spec.md`). | Używaj bez zmian. Zmiana wymaga zmiany także w maskotce. |
 | `wywnioskowane` | Nasza interpretacja albo decyzja projektu (np. kolor tekstu zmieniony dla AA) zbudowana z wykrytych wartości. | Używaj. Zmienia je tylko decyzja zespołu. |
 | `do weryfikacji` | Niepewne albo niezmierzone. | Używaj, ale wypisz w opisie zmiany. Lista do sprawdzenia: [zrodla.md §3](zrodla.md#3-lista-do-weryfikacji). |
 
@@ -44,8 +47,8 @@ Oprócz statusów danych są dwie **etykiety procesu**. Dotyczą decyzji zespoł
 
 ## Najważniejsze w pięciu punktach
 
-1. **Biel, jeden mocny kolor akcji i twarda dolna krawędź zamiast cieni.** Przycisk po naciśnięciu zjeżdża o wysokość krawędzi.
+1. **Biel, płaskie elementy z ramką 2 px i paleta Zusika.** Przycisk główny wygląda jak Zusik: mięta w zielonej obwódce, granatowy tekst. Bez cieni i bez dolnej krawędzi.
 2. **Stany kontrolek zmieniają się natychmiast.** Ruch mają tylko ilustracje, nagłówek i tła przy przewijaniu.
-3. **Tekst tylko w kolorach spełniających AA.** Ciemny tekst na zielonym, linki `#2b70c9`, nagłówki display w granacie.
+3. **Tekst tylko w parach spełniających AA.** Granat na mięcie, linki w granacie ZUS, żadnego tekstu na zieleni ani niebieskim ZUS.
 4. **Wartości wyłącznie z tokenów.** Brak tokenu oznacza pytanie albo oznaczenie „do weryfikacji”, nie zgadywanie.
 5. **Animacje dostarcza zespół.** Do tego czasu agent buduje stan końcowy bez ruchu ([motion.md §5](motion.md#5-animacje-dostarczane-przez-zespół)).

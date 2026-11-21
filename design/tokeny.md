@@ -14,33 +14,49 @@ Czytaj przy każdej pracy nad stylami. W komponentach używaj wyłącznie zmienn
 
 Statusy objaśnia [README](README.md#statusy). Dowody do wartości są w [zrodla.md](zrodla.md).
 
-**Decyzja projektu: WCAG 2.1 AA.** Paleta źródła zostaje dla wypełnień, krawędzi i dużych powierzchni. Tekst i wskaźniki stanu dostają tylko kolory wykryte w źródle, które spełniają AA. Kolumna „Źródło” pokazuje oryginalną wartość, której nie używamy.
+**Decyzje projektu (uzgodnione 2026-11-21):**
+
+1. **Paleta pochodzi z maskotki Zusika i z palety ZUS**, nie ze strony źródłowej. Ze źródła zostają rytm, skale, typografia i neutralne szarości.
+2. **Bez dolnej krawędzi („klawisza”) pod przyciskami i kartami.** Jej efekt za mocno kojarzył się ze stroną źródłową. Elementy są płaskie, z ramką 2 px.
+3. **WCAG 2.1 AA.** Tekst tylko w parach, które spełniają AA. Dlatego:
+   - przycisk główny ma miętowe wypełnienie, zieloną obwódkę i granatowy tekst, jak Zusik;
+   - zieleń ZUS (`#00993F`) i niebieski ZUS (`#3F84D2`) nie niosą tekstu: biały i granatowy tekst mają na nich 2.9–3.9:1;
+   - te dwa kolory służą tylko do ramek, ikon i ilustracji.
+
+Kolumna „Źródło” pokazuje poprzednią wartość, której już nie używamy.
 
 ---
 
 ## 1. Kolory
 
+Skąd są kolory:
+
+- **Maskotka:** tokeny Zusika z `maskotka_kod/app/globals.css`, zmierzone z obrazu referencyjnego maskotki. Są to wypełnienie `#A3DAB3`, obwódka `#338C5C`, granat `#1E3D5C`, biel `#FFFFFF` i cień `#D1D1D1`.
+- **Paleta ZUS:** z `maskotka_kod/docs/mascot/01-design-spec.md`. Są to zieleń `#00993F`, granat `#00416E`, niebieski `#3F84D2`, żółty `#FFB34F` i szary `#BEC3CE`.
+
+Status takich wartości: `zespół`.
+
 ### 1.1 Powierzchnie
 
-| Token | Wartość | Rola | Status |
-| --- | --- | --- | --- |
-| `color.surface.page` | `#ffffff` | Tło strony, kart, paneli, modala, przycisków obrysowanych. Zajmuje 67% powierzchni strony źródłowej. | wykryte |
-| `color.surface.subtle` | `#f7f7f7` | Tło pola formularza; zaślepka ilustracji. | wykryte (pole); zaślepka: wywnioskowane |
-| `color.surface.info` | `#ddf4ff` | Tło wyróżnionej sekcji pełnej szerokości, tło zaznaczonej karty lub zakładki. | wykryte (sekcja); zaznaczenie: wywnioskowane |
-| `color.surface.brand` | `#58cc02` | Stopka. Ta sama barwa co wypełnienie przycisku głównego. | wykryte |
-| `color.surface.inverse` | `#100f3e` | Ciemny pas pełnej szerokości. | wykryte |
-| `color.surface.overlay` | `rgba(0, 0, 0, 0.3)` | Nakładka pod modalem. | wykryte |
-| `color.surface.overlayStrong` | `rgba(0, 0, 0, 0.4)` | Nakładka pod szufladą. | wykryte |
-| `color.surface.disabled` | `#e5e5e5` | Wypełnienie przycisku nieaktywnego. Stanu nie zaobserwowano. | wywnioskowane, do weryfikacji |
+| Token | Wartość | Rola | Status | Źródło |
+| --- | --- | --- | --- | --- |
+| `color.surface.page` | `#ffffff` | Tło strony, kart, paneli, modala, przycisków obrysowanych. | wykryte (= biel maskotki) | — |
+| `color.surface.subtle` | `#f7f7f7` | Tło pola formularza, zaślepka ilustracji. | wykryte | — |
+| `color.surface.info` | `#ddf4ff` | Tło wyróżnionej sekcji, tło zaznaczonej karty lub zakładki. | wykryte; zaznaczenie: wywnioskowane | — |
+| `color.surface.brand` | `#A3DAB3` | Stopka. Ta sama barwa co wypełnienie przycisku głównego i ciało Zusika. | zespół (maskotka) | `#58cc02` |
+| `color.surface.inverse` | `#1E3D5C` | Ciemny pas pełnej szerokości. | zespół (maskotka) | `#100f3e` |
+| `color.surface.overlay` | `rgba(0, 0, 0, 0.3)` | Nakładka pod modalem. | wykryte | — |
+| `color.surface.overlayStrong` | `rgba(0, 0, 0, 0.4)` | Nakładka pod szufladą. | wykryte | — |
+| `color.surface.disabled` | `#e5e5e5` | Wypełnienie przycisku nieaktywnego. | wywnioskowane, do weryfikacji | — |
 
 ### 1.2 Ramki
 
 | Token | Wartość | Rola | Status | Źródło |
 | --- | --- | --- | --- | --- |
-| `color.border.default` | `#e5e5e5` | Ramki kart, paneli, przycisków obrysowanych i ich dolna krawędź, linia pod nagłówkiem, separatory, ramki pasków. Jedyny kolor obramowań w źródle. | wykryte | — |
-| `color.border.field` | `#777777` | Ramka pola formularza (4.48:1 na białym, wymóg WCAG 1.4.11 to 3:1). | wywnioskowane, do weryfikacji | `#e5e5e5` (1.26:1) |
-| `color.border.focus` | `#2b70c9` | Ramka pola w focus, ramka zaznaczonej karty lub zakładki (4.93:1). | wywnioskowane | `#1cb0f6` (2.44:1) |
-| `color.border.error` | `#ea2b2b` | Ramka pola z błędem (4.30:1). Stanu nie zaobserwowano. | wywnioskowane, do weryfikacji | — |
+| `color.border.default` | `#BEC3CE` | Ramki kart, paneli, przycisków obrysowanych i komunikatów; linia pod nagłówkiem; separatory; ramki pasków. Jeden kolor obramowań w całym systemie. | zespół (paleta ZUS) | `#e5e5e5` |
+| `color.border.field` | `#777777` | Ramka pola formularza (4.48:1 na białym, wymóg WCAG 1.4.11 to 3:1). | wywnioskowane, do weryfikacji | — |
+| `color.border.focus` | `#3F84D2` | Ramka pola w focus, ramka zaznaczonej karty lub zakładki. Ma 3.86:1 na białym i 3.39:1 na `surface.info`, więc spełnia próg 3:1 dla elementów nietekstowych. | zespół (paleta ZUS) | `#2b70c9` |
+| `color.border.error` | `#ea2b2b` | Ramka pola z błędem (4.30:1). | wywnioskowane, do weryfikacji | — |
 
 ### 1.3 Tekst
 
@@ -48,73 +64,88 @@ Kontrast liczony na `color.surface.page`, chyba że zaznaczono inaczej.
 
 | Token | Wartość | Kontrast | Rola | Status | Źródło |
 | --- | --- | --- | --- | --- | --- |
-| `color.text.strong` | `#3c3c3c` | 11.03 | Domyślny kolor dokumentu, tytuł modala. | wykryte | — |
-| `color.text.primary` | `#4b4b4b` | 8.72 | Tytuły (hero, karty), tekst w polu, **akapity**, drobne etykiety, tekst prawny, komunikaty. | wykryte; użycie dla akapitów i drobnych etykiet: wywnioskowane | akapity `#777777` (4.48), drobne etykiety `#afafaf` (2.19) |
-| `color.text.muted` | `#777777` | 4.48 | **Tylko tekst duży:** od 19 px przy grubości 700 albo od 24 px. | wykryte (podtytuł 19 px / 700) | — |
+| `color.text.strong` | `#1E3D5C` | 11.19 | Tytuły krojem UI: hero, modal, karty, panele. | zespół (maskotka: granat oczu i ust) | `#3c3c3c` |
+| `color.text.primary` | `#4b4b4b` | 8.72 | Akapity, podpisy, etykiety, tekst w polu, komunikaty, tekst prawny. | wykryte | — |
+| `color.text.muted` | `#777777` | 4.48 | **Tylko tekst duży:** od 19 px przy grubości 700 albo od 24 px. | wykryte | — |
 | `color.text.disabled` | `#afafaf` | 2.19 | Tylko stan nieaktywny i elementy dekoracyjne. | wykryte | — |
-| `color.text.display` | `#042c60` | 13.69 | Nagłówki krojem display. | wykryte (CSS var; użyty dla dużego nagłówka na `surface.info`); rola dla wszystkich nagłówków: wywnioskowane | nagłówki sekcji `#58cc02` (2.09) |
-| `color.text.link` | `#2b70c9` | 4.93 (4.60 na `#f7f7f7`) | Linki w tekście, etykieta przycisku `secondary`, akcja w polu. | wykryte (CSS var); rola: wywnioskowane | `#1cb0f6` (2.44) |
-| `color.text.linkOnInfo` | `#042c60` | 12.03 na `#ddf4ff` | Linki na `color.surface.info`. Zwykły link ma tam 4.33:1. | wywnioskowane | — |
-| `color.text.onBrand` | `#3c3c3c` | 5.28 na `#58cc02` | Tekst i ikony na zielonym: przycisk główny, stopka. | wywnioskowane | biały (2.09), w stopce `#a5ed6e` i `#d7ffb8` |
-| `color.text.onInfoFill` | `#042c60` | 5.60 na `#1cb0f6` | Tekst na niebieskim wypełnieniu. | wywnioskowane, do weryfikacji | biały (2.44) |
-| `color.text.onInverse` | `#ffffff` | 18.10 na `#100f3e` | Tekst na ciemnym pasie. | wykryte | — |
+| `color.text.display` | `#1E3D5C` | 11.19 | Nagłówki krojem display. | zespół (maskotka) | `#042c60` |
+| `color.text.link` | `#00416E` | 10.60 (9.47 na `#ddf4ff`, 6.7 na `#A3DAB3`) | Linki w tekście, etykieta przycisku `secondary`, akcja w polu. Działa na każdym tle systemu. | zespół (paleta ZUS) | `#2b70c9` |
+| `color.text.onBrand` | `#1E3D5C` | 7.05 na `#A3DAB3` | Tekst i ikony na mięcie: przycisk główny, stopka. | zespół (maskotka) | `#3c3c3c` |
+| `color.text.onAccent` | `#1E3D5C` | 6.29 na `#FFB34F` | Tekst na żółtym akcencie. | zespół (maskotka) | — |
+| `color.text.onInverse` | `#ffffff` | 11.19 na `#1E3D5C` | Tekst na ciemnym pasie. | wykryte | — |
 
-**Placeholderów nie używamy.** Na tle pola `#777777` ma tylko 4.18:1, a 20 px przy grubości 400 nie jest tekstem dużym. Przykład formatu podaj jako tekst pomocniczy pod etykietą ([komponenty.md §4](komponenty.md#4-pole-formularza)). Status: wywnioskowane AA; źródło używa placeholdera zamiast etykiety.
+**Placeholderów nie używamy.** Na tle pola `#777777` ma tylko 4.18:1, a 20 px przy grubości 400 nie jest tekstem dużym. Przykład formatu podaj jako tekst pomocniczy pod etykietą ([komponenty.md §4](komponenty.md#4-pole-formularza)). Status: wywnioskowane AA.
 
 ### 1.4 Akcje (przyciski)
 
 | Token | Wartość | Status | Uwagi |
 | --- | --- | --- | --- |
-| `color.action.primary.fill` | `#58cc02` | wykryte | — |
-| `color.action.primary.edge` | `#58a700` | wykryte | — |
-| `color.action.primary.text` | = `color.text.onBrand` | wywnioskowane AA | Źródło: biały. |
+| `color.action.primary.fill` | `#A3DAB3` | zespół (maskotka: ciało) | Źródło: `#58cc02`. |
+| `color.action.primary.border` | `#338C5C` | zespół (maskotka: obwódka) | Przycisk wygląda jak Zusik: mięta w zielonej obwódce. |
+| `color.action.primary.text` | = `color.text.onBrand` | zespół | 7.05:1. |
 | `color.action.secondary.fill` | `#ffffff` | wykryte | — |
-| `color.action.secondary.border` | `#e5e5e5` | wykryte | — |
-| `color.action.secondary.edge` | `#e5e5e5` | wykryte | — |
-| `color.action.secondary.text` | = `color.text.link` | wywnioskowane AA | Źródło: `#1cb0f6`. |
-| `color.action.neutral.text` | `#4b4b4b` | wykryte | Przycisk obrysowany z ciemnym tekstem. |
-| `color.action.info.fill` | `#1cb0f6` | wykryte | Przycisk główny w modalu źródła. |
-| `color.action.info.edge` | `#1899d6` | wykryte | — |
-| `color.action.info.text` | = `color.text.onInfoFill` | wywnioskowane AA, do weryfikacji | Źródło: biały. |
+| `color.action.secondary.border` | `#BEC3CE` | zespół (paleta ZUS) | — |
+| `color.action.secondary.text` | = `color.text.link` | zespół | — |
+| `color.action.neutral.text` | `#4b4b4b` | wykryte | Przycisk obrysowany z szarym tekstem, dla akcji mniej ważnych. |
+
+Usunięty wariant: wypełniony niebieski (`info`). Na niebieskim ZUS żaden kolor tekstu z palety nie spełnia AA.
 
 ### 1.5 Statusy
 
-Kolory pochodzą ze zmiennych CSS źródła (`wykryte (CSS var)`). Na stronach publicznych ich nie zaobserwowano, więc przypisanie ról jest `wywnioskowane`.
+Przypisanie ról jest `wywnioskowane`.
 
-| Status | `fill` | `edge` (ramka, krawędź, ikona) | `surface` (jasne tło komunikatu) |
-| --- | --- | --- | --- |
-| `success` | `#58cc02` | `#58a700` (3.02 na białym) | `#d7ffb8` |
-| `info` | `#1cb0f6` | `#1899d6` (3.20) | `#ddf4ff` |
-| `warning` | `#ff9600` | `#cd7900` (3.32) | `#fff5d3` |
-| `error` | `#ff4b4b` | `#ea2b2b` (4.30) | `#ffdfe0` |
+| Status | `edge` (ramka, ikona) | Status `edge` | `surface` (jasne tło komunikatu) | Status `surface` |
+| --- | --- | --- | --- | --- |
+| `success` | `#338C5C` (4.16 na białym) | zespół (maskotka) | `#d7ffb8` | wykryte (CSS var); do weryfikacji, bo jaśniejszej mięty nie ma w materiałach zespołu |
+| `info` | `#3F84D2` (3.86) | zespół (paleta ZUS) | `#ddf4ff` | wykryte |
+| `warning` | `#cd7900` (3.32) | wykryte (CSS var) | `#fff5d3` | wykryte (CSS var) |
+| `error` | `#ea2b2b` (4.30) | wykryte (CSS var) | `#ffdfe0` | wykryte (CSS var) |
 
-Tokeny mają postać `color.status.<status>.<fill|edge|surface>`.
+Tokeny mają postać `color.status.<status>.<edge|surface>`.
 
 Zasady:
 
 - Tekst komunikatu zawsze w `color.text.primary`. Na tłach statusów daje 7.0–8.0:1.
-- Kolor statusu tylko dla ramki, krawędzi i ikony. Na białym spełnia próg 3:1.
-- Ikona zawsze stoi obok tekstu. Na jasnym tle statusu ma tylko 2.7–3.5:1.
-- Wypełnień `fill` nie używaj jako tła tekstu.
+- Kolor statusu tylko dla ramki i ikony. Ikona zawsze stoi obok tekstu.
+- `success` nie ma tła miętowego, żeby komunikat nie wyglądał jak przycisk główny.
 
-### 1.6 Fokus
+### 1.6 Akcent
+
+| Token | Wartość | Rola | Status |
+| --- | --- | --- | --- |
+| `color.accent.fill` | `#FFB34F` | Etykiety typu „Przykład”, wyróżnienia. Tekst na nim tylko `color.text.onAccent`. | zespół (paleta ZUS) |
+
+### 1.7 Fokus
 
 | Token | Wartość | Status | Uwagi |
 | --- | --- | --- | --- |
-| `color.focus.ring` | `#042c60` | wywnioskowane | Źródło nie pokazuje fokusu. Kontrast: 13.69 na białym, 6.55 na zielonym, 12.03 na `surface.info`. |
+| `color.focus.ring` | `#1E3D5C` | zespół (maskotka) | Kontrast: 11.19 na białym, 7.05 na mięcie, 9.83 na `surface.info`. |
 | `color.focus.ringOnInverse` | `#ffffff` | wywnioskowane | Na `color.surface.inverse`. |
 | `focus.ring.width` | 3px | wykryte (`outline-width`) | — |
 | `focus.ring.offset` | 1px | wykryte (`outline-offset`) | — |
 
-### 1.7 Barwy dekoracyjne
+### 1.8 Barwy dekoracyjne i maskotka
 
-Tylko do ilustracji i elementów bez tekstu. Nie twórz z nich nowych ról.
+Tylko do ilustracji i elementów bez tekstu:
 
 | Token | Wartość | Status |
 | --- | --- | --- |
-| `color.decorative.violet` | `#ce82ff` | wykryte (CSS var) |
-| `color.decorative.yellow` | `#ffc800` | wykryte (CSS var) |
-| `color.decorative.teal` | `#00cd9c` | wykryte (tło na podstronie z szachami) |
+| `color.decorative.green` | `#00993F` (zieleń ZUS) | zespół |
+| `color.decorative.blue` | `#3F84D2` (niebieski ZUS) | zespół |
+| `color.decorative.yellow` | `#FFB34F` (żółty ZUS) | zespół |
+| `color.decorative.rim` | `#338C5C` (obwódka maskotki) | zespół |
+
+Zusik ma własne tokeny `--color-babelek-*` w `maskotka_kod/app/globals.css`. Ich wartości są równe tokenom z tego pliku:
+
+| Token maskotki | Token systemu |
+| --- | --- |
+| `fill` | `surface.brand` |
+| `rim` | `action.primary.border` |
+| `ink` | `text.strong` |
+| `shine` | `surface.page` |
+| `shadow` (`#D1D1D1`) | — (tylko cień pod maskotką) |
+
+Zmieniając jeden z tych kolorów, zmieniaj oba miejsca.
 
 ---
 
@@ -200,7 +231,7 @@ Wartości zmierzone w źródle są wielokrotnościami 4 px. Status skali: wywnio
 | `space.xl` | 24px | od nagłówka do akapitu, od pola do przycisku, odstęp siatki stopki (desktop), dolny wewnętrzny odstęp karty | wykryte |
 | `space.2xl` | 32px | odstęp ilustracja–tekst w układzie kolumnowym, boczny wewnętrzny odstęp stopki (telefon) | wykryte |
 | `space.3xl` | 40px | od tytułu hero do przycisków (tablet, desktop), boczny margines nagłówka i stopki (tablet) | wykryte |
-| `space.4xl` | 48px | w skali designlang, użycia nie zlokalizowano | do weryfikacji |
+| `space.4xl` | 48px | pionowy wewnętrzny odstęp wiersza hero | wykryte |
 | `space.5xl` | 64px | dolny wewnętrzny odstęp stopki, górny i dolny na tablecie | wykryte |
 | `space.6xl` | 96px | pionowy odstęp bloku sekcji, górny wewnętrzny odstęp stopki | wykryte |
 
@@ -215,6 +246,7 @@ Wartości lokalne poza skalą. Wszystkie wykryte; używaj ich tylko w podanym mi
 | `space.card.mediaTitle` | 22px | od ikony do tytułu w karcie wyboru |
 | `space.card.titleMeta` | 6px | od tytułu do podpisu w karcie wyboru |
 | `space.heading.grid` | 80px | od nagłówka strony do pierwszego rzędu kart (telefon; desktop 86) |
+| `space.hero.gap` | 15px | odstęp ilustracja–tekst w hero na desktopie (w źródle `gap: 80px` i ujemny margines ilustracji −65 px; grafika ma wolne miejsce wewnątrz kwadratu 424 px) |
 | `space.stack.alt` | 15px | między przyciskami alternatywnymi w modalu (np. logowanie zewnętrzne); do weryfikacji, czy to nie 16 |
 
 ---
@@ -231,6 +263,7 @@ Wartości lokalne poza skalą. Wszystkie wykryte; używaj ich tylko w podanym mi
 | `size.cta.width` | 330px | wykryte |
 | `size.header.height` | 72px (70 px treści + 2 px ramki) | wykryte |
 | `size.strip.height` | 80px | wykryte |
+| `size.media.hero` | 273px na telefonie, 424px od tabletu (kwadrat) | wykryte |
 | `size.media.feature` | `min(345px, 100vw - 30px)` na telefonie, 452px na tablecie, 530px na desktopie (kwadrat) | wykryte |
 | `size.card.choiceMin` | 150px (najwęższa karta, liczba kolumn dopasowuje się do szerokości) | wykryte |
 | `size.card.choice` | 200px szerokości na desktopie | wykryte |
@@ -271,18 +304,22 @@ Status zasady: wykryte (użycia), wywnioskowane (reguła). Kształtu pigułki an
 
 ---
 
-## 5. Krawędź zamiast cieni
+## 5. Głębia: płasko, ramki zamiast cieni
 
-Źródło nie ma rozmytych cieni, gradientów ani `backdrop-filter`. Status: wykryte.
+Elementy są płaskie. Strukturę daje ramka 2 px, a nie cień ani dolna krawędź. Status: uzgodnione 2026-11-21. Wcześniej był tu wzorzec dolnej krawędzi ze strony źródłowej; zespół go odrzucił, bo za mocno kojarzył się ze źródłem.
 
-| Token | Wartość | Budowa | Status |
+| Token | Wartość | Gdzie | Status |
 | --- | --- | --- | --- |
-| `edge.height` | 4px | Przycisk wypełniony: `box-shadow: 0 4px 0 <edge>` na `::before`; element ma 4 px przezroczystej dolnej ramki jako rezerwę. | wykryte |
-| `edge.heightOutline` | 2px | Przycisk obrysowany: ramka 2px plus `box-shadow: 0 2px 0 <border>`, razem 4px. | wykryte |
-| `border.width.default` | 2px | Ramki kart, paneli, pól, przycisków obrysowanych, linii nagłówka i pasków. | wykryte |
-| `border.width.cardBottom` | 4px | Dolna ramka karty i panelu. Krawędź kontenera to ramka, nie cień. | wykryte (karta); panel: wywnioskowane |
+| `border.width.default` | 2px | Ramki przycisków (wypełnionych i obrysowanych), kart, paneli, pól, komunikatów, zakładek, linii nagłówka i pasków. | wykryte |
 
-Wszystkie wymiary w źródle są liczone z `box-sizing: border-box`. Zgadzają się z pomiarami tylko z resetem z §9. Status: wykryte (wysokości zgadzają się wyłącznie przy `border-box`).
+Zasady:
+
+- **Bez** `box-shadow`, gradientów, `backdrop-filter` i grubszej dolnej ramki.
+- Hierarchię budują:
+  - kolor wypełnienia (mięta dla akcji głównej);
+  - kolor ramki (zielona obwódka, szara, niebieska dla zaznaczenia);
+  - przestrzeń.
+- Wszystkie wymiary są liczone z `box-sizing: border-box`. Reset jest w §9.
 
 ---
 
@@ -323,27 +360,9 @@ Użycie opisuje [motion.md](motion.md).
 
 ---
 
-## 8. Dodatek: tryb ciemny (nie włączaj bez decyzji zespołu)
+## 8. Tryb ciemny
 
-Strona źródłowa nie ma trybu ciemnego: zrzuty jasny i ciemny wyglądają tak samo. Jej CSS zawiera jednak ciemne wartości tych samych zmiennych. Status całej tabeli: wykryte (CSS var), wizualnie niezweryfikowane.
-
-| Token | Jasny | Ciemny | Kontrast w ciemnym |
-| --- | --- | --- | --- |
-| `color.surface.page` | `#ffffff` | `#131f24` | — |
-| `color.surface.subtle`, `color.surface.info` | `#f7f7f7`, `#ddf4ff` | `#202f36` | — |
-| `color.border.default` | `#e5e5e5` | `#37464f` | — |
-| `color.text.strong`, `color.text.primary` | `#3c3c3c`, `#4b4b4b` | `#f1f7fb` | 15.56 |
-| `color.text.muted` | `#777777` | `#dce6ec` | 13.27 |
-| `color.text.disabled` | `#afafaf` | `#52656d` | 2.75 |
-| `color.action.primary.fill` / `.edge` | `#58cc02` / `#58a700` | `#93d333` / `#79b933` | tekst `#131f24` na wypełnieniu: 9.29 |
-| `color.action.info.fill` | `#1cb0f6` | `#49c0f8` | — |
-| `color.status.error.fill` / `.edge` | `#ff4b4b` / `#ea2b2b` | `#ee5555` / `#d84848` | — |
-| `color.status.warning.fill` / `.edge` | `#ff9600` / `#cd7900` | `#ffab33` / `#d79433` | — |
-
-Nie wszystkie tokeny mają działający odpowiednik w ciemnym:
-
-- `color.text.link`: 3.41:1 w ciemnym. Zamiennik: `#49c0f8` (8.15:1). Status: wywnioskowane.
-- `color.text.display`: 1.23:1. Zamiennik: `#93d333` (9.29:1). Status: wywnioskowane, do weryfikacji.
+Brak. Strona źródłowa nie ma trybu ciemnego. Poprzednia wersja tego pliku zawierała ciemne wartości zmiennych ze źródła, ale po zmianie palety na kolory maskotki i ZUS (2026-11-21) przestały pasować, więc je usunąłem. Tryb ciemny wymaga osobnego zaprojektowania przez zespół.
 
 ---
 
@@ -360,64 +379,57 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
   --color-surface-page: #ffffff;                       /* [wykryte] */
   --color-surface-subtle: #f7f7f7;                     /* [wykryte] */
   --color-surface-info: #ddf4ff;                       /* [wykryte] */
-  --color-surface-brand: #58cc02;                      /* [wykryte] */
-  --color-surface-inverse: #100f3e;                    /* [wykryte] */
+  --color-surface-brand: #A3DAB3;                      /* [zespół: maskotka] */
+  --color-surface-inverse: #1E3D5C;                    /* [zespół: maskotka] */
   --color-surface-overlay: rgba(0, 0, 0, 0.3);         /* [wykryte] */
   --color-surface-overlay-strong: rgba(0, 0, 0, 0.4);  /* [wykryte] */
   --color-surface-disabled: #e5e5e5;                   /* [wywnioskowane, do weryfikacji] */
 
   /* Ramki */
-  --color-border-default: #e5e5e5;                     /* [wykryte] */
+  --color-border-default: #BEC3CE;                     /* [zespół: paleta ZUS] */
   --color-border-field: #777777;                       /* [wywnioskowane AA, do weryfikacji] */
-  --color-border-focus: #2b70c9;                       /* [wywnioskowane AA] */
+  --color-border-focus: #3F84D2;                       /* [zespół: paleta ZUS] fokus pola, zaznaczenie */
   --color-border-error: #ea2b2b;                       /* [wywnioskowane, do weryfikacji] */
 
   /* Tekst */
-  --color-text-strong: #3c3c3c;                        /* [wykryte] */
-  --color-text-primary: #4b4b4b;                       /* [wykryte; dla akapitów: wywnioskowane AA] */
+  --color-text-strong: #1E3D5C;                        /* [zespół: maskotka] tytuły */
+  --color-text-primary: #4b4b4b;                       /* [wykryte] akapity */
   --color-text-muted: #777777;                         /* [wykryte] tylko tekst duży */
   --color-text-disabled: #afafaf;                      /* [wykryte] tylko nieaktywne i dekoracja */
-  --color-text-display: #042c60;                       /* [wykryte (CSS var); rola: wywnioskowane AA] */
-  --color-text-link: #2b70c9;                          /* [wykryte (CSS var); rola: wywnioskowane AA] */
-  --color-text-link-on-info: #042c60;                  /* [wywnioskowane AA] */
-  --color-text-on-brand: #3c3c3c;                      /* [wywnioskowane AA] */
-  --color-text-on-info-fill: #042c60;                  /* [wywnioskowane AA, do weryfikacji] */
+  --color-text-display: #1E3D5C;                       /* [zespół: maskotka] */
+  --color-text-link: #00416E;                          /* [zespół: paleta ZUS] */
+  --color-text-on-brand: #1E3D5C;                      /* [zespół: maskotka] 7.05:1 na mięcie */
+  --color-text-on-accent: #1E3D5C;                     /* [zespół: maskotka] 6.29:1 na żółtym */
   --color-text-on-inverse: #ffffff;                    /* [wykryte] */
 
   /* Akcje */
-  --color-action-primary-fill: #58cc02;                /* [wykryte] */
-  --color-action-primary-edge: #58a700;                /* [wykryte] */
-  --color-action-primary-text: var(--color-text-on-brand);      /* [wywnioskowane AA] */
+  --color-action-primary-fill: #A3DAB3;                /* [zespół: maskotka, ciało] */
+  --color-action-primary-border: #338C5C;              /* [zespół: maskotka, obwódka] */
+  --color-action-primary-text: var(--color-text-on-brand);
   --color-action-secondary-fill: #ffffff;              /* [wykryte] */
-  --color-action-secondary-border: #e5e5e5;            /* [wykryte] */
-  --color-action-secondary-edge: #e5e5e5;              /* [wykryte] */
-  --color-action-secondary-text: var(--color-text-link);        /* [wywnioskowane AA] */
+  --color-action-secondary-border: #BEC3CE;            /* [zespół: paleta ZUS] */
+  --color-action-secondary-text: var(--color-text-link);
   --color-action-neutral-text: #4b4b4b;                /* [wykryte] */
-  --color-action-info-fill: #1cb0f6;                   /* [wykryte] */
-  --color-action-info-edge: #1899d6;                   /* [wykryte] */
-  --color-action-info-text: var(--color-text-on-info-fill);     /* [wywnioskowane AA, do weryfikacji] */
 
-  /* Statusy  [kolory: wykryte (CSS var); role: wywnioskowane] */
-  --color-status-success-fill: #58cc02;
-  --color-status-success-edge: #58a700;
-  --color-status-success-surface: #d7ffb8;
-  --color-status-info-fill: #1cb0f6;
-  --color-status-info-edge: #1899d6;
-  --color-status-info-surface: #ddf4ff;
-  --color-status-warning-fill: #ff9600;
-  --color-status-warning-edge: #cd7900;
-  --color-status-warning-surface: #fff5d3;
-  --color-status-error-fill: #ff4b4b;
-  --color-status-error-edge: #ea2b2b;
-  --color-status-error-surface: #ffdfe0;
+  /* Statusy  [role: wywnioskowane] */
+  --color-status-success-edge: #338C5C;                /* [zespół: maskotka] */
+  --color-status-success-surface: #d7ffb8;             /* [wykryte (CSS var); do weryfikacji] */
+  --color-status-info-edge: #3F84D2;                   /* [zespół: paleta ZUS] */
+  --color-status-info-surface: #ddf4ff;                /* [wykryte] */
+  --color-status-warning-edge: #cd7900;                /* [wykryte (CSS var)] */
+  --color-status-warning-surface: #fff5d3;             /* [wykryte (CSS var)] */
+  --color-status-error-edge: #ea2b2b;                  /* [wykryte (CSS var)] */
+  --color-status-error-surface: #ffdfe0;               /* [wykryte (CSS var)] */
 
-  /* Dekoracyjne  [wykryte (CSS var)] tylko ilustracje, bez tekstu */
-  --color-decorative-violet: #ce82ff;
-  --color-decorative-yellow: #ffc800;
-  --color-decorative-teal: #00cd9c;
+  /* Akcent i dekoracja  [zespół: paleta ZUS / maskotka] */
+  --color-accent-fill: #FFB34F;                        /* tekst na nim tylko --color-text-on-accent */
+  --color-decorative-green: #00993F;                   /* bez tekstu */
+  --color-decorative-blue: #3F84D2;                    /* bez tekstu */
+  --color-decorative-yellow: #FFB34F;                  /* bez tekstu */
+  --color-decorative-rim: #338C5C;                     /* bez tekstu */
 
   /* Fokus */
-  --color-focus-ring: #042c60;                         /* [wywnioskowane] */
+  --color-focus-ring: #1E3D5C;                         /* [zespół: maskotka] */
   --color-focus-ring-on-inverse: #ffffff;              /* [wywnioskowane] */
   --focus-ring-width: 3px;                             /* [wykryte] */
   --focus-ring-offset: 1px;                            /* [wykryte] */
@@ -471,7 +483,7 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
   --space-xl: 24px;
   --space-2xl: 32px;
   --space-3xl: 40px;
-  --space-4xl: 48px;                                   /* [do weryfikacji] */
+  --space-4xl: 48px;
   --space-5xl: 64px;
   --space-6xl: 96px;
   /* Odstępy lokalne  [wykryte] tylko w opisanych miejscach */
@@ -483,6 +495,7 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
   --space-card-media-title: 22px;
   --space-card-title-meta: 6px;
   --space-heading-grid: 80px;
+  --space-hero-gap: 15px;                              /* efektywny odstęp: gap 80px − margines 65px w źródle */
   --space-stack-alt: 15px;                             /* [do weryfikacji] */
 
   /* Rozmiary  [wykryte, chyba że opisano inaczej] */
@@ -492,6 +505,7 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
   --size-cta-width: 330px;
   --size-header-height: 72px;
   --size-strip-height: 80px;
+  --size-media-hero: 273px;                            /* 424px od 768 */
   --size-media-feature: min(345px, calc(100vw - 30px)); /* 452px od 768, 530px od 1080 */
   --size-card-choice-min: 150px;
   --size-card-choice: 200px;
@@ -513,13 +527,10 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
   --container-form: 375px;
   --container-footer: 375px;                           /* 768px od 768, 988px od 1080 */
 
-  /* Zaokrąglenia, ramki, krawędź  [wykryte] */
+  /* Zaokrąglenia i ramki  [wykryte] */
   --radius-md: 12px;
   --radius-lg: 16px;
   --border-width: 2px;
-  --border-width-card-bottom: 4px;
-  --edge-height: 4px;
-  --edge-height-outline: 2px;
 
   /* Ruch  [wykryte; --motion-duration-fast: element do weryfikacji] */
   --motion-state: 0ms;
@@ -538,6 +549,7 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
     --type-display-xl-size: 48px;
     --type-display-lg-size: 48px;
     --space-gutter: 40px;
+    --size-media-hero: 424px;
     --size-media-feature: 452px;
     --container-footer: 768px;
   }
@@ -551,11 +563,11 @@ Wklej na początek globalnego arkusza. Komentarze `[status]` są tylko informacj
   }
 }
 
-/* Baza dokumentu  [wywnioskowane: kolor i krój z wykrytych wartości dokumentu] */
+/* Baza dokumentu  [wywnioskowane] */
 body {
   margin: 0;
   background: var(--color-surface-page);
-  color: var(--color-text-strong);
+  color: var(--color-text-primary);
   font: var(--type-body);
 }
 ```

@@ -72,37 +72,36 @@ Wszystko w tej sekcji jest wywnioskowane, a efekt wizualny trzeba sprawdzić na 
 
 ### 3.1 Zasady
 
-1. **Powierzchnią jest sylwetka, nie przycisk.** Wewnątrz `<Liquid>` przycisk musi mieć przezroczyste tło, więc wyłączamy jego `::before` (klasa `.btn--liquid`). Kolor wypełnienia przechodzi do `fill` grupy.
-2. **Krawędź przenosimy do `shadow` grupy.** Twardy cień `0 4px 0 <edge>` rysuje się na scalonej sylwetce, więc zlane przyciski mają jedną wspólną krawędź.
+1. **Powierzchnią jest sylwetka, nie przycisk.** Wewnątrz `<Liquid>` przycisk ma przezroczyste tło i ramkę (klasa `.btn--liquid`). Kolor wypełnienia przechodzi do `fill` grupy.
+2. **Ramkę 2 px przenosimy do `shadow` grupy jako pierścień `inset`.** Rysuje się wewnątrz krawędzi scalonej sylwetki, więc zlane przyciski mają jedną wspólną obwódkę. Przycisk główny wygląda wtedy jak ciało Zusika: mięta w zielonej obwódce, która płynnie się łączy i rozdziela.
 3. **W `shadow` wpisz kolor literalnie**, skopiowany z [tokeny.md](tokeny.md). Parser cienia w bibliotece dzieli tekst na liczby i kolor. Działanie `var()` w `shadow` nie jest sprawdzone (do weryfikacji). `fill` przyjmuje `var()`.
 4. **Jedna grupa to jeden wariant.** Grupa ma jeden `fill` i jeden `shadow`, więc nie mieszaj `primary` z `secondary` w jednej grupie.
-5. **Wariant obrysowany:**
+5. **Ustawienia dla wariantów:**
 
-   ```
-   fill = biały
-   shadow = "inset 0 0 0 2px #e5e5e5, 0 2px 0 #e5e5e5"
-   ```
+   | Wariant | `fill` | `shadow` |
+   | --- | --- | --- |
+   | `primary` | `var(--color-action-primary-fill)` | `"inset 0 0 0 2px #338C5C"` |
+   | `secondary` | `var(--color-action-secondary-fill)` | `"inset 0 0 0 2px #BEC3CE"` |
 
-   Pierścień `inset` naśladuje ramkę 2 px (do weryfikacji).
-6. **Zaokrąglenie** biblioteka odczytuje z computed style przycisku. Zostaw zaokrąglenie z `.btn` (`--radius-md`) albo dodaj `.btn--app` (`--radius-lg`).
-7. **Rozmiar grupy** ustaw tak, żeby mieściła pełny zasięg ruchu elementów, np. rozwinięte menu.
-8. **Fokus działa bez zmian.** Pierścień `outline` jest na prawdziwym przycisku w warstwie treści.
+   Do weryfikacji na prototypie.
+6. **Bez cienia zewnętrznego.** System jest płaski, więc `shadow` zawiera tylko warstwę `inset`.
+7. **Zaokrąglenie** biblioteka odczytuje z computed style przycisku. Zostaw zaokrąglenie z `.btn` (`--radius-md`) albo dodaj `.btn--app` (`--radius-lg`).
+8. **Rozmiar grupy** ustaw tak, żeby mieściła pełny zasięg ruchu elementów, np. rozwinięte menu.
+9. **Fokus działa bez zmian.** Pierścień `outline` jest na prawdziwym przycisku w warstwie treści.
 
 ### 3.2 Czego nie da się przenieść 1:1 (do omówienia)
 
-| Zachowanie ze źródła | Problem w `<Liquid>` | Opcje |
+| Zachowanie zwykłego przycisku | Problem w `<Liquid>` | Opcje |
 | --- | --- | --- |
-| Naciśnięcie: przycisk zjeżdża o 4 px, krawędź znika | Cień należy do całej grupy, nie da się go zdjąć z jednego elementu | a) `y={pressed ? 4 : 0}` z `transition="snappy"`: przycisk zjeżdża, krawędź zostaje; b) na czas naciśnięcia `shadow="none"` dla całej grupy, co działa tylko przy grupie z jednym elementem lub wspólną akcją; c) przy naciśnięciu nic się nie dzieje |
-| Hover: `filter: brightness()` | Filtr na przycisku rozjaśni tylko tekst, bo powierzchnia jest w SVG | Pomiń hover albo zmieniaj `fill` grupy (do weryfikacji) |
+| Hover i naciśnięcie: `filter: brightness()` | Filtr na przycisku zmieni tylko tekst, bo powierzchnia jest w SVG | Pomiń hover i naciśnięcie albo na ich czas zmieniaj `fill` grupy (do weryfikacji) |
 | Stany natychmiastowe | Ruch cieczy to z definicji sprężyna | Sprężyny tylko dla ruchu i łączenia. Zmiany koloru i stanów nadal natychmiastowe. |
 
 ### 3.3 Receptura
 
 ```css
 /* przycisk wewnątrz <Liquid>: powierzchnię daje sylwetka grupy */
-.btn--liquid::before { display: none; }
-.btn--liquid:hover { filter: none; }   /* zob. 3.2 */
-.btn--liquid:active { transform: none; }
+.btn--liquid { --btn-fill: transparent; --btn-border: transparent; }
+.btn--liquid:hover, .btn--liquid:active { filter: none; }   /* zob. 3.2 */
 
 /* menu z przykładu niżej: w spoczynku przyciski leżą jeden na drugim,
    a grupa rezerwuje miejsce na pełne rozwinięcie (zasada 7) */
@@ -114,10 +113,10 @@ Wszystko w tej sekcji jest wywnioskowane, a efekt wizualny trzeba sprawdzić na 
 import { Liquid } from 'liquid-gooey'
 
 // Przykład: przycisk główny, który rozwija się w dwie akcje.
-// Kolory przepisane z tokeny.md, bo shadow potrzebuje wartości literalnej (3.1, pkt 3).
+// Kolor obwódki przepisany z tokeny.md, bo shadow potrzebuje wartości literalnej (3.1, pkt 3).
 export function PrimaryActionMenu({ open }: { open: boolean }) {
   return (
-    <Liquid className="liquid-menu" fill="var(--color-action-primary-fill)" shadow="0 4px 0 #58a700">
+    <Liquid className="liquid-menu" fill="var(--color-action-primary-fill)" shadow="inset 0 0 0 2px #338C5C">
       <Liquid.Item x={0} y={open ? -62 : 0} transition="snappy">
         <button className="btn btn--liquid btn--app" aria-hidden={!open} tabIndex={open ? 0 : -1}>…</button>
       </Liquid.Item>
