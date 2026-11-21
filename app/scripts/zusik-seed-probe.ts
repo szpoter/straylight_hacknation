@@ -82,7 +82,7 @@ async function main() {
   const count = await fetch(`${base}/points/count`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ exact: true }),
+    body: JSON.stringify({ exact: true, filter: { must: [{ is_empty: { key: "corpusVersion" } }] } }),
   });
   const total = ((await count.json()) as { result?: { count?: number } }).result?.count;
   if (total !== PROBE_POINTS.length) throw new Error(`expected ${PROBE_POINTS.length} points, found ${total}`);

@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { answerFromAskBody, groundedClaims, pdfPage, turnsFromView, type Answer } from "@/features/chat/contract";
-import { AnswerView } from "@/features/chat/turn-view";
+import { AnswerView, TurnView } from "@/features/chat/turn-view";
 import { mergeConversation } from "@/features/chat/use-zusik-case";
 
 // Sample answers shaped like the proposed /ask contract (PLAN-ETAP-1-KROK-2.md, section 4).
@@ -95,6 +95,28 @@ describe("mergeConversation", () => {
   });
 });
 
+describe("TurnView", () => {
+  it("replaces verified streaming text and activity with the final cited answer", () => {
+    const render = (state: "sending" | "done" | "lost", partialText: string) =>
+      renderToStaticMarkup(createElement(TurnView, {
+        item: { state, requestId: "r1", question: "Odpis?", answer: odpis },
+        asking: state === "sending", activity: "Sprawdzam źródła", partialText, onRetry: () => {},
+      }));
+    for (const part of ["Pierwszy fragment", "Pierwszy fragment i kolejny"]) {
+      const html = render("sending", part);
+      expect(html).toContain(part);
+      expect(html).toContain("Sprawdzam źródła");
+      expect(html).not.toContain("Źródło 1");
+    }
+    for (const state of ["lost", "done"] as const) {
+      const html = render(state, "Tymczasowy tekst");
+      expect(html).not.toContain("Tymczasowy tekst");
+      expect(html).not.toContain("Sprawdzam źródła");
+    }
+    expect(render("done", "")).toContain("Źródło 1");
+  });
+});
+
 describe("AnswerView", () => {
   it("shows each claim with its own footnote, sources collapsed", () => {
     const html = renderToStaticMarkup(createElement(AnswerView, { answer: odpis }));
@@ -108,8 +130,12 @@ describe("AnswerView", () => {
   it("shows no source as a basis for refusal when evidence is insufficient", () => {
     const html = renderToStaticMarkup(createElement(AnswerView, { answer: benefit800 }));
     expect(html).toContain("800+");
-    expect(html).toContain("nie oznacza, że świadczenie Ci nie przysługuje");
     expect(html).not.toContain("Źródło");
+  });
+
+  it("adds its own reassurance only when the server sent no message", () => {
+    const html = renderToStaticMarkup(createElement(AnswerView, { answer: { ...benefit800, message: "" } }));
+    expect(html).toContain("nie oznacza, że świadczenie Ci nie przysługuje");
   });
 
   it("asks a single clarifying question", () => {

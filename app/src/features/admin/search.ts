@@ -1,5 +1,5 @@
 // Text search for admin lists: diacritic-insensitive, every query word must match, results ranked by relevance.
-import type { TestCase } from "./mock-data";
+import type { TestCase } from "@/lib/admin/types";
 
 export interface SearchField {
   text: string;

@@ -1,0 +1,443 @@
+{
+  "evaluatedAt": "2026-11-21T21:58:21.746Z",
+  "collection": "zusik_marta_v1",
+  "passed": 11,
+  "total": 11,
+  "rows": [
+    {
+      "id": "paternity-date",
+      "mode": "retrieval+model",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "answered",
+      "top5": [
+        "zus-ojcowski-termin",
+        "rz-par33-ust1",
+        "rz-33-1",
+        "rz-zal3-3",
+        "uz-30a-1"
+      ],
+      "evidence": [
+        "rz-par33-ust1",
+        "rz-33-1"
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "rz-par33-ust1",
+          "title": "Rozporządzenie o dokumentach zasiłkowych",
+          "locator": "§ 33 ust. 1",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1316/text.pdf#page=9",
+          "quote": "wniosek ubezpieczonego o wypłatę zasiłku macierzyńskiego za okres ustalony przepisami Kodeksu pracy jako okres urlopu ojcowskiego, złożony przed terminem rozpoczęcia korzystania z zasiłku macierzyńskiego",
+          "headingPath": [],
+          "page": 9,
+          "authority": "regulation",
+          "corpusVersion": "rodzina-2026-11-v1"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Ubezpieczony niebędący pracownikiem składa wniosek o zasiłek za okres urlopu ojcowskiego przed terminem rozpoczęcia korzystania z zasiłku macierzyńskiego.",
+          "citationIds": [
+            "c1"
+          ]
+        }
+      ],
+      "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
+      "model": "ok",
+      "modelMs": 5379
+    },
+    {
+      "id": "paternity-parts",
+      "mode": "retrieval+model",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "answered",
+      "top5": [
+        "kp-ojcowski",
+        "kp-1823-1",
+        "kp-183-3",
+        "kp-1823-2",
+        "rw-17-1"
+      ],
+      "evidence": [
+        "kp-ojcowski",
+        "kp-1823-1",
+        "kp-1823-2"
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "kp-ojcowski",
+          "title": "Kodeks pracy",
+          "locator": "art. 182³ § 1 i § 1¹",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=68",
+          "quote": "niedłużej jednak niż do: 1) ukończenia przez dziecko 12 miesiąca życia albo 2) upływu 12 miesięcy od dnia uprawomocnienia się postanowienia orzekającego przysposobienie dziecka i niedłużej niż do ukończenia przez dziecko 14 roku życia. § 1[1]. Urlop ojcowski może być wykorzystany jednorazowo albo niewięcej niż w 2 częściach, z których żadna nie może być krótsza niż tydzień.",
+          "headingPath": [],
+          "page": 68,
+          "authority": "statute",
+          "corpusVersion": "rodzina-2026-11-v1"
+        },
+        {
+          "id": "c2",
+          "fragmentId": "kp-1823-1",
+          "title": "Kodeks pracy",
+          "locator": "art. 182[3]",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=68",
+          "quote": "niedłużej jednak niż do: 1) ukończenia przez dziecko 12 miesiąca życia albo 2) upływu 12 miesięcy od dnia uprawomocnienia się postanowienia orzekającego przysposobienie dziecka i niedłużej niż do ukończenia przez dziecko 14 roku życia. § 1[1]. Urlop ojcowski może być wykorzystany jednorazowo albo niewięcej niż w 2 częściach, z których żadna nie może być krótsza niż tydzień.",
+          "headingPath": [],
+          "page": 68,
+          "authority": "statute",
+          "corpusVersion": "rodzina-2026-11-v1"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Urlop ojcowski można wykorzystać do ukończenia przez dziecko 12 miesiąca życia lub do upływu 12 miesięcy od dnia uprawomocnienia się postanowienia o przysposobieniu, nie dłużej jednak niż do ukończenia przez dziecko 14 roku życia. Urlop może być wykorzystany jednorazowo albo w nie więcej niż 2 częściach, z których żadna nie może być krótsza niż tydzień.",
+          "citationIds": [
+            "c1",
+            "c2"
+          ]
+        }
+      ],
+      "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
+      "model": "ok",
+      "modelMs": 11276
+    },
+    {
+      "id": "paternity-attachments",
+      "mode": "retrieval",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "not_measured",
+      "top5": [
+        "rz-par33-ust1",
+        "zus-ojcowski-termin",
+        "rz-33-1",
+        "rz-16-1",
+        "rz-zal6-3"
+      ],
+      "evidence": [
+        "rz-par33-ust1",
+        "rz-33-1"
+      ],
+      "citations": [],
+      "claims": []
+    },
+    {
+      "id": "sickness-current",
+      "mode": "retrieval+model",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "answered",
+      "top5": [
+        "zus-chorobowy-po",
+        "uz-art6-ust1",
+        "zus-chorobowy-trwanie",
+        "poradnik-25-3",
+        "uz-8-1"
+      ],
+      "evidence": [
+        "uz-7-1",
+        "uz-art6-ust1",
+        "uz-art7"
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "uz-art6-ust1",
+          "title": "Ustawa zasiłkowa",
+          "locator": "art. 6 ust. 1",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf#page=4",
+          "quote": "Art. 6. 1. Zasiłek chorobowy przysługuje ubezpieczonemu, który stał się niezdolny do pracy z powodu choroby w czasie trwania ubezpieczenia chorobowego.",
+          "headingPath": [],
+          "page": 4,
+          "authority": "statute",
+          "corpusVersion": "rodzina-2026-11-v1"
+        },
+        {
+          "id": "c2",
+          "fragmentId": "uz-art7",
+          "title": "Ustawa zasiłkowa",
+          "locator": "art. 7",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf#page=4",
+          "quote": "Art. 7. Zasiłek chorobowy przysługuje również osobie, która stała się niezdolna do pracy po ustaniu tytułu ubezpieczenia chorobowego, jeżeli niezdolność do pracy trwała bez przerwy co najmniej 30 dni i powstała: 1) niepóźniej niż w ciągu 14 dni od ustania tytułu ubezpieczenia chorobowego; 2) niepóźniej niż w ciągu 3 miesięcy od ustania tytułu ubezpieczenia chorobowego – w razie choroby zakaźnej, której okres wylęgania jest dłuższy niż 14 dni, lub innej choroby, której objawy chorobowe ujawniają się po okresie dłuższym niż 14 dni od początku choroby.",
+          "headingPath": [],
+          "page": 4,
+          "authority": "statute",
+          "corpusVersion": "rodzina-2026-11-v1"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Art. 6. 1. Zasiłek chorobowy przysługuje ubezpieczonemu, który stał się niezdolny do pracy z powodu choroby w czasie trwania ubezpieczenia chorobowego.",
+          "citationIds": [
+            "c1"
+          ]
+        },
+        {
+          "text": "Art. 7. Zasiłek chorobowy przysługuje również osobie, która stała się niezdolna do pracy po ustaniu tytułu ubezpieczenia chorobowego, jeżeli niezdolność do pracy trwała bez przerwy co najmniej 30 dni i powstała: 1) niepóźniej niż w ciągu 14 dni od ustania tytułu ubezpieczenia chorobowego; 2) niepóźniej niż w ciągu 3 miesięcy od ustania tytułu ubezpieczenia chorobowego – w razie choroby zakaźnej, której okres wylęgania jest dłuższy niż 14 dni, lub innej choroby, której objawy chorobowe ujawniają się po okresie dłuższym niż 14 dni od początku choroby.",
+          "citationIds": [
+            "c2"
+          ]
+        }
+      ],
+      "message": "Cytuję treść ze wskazanego źródła urzędowego.",
+      "modelProposedStatus": "answered",
+      "quoteReason": "statutory_conditions",
+      "model": "ok",
+      "modelMs": 13556
+    },
+    {
+      "id": "sickness-prior",
+      "mode": "retrieval+model",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "answered",
+      "top5": [
+        "uz-art13-ust1",
+        "zus-chorobowy-po",
+        "uz-12-1",
+        "uz-7-1",
+        "uz-art6-ust1"
+      ],
+      "evidence": [
+        "uz-7-1",
+        "uz-art7",
+        "uz-art13-ust1"
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "uz-art7",
+          "title": "Ustawa zasiłkowa",
+          "locator": "art. 7",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf#page=4",
+          "quote": "Art. 7. Zasiłek chorobowy przysługuje również osobie, która stała się niezdolna do pracy po ustaniu tytułu ubezpieczenia chorobowego, jeżeli niezdolność do pracy trwała bez przerwy co najmniej 30 dni i powstała: 1) niepóźniej niż w ciągu 14 dni od ustania tytułu ubezpieczenia chorobowego; 2) niepóźniej niż w ciągu 3 miesięcy od ustania tytułu ubezpieczenia chorobowego – w razie choroby zakaźnej, której okres wylęgania jest dłuższy niż 14 dni, lub innej choroby, której objawy chorobowe ujawniają się po okresie dłuższym niż 14 dni od początku choroby.",
+          "headingPath": [],
+          "page": 4,
+          "authority": "statute",
+          "corpusVersion": "rodzina-2026-11-v1"
+        },
+        {
+          "id": "c2",
+          "fragmentId": "uz-art13-ust1",
+          "title": "Ustawa zasiłkowa",
+          "locator": "art. 13 ust. 1",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf#page=6",
+          "quote": "Art. 13. 1. Zasiłek chorobowy z tytułu niezdolności do pracy powstałej w czasie trwania ubezpieczenia chorobowego, jak i z tytułu niezdolności do pracy powstałej po ustaniu tytułu ubezpieczenia nie przysługuje za okres po ustaniu tytułu ubezpieczenia chorobowego, jeżeli osoba niezdolna do pracy: 1) ma ustalone prawo do emerytury lub renty z tytułu niezdolności do pracy; 2) kontynuuje działalność zarobkową lub podjęła działalność zarobkową stanowiącą tytuł do objęcia obowiązkowo lub dobrowolnie ubezpieczeniem chorobowym albo zapewniającą prawo do świadczeń za okres niezdolności do pracy z powodu choroby; 3) nie nabyła prawa do zasiłku w czasie ubezpieczenia, w przypadkach określonych w art. 4 ust. 1; 4) jest uprawniona do zasiłku dla bezrobotnych, zasiłku przedemerytalnego, świadczenia przedemerytalnego, rodzicielskiego świadczenia uzupełniającego lub nauczycielskiego świadczenia kompensacyjnego; 5) podlega obowiązkowo ubezpieczeniu społecznemu rolników określonemu w przepisach o ubezpieczeniu społecznym rolników.",
+          "headingPath": [],
+          "page": 6,
+          "authority": "statute",
+          "corpusVersion": "rodzina-2026-11-v1"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Art. 7. Zasiłek chorobowy przysługuje również osobie, która stała się niezdolna do pracy po ustaniu tytułu ubezpieczenia chorobowego, jeżeli niezdolność do pracy trwała bez przerwy co najmniej 30 dni i powstała: 1) niepóźniej niż w ciągu 14 dni od ustania tytułu ubezpieczenia chorobowego; 2) niepóźniej niż w ciągu 3 miesięcy od ustania tytułu ubezpieczenia chorobowego – w razie choroby zakaźnej, której okres wylęgania jest dłuższy niż 14 dni, lub innej choroby, której objawy chorobowe ujawniają się po okresie dłuższym niż 14 dni od początku choroby.",
+          "citationIds": [
+            "c1"
+          ]
+        },
+        {
+          "text": "Art. 13. 1. Zasiłek chorobowy z tytułu niezdolności do pracy powstałej w czasie trwania ubezpieczenia chorobowego, jak i z tytułu niezdolności do pracy powstałej po ustaniu tytułu ubezpieczenia nie przysługuje za okres po ustaniu tytułu ubezpieczenia chorobowego, jeżeli osoba niezdolna do pracy: 1) ma ustalone prawo do emerytury lub renty z tytułu niezdolności do pracy; 2) kontynuuje działalność zarobkową lub podjęła działalność zarobkową stanowiącą tytuł do objęcia obowiązkowo lub dobrowolnie ubezpieczeniem chorobowym albo zapewniającą prawo do świadczeń za okres niezdolności do pracy z powodu choroby; 3) nie nabyła prawa do zasiłku w czasie ubezpieczenia, w przypadkach określonych w art. 4 ust. 1; 4) jest uprawniona do zasiłku dla bezrobotnych, zasiłku przedemerytalnego, świadczenia przedemerytalnego, rodzicielskiego świadczenia uzupełniającego lub nauczycielskiego świadczenia kompensacyjnego; 5) podlega obowiązkowo ubezpieczeniu społecznemu rolników określonemu w przepisach o ubezpieczeniu społecznym rolników.",
+          "citationIds": [
+            "c2"
+          ]
+        }
+      ],
+      "message": "Cytuję treść ze wskazanego źródła urzędowego.",
+      "modelProposedStatus": "answered",
+      "quoteReason": "statutory_conditions",
+      "model": "ok",
+      "modelMs": 14443
+    },
+    {
+      "id": "sickness-rate",
+      "mode": "retrieval",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "not_measured",
+      "top5": [
+        "uz-art11-ust2-pkt1",
+        "uz-11-1",
+        "poradnik-25-2",
+        "poradnik-28-3",
+        "poradnik-26-1"
+      ],
+      "evidence": [
+        "uz-art6-ust1",
+        "uz-art11-ust2-pkt1",
+        "uz-11-1"
+      ],
+      "citations": [],
+      "claims": []
+    },
+    {
+      "id": "rehabilitation",
+      "mode": "retrieval",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "rodzina-2026-11-v1",
+      "status": "not_measured",
+      "top5": [
+        "uz-18-1",
+        "rz-11-1",
+        "poradnik-25-1",
+        "uz-18-3",
+        "rz-11-2"
+      ],
+      "evidence": [
+        "uz-18-1",
+        "uz-18-2",
+        "uz-18-3",
+        "uz-18-4"
+      ],
+      "citations": [],
+      "claims": []
+    },
+    {
+      "id": "family-800",
+      "mode": "retrieval+model",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "programy-2026-11-v1",
+      "status": "answered",
+      "top5": [
+        "800-plus",
+        "dobry-start",
+        "aktywny-rodzic"
+      ],
+      "evidence": [
+        "800-plus"
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "800-plus",
+          "title": "ZUS, Świadczenia dla rodziny",
+          "locator": "Świadczenie wychowawcze 800+",
+          "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin",
+          "quote": "Od 1 lutego w danym roku możesz złożyć elektronicznie wniosek o świadczenie wychowawcze na nowy okres: od 1 czerwca do 31 maja kolejnego roku. Otrzymasz je na każde dziecko do ukończenia przez nie 18 lat. Świadczenie 800+ przysługuje niezależnie od Twoich dochodów. Wniosek złożysz przez aplikację mZUS",
+          "headingPath": [
+            "Świadczenia dla rodziny z ZUS",
+            "Świadczenie wychowawcze 800+"
+          ],
+          "page": null,
+          "authority": "zus_guidance",
+          "corpusVersion": "programy-2026-11-v1"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Program 800+ to świadczenie wychowawcze przysługujące na każde dziecko do ukończenia 18 lat, niezależnie od dochodów rodziców. Wniosek na nowy okres (od 1 czerwca do 31 maja kolejnego roku) można złożyć elektronicznie od 1 lutego danego roku przez aplikację mZUS.",
+          "citationIds": [
+            "c1"
+          ]
+        }
+      ],
+      "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
+      "model": "ok",
+      "modelMs": 6595
+    },
+    {
+      "id": "family-school",
+      "mode": "retrieval",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "programy-2026-11-v1",
+      "status": "not_measured",
+      "top5": [
+        "dobry-start",
+        "800-plus",
+        "aktywny-rodzic"
+      ],
+      "evidence": [
+        "dobry-start"
+      ],
+      "citations": [],
+      "claims": []
+    },
+    {
+      "id": "family-care",
+      "mode": "retrieval+model",
+      "pass": true,
+      "rawHit": true,
+      "evidenceHit": true,
+      "version": "programy-2026-11-v1",
+      "status": "answered",
+      "top5": [
+        "aktywny-rodzic",
+        "800-plus",
+        "dobry-start"
+      ],
+      "evidence": [
+        "aktywny-rodzic"
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "aktywny-rodzic",
+          "title": "ZUS, Świadczenia dla rodziny",
+          "locator": "Program Aktywny Rodzic",
+          "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin",
+          "quote": "Z programu Aktywny Rodzic możesz otrzymać następujące świadczenia: świadczenie aktywni rodzice w pracy – nowe , świadczenie aktywnie w żłobku – zastępuje dofinansowanie do żłobka , świadczenie aktywnie w domu – zastępuje rodzinny kapitał opiekuńczy .",
+          "headingPath": [
+            "Świadczenia dla rodziny z ZUS",
+            "Program Aktywny Rodzic"
+          ],
+          "page": null,
+          "authority": "zus_guidance",
+          "corpusVersion": "programy-2026-11-v1"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Z programu Aktywny Rodzic możesz otrzymać następujące świadczenia: świadczenie aktywni rodzice w pracy, świadczenie aktywnie w żłobku, świadczenie aktywnie w domu.",
+          "citationIds": [
+            "c1"
+          ]
+        }
+      ],
+      "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
+      "model": "ok",
+      "modelMs": 4611
+    },
+    {
+      "id": "outside",
+      "mode": "abstention",
+      "pass": true,
+      "rawHit": false,
+      "evidenceHit": false,
+      "version": "marta-v1",
+      "status": "insufficient_evidence",
+      "top5": [],
+      "evidence": [],
+      "citations": [],
+      "claims": []
+    }
+  ]
+}

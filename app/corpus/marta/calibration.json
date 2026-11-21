@@ -1,0 +1,18 @@
+{
+  "corpusVersion": "marta-v1",
+  "writtenAt": "2026-11-21",
+  "note": "Pytania robocze do strojenia rozszerzeń zapytań i progów. Nie pokrywają się z eval.json i nie wchodzą do oceny.",
+  "cases": [
+    { "id": "k01", "question": "Czy żona i ja możemy mieć rodzicielski w tych samych tygodniach?", "expected": [["kp-art182-1a-par6", "mrpips-dzielenie-jednoczesnie"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] },
+    { "id": "k02", "question": "Ile dni przed startem urlopu muszę dać papier szefowi?", "expected": [["kp-art182-1d-par1", "mrpips-korzystanie-wniosek"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": ["kp-art182-1e-par2"] },
+    { "id": "k03", "question": "Firma ma w teczce akt urodzenia syna, czy znowu go nosić?", "expected": [["rozp-2025-322-par15-ust2-pkt1"], ["rozp-2025-322-par22"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] },
+    { "id": "k04", "question": "Partnerka też idzie na urlop, co o niej napisać we wniosku?", "expected": [["rozp-2025-322-par15-ust2-pkt2"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] },
+    { "id": "k05", "question": "Czy moje dziewięć tygodni może wykorzystać żona?", "expected": [["kp-art182-1a-par4", "mrpips-nieprzenoszalna", "zus-czas-trwania-9-tygodni"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] },
+    { "id": "k06", "question": "Ile razy mogę przerwać i wrócić na rodzicielski?", "expected": [["kp-art182-1c", "mrpips-korzystanie-czesci"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] },
+    { "id": "k07", "question": "Czy wniosek można przesłać mailem do kadr?", "expected": [["kp-art182-1d-par1", "mrpips-korzystanie-wniosek"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] },
+    { "id": "k08", "question": "Chcę pracować na pół etatu w trakcie rodzicielskiego, kiedy złożyć wniosek?", "expected": [["kp-art182-1e-par2"]], "status": ["answered"], "required": [], "forbidden": [], "forbiddenCitations": [] }
+  ],
+  "negatives": [
+    { "id": "kn1", "question": "Jaka jest stawka zasiłku chorobowego?", "status": ["insufficient_evidence"], "forbidden": [] }
+  ]
+}

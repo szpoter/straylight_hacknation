@@ -1,4 +1,4 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { chatModel } from "../zusik/model-provider";
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { generateText } from "ai";
 import { Pool } from "pg";
@@ -29,7 +29,7 @@ function sherlockModel(): KamilModel | null {
   const apiKey = process.env.SHERLOCK_API_KEY?.trim();
   const id = process.env.SHERLOCK_MODEL?.trim();
   if (!baseURL || !apiKey || !id) return null;
-  const model = createOpenAICompatible({ name: "sherlock", baseURL, apiKey })(id);
+  const model = chatModel(baseURL, apiKey, id);
   const call = async (system: string, prompt: string) => {
     const { text } = await generateText({
       model,

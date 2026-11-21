@@ -1,30 +1,30 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { CASE_LABEL, STARTERS } from "./case-data";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { ScenarioMenu, type Scenario } from "./scenario-nav";
+import { CASE_LABEL } from "./case-data";
 import { CaseSteps, type CaseStepsProps } from "./case-steps";
 import { TurnView } from "./turn-view";
 import type { ConversationItem } from "./use-zusik-case";
 import s from "./zusik.module.css";
 
 type Props = {
-  phone: boolean;
   fullscreen: boolean;
-  showHistory: boolean;
   mascot: ReactNode;
   steps: CaseStepsProps;
   conversation: ConversationItem[];
   caseError: string | null;
   notice: string | null;
   composer: ReactNode;
-  /** Reading position of this conversation, kept while the panel is collapsed or shows the history. */
+  workflow?: ReactNode;
+  workflowVersion?: number;
+  activity: string | null;
+  partialText: string;
+  /** Reading position of this conversation, kept while the panel is collapsed. */
   readScroll: () => number | null;
   onScrollSave: (top: number) => void;
   onRetryAsk: (requestId: string) => void;
   onRetryCase: () => void;
-  onStarter: (text: string) => void;
-  onHistory: (open: boolean) => void;
-  onNewChat: () => void;
   onFullscreen: () => void;
   onCollapse: () => void;
 };
@@ -32,86 +32,33 @@ type Props = {
 export function ChatPanel(props: Props) {
   return (
     <section className={s.chat} aria-label="Czat z Zusikiem">
-      <ChatHeader {...props} />
-      {props.showHistory ? <History onBack={() => props.onHistory(false)} /> : <Thread {...props} />}
+      <ChatHeader label={CASE_LABEL} scenario="marta" fullscreen={props.fullscreen} onFullscreen={props.onFullscreen} onCollapse={props.onCollapse} />
+      <Thread {...props} />
     </section>
   );
 }
 
-function ChatHeader({ phone, fullscreen, showHistory, onHistory, onNewChat, onFullscreen, onCollapse }: Props) {
-  const [moreOpen, setMoreOpen] = useState(false);
+export function ChatHeader({ label, scenario, fullscreen, onFullscreen, onCollapse }: {
+  label: string;
+  scenario: Scenario;
+  fullscreen?: boolean;
+  onFullscreen?: () => void;
+  onCollapse?: () => void;
+}) {
   return (
     <header className={s.chatHead}>
       <div className={s.chatHeadTitle}>
-        <p className={s.chatName}>
-          Zusik · asystent AI{" "}
-          <span className={s.aiBadge} aria-label="treści generowane przez AI">
-            AI
-          </span>
-        </p>
-        <p className={s.chatCase}>{CASE_LABEL}</p>
+        <p className={s.chatName}>Zusik · asystent AI</p>
+        <p className={s.chatCase}>{label}</p>
       </div>
-      <button type="button" className={s.headButton} aria-pressed={showHistory} onClick={() => onHistory(!showHistory)}>
-        <HistoryIcon />
-        <span className={phone ? s.srOnly : undefined}>Historia</span>
-      </button>
-      {phone ? (
-        <div className={s.menuWrap} onKeyDown={(event) => event.key === "Escape" && setMoreOpen(false)}>
-          <button
-            type="button"
-            className={s.iconButton}
-            aria-label="Więcej"
-            aria-haspopup="menu"
-            aria-expanded={moreOpen}
-            onClick={() => setMoreOpen((open) => !open)}
-          >
-            <MoreIcon />
-          </button>
-          {moreOpen && (
-            <div className={s.menu} role="menu">
-              <button
-                type="button"
-                role="menuitem"
-                className={s.menuItem}
-                autoFocus
-                onClick={() => {
-                  setMoreOpen(false);
-                  onNewChat();
-                }}
-              >
-                Nowa rozmowa
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <button type="button" className={s.iconButton} aria-label="Nowa rozmowa" onClick={onNewChat}>
-          <NewChatIcon />
-        </button>
-      )}
-      <button type="button" className={s.iconButton} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
+      <ScenarioMenu current={scenario} label="Zmień sprawę" />
+      {onFullscreen && <button type="button" className={s.iconButton} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
         {fullscreen ? <SplitIcon /> : <ExpandIcon />}
-      </button>
-      <button type="button" className={s.iconButton} aria-label="Zwiń czat" onClick={onCollapse}>
+      </button>}
+      {onCollapse && <button type="button" className={s.iconButton} aria-label="Zwiń czat" onClick={onCollapse}>
         <MinusIcon />
-      </button>
+      </button>}
     </header>
-  );
-}
-
-function History({ onBack }: { onBack: () => void }) {
-  return (
-    <nav className={s.history} aria-label="Historia rozmów">
-      <button type="button" className={s.secondaryButton} autoFocus onClick={onBack}>
-        ← Wróć do rozmowy
-      </button>
-      <h3 className={s.historyGroup}>Ta sprawa</h3>
-      <button type="button" className={s.historyItem} aria-current="true" onClick={onBack}>
-        <span className={s.historyTop}>Urlop rodzicielski Marty</span>
-        <span className={s.muted}>{CASE_LABEL}</span>
-      </button>
-      <p className={s.muted}>Wcześniejsze rozmowy pojawią się tu, gdy serwer zacznie zapisywać kilka rozmów dla jednej sprawy.</p>
-    </nav>
   );
 }
 
@@ -119,8 +66,9 @@ function History({ onBack }: { onBack: () => void }) {
 function Thread(props: Props) {
   const { conversation, steps, mascot, caseError, notice } = props;
   const list = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
-  const signature = `${steps.view?.state}:${steps.pendingChoice}:${steps.preview}:${conversation
+  const signature = `${props.workflowVersion ?? ""}:${steps.view?.state}:${steps.pendingChoice}:${steps.preview}:${conversation
     .map((item) => `${item.requestId}:${item.state}`)
     .join("|")}`;
   const [reader, setReader] = useState({ atBottom: true, seen: signature });
@@ -128,7 +76,10 @@ function Thread(props: Props) {
   // restore the reading place when the thread opens again
   useLayoutEffect(() => {
     const el = list.current;
-    if (el) el.scrollTop = props.readScroll() ?? el.scrollHeight;
+    if (el) {
+      el.scrollTop = props.readScroll() ?? el.scrollHeight;
+      atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 32;
+    }
     // only when the thread mounts
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -138,6 +89,18 @@ function Thread(props: Props) {
     const el = list.current;
     if (el && atBottom.current) el.scrollTop = el.scrollHeight;
   }, [signature]);
+
+  // content can also grow without a new message (a source opens, fonts load): stay pinned at the bottom
+  useEffect(() => {
+    const el = list.current;
+    const inner = content.current;
+    if (!el || !inner) return;
+    const observer = new ResizeObserver(() => {
+      if (atBottom.current) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, []);
 
   const onScroll = () => {
     const el = list.current;
@@ -161,33 +124,42 @@ function Thread(props: Props) {
   };
 
   const newAnswer = !reader.atBottom && signature !== reader.seen;
-  const showStarters = conversation.length === 0;
+  const asking = conversation.some((item) => item.state === "sending");
 
   return (
     <>
       <div ref={list} className={s.thread} onScroll={onScroll}>
         <div className={s.threadSpacer} />
-        <div className={s.threadInner} aria-live="polite" aria-relevant="additions">
+        <div className={s.threadInner}>
           <div className={s.marginMascot} aria-hidden="true">
             {mascot}
           </div>
-          <CaseSteps {...steps} />
-          {conversation.map((item) => (
-            <TurnView key={item.requestId} item={item} onRetry={props.onRetryAsk} />
-          ))}
-          {notice && (
-            <p className={s.notice} role="status">
-              {notice}
-            </p>
-          )}
-          {caseError && (
-            <div className={s.inlineError} role="alert">
-              <span>{caseError}</span>
-              <button type="button" className={s.secondaryButton} onClick={props.onRetryCase}>
-                Spróbuj ponownie
-              </button>
-            </div>
-          )}
+          <div ref={content} className={s.messages} aria-live="polite" aria-relevant="additions">
+            {props.workflow ?? <CaseSteps {...steps} />}
+            {conversation.map((item) => (
+              <TurnView
+                key={item.requestId}
+                item={item}
+                activity={props.activity}
+                partialText={props.partialText}
+                asking={asking}
+                onRetry={props.onRetryAsk}
+              />
+            ))}
+            {notice && (
+              <p className={s.notice} role="status">
+                {notice}
+              </p>
+            )}
+            {caseError && (
+              <div className={s.inlineError} role="alert">
+                <span>{caseError}</span>
+                <button type="button" className={s.secondaryButton} onClick={props.onRetryCase}>
+                  Spróbuj ponownie
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className={s.chatBottom}>
@@ -195,16 +167,6 @@ function Thread(props: Props) {
           <button type="button" className={s.toBottom} aria-label={newAnswer ? undefined : "Wróć na dół"} onClick={toBottom}>
             ↓{newAnswer && " Nowa odpowiedź"}
           </button>
-        )}
-        {showStarters && (
-          <div className={s.starters} role="group" aria-label="Pytania na start">
-            {STARTERS.map((starter) => (
-              <button key={starter} type="button" className={s.starter} onClick={() => props.onStarter(starter)}>
-                {starter}
-                <span aria-hidden="true">↗</span>
-              </button>
-            ))}
-          </div>
         )}
         {props.composer}
       </div>
@@ -224,21 +186,6 @@ const iconProps = {
   "aria-hidden": true,
 };
 
-function HistoryIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
-      <path d="M3 3v5h5M12 7v5l3 2" />
-    </svg>
-  );
-}
-function NewChatIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  );
-}
 function ExpandIcon() {
   return (
     <svg {...iconProps}>
@@ -258,15 +205,6 @@ function MinusIcon() {
   return (
     <svg {...iconProps}>
       <path d="M5 12h14" />
-    </svg>
-  );
-}
-function MoreIcon() {
-  return (
-    <svg {...iconProps}>
-      <circle cx="5" cy="12" r="1" />
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
     </svg>
   );
 }

@@ -31,7 +31,7 @@ export async function pdfjs() {
   return lib;
 }
 
-async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progress): Promise<OcrWord[]> {
+export async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progress): Promise<OcrWord[]> {
   progress("Rozpoznaję tekst na skanie (OCR)…");
   const { createWorker } = await import("tesseract.js");
   const worker = await createWorker("pol", 1, {
@@ -51,7 +51,7 @@ async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progr
   }
 }
 
-async function loadImage(file: Blob): Promise<HTMLImageElement> {
+export async function loadImage(file: Blob): Promise<HTMLImageElement> {
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();
@@ -126,12 +126,12 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
-export async function savePages(fileName: string, pages: PageImage[]): Promise<void> {
+export async function savePages(scope: string, fileName: string, pages: PageImage[]): Promise<void> {
   try {
     const db = await openDb();
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).put({ fileName, pages }, "current");
+      tx.objectStore(STORE).put({ fileName, pages }, scope);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -140,11 +140,11 @@ export async function savePages(fileName: string, pages: PageImage[]): Promise<v
   }
 }
 
-export async function loadPages(): Promise<{ fileName: string; pages: PageImage[] } | null> {
+export async function loadPages(scope: string): Promise<{ fileName: string; pages: PageImage[] } | null> {
   try {
     const db = await openDb();
     return await new Promise((resolve) => {
-      const req = db.transaction(STORE, "readonly").objectStore(STORE).get("current");
+      const req = db.transaction(STORE, "readonly").objectStore(STORE).get(scope);
       req.onsuccess = () => resolve(req.result ?? null);
       req.onerror = () => resolve(null);
     });
@@ -153,10 +153,10 @@ export async function loadPages(): Promise<{ fileName: string; pages: PageImage[
   }
 }
 
-export async function clearPages(): Promise<void> {
+export async function clearPages(scope: string): Promise<void> {
   try {
     const db = await openDb();
-    db.transaction(STORE, "readwrite").objectStore(STORE).delete("current");
+    db.transaction(STORE, "readwrite").objectStore(STORE).delete(scope);
   } catch {
     // nothing to clear
   }

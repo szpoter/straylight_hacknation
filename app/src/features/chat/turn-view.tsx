@@ -7,21 +7,29 @@ import s from "./zusik.module.css";
 
 type Props = {
   item: ConversationItem;
+  activity: string | null;
+  partialText: string;
+  asking: boolean;
   onRetry: (requestId: string) => void;
 };
 
 /** One question from the parent and Zusik's answer to it. */
-export function TurnView({ item, onRetry }: Props) {
+export function TurnView({ item, activity, partialText, asking, onRetry }: Props) {
   return (
     <>
       <div className={s.userRow}>
         <p className={s.userBubble}>{item.question}</p>
       </div>
-      {item.state === "sending" && <Progress label="Szukam w materiałach ZUS…" />}
+      {item.state === "sending" && (
+        <>
+          {activity && <Progress label={activity} />}
+          {partialText && <p className={s.partialAnswer} aria-live="off">{partialText}</p>}
+        </>
+      )}
       {item.state === "lost" && (
         <div className={s.inlineError} role="alert">
           <span>Utracono połączenie. Pytanie jest zapisane w tej karcie.</span>
-          <button type="button" className={s.secondaryButton} onClick={() => onRetry(item.requestId)}>
+          <button type="button" className={s.secondaryButton} disabled={asking} onClick={() => onRetry(item.requestId)}>
             Ponów odpowiedź
           </button>
         </div>
@@ -41,6 +49,7 @@ export function Progress({ label }: { label: string }) {
 }
 
 export function AnswerView({ answer }: { answer: Answer }) {
+  if (answer.status === "conversation") return <div className={s.aiMessage}><p>{answer.message}</p></div>;
   if (answer.status === "needs_clarification") {
     return (
       <div className={s.aiMessage}>
@@ -52,8 +61,14 @@ export function AnswerView({ answer }: { answer: Answer }) {
     // No sources here on purpose: a missing basis is not shown as a reason to refuse the benefit.
     return (
       <div className={s.aiMessage}>
-        <p>{answer.message ?? "Materiały, które mam, nie wystarczają, żeby odpowiedzieć na to pytanie."}</p>
-        <p className={s.muted}>Brak podstawy w tych źródłach nie oznacza, że świadczenie Ci nie przysługuje.</p>
+        {answer.message ? (
+          <p>{answer.message}</p>
+        ) : (
+          <>
+            <p>Materiały, które mam, nie wystarczają, żeby odpowiedzieć na to pytanie.</p>
+            <p className={s.muted}>Brak podstawy w tych źródłach nie oznacza, że świadczenie Ci nie przysługuje.</p>
+          </>
+        )}
       </div>
     );
   }

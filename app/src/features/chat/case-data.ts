@@ -11,8 +11,6 @@ export const CASE_LABEL = "Ola · Wniosek o urlop rodzicielski";
 export const DRAFT_TITLE = "Wniosek o urlop rodzicielski";
 export const RECIPIENT = "Studio Lipa";
 
-export const STARTERS = ["Czy możemy razem?", "Do kiedy złożyć wniosek?", "Co wpisać o Pawle?"] as const;
-
 export type ProfileRow = { key: string; label: string; value: string; note?: string };
 
 export const PROFILE_ROWS: ProfileRow[] = [

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useId, useState } from "react";
-import { PARAMETERS, formatDate, type Parameter } from "./mock-data";
-import { Badge, Card, StateBadge, cx } from "./ui";
+import { formatDate, type Parameter } from "./mock-data";
+import { Badge, Card, OriginNote, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
 // Demo family from SPEC §12: daily base 200 zł, one period of parental leave lasting 28 days.
@@ -86,8 +86,9 @@ function checksFor(p: Parameter, before: string, after: string, next: string): C
   }
 }
 
-export function ChangeView({ parameterId }: { parameterId?: string }) {
-  const parameter = PARAMETERS.find((p) => p.id === parameterId) ?? PARAMETERS[0];
+export function ChangeView({ parameters, parameterId }: { parameters: Parameter[]; parameterId?: string }) {
+  const parameter =
+    parameters.find((p) => p.id === parameterId) ?? parameters.find((p) => p.id === "rate-parental") ?? parameters[0];
   const current = parseNumber(parameter.value);
   const unit = current === null ? "" : parameter.value.replace(/^[\d\s,.]+/, "").trim();
   const kind: Kind = unit === "%" ? "rate" : current === null ? "text" : "number";
@@ -154,6 +155,7 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
         <p className={s.eyebrow}>
           {parameter.group} · {parameter.name}
         </p>
+        <OriginNote origin={parameter.origin} appSource={parameter.appSource} />
         <form id={formId} className={s.form} onSubmit={(e) => e.preventDefault()} style={{ marginTop: 12 }}>
           <div className={s.currentValue}>
             <div>

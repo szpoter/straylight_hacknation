@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Literata } from "next/font/google";
-import { AdminShell } from "@/features/admin/admin-shell";
 import "./admin-globals.css";
 
 // Fonts from DESIGN.md: Literata for headings and numbers, Inter for interface text.
@@ -12,6 +11,11 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+// Shared by the sign-in (/admin) and the panel ((panel)/), which adds the sidebar after the access check.
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <AdminShell fontClassName={`${literata.variable} ${inter.variable}`}>{children}</AdminShell>;
+  return (
+    <div className={`${literata.variable} ${inter.variable}`} data-admin-shell="">
+      {children}
+    </div>
+  );
 }

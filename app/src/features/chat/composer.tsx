@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import s from "./zusik.module.css";
 
 type Props = {
@@ -12,10 +12,13 @@ type Props = {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   onText: (text: string) => void;
   onSend: () => void;
+  onAttach?: (file: File | null) => void;
+  attachment?: File | null;
 };
 
 /** The message field, laid out like Claude's: text on top, attachment left, send right. */
-export function Composer({ text, busy, notice, textareaRef, onText, onSend }: Props) {
+export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAttach, attachment }: Props) {
+  const fileInput = useRef<HTMLInputElement>(null);
   const canSend = !busy && text.trim().length > 0;
 
   // grow the text area with its content (up to the CSS max-height)
@@ -54,21 +57,15 @@ export function Composer({ text, busy, notice, textareaRef, onText, onSend }: Pr
           }}
         />
         <div className={s.composerBar}>
-          <button
-            type="button"
-            className={s.iconButton}
-            aria-label="Dołącz dokument"
-            aria-disabled="true"
-            aria-describedby="zusik-attach-note"
-          >
-            <PaperclipIcon />
-          </button>
-          <span id="zusik-attach-note" className={s.srOnly}>
-            Dołączanie dokumentów pojawi się razem z zapisem szkicu.
-          </span>
-          <span className={s.composerHint} aria-hidden="true">
-            {busy ? "Zusik pracuje…" : "Enter wysyła · Shift+Enter nowa linia"}
-          </span>
+          {onAttach && <>
+            <input ref={fileInput} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={event=>{
+              const file=event.target.files?.[0];
+              if(file) onAttach(file);
+              event.target.value="";
+            }} />
+            <button type="button" className={s.iconButton} aria-label="Wybierz kopię aktu urodzenia" onClick={()=>fileInput.current?.click()}><PaperclipIcon /></button>
+            {attachment && <button type="button" className={s.secondaryButton} title={attachment.name} onClick={()=>onAttach(null)}>Usuń odpis</button>}
+          </>}
           <button type="button" className={s.send} aria-label="Wyślij" disabled={!canSend} onClick={onSend}>
             <ArrowUpIcon />
           </button>

@@ -264,8 +264,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 460px;
-  overflow-y: auto;
   padding-right: 4px;
 }
 .bubbleKamil {
@@ -280,6 +278,10 @@
   align-self: flex-start;
   max-width: 92%;
   color: var(--answer-ink);
+}
+.bubbleZusik > p:first-child {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 .author {
   font-size: 11px;
@@ -358,19 +360,6 @@
   margin: 6px 0 0;
 }
 
-/* ZAM preview */
-.pages {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.pageImg {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--outline);
-  border-radius: 4px;
-  box-shadow: 0 1px 6px rgba(40, 55, 84, 0.08);
-}
 .editGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -399,8 +388,11 @@
   .field,
   .compare,
   .dates,
-  .pages,
   .editGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.caseTools { display: grid; gap: 12px; --answer-ink: #21342d; }
+.caseTools > details > summary { padding: 10px 0; font-weight: 600; }
+.caseTools > button { justify-self: start; }

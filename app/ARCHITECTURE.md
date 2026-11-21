@@ -2,7 +2,7 @@
 
 **Stan z 21.11.2026.** `app/` jest docelowym miejscem aplikacji Zusika. Wchodzi tu tylko kod produkcyjny: przejrzany, z testami i bez eksperymentów. Prototypy powstają poza nią: maskotka w `maskotka_kod/`, makiety w `Przewodnik-Rodzica.html` i `ui/`. Kod przenosimy do `app/` dopiero po akceptacji.
 
-**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [DESIGN.md](../DESIGN.md). Tokeny z DESIGN.md są w `src/app/globals.css` jako `@theme` Tailwinda v4; domyślna paleta Tailwinda jest wyłączona, więc w klasach działają tylko kolory z tokenów. Wyjątek: panel administracyjny ma własne style (CSS Modules w `features/admin/admin.module.css`) i przykładowe dane (`features/admin/mock-data.ts`).
+**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [DESIGN.md](../DESIGN.md). Tokeny z DESIGN.md są w `src/app/globals.css` jako `@theme` Tailwinda v4 (obszar rodzica). Wyjątek to panel administracyjny: ma układ z sekcji 14 speca i tokeny z [DESIGN.md](../DESIGN.md) (CSS Modules w `features/admin/admin.module.css`, kroje Literata i Inter przez `next/font/google`). Wartości, które aplikacja już stosuje (urlop ojcowski, warunki zasiłku chorobowego, wzór ZAM, źródła wiedzy, sprawy liczone regułą ojcowską), panel czyta z kodu przez `lib/admin/catalog.ts` i oznacza „W aplikacji”. Pozostałe parametry ze specu i historia zmian są przykładowe (`features/admin/mock-data.ts`), oznaczone „Ze specyfikacji”.
 
 ## Stos
 
@@ -17,7 +17,7 @@ Ruch idzie w jedną stronę: **trasa → funkcja → biblioteka domenowa → us�
 | Trasy | `src/app/` | Strony i endpointy `route.ts`: odczyt sesji, walidacja wejścia, wywołanie domeny, odpowiedź HTTP | Logika biznesowa, SQL, wywołania dostawców |
 | Funkcje | `src/features/<obszar>/` | Komponenty i hooki jednego obszaru produktu, np. kalkulatora albo czatu | Kod współdzielony przez kilka obszarów |
 | UI wspólne | `src/components/` | `ui/`: elementy z DESIGN.md (przyciski, karty wyboru, pola, panel, zakładki, etykiety). `shell/`: pasek z selektorem dziecka, dolny pasek, bąbelek Zusika. `mascot/`: statyczny zastępnik Zusika do czasu przeniesienia Bąbelka | Dane i wywołania API |
-| Domena | `src/lib/` | Czysty TypeScript bez Reacta. Każdy moduł ma testy w `tests/` | Komponenty, `next/headers` (poza `lib/zusik/server.ts`) |
+| Domena | `src/lib/` | Czysty TypeScript bez Reacta. Każdy moduł ma testy w `tests/` | Komponenty, `next/headers` (poza `lib/zusik/server.ts` i `lib/admin/server.ts`) |
 | Dane wejściowe | `corpus/`, `public/` | Manifest źródeł RAG, wzory druków, pliki modelu OCR | Prywatne akta konkursowe (nigdy w repo) |
 | Operacje | `scripts/` | Migracje, seed, import korpusu. Uruchamiane ręcznie przez operatora | Kod wykonywany przez aplikację |
 
@@ -38,17 +38,20 @@ app/
 │  │  │     ├─ dokumenty/         „Dokumenty i wnioski”, [id] = szczegóły i przebieg sprawy
 │  │  │     ├─ profil/            profil rodziny, konto ZUS, sprawa-testowa/
 │  │  │     └─ wsparcie/          widok „Wsparcie”
-│  │  ├─ admin/                   panel · SPEC-PANEL-ADMINISTRACYJNY.md
-│  │  │  ├─ reguly/               stawki, limity, kto wypłaca, dokumenty i terminy
-│  │  │  ├─ tresci/               treści i źródła
-│  │  │  ├─ sprawy-testowe/
-│  │  │  ├─ zmiany/               „Przygotuj zmianę”
-│  │  │  └─ historia/
+│  │  ├─ admin/                   ✅ panel na danych przykładowych · SPEC-PANEL-ADMINISTRACYJNY.md
+│  │  │  ├─ page.tsx              ✅ logowanie administratora, bez rejestracji (actions.ts: zaloguj, wyloguj)
+│  │  │  └─ (panel)/              widoki za logowaniem, sidebar; każda strona woła requireAdmin()
+│  │  │     ├─ reguly/            ✅ kafle, parametry w grupach, panel boczny parametru
+│  │  │     ├─ tresci/            ✅ źródła wiedzy Zusika z manifestów korpusu
+│  │  │     ├─ sprawy-testowe/    ✅ kafle-filtry, lista z wyszukiwaniem, szczegóły
+│  │  │     ├─ zmiany/            ✅ „Przygotuj zmianę”: formularz, wpływ na rodzinę, sprawdzenie
+│  │  │     └─ historia/          ✅ tabela publikacji, panel boczny wpisu
 │  │  ├─ api/zusik/               ✅ etap 1 krok 1: POST start/resume, GET state, POST session
 │  │  └─ demo/polaczenia/         ✅ ekran próby (tymczasowy, do usunięcia po etapie 1)
 │  ├─ features/                   ✅ onboarding · family · journey-map · calculator · documents · support; dalej landing · chat · admin
 │  ├─ components/                 ui/ · mascot/
 │  └─ lib/
+│     ├─ admin/                   ✅ logowanie panelu (auth.ts, server.ts: cookies), katalog wartości z kodu aplikacji (catalog.ts)
 │     ├─ zusik/                   ✅ agent: graf, sesja, Qdrant, Sherlock, magazyn spraw z dzierżawą
 │     ├─ demo/                    ✅ typy i dane fikcyjne widoków rodzica (do podmiany na API)
 │     ├─ plan/                    ✅ reguła pionka, najbliższa sprawa, model statusów

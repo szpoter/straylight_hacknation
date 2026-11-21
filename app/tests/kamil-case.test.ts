@@ -1,5 +1,5 @@
 import { MemorySaver } from "@langchain/langgraph";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Candidate, Command, KamilView } from "@/lib/kamil/contract";
 import { parseMessage } from "@/lib/kamil/interpret";
 import { kamilCertificate } from "@/lib/kamil/profile";
@@ -110,6 +110,44 @@ describe("step 2–4 · Kamil's case on the session", () => {
     expect(texts).toContain("Czy pobierałeś już z innego tytułu");
     expect(texts).toContain("Gotowe do sprawdzenia");
     expect(v.citations.map((c) => c.id)).toContain("zus-termin-niepracownik");
+  });
+
+  it("answers a source question from the current case without a model call or a change to the form", async () => {
+    const model = { extract: vi.fn(async () => null), rephrase: vi.fn(async () => null) };
+    const { service } = setup(model);
+    await kamilReady(service, "s1");
+    await run(service, "s1", { type: "confirm", opKey: op(), key: "child_birth_place", value: "WARSZAWA",
+      origin: { kind: "user_edit", previous: "KRAKÓW" } });
+    const before = (await run(service, "s1", { type: "create_draft", opKey: op() })).view;
+    vi.clearAllMocks();
+    const after = await say(service, "s1", "Skąd są te dane? Skąd termin 11 stycznia?");
+    const reply = after.chat.at(-1)!;
+    expect(reply.author).toBe("template");
+    expect(reply.text).toContain("Profil demonstracyjny Kamila");
+    expect(reply.text).toContain("Odczyt OCR z pliku „odpis-aktu-urodzenia-skan.jpg”, strona 1");
+    expect(reply.text).toContain("Twoja korekta — Miejsce urodzenia dziecka");
+    expect(reply.text).toContain("Twoja odpowiedź w rozmowie — Zasiłek za okres ojcowski z innego tytułu");
+    expect(reply.text).toContain("8–14 grudnia 2026");
+    expect(reply.text).not.toContain(before.facts.father_pesel!.value);
+    expect(reply.citationIds).toContain("zus-termin-niepracownik");
+    expect(after).toEqual({ ...before, version: before.version + 1, chat: [...before.chat, ...after.chat.slice(-2)],
+      citations: after.citations });
+    expect(model.extract).not.toHaveBeenCalled();
+    expect(model.rephrase).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes unconfirmed readings from facts and leaves the pending question active", async () => {
+    const { service } = setup();
+    const candidates = docCandidates();
+    await run(service, "s1", { type: "set_candidates", opKey: op(), candidates });
+    await say(service, "s1", "Czy przysługuje mi zasiłek?");
+    const after = await say(service, "s1", "Skąd są te dane?");
+    expect(after.chat.at(-1)?.text).toContain("nie ma jeszcze potwierdzonych danych");
+    expect(after.chat.at(-1)?.text).toContain("czekają na Twoje potwierdzenie");
+    expect(after.candidates).toEqual(candidates);
+    const next = await say(service, "s1", "21 maja");
+    expect(next.conflict?.key).toBe("child_birth_date");
+    expect(next.request).toBeNull();
   });
 
   it("missing insurance confirmation → Zusik asks before deciding", async () => {

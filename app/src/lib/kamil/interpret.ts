@@ -66,6 +66,15 @@ export function findDates(text: string, today: string, direction: "future" | "pa
   return found.sort((a, b) => a.index - b.index);
 }
 
+/** A question about the current form must never be interpreted as a new date or declaration. */
+export function asksAboutSources(text: string): boolean {
+  const q = normalize(text);
+  if (/\bskad\b/.test(q) && !/\bskad (pobrac|sciagnac|wziac) (druk|formularz|wniosek)\b/.test(q)) {
+    return /\b(dane|danych|informacj|wiesz|masz|pochodz|okres|termin|dat[ay]|pesel|nip|adres|nazwisk|imie|formularz|wniosek)/.test(q);
+  }
+  return /^(?:(?:podaj|pokaz|wskaz) (?:mi )?|jakie (?:(?:jest|sa) )?)(?:zrodlo|zrodla)\b|^z jakiego zrodla\b/.test(q);
+}
+
 /** Rule-based reading of one message. `asked` = what Zusik asked last. */
 export function parseMessage(text: string, today: string, asked: string | null): Interpretation {
   const n = normalize(text);

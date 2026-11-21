@@ -1,0 +1,191 @@
+.sheet {
+  background: #fff;
+  border: 1px solid #d4d7dd;
+  border-radius: 20px;
+  margin: 14px auto;
+  padding: clamp(20px, 3vw, 42px);
+  width: 100%;
+  max-width: 800px;
+}
+.sheet h1 {
+  font:
+    400 clamp(26px, 3.6vw, 46px)/1.1 var(--font-serif),
+    Georgia,
+    serif;
+  margin: 10px 0;
+  letter-spacing: -0.02em;
+}
+.eyebrow,
+.badge {
+  font-size: 13px;
+  color: #5e697f;
+}
+.badge {
+  display: inline-block;
+  border-radius: 15px;
+  padding: 3px 10px;
+  color: #176343;
+  background: #e6f3e9;
+  margin: 0 6px;
+}
+.sheet .deadline {
+  padding: 12px 14px;
+  margin: 18px 0;
+  background: #fff1dc;
+  border-radius: 8px;
+}
+.preview {
+  margin-top: 12px;
+}
+.preview summary {
+  color: #1e5479;
+  cursor: pointer;
+}
+.interview {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  width: 100%;
+  min-width: 0;
+  color: #283754;
+}
+.interview p {
+  max-width: 60ch;
+}
+.interview button,
+.download {
+  display: inline-block;
+  font:
+    600 14px/1.4 var(--font-sans),
+    system-ui,
+    sans-serif;
+  text-decoration: none;
+  padding: 10px 14px;
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid #176343;
+  background: #176343;
+  color: white;
+  cursor: pointer;
+}
+.interview button.secondary {
+  background: White;
+  color: #176343;
+}
+.interview button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.form {
+  box-sizing: border-box;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #d4d7dd;
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  background: #f5faf7;
+}
+.form button {
+  justify-self: start;
+}
+.form label,
+.fields {
+  display: grid;
+  gap: 5px;
+  font-size: 14px;
+}
+.fields {
+  gap: 12px;
+  margin-top: 10px;
+}
+.form input,
+.form select {
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  padding: 9px;
+  border: 1px solid #89948f;
+  border-radius: 6px;
+  background: white;
+  color: #283754;
+}
+.form label.check {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+.form input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.comparison {
+  max-width: 100%;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+.comparison table {
+  border-collapse: collapse;
+  font-size: 14px;
+  width: 100%;
+  text-align: left;
+}
+.comparison caption {
+  text-align: left;
+  font:
+    400 20px var(--font-serif),
+    Georgia,
+    serif;
+  padding: 8px 0;
+}
+.comparison th,
+.comparison td {
+  border-bottom: 1px solid #d4d7dd;
+  padding: 8px 6px;
+}
+.comparison th {
+  font-weight: 600;
+}
+.comparison thead {
+  background: #e6f3e9;
+}
+.interview summary {
+  color: #176343;
+  font-weight: 600;
+  cursor: pointer;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chosen {
+  background: #e6f3e9;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.error {
+  color: #9e3039;
+}
+@media (max-width: 767px) {
+  .sheet {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+  .sheet h1 {
+    font-size: 24px;
+  }
+  .sheet .deadline {
+    margin: 6px 0 0;
+    padding: 4px 8px;
+  }
+}
+
+.deadline summary { font-size: 14px; color: #534322; cursor:pointer; }
+.deadline details[open] { margin-top: 8px; }
+.deadline blockquote { padding: 8px 0; font-size: 14px; }
+.deadline a { color:#1e5479; font-size:14px; }
+.comparison .comparisonNote { margin-top: 10px; font-size: 14px; }

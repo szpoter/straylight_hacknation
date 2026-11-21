@@ -17,7 +17,7 @@ export function HistoryView() {
 
   return (
     <div className={s.grid}>
-      <Card className={s.span12} title="Publikacje" id="history" meta="Od najnowszej">
+      <Card className={s.span12} title="Publikacje" id="history" meta="Dane przykładowe · od najnowszej">
         <div className={s.tabs} role="group" aria-label="Filtr grupy">
           {FILTERS.map((f) => (
             <button key={f} type="button" className={s.tab} aria-pressed={filter === f} onClick={() => setFilter(f)}>

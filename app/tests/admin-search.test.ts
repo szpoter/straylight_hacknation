@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { caseSearchFields, normalize, scoreMatch, searchItems } from "@/features/admin/search";
-import { TEST_CASES } from "@/features/admin/mock-data";
+import { paternityTestCases } from "@/lib/admin/catalog";
 
-const ids = (query: string) => searchItems(TEST_CASES, query, caseSearchFields).map((c) => c.id);
+const CASES = paternityTestCases();
+const ids = (query: string) => searchItems(CASES, query, caseSearchFields).map((c) => c.id);
 
 describe("normalize", () => {
   it("strips Polish diacritics, including ł, and punctuation", () => {
@@ -11,34 +12,30 @@ describe("normalize", () => {
 });
 
 describe("admin case search", () => {
-  it("ignores diacritics in both directions", () => {
-    expect(ids("bliznieta")).toEqual(["S-02"]);
-    expect(ids("bliźnięta")).toEqual(["S-02"]);
-    expect(ids("LACZENIE")).toEqual(["S-05"]);
-    expect(ids("wczesniak")).toEqual(["S-03"]);
+  it("ignores diacritics and case in both directions", () => {
+    expect(ids("wczesniejszym")).toEqual(["K-02"]);
+    expect(ids("wcześniejszym")).toEqual(["K-02"]);
+    expect(ids("LIMICIE")).toEqual(["K-03"]);
   });
 
   it("requires every word to match", () => {
-    // S-08 matches through its expected result ("Pula rodzicielskiego"), so it ranks below the title match.
-    expect(ids("rodzicielski jedno")).toEqual(["S-01", "S-08"]);
-    expect(ids("rodzicielski blizneta")).toEqual([]);
+    expect(ids("wniosek limicie")).toEqual(["K-03"]);
+    expect(ids("limicie odmowa")).toEqual([]);
   });
 
   it("finds IDs typed with or without the hyphen", () => {
-    expect(ids("S-04")[0]).toBe("S-04");
-    expect(ids("s04")[0]).toBe("S-04");
-    expect(ids("s 04")[0]).toBe("S-04");
+    expect(ids("K-05")[0]).toBe("K-05");
+    expect(ids("k05")[0]).toBe("K-05");
+    expect(ids("k 05")[0]).toBe("K-05");
   });
 
-  it("searches case data and matches word prefixes", () => {
-    expect(ids("dobrowolne")).toEqual(["S-04"]);
-    expect(ids("adop")).toEqual(["S-06"]);
+  it("matches word prefixes and searches case data", () => {
+    expect(ids("potwierdz")[0]).toBe("K-08");
+    expect(ids("19 maja")).toContain("K-03");
   });
 
-  it("ranks title matches above matches deeper in the data", () => {
-    const result = ids("rodzicielski");
-    expect(result[0]).toBe("S-01");
-    expect(result).toContain("S-05");
+  it("ranks title and tag matches first", () => {
+    expect(ids("limit").slice(0, 2).sort()).toEqual(["K-03", "K-04"]);
   });
 
   it("does not let a single letter match the middle of words", () => {
@@ -46,7 +43,7 @@ describe("admin case search", () => {
   });
 
   it("returns everything for an empty or punctuation-only query", () => {
-    expect(ids("")).toHaveLength(TEST_CASES.length);
-    expect(ids("  -- ")).toHaveLength(TEST_CASES.length);
+    expect(ids("")).toHaveLength(CASES.length);
+    expect(ids("  -- ")).toHaveLength(CASES.length);
   });
 });

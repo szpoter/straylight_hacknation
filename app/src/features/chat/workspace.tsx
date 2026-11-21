@@ -1,6 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { conversationInput } from "@/lib/zusik/conversation";
+import { ScenarioNav } from "./scenario-nav";
+import { useCaseResource } from "./use-case-resource";
+import { MartaDraft, MartaInterview, type DeadlineSource } from "./marta-workflow";
+import { checkedCopy } from "./marta-attachment";
+import { martaInput } from "./marta-input";
+import type { MartaView } from "@/lib/marta/types";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 import type { ZusikState } from "@/components/mascot/types";
@@ -92,20 +98,20 @@ function caseErrorText(error: CaseError | null): string | null {
   }
 }
 
-export function ZusikWorkspace() {
+export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { initialChatOpen?: boolean; deadlineSource?:DeadlineSource }) {
   const zusik = useZusikCase();
+  const marta = useCaseResource<MartaView>("/api/zusik/marta", initialChatOpen && zusik.view !== null, false);
   const phone = usePhone();
   const viewport = useVisualViewport();
   const [inviteDismissed, dismissInvite] = useInviteDismissed();
 
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(initialChatOpen);
   const [inviteAccepted, setInviteAccepted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [chatShare, setChatShare] = useState(50);
   const [text, setText] = useState("");
+  const [attachment,setAttachment] = useState<File|null>(null);
   const [composerNotice, setComposerNotice] = useState<string | null>(null);
-  const [panelNotice, setPanelNotice] = useState<string | null>(null);
   const [preview, setPreview] = useState<Choice | null>(null);
   const [typingTick, setTypingTick] = useState(0);
   const [expiredSave, setExpiredSave] = useState<number | null>(null);
@@ -121,7 +127,7 @@ export function ZusikWorkspace() {
   const awaiting = view?.state === "awaiting_choice";
   const activePreview = awaiting ? preview : null;
   const highlight = zusik.savedAt !== null && expiredSave !== zusik.savedAt;
-  const busy = zusik.phase === "starting" || zusik.phase === "saving" || zusik.asking;
+  const busy = zusik.phase !== "ready" || zusik.asking || marta.busy;
   const inviteVisible = !chatOpen && !inviteDismissed && !inviteAccepted;
 
   // the field outline after a confirmed save fades after a few seconds
@@ -148,14 +154,12 @@ export function ZusikWorkspace() {
 
   const collapse = () => {
     focusBubble.current = true;
-    setShowHistory(false);
     setChatOpen(false);
   };
 
   /** Points at the saved field: on a computer in the draft on the left, on a phone above the chat. */
   const showField = () => {
     setFullscreen(false);
-    setShowHistory(false);
     requestAnimationFrame(() => {
       const el = field.current;
       if (!el) return;
@@ -170,7 +174,17 @@ export function ZusikWorkspace() {
     if (!question || busy) return;
     setText("");
     setComposerNotice(null);
-    setPanelNotice(null);
+    if (initialChatOpen) {
+      const intent = martaInput(conversationInput(question, "marta").text, marta.view, new Date().toLocaleDateString("sv-SE", {timeZone:"Europe/Warsaw"}));
+      if (intent) {
+        if ("notice" in intent) setComposerNotice(intent.notice);
+        else if (!marta.loaded || !(await marta.send(intent.action))) {
+          setText(question);
+          setComposerNotice("Sprawdź stan sprawy i ponów zmianę.");
+        }
+        return;
+      }
+    }
     const outcome = await zusik.ask(question);
     if (outcome.kind === "invalid") {
       setText((current) => (current.trim() ? current : question));
@@ -237,14 +251,7 @@ export function ZusikWorkspace() {
       data-zusik-workspace
       style={phone && chatOpen && viewport ? { height: viewport.height, top: viewport.top } : undefined}
     >
-      {!(phone && chatOpen) && (
-        <header className={s.appBar}>
-          <Link href="/" className={s.brand}>
-            Przewodnik Rodzica
-          </Link>
-          <span className={s.demoBadge}>Dane demonstracyjne</span>
-        </header>
-      )}
+      <ScenarioNav current="marta" />
 
       <div ref={workArea} className={`${s.work} ${phone ? s.workColumn : ""}`}>
         {showForm && (
@@ -255,7 +262,7 @@ export function ZusikWorkspace() {
             role="region"
             aria-label="Szkic wniosku"
           >
-            <DraftForm
+            {initialChatOpen ? <MartaDraft loaded={marta.loaded} source={deadlineSource} view={marta.view} phone={formMode === "fragment"} /> : <DraftForm
               savedChoice={view?.state === "completed" ? view.choice : null}
               pendingChoice={zusik.pendingChoice}
               preview={activePreview}
@@ -263,7 +270,7 @@ export function ZusikWorkspace() {
               highlight={highlight}
               fieldRef={field}
               onDecide={openChat}
-            />
+            />}
           </div>
         )}
         {split && (
@@ -287,9 +294,7 @@ export function ZusikWorkspace() {
         {chatOpen && (
           <div className={s.chatPane} style={split ? { flexBasis: `${chatShare}%` } : undefined}>
             <ChatPanel
-              phone={phone}
               fullscreen={fullscreen}
-              showHistory={showHistory}
               mascot={<Babelek animated state={mascotState} toward={phone ? 300 : 200} typingTick={typingTick} />}
               steps={{
                 view,
@@ -301,9 +306,13 @@ export function ZusikWorkspace() {
                 onStart: () => void zusik.start(),
                 onShowField: showField,
               }}
+              workflow={initialChatOpen ? <MartaInterview fullscreen={fullscreen} scope={zusik.documentCache} state={marta} attachment={attachment} onAttach={setAttachment} /> : undefined}
+              workflowVersion={marta.view?.version}
+              activity={zusik.activity}
+              partialText={zusik.partialText}
               conversation={zusik.conversation}
               caseError={caseErrorText(zusik.error)}
-              notice={panelNotice ?? zusik.notice}
+              notice={zusik.notice}
               readScroll={() => scrollMemory.current}
               onScrollSave={(top) => {
                 scrollMemory.current = top;
@@ -314,6 +323,12 @@ export function ZusikWorkspace() {
                   busy={busy}
                   notice={composerNotice}
                   textareaRef={textarea}
+                  attachment={attachment}
+                  onAttach={initialChatOpen && !marta.view?.selected ? async (file)=>{
+                    try { setAttachment(file ? await checkedCopy(file) : null); }
+                    catch { setComposerNotice("Wybierz niepusty PDF, PNG lub JPEG do 25 MB.");return; }
+                    setComposerNotice(file ? `Wybrano odpis: ${file.name}. Przy zatwierdzaniu wskaż, czy dołączyć go do wniosku.` : "Usunięto wybrany odpis.");
+                  } : undefined}
                   onText={(value) => {
                     setText(value);
                     setTypingTick((tick) => tick + 1);
@@ -323,19 +338,6 @@ export function ZusikWorkspace() {
               }
               onRetryAsk={(requestId) => void zusik.retryAsk(requestId)}
               onRetryCase={() => void zusik.restore()}
-              onStarter={(starter) => {
-                setText(starter);
-                requestAnimationFrame(() => {
-                  const area = textarea.current;
-                  if (!area) return;
-                  area.focus();
-                  area.setSelectionRange(starter.length, starter.length);
-                });
-              }}
-              onHistory={setShowHistory}
-              onNewChat={() =>
-                setPanelNotice("Ta sprawa ma na razie jedną rozmowę zapisaną na serwerze. Kolejne rozmowy pojawią się razem z historią.")
-              }
               onFullscreen={() => setFullscreen((value) => !value)}
               onCollapse={collapse}
             />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+
 import { FIELD_LABELS, type KamilView } from "@/lib/kamil/contract";
 import { formatLong } from "@/lib/rules/dates";
 import { Crop, originText } from "./document-step";
@@ -26,8 +26,6 @@ interface Props {
 }
 
 export function ChatStep({ view, pages, busy, send }: Props) {
-  const [text, setText] = useState("");
-  const listRef = useRef<HTMLDivElement>(null);
   const conflict = view.conflict;
   const docOrigin = conflict
     ? (view.candidates.find((c) => c.key === conflict.key)?.origin ??
@@ -35,23 +33,12 @@ export function ChatStep({ view, pages, busy, send }: Props) {
       null)
     : null;
 
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [view.chat.length]);
-
-  const submit = async (message: string) => {
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    const ok = await send({ type: "chat", text: trimmed });
-    if (ok) setText("");
-  };
-
   return (
     <section className={s.card} aria-labelledby="chat-title">
       <h2 id="chat-title" className={s.cardTitle}>
         <span className={s.step}>2</span> Rozmowa z Zusikiem
       </h2>
-      <div ref={listRef} className={s.chat} role="log" aria-live="polite" aria-label="Rozmowa">
+      <div className={s.chat} role="log" aria-live="polite" aria-label="Rozmowa">
         {view.chat.length === 0 && (
           <p className={s.bubbleZusik}>
             Cześć, Kamil. Zapytaj o zasiłek za okres ojcowski. Daty i terminy liczy kod, ja je wyjaśniam i podaję źródło.
@@ -63,7 +50,7 @@ export function ChatStep({ view, pages, busy, send }: Props) {
               {turn.text}
             </p>
           ) : (
-            <div key={turn.id} className={s.bubbleZusik}>
+            <div key={turn.id} className={s.bubbleZusik} data-chat-reply>
               <p>{turn.text}</p>
               {turn.citationIds && turn.citationIds.length > 0 && (
                 <p className={s.author}>
@@ -125,31 +112,11 @@ export function ChatStep({ view, pages, busy, send }: Props) {
 
       <div className={s.suggestions}>
         {suggestions(view).map((sug) => (
-          <button key={sug} className={s.ghost} type="button" disabled={busy} onClick={() => submit(sug)}>
+          <button key={sug} className={s.ghost} type="button" disabled={busy} onClick={() => void send({ type: "chat", text: sug })}>
             {sug}
           </button>
         ))}
       </div>
-      <form
-        className={s.composer}
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit(text);
-        }}
-      >
-        <input
-          id="kamil-message"
-          aria-label="Wiadomość do Zusika"
-          className={s.input}
-          value={text}
-          maxLength={600}
-          placeholder="Napisz wiadomość…"
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button className={s.primary} type="submit" disabled={busy || !text.trim()}>
-          Wyślij
-        </button>
-      </form>
     </section>
   );
 }

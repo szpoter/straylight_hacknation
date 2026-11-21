@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { TEST_CASES, type CaseStatus, type TestCase } from "./mock-data";
+import type { CaseStatus, TestCase } from "@/lib/admin/types";
 import { caseSearchFields, searchItems } from "./search";
 import { Badge, Card, StatTile, cx } from "./ui";
 import s from "./admin.module.css";
@@ -16,16 +16,16 @@ const STATUS_LABEL: Record<CaseStatus, string> = {
 
 const STATUS_TONE = { zgodna: "active", niezgodna: "warn", "brak-danych": "historic" } as const;
 
-export function CasesView() {
+export function CasesView({ cases }: { cases: TestCase[] }) {
   const [filter, setFilter] = useState<Filter>("wszystkie");
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(TEST_CASES[0].id);
+  const [selectedId, setSelectedId] = useState(cases[0]?.id ?? "");
   const [uploaded, setUploaded] = useState<string | null>(null);
   const uploadId = useId();
 
-  const count = (status: CaseStatus) => TEST_CASES.filter((c) => c.status === status).length;
+  const count = (status: CaseStatus) => cases.filter((c) => c.status === status).length;
   const visible = searchItems(
-    TEST_CASES.filter((c) => filter === "wszystkie" || c.status === filter),
+    cases.filter((c) => filter === "wszystkie" || c.status === filter),
     query,
     caseSearchFields,
   );
@@ -38,7 +38,7 @@ export function CasesView() {
       <StatTile
         className={s.span3}
         label="Wszystkie"
-        value={TEST_CASES.length}
+        value={cases.length}
         note="spraw w zestawie"
         pressed={filter === "wszystkie"}
         onClick={() => setFilter("wszystkie")}
@@ -169,6 +169,23 @@ function CaseDetails({ testCase: c }: { testCase: TestCase }) {
           </p>
         </div>
       </div>
+
+      {c.reasons?.length ? (
+        <div style={{ marginTop: 24 }}>
+          <h3 className={s.subTitle}>Uzasadnienie z reguły</h3>
+          <ul className={s.reasons}>
+            {c.reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {c.computedBy ? (
+        <p className={cx(s.small, s.muted)} style={{ margin: "16px 0 0" }}>
+          Wynik policzony na żywo: {c.computedBy}
+        </p>
+      ) : null}
 
       <div className={s.cardActions}>
         <button type="button" className={s.btnSecondary} aria-disabled="true" title="Dostępne po podłączeniu kalkulatora">
