@@ -108,8 +108,12 @@ describe("AnswerView", () => {
   it("shows no source as a basis for refusal when evidence is insufficient", () => {
     const html = renderToStaticMarkup(createElement(AnswerView, { answer: benefit800 }));
     expect(html).toContain("800+");
-    expect(html).toContain("nie oznacza, że świadczenie Ci nie przysługuje");
     expect(html).not.toContain("Źródło");
+  });
+
+  it("adds its own reassurance only when the server sent no message", () => {
+    const html = renderToStaticMarkup(createElement(AnswerView, { answer: { ...benefit800, message: "" } }));
+    expect(html).toContain("nie oznacza, że świadczenie Ci nie przysługuje");
   });
 
   it("asks a single clarifying question", () => {

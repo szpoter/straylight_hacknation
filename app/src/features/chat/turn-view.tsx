@@ -52,8 +52,14 @@ export function AnswerView({ answer }: { answer: Answer }) {
     // No sources here on purpose: a missing basis is not shown as a reason to refuse the benefit.
     return (
       <div className={s.aiMessage}>
-        <p>{answer.message ?? "Materiały, które mam, nie wystarczają, żeby odpowiedzieć na to pytanie."}</p>
-        <p className={s.muted}>Brak podstawy w tych źródłach nie oznacza, że świadczenie Ci nie przysługuje.</p>
+        {answer.message ? (
+          <p>{answer.message}</p>
+        ) : (
+          <>
+            <p>Materiały, które mam, nie wystarczają, żeby odpowiedzieć na to pytanie.</p>
+            <p className={s.muted}>Brak podstawy w tych źródłach nie oznacza, że świadczenie Ci nie przysługuje.</p>
+          </>
+        )}
       </div>
     );
   }
