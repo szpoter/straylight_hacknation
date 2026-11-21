@@ -1,0 +1,239 @@
+/* Admin sign-in. Tokens from DESIGN.md: white page, secondary pastel card with ink text, serif heading above it. */
+
+.page {
+  --color-primary: #1a8648;
+  --color-on-primary: #ffffff;
+  --color-secondary: #a6d0b8;
+  --color-tertiary: #fcdcaa;
+  --color-background: #f5faf7;
+  --color-surface: #ffffff;
+  --color-on-surface: #283754;
+  --color-on-surface-variant: #5e697f;
+  --color-outline: #d4d7dd;
+  /* Do weryfikacji: not a token. ZUS green #007834 (DESIGN.md prose) mixed with 25% black. */
+  --color-heading: #005a27;
+
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+.page :focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---------- Header above the card ---------- */
+
+/*
+ * Three stacked zones: the header zone stretches from the top edge to the card and centres the heading,
+ * so the space above and below it is equal. The bottom spacer grows 1.4 times as fast, which keeps both gaps
+ * modest and the whole group in the upper half of the screen.
+ */
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 0 40px;
+}
+
+.column::after {
+  content: "";
+  flex: 1.4 1 0;
+  min-height: 24px;
+}
+
+.header {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.card {
+  flex: none;
+}
+
+.headline {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  /* Scales with window height so the whole sign-in fits without scrolling. */
+  font-size: clamp(40px, 8vh, 64px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  padding: 28px;
+  background: var(--color-secondary);
+  border-radius: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+}
+
+.title {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+
+.intro {
+  margin: 0 0 20px;
+  font-size: 15px;
+  color: var(--color-on-surface);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--color-outline);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font: inherit;
+}
+
+.input:hover {
+  border-color: var(--color-on-surface-variant);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--color-on-surface);
+}
+
+.inputWithToggle {
+  padding-right: 88px;
+}
+
+.toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--color-on-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--color-background);
+}
+
+/* Do weryfikacji: DESIGN.md has no error colour, tertiary used as the nearest token. */
+.error {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--color-tertiary);
+  font-size: 15px;
+}
+
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 56px;
+  margin-top: 24px;
+  padding: 0 24px;
+  border: 1px solid var(--color-primary);
+  border-radius: 9999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width: 900px) {
+  .column {
+    padding: 0 16px;
+  }
+
+  .column::after {
+    min-height: 16px;
+  }
+
+  .header {
+    padding: 16px 0;
+  }
+
+  .headline {
+    font-size: clamp(32px, 6.5vh, 44px);
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .submit {
+    height: 48px;
+  }
+}

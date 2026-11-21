@@ -17,7 +17,7 @@ Ruch idzie w jedną stronę: **trasa → funkcja → biblioteka domenowa → us�
 | Trasy | `src/app/` | Strony i endpointy `route.ts`: odczyt sesji, walidacja wejścia, wywołanie domeny, odpowiedź HTTP | Logika biznesowa, SQL, wywołania dostawców |
 | Funkcje | `src/features/<obszar>/` | Komponenty i hooki jednego obszaru produktu, np. kalkulatora albo czatu | Kod współdzielony przez kilka obszarów |
 | UI wspólne | `src/components/` | `ui/`: elementy z design systemu (po akceptacji `design/`). `mascot/`: Bąbelek przeniesiony z `maskotka_kod/components/mascot` | Dane i wywołania API |
-| Domena | `src/lib/` | Czysty TypeScript bez Reacta. Każdy moduł ma testy w `tests/` | Komponenty, `next/headers` (poza `lib/zusik/server.ts`) |
+| Domena | `src/lib/` | Czysty TypeScript bez Reacta. Każdy moduł ma testy w `tests/` | Komponenty, `next/headers` (poza `lib/zusik/server.ts` i `lib/admin/server.ts`) |
 | Dane wejściowe | `corpus/`, `public/` | Manifest źródeł RAG, wzory druków, pliki modelu OCR | Prywatne akta konkursowe (nigdy w repo) |
 | Operacje | `scripts/` | Migracje, seed, import korpusu. Uruchamiane ręcznie przez operatora | Kod wykonywany przez aplikację |
 
@@ -38,17 +38,20 @@ app/
 │  │  │  ├─ dokumenty/            „Dokumenty i wnioski”, statusy, „Dokończ z Zusikiem”
 │  │  │  ├─ profil/               profil rodziny, konto ZUS, przykładowa sprawa
 │  │  │  └─ wsparcie/             widok „Wsparcie” i sprawy spoza ZUS
-│  │  ├─ admin/                   panel · SPEC-PANEL-ADMINISTRACYJNY.md
-│  │  │  ├─ reguly/               stawki, limity, kto wypłaca, dokumenty i terminy
-│  │  │  ├─ tresci/               treści i źródła
-│  │  │  ├─ sprawy-testowe/
-│  │  │  ├─ zmiany/               „Przygotuj zmianę”
-│  │  │  └─ historia/
+│  │  ├─ admin/                   ✅ panel na danych przykładowych · SPEC-PANEL-ADMINISTRACYJNY.md
+│  │  │  ├─ page.tsx              ✅ logowanie administratora, bez rejestracji (actions.ts: zaloguj, wyloguj)
+│  │  │  └─ (panel)/              widoki za logowaniem, sidebar; każda strona woła requireAdmin()
+│  │  │     ├─ reguly/            ✅ kafle, parametry w grupach, panel boczny parametru
+│  │  │     ├─ tresci/            treści i źródła (miejsce w menu, bez widoku)
+│  │  │     ├─ sprawy-testowe/    ✅ kafle-filtry, lista z wyszukiwaniem, szczegóły
+│  │  │     ├─ zmiany/            ✅ „Przygotuj zmianę”: formularz, wpływ na rodzinę, sprawdzenie
+│  │  │     └─ historia/          ✅ tabela publikacji, panel boczny wpisu
 │  │  ├─ api/zusik/               ✅ etap 1 krok 1: POST start/resume, GET state, POST session
 │  │  └─ demo/polaczenia/         ✅ ekran próby (tymczasowy, do usunięcia po etapie 1)
 │  ├─ features/                   landing · onboarding · family · journey-map · calculator · chat · documents · support · admin
 │  ├─ components/                 ui/ · mascot/
 │  └─ lib/
+│     ├─ admin/                   ✅ logowanie panelu: hash scrypt, podpisana sesja z wygaśnięciem (server.ts: cookies)
 │     ├─ zusik/                   ✅ agent: graf, sesja, Qdrant, Sherlock, magazyn spraw z dzierżawą
 │     ├─ rules/                   reguły świadczeń w TS: daty, kwoty, zaokrąglenia, ID reguły
 │     ├─ rag/                     podział źródeł, import, wyszukiwanie hybrydowe, cytaty po ID

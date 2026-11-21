@@ -133,8 +133,19 @@
 
 .sidebarFoot {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   font-size: 13px;
   color: var(--color-on-surface-variant);
+}
+
+.sidebarNote {
+  margin: 0;
+}
+
+.signOut {
+  width: 100%;
 }
 
 .iconButton.sidebarClose {
@@ -484,10 +495,6 @@ button.tileActive:hover {
 .badgeWarn {
   background: var(--color-tertiary);
   border-color: var(--color-on-surface);
-}
-
-.demoBadge {
-  background: var(--color-tertiary);
 }
 
 /* ---------- Buttons ---------- */
@@ -1092,12 +1099,5 @@ button.tileActive:hover {
   .table th {
     padding-left: 12px;
     padding-right: 12px;
-  }
-}
-
-/* The demo label stays visible on phones (SPEC §13 B); the avatar gives way instead. */
-@media (max-width: 480px) {
-  .account {
-    display: none;
   }
 }

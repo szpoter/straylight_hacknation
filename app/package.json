@@ -19,7 +19,8 @@
     "predev": "node scripts/copy-ocr-assets.mjs",
     "zusik:import-marta": "tsx scripts/zusik-import-marta.ts",
     "zusik:eval-marta": "tsx scripts/zusik-eval-marta.ts",
-    "zusik:acceptance": "tsx scripts/zusik-acceptance.ts"
+    "zusik:acceptance": "tsx scripts/zusik-acceptance.ts",
+    "admin:hash": "tsx scripts/admin-hash-password.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.94",

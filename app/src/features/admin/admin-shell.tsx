@@ -17,6 +17,12 @@ const TITLES: { prefix: string; title: string }[] = [
   ...NAV.map((item) => ({ prefix: item.href, title: item.label })),
 ];
 
+function initials(login: string): string {
+  const parts = login.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : login.slice(0, 2);
+  return letters.toUpperCase();
+}
+
 function NavIcon({ name }: { name: "rules" | "cases" | "history" | "sources" }) {
   const common = {
     className: s.navIcon,
@@ -61,7 +67,13 @@ function NavIcon({ name }: { name: "rules" | "cases" | "history" | "sources" }) 
   }
 }
 
-export function AdminShell({ children, fontClassName }: { children: ReactNode; fontClassName: string }) {
+interface AdminShellProps {
+  children: ReactNode;
+  adminLogin: string;
+  signOutAction: () => Promise<void>;
+}
+
+export function AdminShell({ children, adminLogin, signOutAction }: AdminShellProps) {
   const pathname = usePathname() ?? "";
   const [menuOpen, setMenuOpen] = useState(false);
   const title = TITLES.find((t) => pathname.startsWith(t.prefix))?.title ?? "Panel administracyjny";
@@ -83,7 +95,7 @@ export function AdminShell({ children, fontClassName }: { children: ReactNode; f
   }, [menuOpen]);
 
   return (
-    <div className={cx(s.shell, fontClassName)} data-admin-shell="">
+    <div className={s.shell}>
       {menuOpen ? (
         <button type="button" className={s.scrim} aria-label="Zamknij menu" onClick={() => setMenuOpen(false)} />
       ) : null}
@@ -130,9 +142,16 @@ export function AdminShell({ children, fontClassName }: { children: ReactNode; f
           </div>
         </nav>
 
-        <p className={s.sidebarFoot}>
-          Wersja demonstracyjna. Zmiany działają w odizolowanej sesji i nie trafiają do prawdziwych spraw.
-        </p>
+        <div className={s.sidebarFoot}>
+          <form action={signOutAction}>
+            <button type="submit" className={cx(s.btnSmall, s.signOut)}>
+              Wyloguj się
+            </button>
+          </form>
+          <p className={s.sidebarNote}>
+            Wersja demonstracyjna. Zmiany działają w odizolowanej sesji i nie trafiają do prawdziwych spraw.
+          </p>
+        </div>
       </aside>
 
       <div className={s.main}>
@@ -151,13 +170,12 @@ export function AdminShell({ children, fontClassName }: { children: ReactNode; f
           </button>
           <h1 className={s.topbarTitle}>{title}</h1>
           <span className={s.topbarSpacer} />
-          <span className={cx(s.badge, s.demoBadge)}>Wersja demo</span>
           <div className={s.account}>
             <span className={s.avatar} aria-hidden>
-              KD
+              {initials(adminLogin)}
             </span>
             <span className={s.accountText}>
-              <span>Konto demo</span>
+              <span>{adminLogin}</span>
               <span className={s.accountRole}>Redaktor i zatwierdzający</span>
             </span>
           </div>

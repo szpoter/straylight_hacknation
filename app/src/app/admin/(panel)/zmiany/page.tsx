@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/admin/server";
 import { ChangeView } from "@/features/admin/change-view";
 
 export const metadata: Metadata = { title: "Przygotuj zmianę" };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ parametr?: string | string[] }> }) {
+  await requireAdmin();
   const { parametr } = await searchParams;
   const parameterId = Array.isArray(parametr) ? parametr[0] : parametr;
   // key resets the form state when switching parameters.
