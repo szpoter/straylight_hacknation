@@ -1,24 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Literata } from "next/font/google";
+import { Domine, Inter } from "next/font/google";
 import "./globals.css";
 
-// Literata (nagłówki) i Inter (interfejs) według DESIGN.md. Oba mają polskie znaki i cyrylicę.
-const literata = Literata({
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["400"],
-  variable: "--font-literata",
+// Kroje z DESIGN.md: Domine (szeryf, nagłówki) i Inter (interfejs). Oba z polskimi znakami.
+const domine = Domine({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-domine",
   display: "swap",
 });
+
 const inter = Inter({
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["400", "500"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-inter",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Zusik",
-  description: "Zusik — przewodnik rodzica",
+  title: "Przewodnik Rodzica · wersja demonstracyjna",
+  description:
+    "Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać.",
 };
 
 export const viewport: Viewport = {
@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pl" className={`${literata.variable} ${inter.variable}`}>
+    <html lang="pl" className={`${domine.variable} ${inter.variable}`}>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );

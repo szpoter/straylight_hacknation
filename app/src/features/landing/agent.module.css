@@ -1,0 +1,180 @@
+/*
+ * Sekcja „Poznaj Zusika”: wyśrodkowany nagłówek (sekcja z jednym hasłem, DESIGN.md, Layout),
+ * potem trzy rzędy na przemian. Od 1024 px dwie kolumny, na telefonie tekst nad Zusikiem.
+ */
+.section {
+  overflow-x: clip;
+  padding-block: var(--space-section);
+}
+
+.intro {
+  max-width: 770px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  text-align: center;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: -0.015em;
+}
+
+.lead {
+  margin-top: 16px;
+  color: var(--color-on-surface-variant);
+  font-size: 18px;
+  line-height: 28px;
+}
+
+/*
+ * ——— Rząd jako przypięta scena ———
+ * Rząd (--row-h) przykleja się w górnej części ekranu (--pin-top) i stoi przez --pin przewijania:
+ * przez tę drogę przewijanie prowadzi animację Zusika (agent-row.tsx), a strona stoi w miejscu.
+ * Tor = rząd + droga przypięcia, więc kolejne rzędy przylegają do siebie bez dużej przerwy.
+ */
+.track {
+  --row-h: 60svh;
+  --pin-top: 14svh;
+  --pin: 70svh;
+
+  height: calc(var(--row-h) + var(--pin));
+}
+
+/*
+ * Przerwa między kolejnymi scenami, taka jak przy rzędach na cały ekran (ok. 580 px treści od treści
+ * na komputerze). Pierwsza scena jej nie ma, więc zostaje blisko nagłówka „Poznaj Zusika”.
+ * Nie zmienia przebiegu animacji: postęp każdej sceny liczy się od jej własnego toru.
+ */
+.track + .track {
+  margin-top: 34svh;
+}
+
+.row {
+  position: sticky;
+  top: var(--pin-top);
+  display: grid;
+  gap: 32px;
+  align-content: center;
+  align-items: center;
+  height: max(var(--row-h), 340px);
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.text {
+  max-width: 460px;
+}
+
+.rowTitle {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.rowBody {
+  margin-top: 16px;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+/* Miejsce Zusika: ZusikEntrance ma 200–260 px szerokości i wpływa tu od krawędzi ekranu */
+.stage {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+}
+
+/* ——— Tekst: wejście, gdy rząd wjedzie na ekran (fazy ustawia agent-row.tsx) ——— */
+.row[data-phase="idle"] .text {
+  opacity: 0;
+  translate: 0 16px;
+}
+
+.row[data-phase="active"] .text {
+  transition:
+    opacity 600ms ease,
+    translate 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: var(--type-headline-size);
+    line-height: 1;
+  }
+
+  .lead {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .track {
+    --row-h: 46svh;
+    --pin-top: 20svh;
+  }
+
+  .track + .track {
+    margin-top: 54svh;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 64px;
+  }
+
+  .row[data-side="right"] .text {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    padding-left: 40px;
+  }
+
+  .row[data-side="right"] .stage {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .row[data-side="left"] .text {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .row[data-side="left"] .stage {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rowTitle {
+    font-size: 40px;
+  }
+
+  .stage {
+    min-height: 320px;
+  }
+}
+
+/* Ograniczenie ruchu: bez przypięcia, rzędy jeden pod drugim, Zusik od razu jako przedmiot */
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    height: auto;
+  }
+
+  .track + .track {
+    margin-top: 0;
+  }
+
+  .row {
+    position: static;
+    height: auto;
+    padding-top: 72px;
+    padding-bottom: 0;
+  }
+}

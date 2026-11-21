@@ -28,6 +28,20 @@ export const TRAVEL = {
   ground: 598,
 };
 
+/**
+ * Landing straight into a shape. When Zusik takes on a shape while it is still a travelling drop
+ * (`travel` above `fromDrop`), the shape forms with this transition instead of the usual jelly spring
+ * (see `become` in useStateAnimation.ts). Whoever drives `travel` brings it back to 0 at the same moment
+ * with `settle`: the same spring, a beat later, so the object forms while the drop is still stretched and
+ * the outline never passes through a round, bubble-like blob (a long drop averaged with a tall object
+ * would be nearly round). The small bounce is a liquid wobble on arrival. Together they take ≈ 0.45 s.
+ */
+export const LANDING = {
+  fromDrop: 0.5,
+  transition: { type: "spring", visualDuration: 0.35, bounce: 0.2 },
+  settle: { type: "spring", visualDuration: 0.35, bounce: 0.2, delay: 0.1 },
+} as const;
+
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 /** Where a point ends up when the mascot is `amount` of the way to a drop heading in `heading` degrees. */

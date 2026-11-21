@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Annotation, END, START, StateGraph, type BaseCheckpointSaver } from "@langchain/langgraph";
 import type { CaseStore } from "../zusik/case-store";
+import type { RuleSchedule } from "../rules/parameters";
 import { applyCommand, newCase, toView, type Clock, type Prepared } from "./case";
 import type { Command, KamilCase, KamilView } from "./contract";
 import { asksAboutSources, mergeModelFacts, parseMessage, type ModelFacts } from "./interpret";
@@ -62,10 +63,10 @@ export class KamilService {
     this.graph = buildGraph(deps.checkpointer);
   }
 
-  private clock(): Clock {
+  private clock(schedule?: RuleSchedule): Clock {
     const now = new Date().toISOString();
     const base = this.deps.clock?.() ?? { now, today: now.slice(0, 10) };
-    return { ...base, newId: () => randomBytes(9).toString("base64url") };
+    return { ...base, newId: () => randomBytes(9).toString("base64url"), schedule };
   }
 
   private config(threadId: string) {
@@ -78,35 +79,36 @@ export class KamilService {
   }
 
   /** GET: reads only. A session without a case sees an empty one. */
-  async getView(sessionId: string): Promise<KamilView> {
-    const clock = this.clock();
+  /** `schedule`: rule values published in the admin panel for this demo session. */
+  async getView(sessionId: string, schedule?: RuleSchedule): Promise<KamilView> {
+    const clock = this.clock(schedule);
     const demoCase = await this.deps.store.findBySession(sessionId);
-    if (!demoCase) return toView(newCase(), clock.today);
-    return toView(await this.load(demoCase.threadId), clock.today);
+    if (!demoCase) return toView(newCase(), clock.today, clock.schedule);
+    return toView(await this.load(demoCase.threadId), clock.today, clock.schedule);
   }
 
-  async apply(sessionId: string, expectedVersion: number, command: Command): Promise<KamilResult> {
+  async apply(sessionId: string, expectedVersion: number, command: Command, schedule?: RuleSchedule): Promise<KamilResult> {
     const demoCase = await this.deps.store.findOrCreate(sessionId);
     const token = randomBytes(12).toString("base64url");
     const waitUntil = Date.now() + (this.deps.leaseWaitMs ?? 6_000);
     while (!(await this.deps.store.acquireLease(demoCase.threadId, token))) {
-      if (Date.now() >= waitUntil) return { status: 202, view: await this.getView(sessionId) };
+      if (Date.now() >= waitUntil) return { status: 202, view: await this.getView(sessionId, schedule) };
       await sleep(150);
     }
     try {
-      const clock = this.clock();
+      const clock = this.clock(schedule);
       const current = await this.load(demoCase.threadId);
       // Same operation key again (double click, retry after a timeout): same result, nothing new.
-      if (current.ops.includes(command.opKey)) return { status: 200, view: toView(current, clock.today) };
+      if (current.ops.includes(command.opKey)) return { status: 200, view: toView(current, clock.today, clock.schedule) };
       if (expectedVersion !== current.version) {
-        return { status: 409, view: toView(current, clock.today), error: "stale_version" };
+        return { status: 409, view: toView(current, clock.today, clock.schedule), error: "stale_version" };
       }
       const prepared = await this.prepare(command, current, clock.today);
       const outcome = applyCommand(current, prepared, clock);
-      if (outcome.rejected) return { status: 422, view: toView(current, clock.today), error: outcome.rejected };
+      if (outcome.rejected) return { status: 422, view: toView(current, clock.today, clock.schedule), error: outcome.rejected };
       const next = prepared.type === "chat" ? await this.rephraseLast(outcome.kase, current) : outcome.kase;
       await this.graph.invoke({ kase: next }, this.config(demoCase.threadId));
-      return { status: 200, view: toView(next, clock.today) };
+      return { status: 200, view: toView(next, clock.today, clock.schedule) };
     } finally {
       await this.deps.store.releaseLease(demoCase.threadId, token);
     }

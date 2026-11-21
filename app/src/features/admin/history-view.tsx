@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { HISTORY, PARAMETER_GROUPS, formatDate, formatDateTime, type HistoryEntry } from "./mock-data";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { PARAMETER_GROUPS, formatDate, formatDateTime, type HistoryEntry } from "./mock-data";
 import { Card, Drawer, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
@@ -10,14 +11,63 @@ import s from "./admin.module.css";
 const FILTERS = ["Wszystkie", ...PARAMETER_GROUPS] as const;
 type Filter = (typeof FILTERS)[number];
 
-export function HistoryView() {
+interface HistoryActions {
+  withdraw: (versionId: string) => Promise<{ ok: boolean; error?: string }>;
+  reset: () => Promise<{ ok: boolean }>;
+}
+
+export function HistoryView({
+  entries,
+  hasSessionChanges,
+  actions,
+}: {
+  entries: HistoryEntry[];
+  hasSessionChanges: boolean;
+  actions: HistoryActions;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const [filter, setFilter] = useState<Filter>("Wszystkie");
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
-  const rows = HISTORY.filter((h) => filter === "Wszystkie" || h.group === filter);
+  const [message, setMessage] = useState<string | null>(null);
+  const rows = entries.filter((h) => filter === "Wszystkie" || h.group === filter);
+
+  const withdraw = (entry: HistoryEntry) =>
+    startTransition(async () => {
+      if (!entry.versionId) return;
+      const r = await actions.withdraw(entry.versionId);
+      setMessage(r.ok ? "Zaplanowana zmiana została wycofana." : (r.error ?? "Nie udało się wycofać zmiany."));
+      setSelected(null);
+      router.refresh();
+    });
+
+  const reset = () =>
+    startTransition(async () => {
+      await actions.reset();
+      setMessage("Przywrócono wartości z kodu aplikacji.");
+      router.refresh();
+    });
 
   return (
     <div className={s.grid}>
-      <Card className={s.span12} title="Publikacje" id="history" meta="Dane przykładowe · od najnowszej">
+      <Card
+        className={s.span12}
+        title="Publikacje"
+        id="history"
+        meta={
+          hasSessionChanges ? (
+            <button type="button" className={s.btnSmall} onClick={reset} disabled={pending}>
+              Przywróć wartości początkowe
+            </button>
+          ) : (
+            "Od najnowszej"
+          )
+        }
+      >
+        <p className={cx(s.small, s.muted)} style={{ margin: "0 0 12px" }} role="status">
+          {message ??
+            "Najpierw publikacje z tej sesji, pod nimi wpisy przykładowe. Kolejna sesja demonstracyjna zaczyna od wartości z kodu."}
+        </p>
         <div className={s.tabs} role="group" aria-label="Filtr grupy">
           {FILTERS.map((f) => (
             <button key={f} type="button" className={s.tab} aria-pressed={filter === f} onClick={() => setFilter(f)}>
@@ -55,6 +105,11 @@ export function HistoryView() {
                     <button type="button" className={s.rowLink} onClick={() => setSelected(h)}>
                       {h.parameter}
                     </button>
+                    {h.sample ? (
+                      <div className={s.originRow}>
+                        <span className={cx(s.originBadge, s.originSpec)}>Przykład</span>
+                      </div>
+                    ) : null}
                     <span className={s.showMobile}>
                       <StateBadge state={h.state} />
                     </span>
@@ -81,9 +136,16 @@ export function HistoryView() {
         title={selected?.parameter ?? ""}
         footer={
           selected ? (
-            <Link href={`/admin/zmiany?parametr=${selected.parameterId}`} className={s.btnSecondary}>
-              Utwórz korektę jako szkic
-            </Link>
+            <>
+              {selected.versionId && selected.state === "Zaplanowana" ? (
+                <button type="button" className={s.btnSecondary} onClick={() => withdraw(selected)} disabled={pending}>
+                  Wycofaj zaplanowaną zmianę
+                </button>
+              ) : null}
+              <Link href={`/admin/zmiany?parametr=${selected.parameterId}`} className={s.btnSecondary}>
+                Utwórz korektę jako szkic
+              </Link>
+            </>
           ) : null
         }
       >

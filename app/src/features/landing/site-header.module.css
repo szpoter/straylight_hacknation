@@ -1,0 +1,155 @@
+.skip {
+  position: absolute;
+  top: 8px;
+  left: var(--gutter);
+  z-index: 100;
+  padding: 8px 16px;
+  border-radius: var(--rounded-full);
+  background: var(--color-on-surface);
+  color: var(--color-surface);
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip:focus-visible {
+  transform: none;
+}
+
+/* Pływająca pigułka 56 px, 8 px od górnej krawędzi, przyklejona (DESIGN.md, Layout) */
+.header {
+  position: sticky;
+  top: 8px;
+  z-index: 50;
+  margin-top: 8px;
+  padding-inline: var(--gutter);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: calc(var(--container) - 2 * 40px);
+  height: 56px;
+  margin-inline: auto;
+  padding: 0 8px 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--rounded-full);
+  background: transparent;
+  --bar-bg: var(--color-background);
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+.bar[data-scrolled="true"] {
+  border-color: var(--color-outline);
+  background: var(--color-surface);
+  --bar-bg: var(--color-surface);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--color-on-surface);
+  text-decoration: none;
+  border-radius: var(--rounded-full);
+}
+
+.mark {
+  flex: none;
+}
+
+/* Obwódka małego koła w kolorze tła paska, żeby koła się rozdzielały */
+.markChild {
+  stroke: var(--bar-bg);
+  transition: stroke 200ms ease;
+}
+
+.brandName {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.nav {
+  display: none;
+}
+
+.links {
+  display: flex;
+  gap: 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--rounded-full);
+  color: var(--color-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 150ms ease;
+}
+
+.link:hover {
+  background: var(--color-background);
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Na telefonie w pasku zostaje tylko „Zaloguj się”. Obie akcje są w hero. */
+.register {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .register {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1080px) {
+  .nav {
+    display: block;
+  }
+}
+
+/* Wąski telefon: nazwa i „Zaloguj się” muszą zmieścić się obok siebie w pigułce */
+@media (max-width: 400px) {
+  .bar {
+    padding-left: 14px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .brandName {
+    font-size: 16px;
+  }
+
+  .actions a {
+    padding: 0 14px;
+  }
+}

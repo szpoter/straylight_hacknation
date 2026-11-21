@@ -1,9 +1,10 @@
 import { AnimatedSvg } from "./AnimatedSvg";
+// app/: zamiast Tailwinda klasy maskotki z mascot.css, pod klasą "babelek" na <svg>
+import "./mascot.css";
 import { DetailsBehind, DetailsFront } from "./details";
 import { VIEWBOX } from "./geometry";
 import { Arms, Body, Face, Highlights, Shadow } from "./parts";
 import type { BabelekProps } from "./types";
-import "./mascot.css";
 
 /**
  * Bąbelek, the app's mascot (called Zusik in the product): a living soap bubble drawn as hand-built
@@ -14,7 +15,7 @@ export function Babelek({ size, className, title, animated = false, frame = "tig
   const svgProps = {
     viewBox: VIEWBOX[frame],
     style: size === undefined ? undefined : { width: size },
-    className,
+    className: className ? `babelek ${className}` : "babelek",
     ...(title ? { role: "img", "aria-label": title } : { "aria-hidden": true }),
   };
   const drawing = (

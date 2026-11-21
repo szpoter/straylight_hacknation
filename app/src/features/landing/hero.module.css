@@ -1,0 +1,462 @@
+/*
+ * Scena hero według granola.ai (pomiary 1440 × 900).
+ * Telefon i tablet: zwykły układ jedna pod drugą (hero, okno z filmem, wiersze).
+ * Od 1024 px: siatka 60/40 na dwa ekrany. Okno z filmem jest przyklejone w prawej połowie
+ * przez jedną wysokość ekranu, a po lewej przewija się hero i sekcja z wierszami.
+ */
+.hero {
+  /* Panele wychodzą do krawędzi okna. clip (a nie hidden) nie psuje przyklejania. */
+  overflow-x: clip;
+}
+
+.scene {
+  max-width: var(--container);
+  margin-inline: auto;
+}
+
+/* ——— Hero: lewa kolumna ——— */
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 40px var(--gutter) 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 6px 12px 6px 6px;
+  border-radius: var(--rounded-full);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+.badge:hover {
+  background: color-mix(in srgb, var(--color-surface) 70%, var(--color-secondary));
+}
+
+.badgeTag {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--color-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+}
+
+.badgeText {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.badgeArrow {
+  flex: none;
+  color: var(--color-on-surface-variant);
+  transition: transform 150ms ease;
+}
+
+.badge:hover .badgeArrow {
+  transform: translateX(2px);
+}
+
+/* Szerokość 6,5 em = 10ch w kroju źródła, interlinia 0,93 */
+.title {
+  max-width: 6.5em;
+  font-family: var(--font-serif);
+  font-size: var(--type-display-size);
+  font-weight: 400;
+  line-height: 0.93;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.lead {
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.button {
+  gap: 4px;
+  font-weight: 430;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+}
+
+/* Ptaszek „sprawdzone źródła” w zieleni ZUS (primary), tekst zostaje szary */
+.note svg {
+  flex: none;
+  color: var(--color-primary);
+}
+
+/* ——— Okno z filmem i panele ——— */
+.visualLayer {
+  padding-top: 88px;
+}
+
+.visualSlot {
+  display: flex;
+  justify-content: center;
+}
+
+.stage {
+  position: relative;
+  width: min(78%, 384px);
+  aspect-ratio: 2 / 3;
+}
+
+.window {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  border: 1px solid var(--color-outline);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-mockup);
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.panel {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.panel img {
+  object-fit: cover;
+}
+
+/* Telefon i tablet: panele wystają zza okna u góry, jak w wersji mobilnej źródła */
+.panelLeft {
+  top: -12%;
+  left: -10%;
+  z-index: 1;
+  width: 60%;
+  aspect-ratio: 3 / 4;
+}
+
+.panelRight {
+  top: -8%;
+  right: -10%;
+  z-index: 0;
+  width: 80%;
+  aspect-ratio: 3 / 4;
+}
+
+/* ——— Druga sekcja: wiersze na liniach notatnika ——— */
+.features {
+  padding: var(--space-section) var(--gutter);
+}
+
+.featuresTitle {
+  max-width: 14em;
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+/*
+ * Linie co 80 px, jak w źródle (--notepad-row). Rysuje je notepad-lines.tsx: każda linia ma
+ * dwie połówki, które po wjechaniu sekcji na ekran wysuwają się od krawędzi do środka.
+ */
+.lines {
+  /* do weryfikacji: outline rozjaśniony tłem, żeby linie były mniej widoczne */
+  --line-color: color-mix(in srgb, var(--color-outline) 60%, var(--color-background));
+
+  position: relative;
+  margin-top: 40px;
+  padding-bottom: 1px;
+}
+
+.lineLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.line {
+  position: absolute;
+  top: calc(var(--i) * 80px);
+  right: 0;
+  left: 0;
+  height: 1px;
+}
+
+.line::before,
+.line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--line-reach, 50%);
+  background: var(--line-color);
+  transform: scaleX(0);
+  transition: transform 1400ms cubic-bezier(0.33, 1, 0.68, 1);
+  transition-delay: calc(var(--i) * 90ms);
+}
+
+.line::before {
+  left: 0;
+  transform-origin: left center;
+}
+
+.line::after {
+  right: 0;
+  transform-origin: right center;
+}
+
+.lines[data-visible="true"] .line::before,
+.lines[data-visible="true"] .line::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line::before,
+  .line::after {
+    transition: none;
+  }
+}
+
+.rows {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 80px;
+  padding-block: 8px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.row strong {
+  font-weight: 600;
+}
+
+.rowIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  color: var(--color-on-surface);
+}
+
+/*
+ * Wejście hero po ekranie ładowania (page-loader.tsx ustawia html[data-intro]): elementy lewej
+ * kolumny wjeżdżają po kolei, okno z filmem chwilę później. Bez JS i przy ograniczeniu ruchu
+ * atrybutu nie ma, więc wszystko stoi na miejscu.
+ */
+:global(html[data-intro="hidden"]) .intro > *,
+:global(html[data-intro="hidden"]) .visualSlot {
+  opacity: 0;
+  translate: 0 24px;
+}
+
+:global(html[data-intro="reveal"]) .intro > *,
+:global(html[data-intro="reveal"]) .visualSlot {
+  transition:
+    opacity 700ms ease var(--intro-delay, 0ms),
+    translate 900ms cubic-bezier(0.22, 1, 0.36, 1) var(--intro-delay, 0ms);
+}
+
+.intro > :nth-child(1) {
+  --intro-delay: 150ms;
+}
+
+.intro > :nth-child(2) {
+  --intro-delay: 240ms;
+}
+
+.intro > :nth-child(3) {
+  --intro-delay: 330ms;
+}
+
+.intro > :nth-child(4) {
+  --intro-delay: 420ms;
+}
+
+.visualSlot {
+  --intro-delay: 300ms;
+}
+
+@media (min-width: 768px) {
+  .lead {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scene {
+    --nav-space: 64px;
+    --win-w: min(460px, 32vw, calc((100svh - var(--nav-space) - 120px) * 2 / 3));
+
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-rows: auto auto;
+  }
+
+  /* Ekran 1: hero w lewej kolumnie, wyśrodkowane w pionie */
+  .intro {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: center;
+    min-height: calc(100svh - var(--nav-space));
+    padding: 48px 40px 64px;
+  }
+
+  /* Warstwa okna przykrywa oba ekrany. Okno trzyma się ekranu, dopóki warstwa się nie skończy. */
+  .visualLayer {
+    z-index: 1;
+    grid-column: 1 / -1;
+    grid-row: 1 / span 2;
+    padding-top: 0;
+    pointer-events: none;
+  }
+
+  .sticky {
+    position: sticky;
+    top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    height: 100svh;
+    padding: 40px 40px 0;
+  }
+
+  .visualSlot {
+    grid-column: 2;
+  }
+
+  /*
+   * Ruch przy przewijaniu (zmienne ustawia hero-visual.tsx, bez nich wszystko stoi).
+   * Okno w spoczynku stoi na środku prawej połowy. Na starcie jest przesunięte o (+96, −54) px
+   * przy oknie 461 × 691 px i powiększone (jak 1,2 w źródle). Po jednej wysokości ekranu
+   * wraca na środek i maleje do 83,3%.
+   */
+  .stage {
+    width: var(--win-w);
+    translate: 20.8% -7.8%;
+    transform: translate(calc(var(--p-window, 0) * -20.8%), calc(var(--p-window, 0) * 7.8%))
+      scale(calc(1 - var(--p-window, 0) * 0.1667));
+    will-change: transform;
+  }
+
+  /* Pozycje paneli zmierzone względem okna na granola.ai przy 1440 × 900 */
+  .panelLeft {
+    top: 10%;
+    left: -19.7%;
+    width: 82%;
+    height: 99.4%;
+    aspect-ratio: auto;
+    opacity: var(--p-fade, 1);
+    transform: translate(calc(var(--p-left, 0) * 35%), calc(var(--p-left, 0) * -9.76%))
+      scale(calc(1 - var(--p-left, 0) * 0.25));
+    will-change: transform, opacity;
+  }
+
+  .panelRight {
+    top: -3.8%;
+    right: auto;
+    left: 20%;
+    width: 115%;
+    height: 95.8%;
+    aspect-ratio: auto;
+    opacity: var(--p-fade, 1);
+    transform: translate(calc(var(--p-right, 0) * -23.9%), calc(var(--p-right, 0) * 6.05%))
+      scale(calc(1 - var(--p-right, 0) * 0.25));
+    will-change: transform, opacity;
+  }
+
+  /* Ekran 2: pełna szerokość kontenera, tekst w lewej połowie, linie aż do dołu ekranu */
+  .features {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 100svh;
+    padding: 26svh 0 0;
+  }
+
+  .featuresTitle {
+    max-width: 50%;
+    padding-inline: 40px;
+    font-size: var(--type-headline-size);
+    line-height: 1;
+  }
+
+  .lines {
+    flex: 1;
+    margin-top: 96px;
+  }
+
+  /*
+   * Jak w źródle: linie widoczne przy brzegach, w środku zanikają. Połówki wysuwają się
+   * tylko do granicy zaniku (32%), żeby cały ruch był widoczny.
+   */
+  .lines {
+    --line-reach: 32%;
+  }
+
+  .lineLayer {
+    mask-image: linear-gradient(to right, #000 0%, transparent 32%, transparent 68%, #000 100%);
+  }
+
+  /* Jak w źródle: wiersz 600 px od lewego wcięcia, tekst 14 px */
+  .rows {
+    max-width: 50%;
+    padding-inline: 40px 0;
+  }
+
+  .row {
+    padding-block: 0;
+    font-size: 14px;
+  }
+}
+
+/* Przerywane pionowe linie na brzegach kontenera, gdy jest od nich wolne miejsce */
+@media (min-width: 1280px) {
+  .features {
+    border-inline: 1px dashed var(--color-outline);
+  }
+}

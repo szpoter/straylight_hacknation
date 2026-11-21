@@ -2,7 +2,7 @@
 
 **Stan z 21.11.2026.** `app/` jest docelowym miejscem aplikacji Zusika. Wchodzi tu tylko kod produkcyjny: przejrzany, z testami i bez eksperymentów. Prototypy powstają poza nią: maskotka w `maskotka_kod/`, makiety w `Przewodnik-Rodzica.html` i `ui/`. Kod przenosimy do `app/` dopiero po akceptacji.
 
-**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [DESIGN.md](../DESIGN.md). Tokeny z DESIGN.md są w `src/app/globals.css` jako `@theme` Tailwinda v4 (obszar rodzica). Wyjątek to panel administracyjny: ma układ z sekcji 14 speca i tokeny z [DESIGN.md](../DESIGN.md) (CSS Modules w `features/admin/admin.module.css`, kroje Literata i Inter przez `next/font/google`). Wartości, które aplikacja już stosuje (urlop ojcowski, warunki zasiłku chorobowego, wzór ZAM, źródła wiedzy, sprawy liczone regułą ojcowską), panel czyta z kodu przez `lib/admin/catalog.ts` i oznacza „W aplikacji”. Pozostałe parametry ze specu i historia zmian są przykładowe (`features/admin/mock-data.ts`), oznaczone „Ze specyfikacji”.
+**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [DESIGN.md](../DESIGN.md). Tokeny z DESIGN.md są w `src/app/globals.css`: obszar rodzica czyta je jako `@theme` Tailwinda v4, strona główna i logowanie (`[data-site]`) jako zmienne CSS w CSS Modules. Wyjątek to panel administracyjny: ma układ z sekcji 14 speca i tokeny z [DESIGN.md](../DESIGN.md) (CSS Modules w `features/admin/admin.module.css`, kroje Literata i Inter przez `next/font/google`). Wartości, które aplikacja już stosuje (urlop ojcowski, warunki zasiłku chorobowego, wzór ZAM, źródła wiedzy, sprawy liczone regułą ojcowską), panel czyta z kodu przez `lib/admin/catalog.ts` i oznacza „W aplikacji”. Łączny wymiar urlopu ojcowskiego da się zmienić w panelu naprawdę: szkic, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty i wpis w historii. Reguła (`lib/rules/paternity.ts`) bierze wartość z harmonogramu w `lib/rules/parameters.ts` na pierwszy dzień okresu, a bez harmonogramu działa jak dotąd. Wersje są zapisane w podpisanym ciasteczku sesji demo, więc zmiana jurora nie trafia do innych, a kolejna sesja zaczyna od wartości z kodu (SPEC-PANEL §10). Wdrożenie produkcyjne przeniesie ten sam stan do bazy. Pozostałe parametry ze specu i część wpisów historii są przykładowe (`features/admin/mock-data.ts`), oznaczone „Ze specyfikacji”.
 
 ## Stos
 
@@ -51,7 +51,7 @@ app/
 │  ├─ features/                   ✅ onboarding · family · journey-map · calculator · documents · support; dalej landing · chat · admin
 │  ├─ components/                 ui/ · mascot/
 │  └─ lib/
-│     ├─ admin/                   ✅ logowanie panelu (auth.ts, server.ts: cookies), katalog wartości z kodu aplikacji (catalog.ts)
+│     ├─ admin/                   ✅ logowanie (auth.ts, server.ts), katalog wartości z kodu (catalog.ts, scenarios.ts), wersje parametrów (rule-versions.ts, rule-store.ts, change-checks.ts)
 │     ├─ zusik/                   ✅ agent: graf, sesja, Qdrant, Sherlock, magazyn spraw z dzierżawą
 │     ├─ demo/                    ✅ typy i dane fikcyjne widoków rodzica (do podmiany na API)
 │     ├─ plan/                    ✅ reguła pionka, najbliższa sprawa, model statusów

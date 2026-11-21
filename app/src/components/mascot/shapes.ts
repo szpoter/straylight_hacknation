@@ -1,6 +1,6 @@
 /**
  * Shapes Zusik can turn into: an open book (reading), a folder (searching), a calculator (calculating),
- * a pencil (writing), a tick (confirming), and liquid "?" and "!" (waiting, attention).
+ * a pencil (writing), a tick (confirming), liquid "?" and "!" (waiting, attention), and a closed folder (folder).
  *
  * Every outline is resampled to the same number of points, evenly along its length, clockwise from the
  * top, so the body can flow into a shape point by point. Coordinates are in the 2048 px reference space,
@@ -11,7 +11,7 @@ import { BODY_OUTLINE, FACE_ORIGIN, subdivide, type Point } from "./geometry";
 /** Points per outline. Enough for smooth curves and gently rounded corners. */
 export const OUTLINE_POINTS = 96;
 
-export type ShapeName = "book" | "folder" | "calculator" | "pencil" | "tick" | "question" | "exclamation";
+export type ShapeName = "book" | "folder" | "calculator" | "pencil" | "tick" | "question" | "exclamation" | "closedFolder";
 
 export type Shape = {
   /** The outline, resampled to OUTLINE_POINTS points. */
@@ -173,6 +173,40 @@ const folderOutline: Point[] = [
   [800, 566], [850, 590], [880, 630], [920, 640],
 ];
 
+/**
+ * The closed folder (state "folder"): the same outline as the searching folder, no index cards, and a
+ * front cover over most of it, with the face on the cover. The cover's sides and bottom lie on the
+ * inner edge of the rim, so only its top edge shows. Opening it a little (about 14° toward us) is drawn
+ * like the open-folder icon: the top edge comes down and gets wider, and a darker strip of the inside
+ * shows above it.
+ */
+export const CLOSED_FOLDER = {
+  cover: { left: 446, right: 1602, top: 760, bottom: 1438, radius: 18 },
+  open: { drop: 60, widen: 40 },
+  /** The inside, hidden behind the closed cover: [x from, x to, y from, y to]. */
+  inside: [452, 1596, 760, 880] as const,
+};
+
+/** The cover's outline with its top edge lowered by `drop` and widened by `widen` on each side. */
+function coverPath(drop: number, widen: number): string {
+  const { left, right, top, bottom, radius } = CLOSED_FOLDER.cover;
+  const corners: Point[] = [[left - widen, top + drop], [right + widen, top + drop], [right, bottom], [left, bottom]];
+  // each corner is a quadratic curve that starts and ends `radius` away from it along its two edges
+  const toward = (from: Point, to: Point) => {
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
+    return `${(from[0] + ((to[0] - from[0]) * radius) / length).toFixed(1)} ${(from[1] + ((to[1] - from[1]) * radius) / length).toFixed(1)}`;
+  };
+  const at = (i: number) => corners[(i + corners.length) % corners.length];
+  const curves = corners.map((corner, i) => `${i === 0 ? "M" : "L"} ${toward(corner, at(i - 1))} Q ${corner[0]} ${corner[1]} ${toward(corner, at(i + 1))}`);
+  return `${curves.join(" ")} Z`;
+}
+
+/** Closed and slightly opened cover; both paths have the same commands, so Motion can animate between them. */
+export const COVER_PATHS = {
+  closed: coverPath(0, 0),
+  open: coverPath(CLOSED_FOLDER.open.drop, CLOSED_FOLDER.open.widen),
+};
+
 /** Calculator standing upright: a display at the top, the face, then a 3 × 3 keypad. */
 export const CALCULATOR = {
   body: [630, 420, 1470, 1500] as const,
@@ -252,4 +286,6 @@ export const SHAPES: Record<ShapeName, Shape> = {
   tick: make(tickOutline, { x: 1240, y: 800, scale: 0.45 }, 1),
   question: make(questionOutline, { x: 1025, y: 470, scale: 0.42 }, 0.6),
   exclamation: make(exclamationOutline, { x: 1024, y: 580, scale: 0.45 }, 0.5),
+  // the face sits lower than on the searching folder, in the middle of the cover
+  closedFolder: make(folderOutline, { x: FACE_ORIGIN.x, y: 1010, scale: 0.95 }, 1.1),
 };

@@ -1,0 +1,145 @@
+/*
+ * Sekcja „Dla rodziców” według „For the doers” na granola.ai (pomiary 1440 × 900):
+ * napis min(12vw, 160px) nad blokiem, nagłówek 20 px po 48 px odstępu. W bloku trzy karty
+ * z animacjami (components/illustrations). U nas blok ma pofalowaną górę i dół.
+ */
+.section {
+  /* Wysokość fali na górnej i dolnej krawędzi bloku */
+  --wave: 24px;
+
+  overflow-x: clip;
+}
+
+.headingArea {
+  --pad: 20px;
+
+  display: flex;
+  justify-content: center;
+  padding: var(--pad) var(--gutter);
+}
+
+/* Zjeżdża o własną wysokość, odstępy obszaru i falę, czyli całkiem pod górną krawędź bloku */
+.heading {
+  font-family: var(--font-serif);
+  font-size: min(12vw, 160px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateY(calc(var(--sink, 0) * (100% + 2 * var(--pad) + var(--wave))));
+  will-change: transform;
+}
+
+/*
+ * Kolor secondary: duże bloki na całą szerokość (DESIGN.md, Colors).
+ * Fale wycina maska: u góry i na dole pas o wysokości --wave z falą (3 okresy na szerokość),
+ * pomiędzy pełny prostokąt. Dolna fala jest obrócona, więc nie powtarza górnej.
+ */
+.block {
+  position: relative;
+  z-index: 1;
+  padding-block: calc(16px + var(--wave));
+  background: var(--color-secondary);
+  color: var(--color-on-surface);
+  mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 40' preserveAspectRatio='none'%3E%3Cpath d='M0 20C80 0 160 0 240 20S400 40 480 20 640 0 720 20 880 40 960 20 1120 0 1200 20 1360 40 1440 20V40H0Z'/%3E%3C/svg%3E"),
+    linear-gradient(#000, #000),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 40' preserveAspectRatio='none'%3E%3Cpath transform='matrix(-1 0 0 -1 1440 40)' d='M0 20C80 0 160 0 240 20S400 40 480 20 640 0 720 20 880 40 960 20 1120 0 1200 20 1360 40 1440 20V40H0Z'/%3E%3C/svg%3E");
+  mask-position: top, center, bottom;
+  mask-repeat: no-repeat;
+  mask-size:
+    100% var(--wave),
+    100% calc(100% - 2 * var(--wave) + 2px),
+    100% var(--wave);
+}
+
+.inner {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.kicker {
+  padding-top: 32px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* Trzy karty: ilustracja na wspólnej linii dołu, pod nią tytuł i tekst, wyśrodkowane */
+.cards {
+  display: grid;
+  gap: 56px;
+  margin: 48px 0 0;
+  padding: 0 0 24px;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.art {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 224px;
+}
+
+.balance {
+  display: block;
+  width: 240px;
+  height: auto;
+}
+
+.cardTitle {
+  margin-top: 28px;
+  font-family: var(--font-serif);
+  font-size: var(--type-title-size);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.cardText {
+  max-width: 320px;
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (min-width: 768px) {
+  .section {
+    --wave: 40px;
+  }
+
+  .headingArea {
+    --pad: 24px;
+  }
+
+  .kicker {
+    padding-top: 48px;
+  }
+
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+    margin-top: 64px;
+    padding-bottom: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heading {
+    transform: none;
+  }
+}
