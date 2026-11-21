@@ -1,4 +1,4 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { chatModel } from "./model-provider";
 import { APICallError, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { SHERLOCK_TIMEOUT_MS } from "./config";
@@ -48,7 +48,7 @@ export async function askSherlock(settings: SherlockSettings, fragmentText: stri
   const started = Date.now();
   const model =
     settings.languageModel ??
-    createOpenAICompatible({ name: "sherlock", baseURL: settings.baseURL, apiKey: settings.apiKey })(settings.model);
+    chatModel(settings.baseURL, settings.apiKey, settings.model);
   try {
     const { text } = await generateText({
       model,

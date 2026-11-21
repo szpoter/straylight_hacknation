@@ -1,4 +1,4 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { chatModel } from "../zusik/model-provider";
 import { generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { classifySherlockError } from "../zusik/sherlock";
@@ -290,7 +290,7 @@ export async function generateAnswer(
   const started = Date.now();
   const model =
     settings.languageModel ??
-    createOpenAICompatible({ name: "sherlock", baseURL: settings.baseURL, apiKey: settings.apiKey })(settings.model);
+    chatModel(settings.baseURL, settings.apiKey, settings.model);
   const prompt = buildPrompt(corpus, question, evidence);
   let last: GenerationResult = { status: "error", output: null, model: settings.model, ms: 0 };
   for (let attempt = 1; attempt <= 2; attempt += 1) {
