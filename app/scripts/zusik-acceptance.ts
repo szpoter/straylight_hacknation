@@ -268,6 +268,10 @@ async function testNewQuestion(page: Page) {
   await page.getByRole("link", {name: /Otwórz dokument na s. 7/}).last().waitFor();
 }
 async function testGreetings(page: Page) {
+  // Reproduce a cold session while the parent is already typing the first message.
+  let releaseSession!: () => void;
+  const holdSession = new Promise<void>(resolve => { releaseSession = resolve; });
+  await page.route("**/api/zusik/session", async route => { await holdSession; await route.continue(); }, { times: 1 });
   for (const [route, question, expected] of [
     ["/app", "Siema, Zusik!", "porównać terminy"],
     ["/app/kamil", "Dzień dobry, Zusiku!", "wnioskiem ZAM"],
@@ -278,6 +282,11 @@ async function testGreetings(page: Page) {
     const input = chat.getByRole("textbox", {name:"Wiadomość do Zusika"});
     await input.fill(question);
     const send = chat.getByRole("button", {name:/Wyślij/});
+    if (route === "/app") {
+      const waiting = await send.isDisabled();
+      releaseSession();
+      assert.ok(waiting, "First message waits for the signed session");
+    }
     const response = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST");
     await send.click();
     const frames = (await (await response).text()).trim().split("\n");

@@ -127,7 +127,7 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
   const awaiting = view?.state === "awaiting_choice";
   const activePreview = awaiting ? preview : null;
   const highlight = zusik.savedAt !== null && expiredSave !== zusik.savedAt;
-  const busy = zusik.phase === "starting" || zusik.phase === "saving" || zusik.asking || marta.busy;
+  const busy = zusik.phase !== "ready" || zusik.asking || marta.busy;
   const inviteVisible = !chatOpen && !inviteDismissed && !inviteAccepted;
 
   // the field outline after a confirmed save fades after a few seconds
