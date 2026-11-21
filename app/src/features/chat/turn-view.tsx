@@ -49,6 +49,7 @@ export function Progress({ label }: { label: string }) {
 }
 
 export function AnswerView({ answer }: { answer: Answer }) {
+  if (answer.status === "conversation") return <div className={s.aiMessage}><p>{answer.message}</p></div>;
   if (answer.status === "needs_clarification") {
     return (
       <div className={s.aiMessage}>

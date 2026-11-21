@@ -11,6 +11,8 @@ import type { AskAnswer, AskTurn } from "./types";
 import type { MartaView } from "../marta/types";
 import { caseSources, previousSources, sourceIntent } from "./context-answer";
 
+import { conversationInput, conversationOwner, type CaseName } from "./conversation";
+
 type Progress = (status: string) => void;
 
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
@@ -90,7 +92,8 @@ export async function answerQuestion(deps: AnswerDeps, question: string, onProgr
     trace.gate = "clarify";
     return { answer: plain("needs_clarification", projected.clarify), trace };
   }
-  if (!projected) return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
+  if (!projected) return { answer: plain("insufficient_evidence",
+    "Nie rozpoznałem tematu w bazie Zusika. O jakie świadczenie, dokument albo sytuację chcesz zapytać?"), trace };
   trace.expanded = projected.corpus === "marta" ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
@@ -178,8 +181,8 @@ export function questionHash(question: string): string {
 export class AskService {
   constructor(private readonly deps: AskServiceDeps) {}
 
-  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void): Promise<AskResult> {
-    const demoCase = await this.deps.store.findOrCreate(sessionId);
+  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void, scenario: CaseName = "marta"): Promise<AskResult> {
+    const demoCase = await this.deps.store.findOrCreate(conversationOwner(sessionId, scenario));
     const threadId = demoCase.threadId;
     const hash = questionHash(question);
     const deadline = Date.now() + (this.deps.pendingWaitMs ?? 45_000);
@@ -197,18 +200,22 @@ export class AskService {
     let result: { answer: AskAnswer; trace: AnswerTrace | null };
     try {
       onProgress?.("Sprawdzam kontekst pytania…");
-      const intent = sourceIntent(question);
-      if (intent) {
-        const previous = intent === "case" ? undefined : (await this.deps.turns.list(threadId, requestId)).at(-1);
-        const snapshot = intent === "previous" ? undefined : await this.deps.readMarta?.(sessionId);
+      const { text, reply } = conversationInput(question, scenario);
+      const intent = sourceIntent(text);
+      if (reply) {
+        result = { answer: { status: "conversation", message: reply, claims: [], citations: [],
+          corpusVersion: this.deps.corpus.manifest.corpusVersion }, trace: null };
+      } else if (intent) {
+        const previous = intent === "case" ? undefined : (await this.deps.turns.list(threadId, requestId)).filter(turn => turn.status !== "conversation").at(-1);
+        const snapshot = scenario !== "marta" || intent === "previous" ? undefined : await this.deps.readMarta?.(sessionId);
         const newerCase = snapshot?.view && snapshot.savedAt && previous &&
           Date.parse(snapshot.savedAt) > Date.parse(previous.completedAt ?? previous.createdAt);
-        const answer = intent === "previous" || (previous && !newerCase)
+        const answer = scenario !== "marta" || intent === "previous" || (previous && !newerCase)
           ? previousSources(previous, this.deps.corpus.manifest.corpusVersion)
           : caseSources(snapshot?.view ?? null, this.deps.corpus);
         result = { answer, trace: null };
       } else {
-        result = await answerQuestion(this.deps, question, onProgress);
+        result = await answerQuestion(this.deps, text, onProgress);
       }
     } catch (error) {
       await this.deps.turns.release(threadId, requestId, token).catch(() => undefined);

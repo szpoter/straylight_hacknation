@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CaseChatWindow } from "../chat/case-chat-window";
+import { asksAboutSources } from "@/lib/kamil/interpret";
 import { ChatStep } from "./chat-step";
 import { DocumentStep } from "./document-step";
 import { clearPages, loadPages, readDocument, savePages, type PageImage } from "./read-document";
@@ -59,9 +60,14 @@ export function KamilWorkspace() {
 
   const blocked = busy || !!reading || !view;
   return (
-    <CaseChatWindow scenario="kamil" label="Kamil · Zasiłek za okres ojcowski" busy={blocked}
-      notice={readError ?? error?.message} onMessage={text => send({ type: "chat", text })}>
-      {!view ? <p role="status">{error ? <button type="button" onClick={reload}>Spróbuj ponownie</button> : "Wczytuję sprawę…"}</p> : <>
+    <CaseChatWindow scenario="kamil" label="Kamil · Zasiłek za okres ojcowski" busy={blocked} ready={!!view}
+      notice={readError ?? error?.message} onMessage={text => {
+        // Questions about principles use the same cited answers as Marta. Declarations still belong to Kamil's form.
+        const informational = /^(?:kiedy|jak(?:ie|i|a)?|ile|komu|komuż|na jak długo|w jakim|czy (?:pracownik|rodzic|oboje|można|świadczenie)|co (?:oznacza|to|mówi)|wyjaśnij|opowiedz)/iu.test(text);
+        if (informational && !asksAboutSources(text)) return Promise.resolve("ask");
+        return send({ type: "chat", text });
+      }}
+      documents={view && (
         <div className={s.caseTools} data-kamil-workspace>
           <h1 className={s.cardTitle}>Zasiłek za okres ojcowski</h1>
           <details open={!!view.candidates.length || (!view.facts.child_birth_date && !view.draft)}>
@@ -85,8 +91,9 @@ export function KamilWorkspace() {
             setReadError(null);
           }}>Zacznij od nowa</button>
         </div>
-        <ChatStep view={view} pages={pages} busy={blocked} send={send} />
-      </>}
+      )}>
+      {!view ? <p role="status">{error ? <button type="button" onClick={reload}>Spróbuj ponownie</button> : "Wczytuję sprawę…"} </p> :
+        <ChatStep view={view} pages={pages} busy={blocked} send={send} />}
     </CaseChatWindow>
   );
 }

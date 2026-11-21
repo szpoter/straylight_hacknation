@@ -65,11 +65,6 @@ export function assertProviderConfig(): void {
   sherlockSettings();
 }
 
-/** /ask calls this first, so a missing variable is reported by name. */
-export function assertAskConfig(): void {
-  knowledgeSettings();
-  sherlockSettings();
-}
 
 /** Informational answers with citations, saved on the session's thread. */
 export function askService(): AskService {
@@ -84,7 +79,7 @@ export function askService(): AskService {
     },
     corpus,
     selectCorpus: (name) => loadCorpus(name),
-    search: qdrantKnowledgeSearch(knowledgeSettings()),
+    search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
     generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db }, activeCorpus, question, evidence),
   });
 }

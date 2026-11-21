@@ -267,9 +267,33 @@ async function testNewQuestion(page: Page) {
   await page.getByRole("button", {name: new RegExp("^Źródło " + (index + 1) + ":")}).last().click();
   await page.getByRole("link", {name: /Otwórz dokument na s. 7/}).last().waitFor();
 }
+async function testGreetings(page: Page) {
+  for (const [route, question, expected] of [
+    ["/app", "Siema, Zusik!", "porównać terminy"],
+    ["/app/kamil", "Dzień dobry, Zusiku!", "wnioskiem ZAM"],
+    ["/app/chorobowe", "Hejka 👋", "dokumenty ubezpieczenia"],
+  ]) {
+    await page.goto(origin + route);
+    const chat = page.getByRole("region", {name:"Czat z Zusikiem"});
+    const input = chat.getByRole("textbox", {name:"Wiadomość do Zusika"});
+    await input.fill(question);
+    const send = chat.getByRole("button", {name:/Wyślij/});
+    const response = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST");
+    await send.click();
+    const frames = (await (await response).text()).trim().split("\n");
+    const {body} = JSON.parse(frames.at(-1)!);
+    assert.equal(body.turn.status, "conversation");
+    assert.equal(body.retrieval, null);
+    assert.ok(body.turn.message.includes(expected));
+    await chat.getByText(body.turn.message, {exact:true}).waitFor();
+    await page.reload();
+    await chat.getByText(question, {exact:true}).waitFor();
+    if (route !== "/app") assert.equal(await chat.getByText("Siema, Zusik!", {exact:true}).count(), 0);
+  }
+}
 async function run() {
   const browser=await chromium.launch({channel:"chrome", headless:true});
-  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false]] as const;
+  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false]] as const;
   let failures=0;
   try {
     for (const [id,test,variation] of cases) {

@@ -995,10 +995,18 @@
 }
 
 .caseWindow {
-  width: min(100%, 900px);
+  flex: 1;
+  min-width: 0;
   min-height: 0;
-  align-self: center;
+  align-self: stretch;
   border-inline: 1px solid var(--outline);
 }
 .caseWindow summary { cursor: pointer; }
 .caseWindow .chatHead { position: relative; z-index: 2; }
+
+.caseLayout { display: flex; flex: 1; min-height: 0; }
+.caseDocuments { flex: 0 1 50%; min-width: 0; overflow: auto; padding: 12px var(--gutter); }
+@media (max-width: 767px) {
+  .caseLayout { flex-direction: column; }
+  .caseDocuments { flex: 0 1 auto; max-height: 32%; border-bottom: 1px solid var(--outline); }
+}

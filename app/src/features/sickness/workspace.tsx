@@ -20,17 +20,10 @@ export function SicknessWorkspace() {
   );
   const [editing, setEditing] = useState(false);
   const assessment = view?.assessment;
-  const [notice, setNotice] = useState<string | null>(null);
   const documents = useRef<HTMLDetailsElement>(null);
-  async function onMessage(text: string) {
-    setNotice(null);
+  async function onMessage(text: string): Promise<boolean | "ask"> {
     const action = sicknessInput(text, view, editing);
-    if (action.type === "help") {
-      setNotice(!view ? "Napisz, że chcesz sprawdzić zasiłek chorobowy." :
-        assessment?.asksOtherCoverage || editing ? "Czy był inny tytuł ubezpieczenia? Napisz „Tak”, „Nie” albo „Nie wiem”." :
-        "Możesz otworzyć dokumenty, poprawić odpowiedź o ubezpieczeniu lub skorzystać z proponowanego kroku.");
-      return false;
-    }
+    if (action.type === "help") return "ask";
     if (action.type === "sources") {
       if (documents.current) {
         documents.current.open = true;
@@ -44,7 +37,33 @@ export function SicknessWorkspace() {
   }
   return (
     <CaseChatWindow scenario="chorobowe" label="Chorobowe w ciąży · Ocena prawa do zasiłku"
-      busy={busy || !loaded} notice={notice} onMessage={onMessage}>
+      ready={loaded} busy={busy || !loaded} onMessage={onMessage}
+      documents={view && (
+          <details className={s.card} ref={documents} open>
+            <summary>Dokumenty sprawy</summary>
+            <ul>
+              {view.evidence.map((e) => (
+                <li key={e.id}>
+                  <a href={e.url} target="_blank" rel="noreferrer">
+                    {e.title} · s. {e.page}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {(view.includeEmployment || view.canRestoreEmployment) && (
+              <button
+                className={s.secondary}
+                disabled={busy}
+                onClick={() =>
+                  void send({ type: "evidence", version: view.version, includeEmployment: !view.includeEmployment })
+                }
+              >
+                {view.includeEmployment ? "Wycofaj dowód dotyczący zatrudnienia" : "Dodaj dowód dotyczący zatrudnienia"}
+              </button>
+            )}
+            <SicknessImport version={view.version} onSaved={setView} />
+          </details>
+      )}>
         <section className={s.card} aria-labelledby="sick-chat">
           <h1 id="sick-chat">Chorobowe w ciąży</h1>
           {!view ? (
@@ -137,32 +156,6 @@ export function SicknessWorkspace() {
             </p>
           )}
         </section>
-        {view && (
-          <details className={s.card} ref={documents} open>
-            <summary>Dokumenty sprawy</summary>
-            <ul>
-              {view.evidence.map((e) => (
-                <li key={e.id}>
-                  <a href={e.url} target="_blank" rel="noreferrer">
-                    {e.title} · s. {e.page}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            {(view.includeEmployment || view.canRestoreEmployment) && (
-              <button
-                className={s.secondary}
-                disabled={busy}
-                onClick={() =>
-                  void send({ type: "evidence", version: view.version, includeEmployment: !view.includeEmployment })
-                }
-              >
-                {view.includeEmployment ? "Wycofaj dowód dotyczący zatrudnienia" : "Dodaj dowód dotyczący zatrudnienia"}
-              </button>
-            )}
-            <SicknessImport version={view.version} onSaved={setView} />
-          </details>
-        )}
     </CaseChatWindow>
   );
 }

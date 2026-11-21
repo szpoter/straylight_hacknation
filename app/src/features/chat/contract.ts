@@ -11,7 +11,7 @@ import type { CaseView } from "@/lib/zusik/types";
  * Anything that does not validate is treated as "unavailable", never rendered half-way.
  */
 
-export const ANSWER_STATUSES = ["answered", "needs_clarification", "insufficient_evidence", "unavailable"] as const;
+export const ANSWER_STATUSES = ["conversation", "answered", "needs_clarification", "insufficient_evidence", "unavailable"] as const;
 export type AnswerStatus = (typeof ANSWER_STATUSES)[number];
 
 export const citationSchema = z.object({

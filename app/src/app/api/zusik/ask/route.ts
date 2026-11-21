@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { MAX_QUESTION_LENGTH } from "@/lib/rag/query";
-import { NO_STORE, askService, assertAskConfig, currentSessionId, errorResponse } from "@/lib/zusik/server";
+import { NO_STORE, askService, currentSessionId, errorResponse } from "@/lib/zusik/server";
 import type { AskTurn } from "@/lib/zusik/types";
 import { ASK_STREAM } from "@/lib/zusik/ask-stream";
+import { caseNames } from "@/lib/zusik/conversation";
 import { isSameOrigin } from "@/lib/zusik/session";
 
 export const runtime = "nodejs";
@@ -12,6 +13,7 @@ export const maxDuration = 60;
 
 // Unknown fields (e.g. a threadId sent by the browser) are stripped and ignored.
 const bodySchema = z.object({
+  scenario: z.enum(caseNames).default("marta"),
   question: z.string().trim().min(2).max(MAX_QUESTION_LENGTH),
   requestId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
 });
@@ -34,11 +36,10 @@ export async function POST(request: Request) {
   try {
     const sessionId = await currentSessionId();
     if (!sessionId) return Response.json({ error: "no_session" }, { status: 401, headers: NO_STORE });
-    assertAskConfig();
     const service = askService();
     const { question, requestId } = parsed.data;
     const run = async (progress?: (value: string) => void, verified?: (turn: AskTurn) => void) => {
-      const result = await service.ask(sessionId, question, requestId, progress, verified);
+      const result = await service.ask(sessionId, question, requestId, progress, verified, parsed.data.scenario);
       const trace = result.trace;
       // Ids, statuses and timings only: never the question or the answer text.
       console.log(

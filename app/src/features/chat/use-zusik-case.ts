@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CaseName } from "@/lib/zusik/conversation";
 import { ASK_STREAM, readAskStream } from "@/lib/zusik/ask-stream";
 import type { Choice } from "@/lib/zusik/constants";
 import { answerFromAskBody, turnsFromView, type Answer, type ClientView, type Turn } from "./contract";
@@ -74,7 +75,7 @@ export function mergeConversation(saved: Turn[], local: LocalAsk[]): Conversatio
   ];
 }
 
-export function useZusikCase() {
+export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) {
   const [view, setView] = useState<ClientView | null>(null);
   const [documentCache,setDocumentCache]=useState("");
   const [phase, setPhase] = useState<Phase>("restoring");
@@ -101,14 +102,14 @@ export function useZusikCase() {
   const markReady = useCallback(() => setPhase((current) => (current === "error" ? current : "ready")), []);
 
   const readState = useCallback(async (): Promise<ClientView | null> => {
-    const state = await call("/api/zusik/state");
+    const state = await call("/api/zusik/state?scenario=" + scenario);
     if (state.status >= 400 || !state.body.view) {
       fail(errorFrom(state.status, state.body));
       return null;
     }
     setView(state.body.view);
     return state.body.view;
-  }, [fail]);
+  }, [fail, scenario]);
 
   /** Waits while another request holds the case (202) or a start is still running. */
   const settle = useCallback(
@@ -127,9 +128,11 @@ export function useZusikCase() {
     setPhase("restoring");
     setError(null);
     try {
-      const session = await post("/api/zusik/session");
-      if (session.status >= 400) return fail(errorFrom(session.status, session.body));
-      setDocumentCache(session.body.documentCache ?? "");
+      if (scenario === "marta") {
+        const session = await post("/api/zusik/session");
+        if (session.status >= 400) return fail(errorFrom(session.status, session.body));
+        setDocumentCache(session.body.documentCache ?? "");
+      }
       const current = await readState();
       if (!current) return;
       if (current.state === "starting") {
@@ -140,13 +143,13 @@ export function useZusikCase() {
     } catch {
       fail({ kind: "network" });
     }
-  }, [fail, markReady, readState, settle]);
+  }, [fail, markReady, readState, settle, scenario]);
 
   useEffect(() => {
     // Rebuild the screen from the server on every load, also after F5 or reopening the tab. Read only.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void restore();
-  }, [restore]);
+    if (sessionReady) void restore();
+  }, [restore, sessionReady]);
 
   const start = useCallback(async () => {
     if (inFlight.current) return;
@@ -230,7 +233,7 @@ export function useZusikCase() {
         const response = await fetch("/api/zusik/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: ASK_STREAM },
-          body: JSON.stringify({ question, requestId }),
+          body: JSON.stringify({ question, requestId, scenario }),
           cache: "no-store",
           signal: controller.signal,
         });
@@ -299,7 +302,7 @@ export function useZusikCase() {
         asking.current.delete(requestId);
       }
     },
-    [readState],
+    [readState, scenario],
   );
 
   const ask = useCallback((question: string) => send(newRequestId(), question), [send]);

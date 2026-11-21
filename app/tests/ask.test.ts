@@ -60,6 +60,26 @@ function world(options: { search?: VectorSearchResult; model?: GenerationResult;
 const Q_ODPIS = "Kadry mają już odpis aktu Oli w moich aktach. Mam dać drugi?";
 
 describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
+  it.each(["Siema, Zusik!", "Dzień dobry, Zusiku 👋", "hejka, co potrafisz?", "Wielkie dzięki za pomoc"])(
+    "treats %s as conversation and saves it without retrieval", async question => {
+      const w = world();
+      const { turn, trace } = await w.ask().ask("visitor", question, "req-social");
+      expect(turn).toMatchObject({ status: "conversation", citations: [], claims: [] });
+      expect(turn?.message.length).toBeGreaterThan(5);
+      expect(trace).toBeNull();
+      expect((await w.probe().getView("visitor")).turns?.[0]).toEqual(turn);
+      expect(w.calls).toEqual({ qdrant: 0, sherlock: 0 });
+    });
+  it("keeps the actual question after a greeting and recalls its citations across small talk", async () => {
+    const w = world();
+    const { turn } = await w.ask().ask("visitor", "Cześć Zusiku! " + Q_ODPIS, "req-law", undefined, undefined, "kamil");
+    expect(turn?.citations.length).toBeGreaterThan(0);
+    await w.ask().ask("visitor", "Dzięki!", "req-thanks", undefined, undefined, "kamil");
+    const source = await w.ask().ask("visitor", "Pokaż źródła", "req-source", undefined, undefined, "kamil");
+    expect(source.turn?.citations).toEqual(turn?.citations);
+    expect((await w.probe().getView("visitor")).turns ?? []).toEqual([]);
+    expect(w.calls).toEqual({ qdrant: 1, sherlock: 1 });
+  });
   it("explains the saved calculator inputs, separates the legal deadline and preserves missing rates", async () => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-10", days: 3,
       firstDaily: 123.45, secondDaily: null, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;

@@ -1,5 +1,6 @@
 "use client";
 
+import { conversationInput } from "@/lib/zusik/conversation";
 import { ScenarioNav } from "./scenario-nav";
 import { useCaseResource } from "./use-case-resource";
 import { MartaDraft, MartaInterview, type DeadlineSource } from "./marta-workflow";
@@ -174,7 +175,7 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
     setText("");
     setComposerNotice(null);
     if (initialChatOpen) {
-      const intent = martaInput(question, marta.view, new Date().toLocaleDateString("sv-SE", {timeZone:"Europe/Warsaw"}));
+      const intent = martaInput(conversationInput(question, "marta").text, marta.view, new Date().toLocaleDateString("sv-SE", {timeZone:"Europe/Warsaw"}));
       if (intent) {
         if ("notice" in intent) setComposerNotice(intent.notice);
         else if (!marta.loaded || !(await marta.send(intent.action))) {

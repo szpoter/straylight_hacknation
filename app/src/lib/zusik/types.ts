@@ -57,7 +57,7 @@ export interface CaseView {
  * Contract of POST /api/zusik/ask and view.turns (shared with the /zusik screen).
  * Legal content lives only in `claims`; `message` carries questions and notices.
  */
-export type AskStatus = "answered" | "needs_clarification" | "insufficient_evidence" | "unavailable";
+export type AskStatus = "conversation" | "answered" | "needs_clarification" | "insufficient_evidence" | "unavailable";
 
 export interface AskClaim {
   text: string;

@@ -10,8 +10,12 @@ type Input = { type: "start" } | { type: "close"; version: number }
   | { type: "confirm"; version: number; answer: Answer } | { type: "sources" } | { type: "help" };
 export function sicknessInput(raw: string, view: SicknessView | null, editing: boolean): Input {
   const text = raw.toLocaleLowerCase("pl").trim().replace(/[.!?]+$/, "").trim();
-  if (!view) return /chorobow|zwolnieni|zasiłek|^zacznij$|^rozpocznij/u.test(text) ? { type: "start" } : { type: "help" };
-  if (/^(?:pokaż (?:mi )?(?:dokumenty|źródła)|skąd (?:to )?wiesz|na jakiej podstawie.*)$/u.test(text)) return { type: "sources" };
+  if (!view) {
+    const asksForAssessment = /^(?:zacznij|rozpocznij|sprawdź moją sprawę)$/.test(text) ||
+      /chorobow|zwolnieni/u.test(text) && /dostanę|przysługuje mi|mi przysługuje|mam (?:zwolnienie|prawo)|chcę sprawdzić/u.test(text);
+    return { type: asksForAssessment ? "start" : "help" };
+  }
+  if (/^(?:pokaż (?:mi )?(?:dokumenty|źródła)|skąd (?:są |pochodzą )?te dane|skąd (?:to )?wiesz|na jakiej podstawie.*)$/u.test(text)) return { type: "sources" };
   if (!view.closed && view.assessment.status === "not_entitled_for_period" && /^(?:zakończ|zamknij)(?: ocenę| sprawę)?$/u.test(text)) {
     return { type: "close", version: view.version };
   }
