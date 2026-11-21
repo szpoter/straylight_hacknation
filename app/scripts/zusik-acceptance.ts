@@ -161,8 +161,13 @@ async function testCitations(page:Page) {
   assert.equal(result.status(),200);
   const {turn}=await result.json();
   assert.equal(turn.status,"answered");
-  assert.ok(turn.citations.some((c:{url:string;quote:string;fragmentId:string})=>
-    ["kp-art182-1a-par6","mrpips-dzielenie-jednoczesnie"].includes(c.fragmentId) && c.quote.length>15 && c.url.startsWith("https://")));
+  const citation=turn.citations.find((c:{url:string;quote:string;fragmentId:string})=>
+    ["kp-art182-1a-par6","mrpips-dzielenie-jednoczesnie"].includes(c.fragmentId) && c.quote.length>15);
+  assert.ok(citation);
+  const source=new URL(citation.url);
+  assert.ok(source.protocol==="https:" && ["eli.gov.pl","www.gov.pl","gov.pl"].includes(source.hostname));
+  const officialPage=await page.request.get(source.href,{timeout:25000});
+  assert.ok(officialPage.ok(),"Official citation HTTP "+officialPage.status());
   await page.reload();
   await page.getByText(turn.question,{exact:true}).first().waitFor();
 }
