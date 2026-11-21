@@ -82,9 +82,9 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 
 **Planowana funkcja.** Po zalogowaniu agent wykorzysta dostępne dane sprawy i odpowiedzi z rozmowy do przygotowania szkicu. Dopyta o brakujące informacje i decyzje rodzica. Przy pytaniu o zasady wyszuka odpowiedni fragment materiałów ZUS i wskaże źródło. Rodzic będzie mógł poprawić dane i zatwierdzić szkic. W projekcie rozważane są polskie modele PLLuM lub Bielik oraz wyszukiwanie w materiałach ZUS (RAG). [Rozmowa o agencie](thread://01a1f4d5-2dd5-77f0-b878-7bc6bdec55c6?hostId=local)
 
-**Kierunek.** Pod nagłówkiem **„Agent AI pomoże Ci wypełnić wniosek”** osadzamy krótkie wideo dostępne przed logowaniem. Miniatura pokazuje rozmowę obok szkicu oraz przycisk „Zobacz, jak powstaje wniosek”. Gdy rodzic przewinie do odtwarzacza, Zusik zatrzymuje się przy jego rogu i lekko zachodzi na ramkę. W czasie odtwarzania jego dymki podążają za scenami filmu. Na ekranie przez cały czas widnieje oznaczenie „Przykład na fikcyjnych danych”.
+**Uzgodnione.** Pod nagłówkiem **„Agent AI pomoże Ci wypełnić wniosek”** osadzamy krótkie wideo dostępne przed logowaniem. Miniatura pokazuje rozmowę obok szkicu oraz przycisk „Zobacz, jak powstaje wniosek”. Gdy rodzic przewinie do odtwarzacza, Zusik zatrzymuje się przy jego rogu i lekko zachodzi na ramkę. W czasie odtwarzania jego dymki podążają za scenami filmu. Na ekranie przez cały czas widnieje oznaczenie „Przykład na fikcyjnych danych”.
 
-### Proponowany scenariusz klipu (30 sekund)
+### Scenariusz klipu (30 sekund)
 
 | Czas | Rozmowa i szkic widoczne na ekranie | Dymek Zusika |
 | --- | --- | --- |
@@ -97,7 +97,7 @@ Rozmowę i odpowiadające jej pole pokazujemy w tym samym kadrze. Na telefonie w
 
 ## Pod filmem — urlop rodzicielski w liczbach
 
-**Proponowany nagłówek: „Jak możecie podzielić się opieką?”** W siatce bento największy kafel pokazuje skalę korzystania ze świadczenia w Polsce. Trzy mniejsze tłumaczą decyzje rodziców. Na telefonie kafle zachowują kolejność z tabeli. Pod liczbami umieszczamy linki do źródeł.
+**Uzgodnione.** Pod filmem umieszczamy siatkę bento z czterema liczbami z poniższej tabeli. Proponowany nagłówek to **„Jak możecie podzielić się opieką?”**. Największy kafel pokazuje skalę korzystania ze świadczenia w Polsce. Trzy mniejsze tłumaczą decyzje rodziców. Na telefonie kafle zachowują kolejność z tabeli. Pod liczbami umieszczamy linki do źródeł.
 
 | Liczba na kaflu | Podpis dla rodzica |
 | --- | --- |
@@ -106,6 +106,15 @@ Rozmowę i odpowiadające jej pole pokazujemy w tym samym kadrze. Na telefonie w
 | **Po 9 tygodni** | Z tej puli każde z uprawnionych rodziców ma własną część. Może ją wykorzystać tylko ten rodzic. [Część nieprzenoszalna](https://www.gov.pl/web/rodzina/urlop-rodzicielski) |
 | **Do 5 części** | Na tyle okresów możecie rozłożyć urlop rodzicielski. W przykładowym planie zobaczycie je na jednej osi czasu. [Zasady podziału urlopu](https://www.gov.pl/web/rodzina/urlop-rodzicielski) |
 
-Pod siatką proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do ekranu demonstracyjnego logowania przez mObywatel.
-
 **Powiązanie z oceną konkursową.** Związek z wyzwaniem oraz kompletność projektu i doświadczenie użytkownika odpowiadają łącznie za 50% oceny. Klip wskazuje czynność wspieraną przez AI, pokazuje zmianę dokonaną przez rodzica i kończy się konkretnym dokumentem, terminem oraz adresatem. Bento wprowadza do porównywania wariantów opieki. Jury zweryfikuje wyliczenia w działającym demie na przykładowych wnioskach. Krótki klip można wykorzystać jako fragment wymaganego filmu o całym projekcie (maks. 3 minuty). [Opis zadania, s. 13–16](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
+
+## Po bento — wejście do demo i stopka
+
+**Propozycja do omówienia.** Pod siatką powtarzamy przycisk **„Sprawdź moją sytuację”**. Prowadzi do tego samego ekranu logowania co przycisk w Hero. Towarzyszy mu krótka informacja „Wersja demonstracyjna. Logowanie przez mObywatel i pobranie danych z ZUS są symulowane.”
+
+Bezpośrednio pod przyciskiem znajduje się stopka z nazwą przewodnika i dwiema grupami odnośników.
+
+- **Oficjalne informacje** — [ZUS o zasiłku macierzyńskim](https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/komu-przysluguje), [ministerstwo o urlopie rodzicielskim](https://www.gov.pl/web/rodzina/urlop-rodzicielski) i [Państwowa Inspekcja Pracy o prawach rodziców](https://www.pip.gov.pl/dla-pracodawcow/porady-prawne/rodzicielstwo).
+- **Pomoc w trudnej sytuacji** — link otwiera istniejący panel „Informacje i wsparcie” także przed logowaniem. W panelu przy każdej organizacji podajemy, komu pomaga i gdzie uzyskać bezpłatne wsparcie. Przykładem jest pomoc dla rodziców po stracie lub w innej trudnej sytuacji okołoporodowej. [Fundacja Ernesta — jak pomagamy](https://fundacjaernesta.pl/jak-pomagamy/)
+
+**Do rozwinięcia w specyfikacji demo.** Po symulowanym logowaniu jury powinno móc wybrać przykładową sprawę lub wczytać testowy wniosek PDF, ustalić na jego podstawie status ubezpieczenia i sprawdzić wyliczenie kwoty oraz okresu świadczenia albo wyjaśnienie braku uprawnień. W dalszych sekcjach specyfikacji trzeba również opisać warianty opieki i pracy, ryzyko zmiany uprawnień, wymagane symulacje oraz edycję parametrów w panelu administracyjnym. Umieszczenie źródeł w stopce i ścieżki testowej po logowaniu to decyzje projektowe proponowane dla tego demo. [Opis zadania, s. 12–15](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
