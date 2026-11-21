@@ -225,7 +225,7 @@ export function planReply(text: string, files: string[], draft: Draft, pending: 
   }
 
   if (/jak poprawić|zmienić dat|poprawić dat/.test(lower)) {
-    const target: FieldKey = draft.fields.start.value ? "start" : "start";
+    const target: FieldKey = field ?? "start";
     return answer("reading", ["Sprawdzam Twój szkic"], [
       { kind: "p", text: "Napisz nową datę, np. „Popraw początek urlopu na 18 czerwca”, albo wybierz „Zmień” przy polu w formularzu." },
       { kind: "question", text: "Którą datę chcesz ustawić?", datePicker: target },

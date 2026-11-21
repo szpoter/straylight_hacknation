@@ -220,6 +220,11 @@
   .zd-head .zd-icon-btn { min-width: 40px; padding: 0 4px; }
 }
 
+/* phone with the on-screen keyboard open: the message and "Wyślij" stay in view */
+.zd--compact .zd-form--fragment { display: none; }
+.zd--compact .zd-starters { max-height: 112px; overflow-y: auto; }
+.zd--compact .zd-head__case { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .zd *, .zd *::before, .zd *::after { animation: none !important; transition: none !important; }
   .zd-composer--busy::before { background: var(--accent); }

@@ -382,12 +382,11 @@ export default function ZusikDemo() {
         if (run.stopped) return;
         setDrafts((all) => ({ ...all, [t.draftId]: { ...all[t.draftId], attachment: plan.name } }));
         const after = { ...draftsRef.current[t.draftId], attachment: plan.name };
-        const next = nextQuestion(after);
-        const segments: Segment[] = [
-          { kind: "p", text: `✓ Dodałem „${plan.name}” do szkicu Oli jako odpis aktu urodzenia.` },
-          { kind: "plan" },
-          next.segment,
-        ];
+        const added: Segment = { kind: "p", text: `✓ Dodałem „${plan.name}” do szkicu Oli jako odpis aktu urodzenia.` };
+        // the parent may have asked something in the same message: answer it after the file
+        const rest = text ? planReply(text, [], after, t.pending) : null;
+        const next = rest?.type === "answer" ? rest : { ...nextQuestion(after), segments: [{ kind: "plan" } as Segment, nextQuestion(after).segment] };
+        const segments: Segment[] = [added, ...next.segments];
         patchMessage(threadId, messageId, () => ({ segments, suggestions: next.suggestions }));
         patchThread(threadId, () => ({ pending: next.pending }));
         return stream(threadId, messageId, segments, run);
@@ -607,7 +606,11 @@ export default function ZusikDemo() {
   const formMode = chatOpen && phone ? "fragment" : "full";
 
   return (
-    <div className="zd" lang="pl" style={phone && chatOpen && visualHeight ? { height: visualHeight, bottom: "auto" } : undefined}>
+    <div
+      className={`zd${phone && chatOpen && visualHeight > 0 && visualHeight < 560 ? " zd--compact" : ""}`}
+      lang="pl"
+      style={phone && chatOpen && visualHeight ? { height: visualHeight, bottom: "auto" } : undefined}
+    >
       <div ref={workArea} className={`zd-work${phone ? " zd-work--column" : ""}`}>
         {showForm && (
           <div
