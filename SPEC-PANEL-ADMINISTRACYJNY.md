@@ -1,6 +1,6 @@
 # Panel administracyjny Przewodnika Rodzica
 
-Specyfikacja panelu, rozwinięta 21.11.2026 na podstawie pełnej treści zadania konkursowego ZUS, załącznika ZUS z wymiarami i wyciągu z Kodeksu pracy. Panel ma służyć osobie, która odpowiada za zasady wyliczania świadczeń: po zmianie przepisów zmienia parametr, widzi różnicę na przykładowej rodzinie i wskazuje, od kiedy rodzice dostają nowy wynik. Nawigacja rodzica: [SPEC-PO-LOGOWANIU.md](SPEC-PO-LOGOWANIU.md). Oznaczenia: **[ZUS s. X]** wymóg lub fakt z opisu zadania, **[Zał.]** załącznik ZUS „Maksymalny czas trwania zasiłków, wysokość, podstawa wymiaru”, **[Kp art. X]** wyciąg z Kodeksu pracy, **[SPEC]** ustalone wcześniej w tym pliku lub w innych specach zespołu, **[P]** propozycja do decyzji.
+Specyfikacja panelu, rozwinięta 21.11.2026 na podstawie pełnej treści zadania konkursowego ZUS, załącznika ZUS z wymiarami i wyciągu z Kodeksu pracy. Panel ma służyć osobie, która odpowiada za zasady wyliczania świadczeń: po zmianie przepisów zmienia parametr, widzi różnicę na przykładowej rodzinie i wskazuje, od kiedy rodzice dostają nowy wynik. Nawigacja rodzica: [SPEC-PO-LOGOWANIU.md](SPEC-PO-LOGOWANIU.md). Oznaczenia: **[ZUS s. X]** wymóg lub fakt z opisu zadania, **[Zał.]** załącznik ZUS „Maksymalny czas trwania zasiłków, wysokość, podstawa wymiaru”, **[Kp art. X]** wyciąg z Kodeksu pracy, **[SPEC]** ustalone wcześniej w tym pliku lub w innych specach zespołu, **[P]** propozycja do decyzji, **[D]** decyzja podjęta przy wdrożeniu 21–22.11.2026. Co już działa w `app/`, opisuje [sekcja 15](#15-stan-wdrożenia-22112026).
 
 ## 1. Po co jest panel
 
@@ -18,6 +18,8 @@ Przykład z samego zadania, który dobrze pokazuje sens panelu: od 24 październ
 **[SPEC, uzgodnione]** Trzy zakładki: „Reguły świadczeń” (domyślna), „Sprawy testowe”, „Historia zmian”.
 
 **[P]** Zawartość z sekcji 3–5 tej rozpiski mieści się w tych trzech zakładkach jako grupy wewnątrz „Reguł świadczeń”. Alternatywa: czwarta zakładka „Treści i źródła” na sekcję 5 (pytanie A w sekcji 12).
+
+**[D]** Wybrana alternatywa: czwarta zakładka „Treści i źródła” pokazuje źródła wiedzy Zusika z manifestów korpusu (sekcja 5, ostatni akapit). Katalog formularzy i warunki zostają grupami w „Regułach świadczeń”.
 
 ## 3. Reguły świadczeń · parametry wyliczeń
 
@@ -270,14 +272,14 @@ Jury może opublikować zmianę w odizolowanej sesji demonstracyjnej, otworzyć 
 
 ## 13. Pytania do decyzji
 
-| Pytanie | Rekomendacja |
-| --- | --- |
-| A. Gdzie trafiają treści i źródła z sekcji 5? | Jako grupa w „Regułach świadczeń”, bez czwartej zakładki, żeby nie ruszać uzgodnionej nawigacji. Alternatywa: zakładka „Treści i źródła”. |
-| B. Skąd prowadzi wejście do panelu? | Link „Panel administracyjny” w stopce strony publicznej i osobne logowanie demo dla administratora, oznaczone jako wersja demonstracyjna. |
-| C. Które parametry są edytowalne w demo? | Wszystkie z sekcji 3 widoczne, pełna ścieżka zmiany dla stawek i wymiarów, reszta do odczytu. |
-| D. Czy katalog formularzy wchodzi do demo? | Tak, w trybie do odczytu z przykładem ZUR i ZAO połączonych z ZAM od 24.10.2026, bo to realna zmiana z treści zadania. |
-| E. Role w demo | Jedno konto z obiema rolami, w opisie projektu wzmianka o zasadzie dwóch osób przy wdrożeniu. |
-| F. Minimalna podstawa wymiaru 2026 | ⚠️ **Niepewne, dopytać mentorów ZUS** (stoisko lub Discord). Załącznik zapowiada wartość, ale jej nie podaje. Do czasu odpowiedzi 4 147,10 zł traktujemy wyłącznie jako roboczą wartość z naszego wyliczenia. |
+| Pytanie | Rekomendacja | Decyzja [D] |
+| --- | --- | --- |
+| A. Gdzie trafiają treści i źródła z sekcji 5? | Jako grupa w „Regułach świadczeń”, bez czwartej zakładki, żeby nie ruszać uzgodnionej nawigacji. Alternatywa: zakładka „Treści i źródła”. | Czwarta zakładka „Treści i źródła” ze źródłami wiedzy Zusika. |
+| B. Skąd prowadzi wejście do panelu? | Link „Panel administracyjny” w stopce strony publicznej i osobne logowanie demo dla administratora, oznaczone jako wersja demonstracyjna. | Bez linku ze strony publicznej. Wejście tylko przez adres `/admin`, który pokazuje logowanie bez rejestracji. Bez etykiety „Wersja demo” na logowaniu i w panelu. W demo login i hasło są już wpisane. |
+| C. Które parametry są edytowalne w demo? | Wszystkie z sekcji 3 widoczne, pełna ścieżka zmiany dla stawek i wymiarów, reszta do odczytu. | Pełna ścieżka dla łącznego wymiaru zasiłku za okres urlopu ojcowskiego (niepracownik). Stawki dołączą po kalkulatorze w aplikacji rodzica. Reszta do odczytu. |
+| D. Czy katalog formularzy wchodzi do demo? | Tak, w trybie do odczytu z przykładem ZUR i ZAO połączonych z ZAM od 24.10.2026, bo to realna zmiana z treści zadania. | Tak, do odczytu. Wzór ZAM z 24.10.2026 pochodzi z kodu aplikacji. |
+| E. Role w demo | Jedno konto z obiema rolami, w opisie projektu wzmianka o zasadzie dwóch osób przy wdrożeniu. | Jedno konto `admin` z obiema rolami. |
+| F. Minimalna podstawa wymiaru 2026 | ⚠️ **Niepewne, dopytać mentorów ZUS** (stoisko lub Discord). Załącznik zapowiada wartość, ale jej nie podaje. Do czasu odpowiedzi 4 147,10 zł traktujemy wyłącznie jako roboczą wartość z naszego wyliczenia. | Bez zmian, nadal do dopytania. |
 
 ## 14. Układ ekranów
 
@@ -287,7 +289,7 @@ Jury może opublikować zmianę w odizolowanej sesji demonstracyjnej, otworzyć 
 
 | Pytanie | Decyzja |
 | --- | --- |
-| L1. Nawigacja | Lewy sidebar. Pozycje „Reguły świadczeń”, „Sprawy testowe”, „Historia zmian” w kolejności ze SPEC. Miejsce na ewentualne „Treści i źródła”. |
+| L1. Nawigacja | Lewy sidebar. Pozycje „Reguły świadczeń”, „Sprawy testowe”, „Historia zmian” w kolejności ze SPEC, a pod nimi „Treści i źródła” **[D]**. Na dole sidebaru „Wyloguj się”. |
 | L2. Kafle podsumowania | Rząd 4 małych kafli u góry w „Regułach świadczeń” i „Sprawach testowych”. W „Sprawach” kafle działają jako filtry. |
 | L3. Lista parametrów | Jedna karta z tabelą i zakładkami grup: Stawki, Wymiary, Uzupełniający, Chorobowy, Kto wypłaca, Podstawa, Terminy, Formularze. |
 | L4. Szczegóły parametru | Panel boczny z wartością, historią i podstawą. „Przygotuj zmianę” otwiera pełny ekran z dwiema kolumnami. |
@@ -297,7 +299,7 @@ Jury może opublikować zmianę w odizolowanej sesji demonstracyjnej, otworzyć 
 
 ```
 ┌───────────┬──────────────────────────────────────────────┐
-│ PANEL     │ Pasek: nazwa widoku · „Wersja demo” · konto  │
+│ PANEL     │ Pasek: nazwa widoku · konto (login)          │
 │ ADMIN     ├──────────────────────────────────────────────┤
 │           │                                              │
 │ Reguły    │            treść widoku (karty)              │
@@ -306,8 +308,30 @@ Jury może opublikować zmianę w odizolowanej sesji demonstracyjnej, otworzyć 
 │ testowe   │                                              │
 │ Historia  │                                              │
 │ zmian     │                                              │
+│ Treści i  │                                              │
+│ źródła    │                                              │
+│ [Wyloguj] │                                              │
 └───────────┴──────────────────────────────────────────────┘
 ```
+
+### Logowanie (`/admin`) [D]
+
+```
+┌──────────────────────────────────────────┐
+│                                          │  białe tło strony
+│          Panel Administratora            │  szeryf, ciemna zieleń, pośrodku
+│                                          │  między górną krawędzią a kartą
+│        ┌──────────────────────┐          │
+│        │ Logowanie admin.     │          │  karta w kolorze secondary,
+│        │ Zaloguj się          │          │  tekst w kolorze tuszu
+│        │ Login   [admin    ]  │          │
+│        │ Hasło   [•••• Pokaż] │          │  w demo pola są już wypełnione
+│        │ [   Zaloguj się   ]  │          │
+│        └──────────────────────┘          │
+└──────────────────────────────────────────┘
+```
+
+Bez rejestracji, bez linku do strony głównej i bez etykiety „Wersja demo”. Mieści się bez przewijania na typowych laptopach i telefonach. Po zalogowaniu `/admin` przekierowuje do „Reguł świadczeń”.
 
 ### Reguły świadczeń (widok startowy)
 
@@ -327,7 +351,7 @@ Jury może opublikować zmianę w odizolowanej sesji demonstracyjnej, otworzyć 
 └────────────────────────────────┴──────────┘
 ```
 
-Kliknięcie wiersza otwiera panel boczny ze szczegółami parametru i przyciskiem „Przygotuj zmianę”.
+Kliknięcie wiersza otwiera panel boczny ze szczegółami parametru i przyciskiem „Przygotuj zmianę”. **[D]** Każdy parametr ma etykietę „W aplikacji” (wartość czytana z kodu aplikacji rodzica) albo „Ze specyfikacji” (aplikacja jeszcze jej nie liczy). Panel boczny pokazuje też link do źródła i jego brzmienie.
 
 ### Przygotuj zmianę
 
@@ -377,3 +401,47 @@ Kliknięcie wiersza otwiera panel boczny ze szczegółami parametru i przyciskie
 - Karty idą jedna pod drugą w kolejności z widoku komputerowego (lewa kolumna, potem prawa).
 - „Przygotuj zmianę”: formularz, wpływ na rodzinę, wyniki. Pasek akcji przypięty do dołu ekranu.
 - Panele boczne otwierają się na całą szerokość ekranu, z przyciskiem „Zamknij”.
+
+## 15. Stan wdrożenia (22.11.2026)
+
+Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.vercel.app/admin). Szczegóły techniczne: [app/ARCHITECTURE.md](app/ARCHITECTURE.md).
+
+### Co działa
+
+| Obszar | Stan | Uwagi |
+| --- | --- | --- |
+| Logowanie (§10, §13 B) | ✅ | Login i hash hasła (scrypt) ze zmiennych `ADMIN_LOGIN` i `ADMIN_PASSWORD_HASH`, nadawanych przez operatora. Sesja 8 h w podpisanym ciasteczku, dostęp sprawdzany po stronie serwera na każdej stronie panelu. `ADMIN_DEMO_PASSWORD` wypełnia formularz w demo. |
+| Reguły świadczeń (§3, §4) | ✅ odczyt | Etykieta „W aplikacji” oznacza wartości czytane z kodu: ojcowski (14 dni, 2 części), cztery przepisy ustawy zasiłkowej z oceny chorobowego (w tym 100% w ciąży, art. 11 ust. 2 pkt 1) i wzór ZAM z 24.10.2026. Pozostałe wartości mają etykietę „Ze specyfikacji”. |
+| Zmiana parametru (§7) | ✅ dla łącznego wymiaru ojcowskiego | Szkic, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty, wpis w historii. Wartość trafia do sprawy Kamila w aplikacji rodzica. |
+| Sprawy testowe (§6) | ✅ 8 spraw syntetycznych | Sprawa Kamila w 8 wariantach, liczona na żywo regułą. Oczekiwane wyniki jak w `app/tests/kamil-rules.test.ts`. |
+| Historia zmian (§8) | ✅ | Publikacje z sesji z autorem, godziną, podstawą i wynikiem sprawdzenia. Wycofanie zaplanowanej zmiany. Wpisy przykładowe są oznaczone. |
+| Treści i źródła (§5) | ✅ | 3 pakiety wiedzy, 13 dokumentów, ostrzeżenie po 6 miesiącach od pobrania. |
+| Telefon i komputer (§12 pkt 6) | ✅ | |
+
+### Decyzje wdrożeniowe [D]
+
+- Reguła bierze wartość obowiązującą w pierwszym dniu okresu, za który rodzic wnioskuje (§9). Bez opublikowanej zmiany działa jak dotąd.
+- Wymiar ojcowski można ustawić na 1–4 tygodnie. Aplikacja przyjmuje części po tydzień lub dwa, najwyżej dwie.
+- Zmiana obowiązuje najwcześniej od jutra. Zmian wstecz panel nie przyjmuje.
+- „Sprawdź zmianę” dla limitu: wniosek na limicie, ponad limit, ten sam wniosek dzień przed zmianą, druga część urlopu, sprawy testowe sprzed daty zmiany bez zmian (§12 pkt 2) i uzupełniona podstawa. Sprawy w zakresie zmiany, których wynik się zmienia, panel pokazuje jako informację. Nie blokują one publikacji.
+- Wersje parametrów są zapisane w podpisanym ciasteczku sesji. Zmiana jurora nie trafia do innych, a kolejna sesja zaczyna od wartości z kodu (§10). „Przywróć wartości początkowe” w historii robi to od razu. Przy wdrożeniu produkcyjnym ten sam stan trafi do bazy.
+- Akta spraw ZUS (`Materiały hackathonowe/Sprawy`) nie są czytane ani dołączane do aplikacji (ZUS s. 11–12).
+
+### Warunki odbioru (§12)
+
+| Warunek | Stan |
+| --- | --- |
+| 1. +280 zł po zmianie stawki | ⏳ Czeka na kalkulator stawek w aplikacji rodzica. |
+| 2. Przypadek spoza zakresu zachowuje wynik | ✅ Dla wymiaru ojcowskiego. |
+| 3. Limit: na limicie przechodzi, ponad limit pokazuje przyczynę | ✅ |
+| 4. Sprawa ZUS lub wgrany PDF daje wynik zgodny z oczekiwanym | ⏳ Wybór spraw syntetycznych działa. Wgrany PDF nie jest jeszcze odczytywany. |
+| 5. Historia z autorem, datą i podstawą | ✅ |
+| 6. Telefon i komputer | ✅ |
+
+### Do zrobienia
+
+1. Stawki i przykład +280 zł, gdy aplikacja rodzica dostanie kalkulator.
+2. Parametry urlopu rodzicielskiego (21 dni, 5 części, 287 dni): przenieść wartości z `app/src/lib/marta/case.ts` do `app/src/lib/rules/parameters.ts`.
+3. Odczyt wgranego wniosku w „Sprawach testowych” albo odesłanie do odczytu dokumentów w aplikacji rodzica.
+4. Przy wdrożeniu produkcyjnym: wersje w bazie zamiast ciasteczka oraz role redaktora i zatwierdzającego.
+5. „Pokaż oczami rodzica” dla szkicu. Dziś przycisk pokazuje tylko opublikowane wartości.
