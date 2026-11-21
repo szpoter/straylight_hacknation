@@ -7,7 +7,7 @@ Aplikacja na Vercelu wywołuje jeden wybrany model czatu zgodny z OpenAI Chat Co
 3. Dla domeny obsługiwanej przez Twój Cloudflare skonfiguruj aplikację **Access → Applications → Add an application → Self-hosted** dla całego hosta, np. `modele.twojadomena.pl`. W **Access controls → Service credentials → Service Tokens** wygeneruj token dla Vercela. W polityce aplikacji wybierz **Service Auth** i ten konkretny service token. Zastosuj politykę przed opublikowaniem hosta.
 4. W Cloudflare Zero Trust utwórz nazwany Cloudflare Tunnel. Zainstaluj `cloudflared` na Macu według instrukcji jego konfiguratora i uruchom konektor. W trasie publicznej wskaż host z poprzedniego kroku i usługę HTTP `http://127.0.0.1:1234`. Najpierw z zewnętrznej sieci sprawdź, że anonimowe `GET /v1/models` nie zwraca listy modeli. W próbie z oboma nagłówkami Access oraz tokenem LM Studio lista ma zawierać dokładne ID.
 5. W **Vercel → projekt straylight-hacknation → Settings → Environment Variables** wybierz najpierw **Preview**. Ustaw poniższe wartości wyłącznie po stronie serwera. Zachowaj poprzednie ustawienia dostawcy w menedżerze sekretów na wypadek powrotu.
-   
+
    | Nazwa | Wartość |
    |---|---|
    | SHERLOCK_BASE_URL | https://modele.twojadomena.pl/v1 |
