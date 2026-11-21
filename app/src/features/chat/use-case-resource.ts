@@ -52,7 +52,7 @@ export function useCaseResource<T extends { version: number }>(path: string, rea
       if (response.status === 409) {
         if ("view" in body) setView(body.view);
         else setRetryCount((n) => n + 1);
-        setError("Dane sprawy zmieniły się w innej karcie. Sprawdź aktualny stan i ponów zmianę.");
+        setError(body.error === "busy" ? "Trwa poprzedni zapis. Poczekaj chwilę i ponów zmianę." : "Dane sprawy zmieniły się w innej karcie. Sprawdź aktualny stan i ponów zmianę.");
         return false;
       }
       if (!response.ok || !body.view) {

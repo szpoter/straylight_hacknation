@@ -55,10 +55,28 @@ async function testMarta(page: Page, missingRate: boolean) {
   await page.reload();
   assert.equal((await read<MartaView>(page,martaPath)).selected,"sequential");
   assert.equal((await page.request.get(origin+martaPath+"/pdf",{headers:await browserHeaders(page)})).status(),404);
-  v = await update(page,martaPath,{type:"confirm",version:v.version,otherParentConfirmed:true,employerHasCopy:missingRate,
-    previousDays:0,previousParts:0,attachmentName:missingRate ? null : "kopia-fikcyjna.pdf"});
+  await page.locator('input[name="statement"]').check();
+  await page.getByLabel("Czy pracodawca ma już odpis aktu urodzenia?").selectOption(missingRate ? "yes" : "no");
+  const certificate=await makeCertificatePdf({...kamilCertificate(), childFirstName:"EWA", childLastName:"BRZOZA"});
+  if(!missingRate) await page.locator('input[name="attachment"]').setInputFiles({
+    name:"kopia-fikcyjna.pdf",mimeType:"application/pdf",buffer:Buffer.from(certificate)});
+  const confirmation=page.waitForResponse(r=>r.url().endsWith(martaPath) && r.request().method()==="POST" &&
+    r.request().postDataJSON()?.type==="confirm");
+  await page.getByRole("button",{name:"Zatwierdź wniosek",exact:true}).click();
+  assert.equal((await confirmation).status(),200,"Server confirms the application");
+  await page.getByRole("link",{name:"Pobierz wniosek PDF",exact:true}).first().waitFor();
+  if(!missingRate) {
+    const attachment=page.getByRole("link",{name:"Pobierz kopię odpisu"}).first();
+    await attachment.waitFor();
+    await page.reload();
+    await attachment.waitFor();
+    const length=await attachment.evaluate(async node=>(await (await fetch((node as HTMLAnchorElement).href)).arrayBuffer()).byteLength);
+    assert.equal(length,certificate.byteLength);
+  }
+  v=await read<MartaView>(page,martaPath);
   const pdf = await page.request.get(origin+martaPath+"/pdf",{headers:await browserHeaders(page)});
-  assert.equal(pdf.status(),200);
+  assert.ok(v.confirmed,"Confirmed state was persisted before PDF download");
+  assert.equal(pdf.status(),200,"Confirmed PDF returns HTTP 200");
   const text = await pdfText(await pdf.body());
   assert.ok(text.includes(firstName) && text.includes("15.02.2027") && text.includes(missingRate ? "aktach osobowych" : "kopia-fikcyjna.pdf"));
   const previousVersion=v.version;

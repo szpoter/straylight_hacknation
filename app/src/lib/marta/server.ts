@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import { runtime } from "../zusik/server";
 import { PgCaseStore } from "../zusik/case-store";
@@ -17,7 +18,13 @@ export async function readMarta(session: string, command?: Command) {
   if (!record) return { status: 200, view: null };
   const config = { configurable: { thread_id: record.threadId + ":marta" }, durability: "sync" as const };
   const token = randomUUID();
-  if (command && !await store.acquireLease(record.threadId, token)) return { status: 409, error: "busy", view: null };
+  if (command) {
+    const limit = Date.now() + 3000;
+    while (!await store.acquireLease(record.threadId, token)) {
+      if (Date.now() >= limit) return { status: 409, error: "busy", view: undefined };
+      await delay(120);
+    }
+  }
   try {
     const snapshot = await graph.getState(config);
     const view: MartaView | null = snapshot.values.view ?? null;
