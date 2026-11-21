@@ -4,6 +4,7 @@ import { ScenarioNav } from "./scenario-nav";
 import { useRouter } from "next/navigation";
 import { useCaseResource } from "./use-case-resource";
 import { MartaDraft, MartaInterview, type DeadlineSource } from "./marta-workflow";
+import { checkedCopy } from "./marta-attachment";
 import { martaInput } from "./marta-input";
 import type { MartaView } from "@/lib/marta/types";
 import { flushSync } from "react-dom";
@@ -314,10 +315,10 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
                 onStart: () => void zusik.start(),
                 onShowField: showField,
               }}
-              workflow={initialChatOpen ? <MartaInterview state={marta} attachment={attachment} onAttach={setAttachment} /> : undefined}
+              workflow={initialChatOpen ? <MartaInterview scope={zusik.documentCache} state={marta} attachment={attachment} onAttach={setAttachment} /> : undefined}
               workflowVersion={marta.view?.version}
               starters={initialChatOpen && !marta.view ? ["Od 11 stycznia 2027", "Czy możemy razem?", "Do kiedy złożyć wniosek?"] :
-                initialChatOpen && !marta.view?.selected ? ["Wybieram razem", "Wybieram kolejno"] : undefined}
+                initialChatOpen && !marta.view?.selected ? [] : undefined}
               conversation={zusik.conversation}
               caseError={caseErrorText(zusik.error)}
               notice={panelNotice ?? zusik.notice}
@@ -332,8 +333,9 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
                   notice={composerNotice}
                   textareaRef={textarea}
                   attachment={attachment}
-                  onAttach={initialChatOpen && !marta.view?.confirmed ? (file)=>{
-                    setAttachment(file);
+                  onAttach={initialChatOpen && !marta.view?.confirmed ? async (file)=>{
+                    try { setAttachment(file ? await checkedCopy(file) : null); }
+                    catch { setComposerNotice("Wybierz niepusty PDF, PNG lub JPEG do 25 MB.");return; }
                     setComposerNotice(file ? `Wybrano odpis: ${file.name}. Przy zatwierdzaniu wskaż, czy dołączyć go do wniosku.` : "Usunięto wybrany odpis.");
                   } : undefined}
                   onText={(value) => {

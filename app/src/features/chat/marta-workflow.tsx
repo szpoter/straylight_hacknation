@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
+import { AttachmentLinks, SavedAttachment, checkedCopy, storeCopy } from "./marta-attachment";
 import type { MartaView } from "@/lib/marta/types";
 import type { useCaseResource } from "./use-case-resource";
 import s from "./marta-workflow.module.css";
@@ -119,7 +120,9 @@ function Comparison({ view }: { view: MartaView }) {
           ))}
         </tbody>
       </table>
-      <p className={s.comparisonNote}>Przy urlopach jeden po drugim opieka trwa o {sequential.calendarDays - together.calendarDays} dni dłużej.</p>
+      <p className={s.comparisonNote}>
+        Przy urlopach jeden po drugim opieka trwa o {sequential.calendarDays - together.calendarDays} dni dłużej.
+      </p>
       <details>
         <summary>Skąd te kwoty?</summary>
         <p>
@@ -135,35 +138,31 @@ function Comparison({ view }: { view: MartaView }) {
   );
 }
 
-type AttachmentProps = { attachment: File | null; onAttach: (file: File | null) => void };
-function AttachmentPreview({ file }: { file: File }) {
-  const [preview, setPreview] = useState("");
-  useEffect(() => {
-    const url = URL.createObjectURL(file);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- object URLs are created and revoked together
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-  return preview ? (
-    <a href={preview} target="_blank" rel="noreferrer">
-      Otwórz wybrany odpis · {file.name}
-    </a>
-  ) : null;
-}
-
+type AttachmentProps = { scope: string; attachment: File | null; onAttach: (file: File | null) => void };
 function Declarations({
   state,
   onSaved,
+  scope,
   attachment,
   onAttach,
 }: { state: Case; onSaved: () => void } & AttachmentProps) {
   const { view, send, busy } = state;
+  const [fileError, setFileError] = useState("");
   const [copy, setCopy] = useState(view?.employerHasCopy === null ? "" : view?.employerHasCopy ? "yes" : "no");
   if (!view?.selected) return null;
   const chosen = view.variants[view.selected];
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    let verified: File | null = null;
+    if (copy === "no" && attachment) {
+      try {
+        verified = await checkedCopy(attachment);
+      } catch {
+        setFileError("Wybierz niepusty PDF, PNG lub JPEG do 25 MB.");
+        return;
+      }
+    }
     const attachmentName = attachment?.name ?? view?.attachmentName;
     if (
       await send({
@@ -175,8 +174,16 @@ function Declarations({
         previousParts: Number(data.get("previousParts")),
         attachmentName: copy === "no" ? attachmentName : null,
       })
-    )
+    ) {
+      if (verified && view) {
+        try {
+          await storeCopy(scope, view.version + 1, verified);
+        } catch {
+          /* Recovery is available in SavedAttachment. */
+        }
+      }
       onSaved();
+    }
   }
   return (
     <form className={s.form} onSubmit={save}>
@@ -209,24 +216,27 @@ function Declarations({
             accept=".pdf,.jpg,.jpeg,.png"
             name="attachment"
             required={!attachment && !view.attachmentName}
-            onChange={(event) => onAttach(event.target.files?.[0] ?? null)}
+            onChange={async (event) => {
+              const selected = event.target.files?.[0];
+              onAttach(null);
+              if(!selected) return;
+              try { onAttach(await checkedCopy(selected)); setFileError(""); }
+              catch { setFileError("Wybierz niepusty PDF, PNG lub JPEG do 25 MB."); }
+            }}
           />
           <small>W szkicu zapiszemy nazwę pliku. Przy przekazaniu rzeczywistego wniosku dołącz ten odpis.</small>
-          {attachment ? (
-            <AttachmentPreview file={attachment} />
-          ) : (
-            view.attachmentName && <span>{view.attachmentName}</span>
-          )}
+          {attachment ? <AttachmentLinks file={attachment} /> : view.attachmentName && <span>{view.attachmentName}</span>}
         </label>
       )}
-      <button disabled={busy} type="submit">
+      {fileError && <p role="alert">{fileError}</p>}
+      <button disabled={busy || (copy==="no" && !attachment && !view.attachmentName)} type="submit">
         Zatwierdź wniosek
       </button>
     </form>
   );
 }
 
-export function MartaInterview({ state, attachment, onAttach }: { state: Case } & AttachmentProps) {
+export function MartaInterview({ state, attachment, onAttach, scope }: { state: Case } & AttachmentProps) {
   const { view, busy, loaded, error, reload, send } = state;
   const [edit, setEdit] = useState(false);
   const [amend, setAmend] = useState(false);
@@ -289,6 +299,7 @@ export function MartaInterview({ state, attachment, onAttach }: { state: Case } 
               {!view.confirmed && !amend && !edit && (
                 <Declarations
                   key={view.version}
+                  scope={scope}
                   attachment={attachment}
                   onAttach={onAttach}
                   state={state}
@@ -303,6 +314,13 @@ export function MartaInterview({ state, attachment, onAttach }: { state: Case } 
                   <a className={s.download} href="/api/zusik/marta/pdf" target="_blank" rel="noreferrer">
                     Pobierz wniosek PDF
                   </a>
+                  {view.attachmentName && (
+                    <SavedAttachment
+                      key={[scope, view.attachmentName, view.version - (view.submitted ? 1 : 0)].join(":")}
+                      view={view}
+                      scope={scope}
+                    />
+                  )}
                   {view.submitted ? (
                     <p role="status">
                       Przekazano do Studia Lipa w symulacji
@@ -323,8 +341,16 @@ export function MartaInterview({ state, attachment, onAttach }: { state: Case } 
   );
 }
 
-export type DeadlineSource = {label:string;text:string;url:string};
-export function MartaDraft({ view, phone, source }: { view: MartaView | null; phone: boolean; source?:DeadlineSource }) {
+export type DeadlineSource = { label: string; text: string; url: string };
+export function MartaDraft({
+  view,
+  phone,
+  source,
+}: {
+  view: MartaView | null;
+  phone: boolean;
+  source?: DeadlineSource;
+}) {
   const selected = view?.selected ? view.variants[view.selected] : null;
   const status = view?.submitted ? "Przekazano w symulacji" : view?.confirmed ? "Zatwierdzony" : "Szkic";
   return (
@@ -336,14 +362,26 @@ export function MartaDraft({ view, phone, source }: { view: MartaView | null; ph
       </p>
       {selected && !view?.submitted && (
         <div className={s.deadline}>
-          <p>Złóż wniosek do <strong>{date(selected.first.deadline)}</strong></p>
-          {source && <details><summary>Skąd ten termin?</summary>
-            <p>Początek urlopu · {date(selected.first.from)}</p>
-            <blockquote>{source.text}</blockquote><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a>
-          </details>}
+          <p>
+            Złóż wniosek do <strong>{date(selected.first.deadline)}</strong>
+          </p>
+          {source && (
+            <details>
+              <summary>Skąd ten termin?</summary>
+              <p>Początek urlopu · {date(selected.first.from)}</p>
+              <blockquote>{source.text}</blockquote>
+              <a href={source.url} target="_blank" rel="noreferrer">
+                {source.label}
+              </a>
+            </details>
+          )}
         </div>
       )}
-      {view?.submittedAt && <p className={s.deadline}>Przekazano do Studia Lipa w symulacji · <strong>{date(view.submittedAt.slice(0,10))}</strong></p>}
+      {view?.submittedAt && (
+        <p className={s.deadline}>
+          Przekazano do Studia Lipa w symulacji · <strong>{date(view.submittedAt.slice(0, 10))}</strong>
+        </p>
+      )}
       {!phone && (
         <dl className={s.summary}>
           {[
