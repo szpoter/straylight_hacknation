@@ -92,6 +92,12 @@ Rozmowy zalogowanego rodzica grupujemy według daty ostatniej wiadomości pod na
 
 **Przykład do odbioru.** Rodzic pyta „Czy mogę podzielić urlop ojcowski?”. Po rozwinięciu źródła widzi tytuł poradnika, wydawcę, rok i drukowaną stronę 33 oraz cytat „Tata może go wykorzystać jednorazowo lub w dwóch 7-dniowych częściach.” Osobny link „Otwórz stronę w PDF” prowadzi do 34. strony tego wydania pliku. Ponowne wybranie oznaczenia zwija cytat. Gdy materiały nie potwierdzają danej informacji, Zusik wskazuje, czego nie udało się ustalić. [Poradnik ZUS 2026](../Materiały%20hackathonowe/Materiały%20dla%20uczestników/Poradnik%20dla%20rodziców%2C%20ZUS%202026.pdf#page=34)
 
+### Termin przy formalności
+
+**Julian · 21 listopada 2026 · Uzgodnione.** W treści odpowiedzi mała flaga wyróżnia termin jak w Things. W jednym zwartym wierszu, wzorem listy Linear, rodzic widzi czynność i ostatni dzień na jej wykonanie. Poniżej jest osobny wiersz z nazwą zdarzenia i datą, od której liczymy termin. „Skąd ten termin?” rozwija przy tej formalności fragment źródła użyty przez RAG, zgodnie z zasadami cytowania powyżej. Na telefonie zachowujemy tę kolejność i zawijamy dłuższe nazwy. Przy kilku formalnościach najbliższy znany termin jest pierwszy. Jeśli brakuje daty odniesienia, Zusik pyta o nią przed podaniem terminu. [Things — Add Deadlines](https://culturedcode.com/things/support/articles/2803579/#:~:text=Add%20Deadlines) · [Linear — Due dates](https://linear.app/changelog/due-dates)
+
+**Scena do przeklikania.** W przykładowym planie Oli rodzic widzi „⚑ Złóż wniosek do 11 czerwca”, a poniżej „Początek urlopu ojcowskiego · 18 czerwca”. Po wybraniu „Skąd ten termin?” obie daty pozostają widoczne, a pod nimi pojawia się cytat wyjaśniający regułę. [Przykład z planu projektu](../SPEC.md#pod-pytaniami--agent-ai-pomaga-przygotować-wniosek)
+
 ### Artefakty w rozmowie
 
 **Julian · 21 listopada 2026 · Uzgodnione.** Zusik może osadzić mini plan albo tabelę bezpośrednio w wiadomości. Dalsze referencje wizualne dobieramy z aplikacji produktowych i galerii UI. Materiały urzędowe służą do sprawdzania przepisów, terminów i procedur.
