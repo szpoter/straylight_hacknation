@@ -281,6 +281,10 @@
   max-width: 92%;
   color: var(--answer-ink);
 }
+.bubbleZusik > p:first-child {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
 .author {
   font-size: 11px;
   color: var(--ink-variant);

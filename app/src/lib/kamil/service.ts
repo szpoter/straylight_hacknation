@@ -3,7 +3,7 @@ import { Annotation, END, START, StateGraph, type BaseCheckpointSaver } from "@l
 import type { CaseStore } from "../zusik/case-store";
 import { applyCommand, newCase, toView, type Clock, type Prepared } from "./case";
 import type { Command, KamilCase, KamilView } from "./contract";
-import { mergeModelFacts, parseMessage, type ModelFacts } from "./interpret";
+import { asksAboutSources, mergeModelFacts, parseMessage, type ModelFacts } from "./interpret";
 
 /**
  * Kamil's case on the existing demo session: the signed cookie → demo_cases row → thread id.
@@ -114,6 +114,7 @@ export class KamilService {
 
   private async prepare(command: Command, current: KamilCase, today: string): Promise<Prepared> {
     if (command.type !== "chat") return command;
+    if (asksAboutSources(command.text)) return { ...command, type: "explain_sources" };
     const rules = parseMessage(command.text, today, current.asked);
     const nothingFound =
       !rules.startDate && !rules.days && !rules.birthDate && !rules.reminderDate && !rules.yesNo && !rules.priorPart;

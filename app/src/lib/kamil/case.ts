@@ -21,6 +21,7 @@ export interface Clock {
 /** A chat command after interpretation (done outside, so the reducer stays pure). */
 export type Prepared =
   | Exclude<Command, { type: "chat" }>
+  | { type: "explain_sources"; text: string; opKey: string }
   | (Extract<Command, { type: "chat" }> & { interpretation: Interpretation });
 
 const MAX_OPS = 200;
@@ -117,6 +118,39 @@ function documentValue(kase: KamilCase, key: FieldKey): { value: string; origin:
 function say(kase: KamilCase, text: string, clock: Clock, extra: Partial<ChatTurn> = {}): KamilCase {
   const turn: ChatTurn = { id: clock.newId(), role: "zusik", text, at: clock.now, author: "template", ...extra };
   return { ...kase, chat: [...kase.chat, turn].slice(-MAX_CHAT) };
+}
+
+function describeSource(origin: Origin): string {
+  switch (origin.kind) {
+    case "profile": return origin.source;
+    case "document": return `${origin.method === "ocr" ? "Odczyt OCR" : "Tekst PDF"} z pliku „${origin.fileName}”, strona ${origin.page}`;
+    case "user_edit": return origin.previous === null ? "Twój wpis w formularzu" : "Twoja korekta";
+    case "chat": return "Twoja odpowiedź w rozmowie";
+  }
+}
+
+function sourceLines(entries: Pick<Fact, "key" | "origin">[]): string[] {
+  const groups = new Map<string, string[]>();
+  for (const { key, origin } of entries) {
+    const source = describeSource(origin);
+    const labels = groups.get(source) ?? [];
+    labels.push(FIELD_LABELS[key]);
+    groups.set(source, labels);
+  }
+  return Array.from(groups, ([source, labels]) => `${source} — ${labels.join(", ")}.`);
+}
+
+function explainSources(view: KamilView): string {
+  const lines = sourceLines(Object.values(view.facts));
+  if (!lines.length) lines.push("W tej sprawie nie ma jeszcze potwierdzonych danych.");
+  if (view.candidates.length) lines.push("Te odczyty czekają na Twoje potwierdzenie:", ...sourceLines(view.candidates));
+  const { period, deadline } = view.result;
+  lines.push(period
+    ? `Kalkulator wyznaczył okres ${formatRange(period.start, period.end)} na podstawie początku podanego w rozmowie i długości ${period.days} dni. Liczy dzień rozpoczęcia jako pierwszy.`
+    : "Kalkulator nie ustalił jeszcze okresu do wpisania w ZAM.");
+  if (deadline) lines.push(`Termin złożenia wniosku (${formatLong(deadline)}) przypada dzień przed początkiem wybranego okresu.`);
+  lines.push(`Sam druk ZAM pochodzi z ZUS (wersja z ${formatLong(view.form.version)}). ZUS publikuje też zasady, według których kalkulator sprawdza okres.`);
+  return lines.join("\n\n");
 }
 
 /** What Zusik should ask next, in scenario order. */
@@ -284,12 +318,17 @@ export function applyCommand(input: KamilCase, command: Prepared, clock: Clock):
       break;
     }
 
+    case "explain_sources":
     case "chat": {
-      const i = command.interpretation;
       kase = {
         ...kase,
         chat: [...kase.chat, { id: clock.newId(), role: "kamil" as const, text: command.text, at: clock.now }].slice(-MAX_CHAT),
       };
+      if (command.type === "explain_sources") {
+        kase = say(kase, explainSources(before), clock, { citationIds: [...new Set(["zam-info-okres", ...before.result.citationIds])] });
+        break;
+      }
+      const i = command.interpretation;
       const extra: string[] = [];
       const quote = command.text.slice(0, 600);
 
