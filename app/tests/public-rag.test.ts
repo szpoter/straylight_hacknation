@@ -55,6 +55,37 @@ describe("public knowledge partitions", () => {
     expect(publicQuestion("Do kiedy mam złożyć na etacie wniosek o urlop ojcowski?")?.locators).toEqual(["kp:1823"]);
   });
 
+  it("abstains before generation when the only remotely retrieved evidence concerns a birth certificate", async () => {
+    const wrong = corpus.fragments.get("rz-par33-ust1")!;
+    const generate = vi.fn((): never => { throw new Error("Off-topic source reached the model"); });
+    const { answer, trace } = await answerQuestion({
+      corpus, selectCorpus: loadCorpus, generate,
+      search: { search: async () => ({ status: "ok", ms: 0, hits: [{ logicalId: wrong.logicalId, fragmentSha256: wrong.fragmentSha256, score: 0.99 }] }) },
+    }, "Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego?");
+    expect(answer).toMatchObject({ status: "insufficient_evidence", citations: [] });
+    expect(trace.vectorIds).toEqual([wrong.logicalId]);
+    expect(trace.evidenceIds).toEqual([]);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("rejects the model's authentic but irrelevant quote even when relevant law was also retrieved", async () => {
+    const wrong = corpus.fragments.get("rz-par33-ust1")!;
+    const right = corpus.fragments.get("uz-art6-ust1")!;
+    const { answer, trace } = await answerQuestion({
+      corpus, selectCorpus: loadCorpus,
+      search: { search: async () => ({ status: "ok", ms: 0, hits: [right, wrong].map(f => ({ logicalId:f.logicalId, fragmentSha256:f.fragmentSha256,score:0.98 })) }) },
+      generate: async (_q, evidence) => {
+        expect(evidence.map(f => f.logicalId)).not.toContain(wrong.logicalId);
+        return { status:"ok", ms:0, model:"off-topic", output:{ status:"answered", message:"", claims:[{
+          text:"Odpis aktu potwierdza prawo do zasiłku chorobowego.", evidence:[{id:wrong.logicalId, quote:"odpis skrócony aktu urodzenia dziecka"}],
+        }] } };
+      },
+    }, "Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego?");
+    expect(trace.report?.rejectedEvidence).toContainEqual({ id:wrong.logicalId, reason:"unknown_id" });
+    expect(answer.claims.map(c=>c.text).join(" ")).not.toContain("Odpis aktu");
+    expect(answer.citations.some(c=>c.fragmentId===wrong.logicalId)).toBe(false);
+  });
+
   it("quotes the retrieved law when the model is unavailable without inventing a personal decision", async () => {
     const f = corpus.fragments.get("uz-art6-ust1")!;
     const result = await answerQuestion({

@@ -1,5 +1,6 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
+import { relevantFragment } from "../rag/relevance";
 import { extractiveAnswer } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
@@ -91,7 +92,12 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
     asOf: (deps.asOf ?? today)(),
   });
   trace.vectorIds = evidence.vectorIds;
-  const fragments = evidence.items.map((i) => i.fragment);
+  const relevant = relevantFragment(projected, corpus);
+  const rawSubjectHit = evidence.vectorIds.some((id) => {
+    const fragment = corpus.fragments.get(id);
+    return fragment && relevant(fragment);
+  });
+  const fragments = rawSubjectHit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
   trace.evidenceIds = fragments.map((f) => f.logicalId);
   if (fragments.length === 0) {
     const { answer } = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
