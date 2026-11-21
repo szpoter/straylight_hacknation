@@ -1,6 +1,6 @@
 # Panel administracyjny Przewodnika Rodzica
 
-**Status dokumentu:** propozycja do omówienia. Panel ma służyć osobie, która odpowiada za zasady wyliczania świadczeń. Po zmianie przepisów powinna móc zmienić parametr, zobaczyć różnicę na przykładowej rodzinie i wskazać, od kiedy rodzice mają otrzymywać nowy wynik.
+**Uzgodniona nawigacja.** Panel ma trzy zakładki w kolejności „Reguły świadczeń”, „Sprawy testowe” i „Historia zmian”. Pierwsza otwiera się domyślnie. Szczegóły ekranów i publikacji poniżej pozostają propozycją do omówienia. Panel ma służyć osobie, która odpowiada za zasady wyliczania świadczeń. Po zmianie przepisów powinna móc zmienić parametr, zobaczyć różnicę na przykładowej rodzinie i wskazać, od kiedy rodzice mają otrzymywać nowy wynik.
 
 ## Co wynika z zadania ZUS
 
