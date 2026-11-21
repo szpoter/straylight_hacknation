@@ -1,7 +1,7 @@
 // Runs before `next build` and `next dev`. Copies the OCR engine and the PDF.js worker from
 // node_modules (pinned versions) into public/, so the app serves them itself and the browser never
 // fetches code from a CDN. The copies are git-ignored; the Polish language model is committed.
-import { copyFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +18,7 @@ const files = [
 
 for (const [from, to] of files) {
   mkdirSync(path.dirname(to), { recursive: true });
-  copyFileSync(from, to);
+  // Third-party minified code: `npm run lint` must not report it as ours.
+  writeFileSync(to, `/* eslint-disable */\n${readFileSync(from, "utf8")}`);
 }
 console.log(`copy-ocr-assets: ${files.length} files → public/ocr, public/pdfjs`);
