@@ -1,6 +1,6 @@
 # Julian — Zusik, rozmowa i treści generowane przez AI
 
-**UI spec do rozwijania.** Zachowanie czatu i szkicu opisuje [spec po zalogowaniu](../SPEC-PO-LOGOWANIU.md), a scenę do filmu [spec strony publicznej](../SPEC.md). Projektuj każdą rodzinę treści z przykładową wypowiedzią po polsku według [workflow](WORKFLOW.md) i [DESIGN.md](../DESIGN.md).
+**UI spec do rozwijania.** Zachowanie czatu i szkicu opisuje [spec po zalogowaniu](../SPEC-PO-LOGOWANIU.md), a scenę do filmu [spec strony publicznej](../SPEC.md). Projektuj każdą rodzinę treści z przykładową wypowiedzią po polsku według [workflow](WORKFLOW.md) i [wspólnego systemu wyglądu](../design/README.md).
 
 | Kolejność rozmów | Decyzja wizualna |
 | --- | --- |
@@ -15,7 +15,7 @@
 
 **Prompt na start rozmowy**
 
-> Projektuję jako Julian wygląd Zusika, czatu i generowanych treści. Przeczytaj ui/JULIAN.md, ui/WORKFLOW.md, DESIGN.md, sekcje o agencie w obu specach rodzica i inspiracjeelementowistron.md. Zacznij od wejścia do czatu przy szkicu. Omów ze mną, co musi pozostać widoczne. Pokaż kilka bezpośrednich linków, opisz dokładny detal i uzasadnij rekomendację. Poczekaj, aż wybiorę. Każdą zaakceptowaną decyzję zapisz w tym UI specu wraz z przykładową polską treścią i stanami na obu ekranach. Na koniec przygotujemy prototyp do przeklikania w Claude Design.
+> Projektuję jako Julian wygląd Zusika, czatu i generowanych treści. Przeczytaj ui/JULIAN.md, ui/WORKFLOW.md, design/README.md, design/zasady-agenta.md, sekcje o agencie w obu specach rodzica i inspiracjeelementowistron.md. Zacznij od wejścia do czatu przy szkicu. Omów ze mną, co musi pozostać widoczne. Pokaż kilka bezpośrednich linków, opisz dokładny detal i uzasadnij rekomendację. Poczekaj, aż wybiorę. Każdą zaakceptowaną decyzję zapisz w tym UI specu wraz z przykładową polską treścią i stanami na obu ekranach. Na koniec przygotujemy prototyp do przeklikania w Claude Design.
 
 ## Uzgodnione decyzje UI
 
@@ -23,7 +23,9 @@
 
 **Julian · 21 listopada 2026 · Uzgodnione**
 
-- **Wejście.** Zusik jest w prawym dolnym rogu. Otwarcie formularza lub wniosku wywołuje krótki dymek nad postacią, np. „Chcesz wypełnić ten wniosek z Zusikiem?”. Rodzic może dalej pracować w formularzu. Kliknięcie zaproszenia otwiera rozmowę dotyczącą tego szkicu.
+- **Bąbelek Zusika.** Po zalogowaniu przycisk „Otwórz czat z Zusikiem” pozostaje w prawym dolnym rogu podczas przewijania. W środku umieszczamy tę samą płaską, kolorową postać co na stronie publicznej. Oprawa pochodzi z obrysowanego przycisku aplikacji: białe tło, twarda dolna krawędź, zaokrąglenie `--radius-lg` i systemowy pierścień fokusu. Obszar dotykowy ma co najmniej `--size-control-height` w obu wymiarach. Na telefonie zostawiamy miejsce przy końcu formularza, aby rodzic mógł nacisnąć także jego ostatni przycisk. [Kierunek ilustracji](../design/kierunek.md) · [Przyciski i fokus](../design/komponenty.md)
+- **Zaproszenie przy szkicu.** Po otwarciu wniosku nad postacią pojawia się biały dymek z ciemnym tekstem „Chcesz wypełnić ten wniosek z Zusikiem?”. Na wąskim ekranie tekst zawija się w obrębie widoku. Zarówno dymek, jak i przycisk otwierają rozmowę o bieżącym szkicu. Po otwarciu panelu zaproszenie znika. Ta sama ilustracja w mniejszej skali wskazuje na marginesie odpowiedzi pole zmienione przez Zusika. „Zwiń czat” przywraca bąbelek i przenosi na niego fokus.
+- **Ruch postaci.** Na stronie publicznej Zusik podąża wzdłuż marginesu do kolejnych sekcji. Przy formularzu ma stałe miejsce, a stan pracy pokazuje ustalony obrys pola wiadomości. Materiał animacji bąbelka i finalny rysunek są do przekazania przez zespół. Do tego czasu projekt pokazuje statyczny stan końcowy. Przy ograniczonym ruchu zaproszenie i adnotacja pozostają czytelne ze statyczną ilustracją. [Ustalenia Nikodema](NIKODEM.md#zusik-przy-przewijaniu-punkt-2) · [Status materiałów ruchowych](../design/motion.md#5-animacje-dostarczane-przez-zespół)
 - **Komputer.** Wzorem układu jest Form-Filling Co-Pilot. Formularz zajmuje początkowo lewą połowę obszaru roboczego, a czat prawą. Rodzic widzi efekt odpowiedzi w tym samym szkicu i może zmieniać proporcje, przesuwając separator myszą lub klawiaturą. [Form-Filling Co-Pilot](https://www.assistant-ui.com/examples/form-demo) · [Uchwyt w shadcn/ui](https://ui.shadcn.com/docs/components/base/resizable#handle)
 - **Telefon.** Zgodnie ze specyfikacją po zalogowaniu fragment wniosku z aktualnym polem znajduje się nad rozmową. Po otwarciu klawiatury rodzic nadal ma dostęp do wpisywanej wiadomości i wysyłania.
 - **Rozmowa i dane.** Zusik korzysta z danych dostępnych dla bieżącego szkicu. Pyta o jedną brakującą informację naraz, np. „Od którego dnia chcesz zacząć urlop?”. Gdy rodzic poda jednoznaczną odpowiedź, wartość pojawia się we właściwym polu szkicu. Jeśli odpowiedź można przypisać do kilku pól, Zusik dopytuje. Podpowiedzi to pytania, które rodzic może zadać Zusikowi w aktualnej sprawie. Wybrana podpowiedź trafia do pola wiadomości do edycji.
@@ -89,7 +91,7 @@ Rozmowy zalogowanego rodzica grupujemy według daty ostatniej wiadomości pod na
 
 ### Kolor i ruch w rozmowie
 
-Wartości do pierwszej próby w makiecie. [Wspólna paleta i fokus klawiatury](../DESIGN.md)
+Wartości do pierwszej próby w makiecie. [Aktualne tokeny palety i fokusu klawiatury](../design/tokeny.md)
 
 | Moment | Wygląd i zachowanie czatu |
 | --- | --- |
