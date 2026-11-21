@@ -108,6 +108,7 @@ export function KamilWorkspace() {
       )}
       <main className={s.grid}>
         <div className={s.column}>
+          <ChatStep view={view} pages={pages} busy={busy} send={send} />
           <DocumentStep
             view={view}
             pages={pages}
@@ -121,7 +122,6 @@ export function KamilWorkspace() {
           <ResultStep key={view.reminder?.date ?? "none"} view={view} busy={busy} send={send} />
         </div>
         <div className={s.column}>
-          <ChatStep view={view} pages={pages} busy={busy} send={send} />
           <ZamStep view={view} busy={busy} send={send} />
         </div>
       </main>

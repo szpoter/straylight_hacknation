@@ -358,19 +358,6 @@
   margin: 6px 0 0;
 }
 
-/* ZAM preview */
-.pages {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.pageImg {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--outline);
-  border-radius: 4px;
-  box-shadow: 0 1px 6px rgba(40, 55, 84, 0.08);
-}
 .editGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -399,7 +386,6 @@
   .field,
   .compare,
   .dates,
-  .pages,
   .editGrid {
     grid-template-columns: minmax(0, 1fr);
   }
