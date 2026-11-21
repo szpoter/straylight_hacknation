@@ -1,6 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { ScenarioNav } from "./scenario-nav";
+import { useRouter } from "next/navigation";
+import { useCaseResource } from "./use-case-resource";
+import { MartaDraft, MartaInterview } from "./marta-workflow";
+import { martaInput } from "./marta-input";
+import type { MartaView } from "@/lib/marta/types";
 import { flushSync } from "react-dom";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
@@ -93,18 +98,21 @@ function caseErrorText(error: CaseError | null): string | null {
   }
 }
 
-export function ZusikWorkspace() {
+export function ZusikWorkspace({ initialChatOpen = false }: { initialChatOpen?: boolean }) {
   const zusik = useZusikCase();
+  const router = useRouter();
+  const marta = useCaseResource<MartaView>("/api/zusik/marta", initialChatOpen && zusik.view !== null, false);
   const phone = usePhone();
   const viewport = useVisualViewport();
   const [inviteDismissed, dismissInvite] = useInviteDismissed();
 
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(initialChatOpen);
   const [inviteAccepted, setInviteAccepted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [chatShare, setChatShare] = useState(50);
   const [text, setText] = useState("");
+  const [attachment,setAttachment] = useState<File|null>(null);
   const [composerNotice, setComposerNotice] = useState<string | null>(null);
   const [panelNotice, setPanelNotice] = useState<string | null>(null);
   const [preview, setPreview] = useState<Choice | null>(null);
@@ -122,7 +130,7 @@ export function ZusikWorkspace() {
   const awaiting = view?.state === "awaiting_choice";
   const activePreview = awaiting ? preview : null;
   const highlight = zusik.savedAt !== null && expiredSave !== zusik.savedAt;
-  const busy = zusik.phase === "starting" || zusik.phase === "saving" || zusik.asking;
+  const busy = zusik.phase === "starting" || zusik.phase === "saving" || zusik.asking || marta.busy;
   const inviteVisible = !chatOpen && !inviteDismissed && !inviteAccepted;
 
   // the field outline after a confirmed save fades after a few seconds
@@ -172,6 +180,17 @@ export function ZusikWorkspace() {
     setText("");
     setComposerNotice(null);
     setPanelNotice(null);
+    if (initialChatOpen) {
+      const intent = martaInput(question, marta.view, new Date().toLocaleDateString("sv-SE", {timeZone:"Europe/Warsaw"}));
+      if (intent) {
+        if ("notice" in intent) setComposerNotice(intent.notice);
+        else if (!marta.loaded || !(await marta.send(intent.action))) {
+          setText(question);
+          setComposerNotice("Sprawdź stan sprawy i ponów zmianę.");
+        }
+        return;
+      }
+    }
     const outcome = await zusik.ask(question);
     if (outcome.kind === "invalid") {
       setText((current) => (current.trim() ? current : question));
@@ -238,14 +257,7 @@ export function ZusikWorkspace() {
       data-zusik-workspace
       style={phone && chatOpen && viewport ? { height: viewport.height, top: viewport.top } : undefined}
     >
-      {!(phone && chatOpen) && (
-        <header className={s.appBar}>
-          <Link href="/" className={s.brand}>
-            Przewodnik Rodzica
-          </Link>
-          <span className={s.demoBadge}>Dane demonstracyjne</span>
-        </header>
-      )}
+      <ScenarioNav current="marta" />
 
       <div ref={workArea} className={`${s.work} ${phone ? s.workColumn : ""}`}>
         {showForm && (
@@ -256,7 +268,7 @@ export function ZusikWorkspace() {
             role="region"
             aria-label="Szkic wniosku"
           >
-            <DraftForm
+            {initialChatOpen ? <MartaDraft view={marta.view} phone={formMode === "fragment"} /> : <DraftForm
               savedChoice={view?.state === "completed" ? view.choice : null}
               pendingChoice={zusik.pendingChoice}
               preview={activePreview}
@@ -264,7 +276,7 @@ export function ZusikWorkspace() {
               highlight={highlight}
               fieldRef={field}
               onDecide={openChat}
-            />
+            />}
           </div>
         )}
         {split && (
@@ -302,6 +314,10 @@ export function ZusikWorkspace() {
                 onStart: () => void zusik.start(),
                 onShowField: showField,
               }}
+              workflow={initialChatOpen ? <MartaInterview state={marta} attachment={attachment} onAttach={setAttachment} /> : undefined}
+              workflowVersion={marta.view?.version}
+              starters={initialChatOpen && !marta.view ? ["Od 11 stycznia 2027", "Czy możemy razem?", "Do kiedy złożyć wniosek?"] :
+                initialChatOpen && !marta.view?.selected ? ["Wybieram razem", "Wybieram kolejno"] : undefined}
               conversation={zusik.conversation}
               caseError={caseErrorText(zusik.error)}
               notice={panelNotice ?? zusik.notice}
@@ -315,6 +331,11 @@ export function ZusikWorkspace() {
                   busy={busy}
                   notice={composerNotice}
                   textareaRef={textarea}
+                  attachment={attachment}
+                  onAttach={initialChatOpen && !marta.view?.confirmed ? (file)=>{
+                    setAttachment(file);
+                    setComposerNotice(file ? `Wybrano odpis: ${file.name}. Przy zatwierdzaniu wskaż, czy dołączyć go do wniosku.` : "Usunięto wybrany odpis.");
+                  } : undefined}
                   onText={(value) => {
                     setText(value);
                     setTypingTick((tick) => tick + 1);
@@ -332,9 +353,7 @@ export function ZusikWorkspace() {
                 area?.setSelectionRange(starter.length, starter.length);
               }}
               onHistory={setShowHistory}
-              onNewChat={() =>
-                setPanelNotice("Ta sprawa ma na razie jedną rozmowę zapisaną na serwerze. Kolejne rozmowy pojawią się razem z historią.")
-              }
+              onNewChat={() => router.push("/app/sprawy")}
               onFullscreen={() => setFullscreen((value) => !value)}
               onCollapse={collapse}
             />

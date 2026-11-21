@@ -17,6 +17,9 @@ type Props = {
   caseError: string | null;
   notice: string | null;
   composer: ReactNode;
+  workflow?: ReactNode;
+  workflowVersion?: number;
+  starters?: readonly string[];
   /** Reading position of this conversation, kept while the panel is collapsed or shows the history. */
   readScroll: () => number | null;
   onScrollSave: (top: number) => void;
@@ -79,13 +82,13 @@ function ChatHeader({ phone, fullscreen, showHistory, onHistory, onNewChat, onFu
                   onNewChat();
                 }}
               >
-                Nowa rozmowa
+                Wybierz sprawę
               </button>
             </div>
           )}
         </div>
       ) : (
-        <button type="button" className={s.iconButton} aria-label="Nowa rozmowa" onClick={onNewChat}>
+        <button type="button" className={s.iconButton} aria-label="Wybierz sprawę" onClick={onNewChat}>
           <NewChatIcon />
         </button>
       )}
@@ -110,7 +113,7 @@ function History({ onBack }: { onBack: () => void }) {
         <span className={s.historyTop}>Urlop rodzicielski Marty</span>
         <span className={s.muted}>{CASE_LABEL}</span>
       </button>
-      <p className={s.muted}>Wcześniejsze rozmowy pojawią się tu, gdy serwer zacznie zapisywać kilka rozmów dla jednej sprawy.</p>
+
     </nav>
   );
 }
@@ -121,7 +124,7 @@ function Thread(props: Props) {
   const list = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
-  const signature = `${steps.view?.state}:${steps.pendingChoice}:${steps.preview}:${conversation
+  const signature = `${props.workflowVersion ?? ""}:${steps.view?.state}:${steps.pendingChoice}:${steps.preview}:${conversation
     .map((item) => `${item.requestId}:${item.state}`)
     .join("|")}`;
   const [reader, setReader] = useState({ atBottom: true, seen: signature });
@@ -185,7 +188,7 @@ function Thread(props: Props) {
             {mascot}
           </div>
           <div ref={content} className={s.messages} aria-live="polite" aria-relevant="additions">
-            <CaseSteps {...steps} />
+            {props.workflow ?? <CaseSteps {...steps} />}
             {conversation.map((item) => (
               <TurnView key={item.requestId} item={item} onRetry={props.onRetryAsk} />
             ))}
@@ -213,7 +216,7 @@ function Thread(props: Props) {
         )}
         {showStarters && (
           <div className={s.starters} role="group" aria-label="Pytania na start">
-            {STARTERS.map((starter) => (
+            {(props.starters ?? STARTERS).map((starter) => (
               <button key={starter} type="button" className={s.starter} onClick={() => props.onStarter(starter)}>
                 {starter}
                 <span aria-hidden="true">↗</span>
