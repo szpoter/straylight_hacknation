@@ -45,6 +45,10 @@ function buildGraph(checkpointer: BaseCheckpointSaver) {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Replies the model must not reword: legal outcome, dates the parent acts on, choices, simulation. */
+export const PROTECTED_REPLY =
+  /^Tak\b|Nie mogę|przysługuje|Wpisuję|Złóż wniosek|termin|Przypomnienie:|Gotowe do sprawdzenia|Której daty|Symulacja|Zostało Ci/i;
+
 /** Every digit group of the rephrased text must already be in the template, and none may be lost. */
 export function keepsNumbers(template: string, candidate: string): boolean {
   const allowed = new Set(template.match(/\d+/g) ?? []);
@@ -126,8 +130,11 @@ export class KamilService {
     const model = this.deps.model;
     const last = next.chat[next.chat.length - 1];
     if (!model || !last || last.role !== "zusik" || next.chat.length === before.chat.length) return next;
+    // Verdicts, periods, deadlines, date choices and the simulation stay exactly as the code wrote them.
+    if (PROTECTED_REPLY.test(last.text)) return next;
     const text = await model.rephrase(last.text).catch(() => null);
     if (!text || text.length > 700 || !keepsNumbers(last.text, text)) return next;
+    if (last.text.includes("?") && !text.includes("?")) return next; // the question must survive
     const chat = [...next.chat.slice(0, -1), { ...last, text, author: "model" as const }];
     return { ...next, chat };
   }

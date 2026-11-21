@@ -32,49 +32,54 @@ export function useKamilCase() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<CaseError | null>(null);
   const versionRef = useRef(0);
+  const lock = useRef(false);
+  const [attempt, setAttempt] = useState(0);
 
   const accept = useCallback((next: KamilView) => {
     versionRef.current = next.version;
     setView(next);
   }, []);
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/kamil", { cache: "no-store" });
-    const body = (await res.json().catch(() => null)) as { view?: KamilView; error?: string } | null;
-    if (body?.view) accept(body.view);
-    else {
-      const code = body?.error ?? "network";
-      setError({ code, message: MESSAGES[code] ?? MESSAGES.network });
-    }
-    return body?.view ?? null;
-  }, [accept]);
-
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      // Reuses the signed demo session cookie of Zusik (HttpOnly). Idempotent.
-      await fetch("/api/zusik/session", { method: "POST" }).catch(() => null);
-      if (cancelled) return;
-      const loaded = await load().catch(() => null);
-      if (!cancelled && loaded && loaded.version === 0) {
-        // First visit: the fictional profile fills Kamil's data, the payer and the mother's PESEL.
-        const res = await fetch("/api/kamil", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ expectedVersion: 0, command: { type: "load_profile", opKey: opKey() } }),
-        });
-        const body = (await res.json().catch(() => null)) as { view?: KamilView } | null;
-        if (!cancelled && body?.view) accept(body.view);
+    const controller = new AbortController();
+    const init = {signal: controller.signal, cache: "no-store" as const};
+    async function restore() {
+      try {
+        const session = await fetch("/api/zusik/session", { ...init, method: "POST" });
+        if (!session.ok) throw new Error("network");
+        const res = await fetch("/api/kamil", init);
+        let body = await res.json() as {view?: KamilView; error?: string};
+        if (!res.ok || !body.view) throw new Error(body.error ?? "network");
+        if (body.view.version === 0) {
+          const profile = await fetch("/api/kamil", {
+            ...init, method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ expectedVersion: 0, command: { type: "load_profile", opKey: opKey() } }),
+          });
+          body = await profile.json();
+          if (!body.view || body.view.version === 0 || (!profile.ok && profile.status !== 409)) {
+            throw new Error(body.error ?? "busy");
+          }
+        }
+        if (!controller.signal.aborted) {
+          accept(body.view);
+          setError(null);
+        }
+      } catch (cause) {
+        if (!controller.signal.aborted) {
+          const code = cause instanceof Error ? cause.message : "network";
+          setError({code, message: MESSAGES[code] ?? MESSAGES.network});
+        }
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [accept, load]);
+    }
+    void restore();
+    return () => controller.abort();
+  }, [accept, attempt]);
 
   /** Sends one action. The same key is reused on a retry, so a repeated click changes nothing twice. */
   const send = useCallback(
     async (action: Action, key: string = opKey()): Promise<boolean> => {
+      if (lock.current) return false;
+      lock.current = true;
       setBusy(true);
       setError(null);
       try {
@@ -99,11 +104,12 @@ export function useKamilCase() {
         setError({ code: "network", message: MESSAGES.network });
         return false;
       } finally {
+        lock.current = false;
         setBusy(false);
       }
     },
     [accept],
   );
 
-  return { view, busy, error, send, reload: load, clearError: () => setError(null) };
+  return { view, busy, error, send, reload: () => setAttempt(current => current + 1), clearError: () => setError(null) };
 }

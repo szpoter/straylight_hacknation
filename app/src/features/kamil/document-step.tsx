@@ -192,7 +192,7 @@ export function DocumentStep({ view, pages, busy, reading, readError, onFile, on
             className={s.fileInput}
             type="file"
             accept="application/pdf,image/png,image/jpeg"
-            disabled={!!reading}
+            disabled={busy || !!reading}
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) onFile(file);
@@ -203,13 +203,13 @@ export function DocumentStep({ view, pages, busy, reading, readError, onFile, on
       </div>
       <div className={s.row}>
         <span className={s.muted}>Przykład z danymi fikcyjnymi:</span>
-        <button className={s.ghost} type="button" disabled={!!reading} onClick={() => onSample("/demo/kamil/odpis-aktu-urodzenia.pdf", "odpis-aktu-urodzenia.pdf")}>
+        <button className={s.ghost} type="button" disabled={busy || !!reading} onClick={() => onSample("/demo/kamil/odpis-aktu-urodzenia.pdf", "odpis-aktu-urodzenia.pdf")}>
           PDF z tekstem
         </button>
-        <button className={s.ghost} type="button" disabled={!!reading} onClick={() => onSample("/demo/kamil/odpis-aktu-urodzenia-skan.jpg", "odpis-aktu-urodzenia-skan.jpg")}>
+        <button className={s.ghost} type="button" disabled={busy || !!reading} onClick={() => onSample("/demo/kamil/odpis-aktu-urodzenia-skan.jpg", "odpis-aktu-urodzenia-skan.jpg")}>
           Skan
         </button>
-        <button className={s.ghost} type="button" disabled={!!reading} onClick={() => onSample("/demo/kamil/odpis-aktu-urodzenia-plama.jpg", "odpis-aktu-urodzenia-plama.jpg")}>
+        <button className={s.ghost} type="button" disabled={busy || !!reading} onClick={() => onSample("/demo/kamil/odpis-aktu-urodzenia-plama.jpg", "odpis-aktu-urodzenia-plama.jpg")}>
           Skan z plamą
         </button>
       </div>
@@ -243,7 +243,9 @@ export function DocumentStep({ view, pages, busy, reading, readError, onFile, on
               type="button"
               disabled={busy}
               onClick={async () => {
-                for (const c of pending) await send({ type: "confirm", key: c.key, value: c.value, origin: c.origin });
+                for (const c of pending) {
+                  if (!(await send({ type: "confirm", key: c.key, value: c.value, origin: c.origin }))) break;
+                }
               }}
             >
               Wszystko się zgadza ({pending.length})

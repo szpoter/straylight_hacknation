@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Candidate, Command, KamilView } from "@/lib/kamil/contract";
 import { parseMessage } from "@/lib/kamil/interpret";
 import { kamilCertificate } from "@/lib/kamil/profile";
-import { KamilService, keepsNumbers, type KamilModel } from "@/lib/kamil/service";
+import { KamilService, PROTECTED_REPLY, keepsNumbers, type KamilModel } from "@/lib/kamil/service";
 import { buildZamValues } from "@/lib/forms/zam-map";
 import { MemoryCaseStore } from "./helpers";
 
@@ -114,9 +114,16 @@ describe("step 2–4 · Kamil's case on the session", () => {
 
   it("missing insurance confirmation → Zusik asks before deciding", async () => {
     const { service } = setup();
+    // Document confirmed, profile not loaded: insurance is unknown.
+    await run(service, "s1", { type: "set_candidates", opKey: op(), candidates: docCandidates() });
+    await confirmAll(service, "s1", await service.getView("s1"));
     const v = await say(service, "s1", "Prowadzę firmę. Czy przysługuje mi wypłata za tydzień z synem?");
     expect(v.result.status).toBe("needs_info");
-    expect(v.chat.at(-1)?.text).toMatch(/ubezpieczenie/);
+    expect(v.result.missing[0]).toBe("insurance_confirmed");
+    expect(v.chat.at(-1)?.text).toMatch(/pytanie o ubezpieczenie.*dobrowolne ubezpieczenie chorobowe/);
+    const answered = await say(service, "s1", "Tak");
+    expect(answered.facts.insurance_confirmed?.value).toBe("tak");
+    expect(answered.facts.insurance_confirmed?.origin.kind).toBe("chat");
   });
 
   it("a corrected value keeps its origin and survives a reload (F5 = new service instance)", async () => {
@@ -234,5 +241,24 @@ describe("step 2–4 · Kamil's case on the session", () => {
     expect(v.chat.filter((t) => t.role === "zusik").every((t) => t.author === "template")).toBe(true);
     expect(keepsNumbers("do 7 grudnia 2026", "najpóźniej 7 grudnia 2026")).toBe(true);
     expect(keepsNumbers("do 7 grudnia 2026", "do 8 grudnia 2026")).toBe(false);
+  });
+
+  it("verdict and deadline replies are never reworded; a plain question may be", async () => {
+    const polite: KamilModel = { extract: async () => null, rephrase: async (t) => `Proszę powiedzieć: ${t}` };
+    const { service } = setup(polite);
+    const v = await kamilReady(service, "s1");
+    const zusik = v.chat.filter((t) => t.role === "zusik");
+    const verdicts = zusik.filter((t) => PROTECTED_REPLY.test(t.text.replace(/^Proszę powiedzieć: /, "")));
+    expect(verdicts.length).toBeGreaterThan(0);
+    expect(verdicts.every((t) => t.author === "template")).toBe(true);
+    expect(zusik.some((t) => t.author === "model")).toBe(true);
+  });
+
+  it("eligibility question without data does not promise an insurance question it does not ask", async () => {
+    const { service } = setup();
+    await run(service, "s1", { type: "load_profile", opKey: op() });
+    const v = await say(service, "s1", "Prowadzę firmę. Czy przysługuje mi wypłata?");
+    expect(v.chat.at(-1)?.text).not.toMatch(/pytanie o ubezpieczenie/);
+    expect(v.chat.at(-1)?.text).toMatch(/odpis aktu urodzenia/);
   });
 });

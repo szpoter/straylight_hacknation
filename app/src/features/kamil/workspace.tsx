@@ -16,7 +16,7 @@ import s from "./kamil.module.css";
  * <ChatStep>, <DocumentStep>, <ResultStep>, <ZamStep> once its layout is ready.
  */
 export function KamilWorkspace() {
-  const { view, busy, error, send, clearError } = useKamilCase();
+  const { view, busy, error, send, clearError, reload } = useKamilCase();
   const [pages, setPages] = useState<PageImage[] | null>(null);
   const [reading, setReading] = useState<string | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
@@ -32,12 +32,14 @@ export function KamilWorkspace() {
     setReading("Przygotowuję odczyt…");
     try {
       const read = await readDocument(file, setReading);
-      setPages(read.pages);
-      await savePages(read.fileName, read.pages);
       if (read.candidates.length === 0) {
         setReadError("Nie znalazłem pól odpisu aktu urodzenia w tym pliku. Spróbuj wyraźniejszego skanu albo wpisz datę w rozmowie.");
       } else {
-        await send({ type: "set_candidates", candidates: read.candidates });
+        const saved = await send({ type: "set_candidates", candidates: read.candidates });
+        if (saved) {
+          setPages(read.pages);
+          await savePages(read.fileName, read.pages);
+        }
       }
     } catch {
       setReadError("Nie udało się odczytać pliku. Sprawdź, czy to PDF albo zdjęcie JPG/PNG.");
@@ -47,16 +49,23 @@ export function KamilWorkspace() {
   };
 
   const onSample = async (path: string, name: string) => {
-    const res = await fetch(path);
-    const blob = await res.blob();
-    await onFile(new File([blob], name, { type: blob.type }));
+    try {
+      setReading("Otwieram przykład…");
+      const res = await fetch(path);
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      await onFile(new File([blob], name, { type: blob.type }));
+    } catch {
+      setReadError("Nie udało się otworzyć przykładowego pliku. Spróbuj ponownie.");
+      setReading(null);
+    }
   };
 
   if (!view) {
     return (
       <div className={s.root}>
         <p className={s.header} role="status">
-          {error ? error.message : "Wczytuję sprawę…"}
+          {error ? <>{error.message} <button type="button" className={s.ghost} onClick={reload}>Spróbuj ponownie</button></> : "Wczytuję sprawę…"}
         </p>
       </div>
     );
@@ -76,7 +85,7 @@ export function KamilWorkspace() {
             type="button"
             disabled={busy}
             onClick={async () => {
-              await send({ type: "reset" });
+              if (!(await send({ type: "reset" }))) return;
               await send({ type: "load_profile" });
               await clearPages();
               setPages(null);
