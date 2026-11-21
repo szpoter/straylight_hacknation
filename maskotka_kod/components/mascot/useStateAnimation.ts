@@ -4,7 +4,8 @@ import { useMotionValue, type MotionValue, type useAnimate } from "motion/react"
 import { useEffect, useMemo, type RefObject } from "react";
 import { MOUTHS, type Point } from "./geometry";
 import { raiseToward } from "./pose";
-import type { ShapeName } from "./shapes";
+import { COVER_PATHS, type ShapeName } from "./shapes";
+import { LANDING } from "./travel";
 import type { ZusikState } from "./types";
 
 type Animate = ReturnType<typeof useAnimate>[1];
@@ -70,6 +71,7 @@ const HELD_SHAPES: Partial<Record<ZusikState, ShapeName>> = {
   searching: "folder",
   calculating: "calculator",
   writing: "pencil",
+  folder: "closedFolder",
 };
 /** Shapes shown for a moment as the state begins, before Zusik returns and acts the state out. */
 const ACCENTS: Partial<Record<ZusikState, { shape: ShapeName; hold: number }>> = {
@@ -96,6 +98,67 @@ const ATTENTION = { droop: -8, shake: [0, -28, 28, -16, 10, 0], shakeSeconds: 0.
 /** Invitation: look at the bubble, hop, and wave once. */
 const INVITE = { hop: 120, wave: [0, 110, 80, 120, 85, 115, 0], waveSeconds: 2.2, lookSeconds: 2.4 };
 const HOP = { seconds: 0.55 };
+/**
+ * Closed folder: once, shortly after the folder has formed (`formed` = how far the morph has gone), the
+ * cover opens a little and closes (cover keyframes closed, open, open, closed at `times`), the folder
+ * sways gently on its base (degrees) and Zusik peeks up at the gap. Then it only blinks.
+ */
+const FOLDER_WORK = {
+  formed: 0.95,
+  delay: 0.15,
+  seconds: 1.1,
+  times: [0, 0.35, 0.55, 1],
+  sway: [0, -2, 1.6, -0.8, 0],
+  peek: [-4, -20] as Point,
+};
+/**
+ * `once` (see BabelekProps): the pencil and the calculator do their work one time, counted from the moment
+ * the shape has formed (morph above `formed`, when the frame loop in AnimatedSvg starts the details), then
+ * rest, and only blinking remains.
+ * - writing: three quick strokes one under another; the pencil moves to each point in its time (seconds),
+ *   then slides back to its place and stands still on its tip.
+ * - calculating: the digits run once through the calculator's values and stop on the last one; keys light
+ *   up at the `presses` steps; the eyes rest after `seconds`.
+ */
+export const ONCE = {
+  formed: 0.97,
+  writing: [
+    [[-85, -55], 0.15], // to the start of the first line
+    [[85, -55], 0.28], // first stroke
+    [[-85, 0], 0.14], // back and one line down
+    [[85, 0], 0.28],
+    [[-85, 55], 0.14],
+    [[85, 55], 0.28],
+    [[0, 0], 0.35], // back to its place
+  ] as const,
+  calculating: { presses: [1, 3, 5], seconds: 1.5 },
+};
+const WRITING_SECONDS = ONCE.writing.reduce((sum, [, seconds]) => sum + seconds, 0);
+
+/** `once` + writing: where the pencil is (offset in viewBox units) `since` seconds after it formed. */
+export function writingOnce(since: number): Point {
+  let [from, start]: [Point, number] = [[0, 0], 0];
+  for (const [to, seconds] of ONCE.writing) {
+    if (since < start + seconds) {
+      const t = Math.max(0, (since - start) / seconds);
+      const eased = t * t * (3 - 2 * t);
+      return [from[0] + (to[0] - from[0]) * eased, from[1] + (to[1] - from[1]) * eased];
+    }
+    [from, start] = [to, start + seconds];
+  }
+  return from;
+}
+
+/**
+ * `once` + calculating: which of the `count` values to show (a new one every `tick` seconds, then the last
+ * one stays) and how bright the pressed key is (0–1), `since` seconds after the calculator formed.
+ */
+export function calculatingOnce(since: number, tick: number, count: number) {
+  const beat = since / tick;
+  const step = Math.floor(beat);
+  const pressing = (ONCE.calculating.presses as readonly number[]).includes(step);
+  return { step: Math.min(step, count - 1), press: pressing ? 1 - (beat - step) : 0 };
+}
 
 /** Pupil offset for looking toward `direction` (degrees, y down), kept inside the eye whites. */
 export function lookOffset(direction: number): Point {
@@ -127,10 +190,14 @@ type Options = {
   pose: Pose;
   /** Time (performance.now, seconds) of the last keystroke, for the waiting state. */
   lastKeystrokeRef: RefObject<number>;
+  /** The travelling drop (see travel.ts): a shape taken on while Zusik is a drop forms as the drop lands. */
+  travel?: MotionValue<number>;
+  /** "writing", "calculating": do the work one time, then rest (see ONCE). */
+  once?: boolean;
 };
 
 /** Plays the animation of the current assistant state (and the invitation greeting). */
-export function useStateAnimation({ enabled, state, toward, inviting, animate, pose, lastKeystrokeRef }: Options) {
+export function useStateAnimation({ enabled, state, toward, inviting, animate, pose, lastKeystrokeRef, travel, once = false }: Options) {
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
@@ -148,7 +215,9 @@ export function useStateAnimation({ enabled, state, toward, inviting, animate, p
       if (pose.shape.get() !== shape && pose.morph.get() > 0.05) await run(animate(pose.morph, 0, MORPH.between));
       if (!alive) return;
       pose.shape.set(shape);
-      run(animate(pose.morph, 1, MORPH.into));
+      // straight from a travelling drop: form as the drop lands, never passing through the bubble (LANDING)
+      const fromDrop = (travel?.get() ?? 0) > LANDING.fromDrop;
+      run(animate(pose.morph, 1, fromDrop ? LANDING.transition : MORPH.into));
     };
     const unshape = () => run(animate(pose.morph, 0, MORPH.back));
 
@@ -158,6 +227,21 @@ export function useStateAnimation({ enabled, state, toward, inviting, animate, p
         await lookAt(animate, THINK.looks[i % THINK.looks.length] as Point, LOOK);
         await new Promise((resolve) => setTimeout(resolve, THINK.seconds * 1000));
       }
+    };
+
+    /**
+     * `once`: runs `rest` when `shape` has formed (however it forms) and worked for `seconds`.
+     * Checked every frame rather than with `pose.morph.on("change")`: removing a motion value's last
+     * change listener stops its running animation, which would freeze the next state's change of shape.
+     */
+    const afterWork = (shape: ShapeName, seconds: number, rest: () => void) => {
+      let frame = 0;
+      const watch = () => {
+        if (pose.shape.get() !== shape || pose.morph.get() < ONCE.formed) frame = requestAnimationFrame(watch);
+        else later(seconds, rest);
+      };
+      watch();
+      running.push({ stop: () => cancelAnimationFrame(frame) });
     };
 
     // every state starts from the calm defaults and overrides what it needs
@@ -170,6 +254,7 @@ export function useStateAnimation({ enabled, state, toward, inviting, animate, p
     run(animate("[data-part=mouth]", { d: MOUTHS.smile }, { duration: 0.3 }));
     run(animate("[data-part=mouth-open]", { opacity: 0, scaleY: 0.2 }, { duration: 0.15 }));
     run(animate("[data-part=lid]", { y: 0 }, SPRING));
+    run(animate("[data-part=character]", { rotate: 0 }, SPRING)); // upright again if the folder's sway was cut short
     if (state !== "available") lookAt(animate, [0, 0], LOOK);
 
     const held = HELD_SHAPES[state];
@@ -203,12 +288,17 @@ export function useStateAnimation({ enabled, state, toward, inviting, animate, p
       case "searching":
       case "calculating": {
         to(pose.calm, BUSY_CALM);
-        think();
+        if (once && state === "calculating") {
+          // one look up to the side while the digits run, then calm eyes
+          lookAt(animate, THINK.looks[0] as Point, LOOK);
+          afterWork("calculator", ONCE.calculating.seconds, () => lookAt(animate, [0, 0], LOOK));
+        } else think();
         break;
       }
       case "writing": {
         to(pose.calm, BUSY_CALM);
         lookAt(animate, lookOffset(toward), LOOK);
+        if (once) afterWork("pencil", WRITING_SECONDS, () => lookAt(animate, [0, 0], LOOK));
         break;
       }
       case "answering": {
@@ -265,6 +355,33 @@ export function useStateAnimation({ enabled, state, toward, inviting, animate, p
         });
         break;
       }
+      case "folder": {
+        to(pose.calm, BUSY_CALM);
+        run(animate("[data-part=folder-cover]", { d: COVER_PATHS.closed }, { duration: 0 }));
+        const { closed, open } = COVER_PATHS;
+        const work = () => {
+          run(
+            animate(
+              "[data-part=folder-cover]",
+              { d: [closed, open, open, closed] },
+              { duration: FOLDER_WORK.seconds, times: FOLDER_WORK.times, ease: ["easeOut", "linear", "easeInOut"] },
+            ),
+          );
+          run(animate("[data-part=character]", { rotate: FOLDER_WORK.sway }, { duration: FOLDER_WORK.seconds, ease: "easeInOut" }));
+          lookAt(animate, FOLDER_WORK.peek, LOOK);
+          later(FOLDER_WORK.seconds * 0.7, () => lookAt(animate, [0, 0], { duration: 0.35, ease: "easeInOut" }));
+        };
+        // The work starts once the folder has formed, however it forms (from Zusik, another shape or a drop).
+        // Checked on a timer rather than with pose.morph.on("change"): when its last change listener is
+        // removed, Motion stops the value, which would cut short the next state's morph.
+        const formed = setInterval(() => {
+          if (pose.shape.get() !== "closedFolder" || pose.morph.get() < FOLDER_WORK.formed) return;
+          clearInterval(formed);
+          later(FOLDER_WORK.delay, work);
+        }, 50);
+        running.push({ stop: () => clearInterval(formed) });
+        break;
+      }
       case "available":
         break;
     }
@@ -274,7 +391,7 @@ export function useStateAnimation({ enabled, state, toward, inviting, animate, p
       running.forEach((controls) => controls.stop());
       timers.forEach(clearTimeout);
     };
-  }, [enabled, state, toward, animate, pose, lastKeystrokeRef]);
+  }, [enabled, state, toward, animate, pose, lastKeystrokeRef, travel, once]);
 
   // the invitation greeting: look at the bubble, hop, and wave once
   useEffect(() => {
