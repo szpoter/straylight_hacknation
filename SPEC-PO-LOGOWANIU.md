@@ -2,7 +2,7 @@
 
 Ten plik rozwijamy dla części produktu po uwierzytelnieniu. Punktem wejścia jest koniec symulowanego pobierania danych z ZUS opisanego w [specyfikacji strony publicznej](SPEC.md). Aktualny kierunek pierwszego wejścia to onboarding, a następnie pełny widok produktu.
 
-**Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Osobna karta paska to „Dokumenty i wnioski”. Podział pozostałej części nawigacji pozostaje otwarty. Pod mapą są kolejno „Najbliższa sprawa” i kalkulator. Szczegóły interakcji oraz dalsze moduły to propozycje do omówienia.
+**Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Osobna karta paska to „Dokumenty i wnioski”. Propozycja całego paska to „Mój plan”, „Dokumenty i wnioski” oraz „Profil rodziny”, z dotychczasowym selektorem dziecka. Pod mapą są kolejno „Najbliższa sprawa” i kalkulator. Szczegóły interakcji oraz dalsze moduły to propozycje do omówienia.
 
 ## Pierwsze wejście — krótka rozmowa z Zusikiem
 
@@ -129,6 +129,8 @@ Zapisany formularz pozostaje w dokumentach roboczych aż do wysłania. Po autory
 
 Na górze nazwa dziecka oraz dwa widoki: **„Sprawy”** (domyślny) i **„Pliki dziecka”**. W „Sprawach” jeden wiersz odpowiada jednej sprawie. Pod nim w szczegółach znajdują się formularz, załączniki, potwierdzenie i korespondencja. Nazwy grup poniżej to etykiety przewodnika. Każda sprawa jest w jednej grupie, zgodnie z ostatnim zdarzeniem i tym, kto ma wykonać kolejny krok.
 
+**Podział według celu obowiązuje w obu widokach.** Dokumenty wybranego dziecka pokazujemy w sekcjach **Urlopy**, **Świadczenia i zasiłki**, **Rejestracja i ubezpieczenie** oraz **Zdrowie i opieka**. Wniosek o urlop do pracodawcy należy do „Urlopów”, wniosek o wypłatę zasiłku do „Świadczeń i zasiłków”, zgłoszenie urodzenia lub do ubezpieczenia do „Rejestracji i ubezpieczenia”, a deklaracja wyboru POZ do „Zdrowia i opieki”. W „Sprawach” nad sekcjami są filtry statusu z licznikami. Wybranie „Do załatwienia” pokazuje zadania ze wszystkich celów, z pilnymi wezwaniami na górze. Odznaczenie filtra przywraca wszystkie sprawy. Każda pozycja ma jeden cel główny i jeden aktualny status. Potwierdzenia, załączniki i pisma dziedziczą cel sprawy. Jeden plik użyty w kilku sprawach ma odnośniki do tych spraw i pozostaje pojedynczym plikiem.
+
 | Grupa | Co widzi rodzic | Główne działanie |
 | --- | --- | --- |
 | **Do załatwienia** | Najpierw wezwania z terminem, potem aktualne sprawy według terminu. Etykiety: „Do rozpoczęcia”, „Szkic”, „Wypełniony · do sprawdzenia”, „Zatwierdzony · do przekazania”, „Do uzupełnienia po wezwaniu”. Obok jedno zdanie, np. „Brakuje daty rozpoczęcia urlopu”. Sprawa dobrowolna ma oznaczenie „Jeśli chcesz skorzystać”. | „Rozpocznij”, „Dokończ z Zusikiem”, „Sprawdź i zatwierdź”, „Przekaż” albo „Otwórz wezwanie”. |
@@ -166,6 +168,29 @@ Na komputerze wiersz ma tytuł sprawy językiem rodzica, status, odbiorcę, term
 2. **Zobacz, czego brakuje.** Przykład fikcyjnej sprawy: „Dołącz zaświadczenie ze szpitala wskazane w piśmie”. Pod spodem krótka lista zadań z tego wezwania. Plik otrzymuje oznaczenie „Dodano do szkicu” po faktycznym dołączeniu. Obok streszczenia stale dostępny jest oryginał pisma.
 3. **„Uzupełnij z Zusikiem”.** Po lewej otwiera się szkic odpowiedzi na konkretne wezwanie, po prawej jego rozmowa. Rodzic dodaje plik z „Plików dziecka” lub z urządzenia, sprawdza adresata i załączniki, a następnie wybiera „Wyślij uzupełnienie w symulacji”. Może wyjść i wznowić ten sam szkic. Wysłany wcześniej wniosek pozostaje dostępny do odczytu. Forma uzupełnienia zależy od rodzaju sprawy. [Przykład obsługi załączników do wniosku 800+](https://www.zus.pl/portal/pomoc/kub0030.html)
 4. **Sprawdź, co dalej.** Po udanej wysyłce na osi pojawia się „Wysłano uzupełnienie”, a potwierdzenie wpływu uzupełnienia trafia do tego wpisu po jego udostępnieniu. Gdy wszystkie wezwania mają wysłaną odpowiedź i brak innych czynności rodzica, sprawa wraca do „Wysłane i w toku”. Błąd wysyłki zachowuje szkic w „Do załatwienia”. Kolejne wezwanie ponownie aktywuje tę samą sprawę. Sam upływ terminu oznaczamy „Termin minął”, a zakończenie sprawy wynika z otrzymanego rozstrzygnięcia.
+
+## Profil rodziny — dane rodzica i dzieci
+
+**Uzgodniona zasada widoczności.** W profilu pokazujemy podstawowe dane identyfikujące osobę oraz informacje, które rodzic może uzupełnić lub zmienić w przewodniku. Szczegóły urzędowe tylko do odczytu pojawiają się w odpowiedniej sprawie lub przy wyliczeniu. Edycja w przewodniku dotyczy własnych deklaracji i założeń planu. Urzędowa korekta ma osobną drogę u właściwego podmiotu. [Korekta danych zgłoszeniowych według ZUS](https://www.zus.pl/-/jak-dokonac-zmiany-korekty-danych-wykazanych-w-dokumentach-zgloszeniowych-ubezpieczonego-czlonka-rodziny)
+
+**Rekomendowana nazwa: „Profil rodziny”.** Ekran ma sekcje „Moje dane” oraz „Dzieci i plany”. Pierwsza pokazuje dane rodzica raz dla całej rodziny. W drugiej są wszystkie plany tej osoby, z zaznaczonym dzieckiem wybranym w pasku. Rodzic wybiera „Edytuj plan Oli” lub „Dodaj dziecko lub plan”. Osoba planująca ciążę może zacząć od nienazwanego planu.
+
+| Źródło i zakres | Co symulujemy lub wpisujemy | Co widzi i zmienia rodzic |
+| --- | --- | --- |
+| **Tożsamość rodzica — logowanie.** Publicznie opisana integracja S46 z login.gov.pl otrzymuje imię, nazwisko i PESEL. Własna usługa wymaga odrębnego uzgodnienia zakresu integracji. [Przykład S46](https://www.gov.pl/web/system-s46/logowanie-i-rejestracja-konta) · [Informacje dla integratorów](https://www.gov.pl/web/login/dla-integratorow2) | W demonstracji podstawiamy fikcyjną tożsamość. | W „Moich danych” imię i nazwisko z oznaczeniem źródła, do odczytu. PESEL tylko w formularzu, który go potrzebuje. |
+| **Dziecko — rejestr PESEL.** Gov.pl oferuje rodzicowi oddzielną usługę wglądu w dane dziecka po spełnieniu warunków dotyczących uprawnień i powiązania w rejestrze. [Usługa Gov.pl](https://www.gov.pl/web/gov/sprawdz-swoje-dane-w-rejestrze-pesel) | Dzieci znane z przygotowanego przypadku demo lub dodane przez rodzica. Samo logowanie nie dostarcza listy dzieci. | Podstawy: imię i nazwisko oraz data urodzenia, jeśli są znane. Dane rejestrowe tylko do odczytu. W planie dodanym ręcznie rodzic może poprawić podane przez siebie dane, ustawić nazwę wyświetlaną, etap, przewidywany termin porodu lub datę przyjęcia pod opiekę. |
+| **ZUS — ubezpieczony i płatnik.** eZUS pokazuje m.in. ubezpieczenia i płatników, podstawy składek, członków rodziny zgłoszonych do ubezpieczenia zdrowotnego oraz zwolnienia lekarskie. Dane zależą od roli i dostępnych zapisów. [Panel ubezpieczonego](https://www.zus.pl/portal/pomoc/kub0000.html) · [Informator eZUS](https://www.zus.pl/documents/10182/13876255/0306_26%2BPortal%2BeZUS_WCAG.pdf/2c883aa0-bccd-30af-3ce7-67199f7c28a6?t=1779346638803) | Konkurs przewiduje m.in. symulowany stan ubezpieczenia, podgląd e-ZLA i zadłużenia składkowego dla odpowiedniej osoby. Zgłoszenie zdrowotne dziecka przez danego płatnika jest informacją o zgłoszeniu. Kompletność listy dzieci i uprawnienia opiekuna wymagają odrębnego ustalenia. | Status i okres ubezpieczenia w sprawie o zasiłek, podstawy w kalkulatorze, e-ZLA i zadłużenie przy sprawie, której dotyczą. Wartość podana przez rodzica do symulacji jest podpisana „Moje założenie”. Źródłowy zapis ZUS zachowuje swoje pochodzenie. |
+| **Dane od rodzica.** Informacje potrzebne do wyboru ścieżki. | Rola w konkretnym planie, planowane zmiany zatrudnienia lub opieki, brakujące daty. Dane drugiego opiekuna tylko w zakresie podanym do wspólnej symulacji. | Możliwość dodania, poprawienia i zapisania przy właściwej osobie lub planie. Szczegółowe dane medyczne, finansowe i załączniki mają wejście przez odpowiednią sprawę. |
+
+**Po zapisaniu zmiany** rodzic widzi jej skutek, np. „Zmieniono przewidywany termin porodu. Zaktualizowano daty w planie Oli”. Szkic zależny od zmienionego pola dostaje oznaczenie „Sprawdź po zmianie danych”. Wysłane dokumenty zachowują treść z chwili wysyłki. Przy błędzie zapisu formularz zachowuje wpisane wartości. Korekta lokalnego założenia i przywrócenie wartości źródłowej są dostępne w miejscu użycia tej wartości.
+
+### Proponowany komplet kart
+
+- **Mój plan** — mapa aktywnego dziecka, najbliższa sprawa, kalkulator i kontekstowa pomoc.
+- **Dokumenty i wnioski** — sprawy według celu, filtry statusu, terminy, wezwania i pliki.
+- **Profil rodziny** — podstawowe dane rodzica, dzieci i edycja planów.
+
+Selektor dziecka i bąbelek Zusika są dostępne globalnie. Pilne wezwanie jest widoczne w „Najbliższej sprawie” i liczniku „Do załatwienia”. Do testowania konkursowego pozostaje potrzebne wejście „Przetestuj przykładową sprawę” przy planie, a edycja parametrów świadczeń należy do widoku administratora. Te działania mają własne miejsca poza głównym paskiem rodzica. [Zakres demonstracji w opisie zadania, s. 13–15](Materia%C5%82y%20hackathonowe/ZUS%20-%20Pe%C5%82na%20tre%C5%9B%C4%87%20zadania%20konkursowego.pdf)
 
 ## Zakres konkursowy do dalszego rozpisania
 
