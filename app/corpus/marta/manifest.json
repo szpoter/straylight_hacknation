@@ -1,0 +1,70 @@
+{
+  "corpusVersion": "marta-v1",
+  "locale": "pl",
+  "description": "Urlop rodzicielski pracownika: wniosek do pracodawcy, wspólne korzystanie, wyłączna część, załączniki. Tylko publiczne źródła urzędowe. Bez profilu rodziny i bez pytań użytkowników.",
+  "verifiedAt": "2026-11-21",
+  "fragmentsFile": "fragments.jsonl",
+  "expectedFragments": 23,
+  "documents": [
+    {
+      "id": "kp-2026-1245",
+      "title": "Kodeks pracy (tekst jednolity, Dz.U. 2026 poz. 1245)",
+      "shortTitle": "Kodeks pracy",
+      "authority": "statute",
+      "issuer": "Sejm RP (obwieszczenie Marszałka Sejmu z 1.09.2026)",
+      "sourceType": "pdf",
+      "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf",
+      "landingUrl": "https://dziennikustaw.gov.pl/DU/2026/1245",
+      "retrievedAt": "2026-11-21",
+      "sourceSha256": "5e1722965c4ed8f234cef18f8fad6fc11e8672969fe7f04e89f4000d10f36517",
+      "validFrom": null,
+      "validTo": null,
+      "versionNote": "Tekst jednolity ze stanem prawnym na 27.08.2026, obejmuje zmianę Dz.U. 2026 poz. 1046 (w życiu od 5.11.2026). Sprawdzone w ELI 21.11.2026: brak późniejszych aktów zmieniających Kodeks pracy. Daty wejścia w życie poszczególnych jednostek nie zostały ustalone, dlatego validFrom pozostaje puste."
+    },
+    {
+      "id": "rozp-2025-322",
+      "title": "Rozporządzenie MRPiPS z 11.03.2025 w sprawie wniosków dotyczących uprawnień pracowników związanych z rodzicielstwem oraz dokumentów dołączanych do takich wniosków (Dz.U. 2025 poz. 322)",
+      "shortTitle": "Rozporządzenie w sprawie wniosków pracownika",
+      "authority": "regulation",
+      "issuer": "Minister Rodziny, Pracy i Polityki Społecznej",
+      "sourceType": "pdf",
+      "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf",
+      "landingUrl": "https://dziennikustaw.gov.pl/DU/2025/322",
+      "retrievedAt": "2026-11-21",
+      "sourceSha256": "3c622bd3206a58792776ba7f86e03cedf786aedf69076c3af57cedf891b11952",
+      "validFrom": "2025-03-19",
+      "validTo": null,
+      "versionNote": "§ 24: wchodzi w życie 19.03.2025. ELI 21.11.2026: obowiązujący, bez aktów zmieniających."
+    },
+    {
+      "id": "mrpips-urlop-rodzicielski",
+      "title": "Urlop rodzicielski – Ministerstwo Rodziny, Pracy i Polityki Społecznej",
+      "shortTitle": "MRPiPS, Urlop rodzicielski",
+      "authority": "ministry_guidance",
+      "issuer": "Ministerstwo Rodziny, Pracy i Polityki Społecznej",
+      "sourceType": "html",
+      "url": "https://www.gov.pl/web/rodzina/urlop-rodzicielski",
+      "landingUrl": "https://www.gov.pl/web/rodzina/urlop-rodzicielski",
+      "retrievedAt": "2026-11-21",
+      "sourceSha256": "99580133ac6fbe42abbe7943dd6bf6c2a066a78797d1f39b40e9f20945ca35cc",
+      "validFrom": null,
+      "validTo": null,
+      "versionNote": "Strona: „Ostatnia modyfikacja: 28.01.2026”. Objaśnienie, nie akt prawny. Nagłówki bez kotwic HTML."
+    },
+    {
+      "id": "zus-zasilek-rodzicielski",
+      "title": "Zasiłek macierzyński za okres odpowiadający okresowi urlopu rodzicielskiego – ZUS",
+      "shortTitle": "ZUS, Zasiłek za okres urlopu rodzicielskiego",
+      "authority": "zus_guidance",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "sourceType": "html",
+      "url": "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/prawo-do-zasilku-i-okres-przyslugiwania/za-okres-dodatkowego-urlopu-rodzicielskiego",
+      "landingUrl": "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/prawo-do-zasilku-i-okres-przyslugiwania/za-okres-dodatkowego-urlopu-rodzicielskiego",
+      "retrievedAt": "2026-11-21",
+      "sourceSha256": "4cef1c0a86695df2b8baa1a6b1880df19939b583fc9d9d72108e4deea11a1ffc",
+      "validFrom": null,
+      "validTo": null,
+      "versionNote": "Strona datowana 25.07.2025. Objaśnienie ZUS o okresie zasiłku. Nagłówki bez kotwic HTML."
+    }
+  ]
+}

@@ -30,7 +30,7 @@ export function parseQuestion(raw: string): string | null {
   }
 }
 
-function classify(error: unknown): QuestionResult["status"] {
+export function classifySherlockError(error: unknown): QuestionResult["status"] {
   const seen = new Set<unknown>();
   let current: unknown = error;
   while (current && !seen.has(current)) {
@@ -66,7 +66,7 @@ export async function askSherlock(settings: SherlockSettings, fragmentText: stri
       ms: Date.now() - started,
     };
   } catch (error) {
-    const status = classify(error);
+    const status = classifySherlockError(error);
     console.error(JSON.stringify({ event: "sherlock_error", status }));
     return { status, question: null, model: settings.model, ms: Date.now() - started };
   }

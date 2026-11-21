@@ -16,6 +16,7 @@ export function emptyView(threadId: string | null = null): CaseView {
     providers: { qdrant: null, sherlock: null },
     checkpointId: null,
     interruptId: null,
+    turns: [],
   };
 }
 
@@ -41,6 +42,7 @@ export function viewFromSnapshot(threadId: string, snapshot: StateSnapshot, leas
     providers: { qdrant: values.qdrantStatus ?? null, sherlock: values.sherlockStatus ?? null },
     checkpointId,
     interruptId: null,
+    turns: [],
   };
 
   if (pending) {

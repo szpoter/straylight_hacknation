@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Command, type BaseCheckpointSaver } from "@langchain/langgraph";
 import type { Choice } from "./constants";
 import type { CaseStore } from "./case-store";
+import type { TurnStore } from "./turn-store";
 import { buildProbeGraph } from "./graph";
 import type { CaseView, ProbeProviders } from "./types";
 import { emptyView, isFresh, viewFromSnapshot } from "./view";
@@ -21,6 +22,8 @@ export interface ProbeServiceDeps {
   store: CaseStore;
   checkpointer: BaseCheckpointSaver;
   providers: ProbeProviders;
+  /** Saved ask turns, attached to every view (view.turns). Optional for older callers. */
+  turns?: TurnStore;
   /** How long a request waits for another request's lease. */
   leaseWaitMs?: number;
 }
@@ -55,13 +58,19 @@ export class ProbeService {
     return { configurable: { thread_id: threadId }, durability: "sync" as const };
   }
 
+  /** Adds saved ask turns (oldest first); reading them never calls a provider. */
+  private async withTurns(view: CaseView): Promise<CaseView> {
+    if (!view.threadId || !this.deps.turns) return view;
+    return { ...view, turns: await this.deps.turns.list(view.threadId) };
+  }
+
   /** GET: reads the checkpoint, never creates anything. */
   async getView(sessionId: string): Promise<CaseView> {
     const demoCase = await this.deps.store.findBySession(sessionId);
     if (!demoCase) return emptyView();
     const { graph } = this.graph();
     const snapshot = await graph.getState(this.config(demoCase.threadId));
-    return viewFromSnapshot(demoCase.threadId, snapshot, demoCase.leaseActive);
+    return this.withTurns(viewFromSnapshot(demoCase.threadId, snapshot, demoCase.leaseActive));
   }
 
   private async withLease<T>(threadId: string, run: () => Promise<T>): Promise<T | "busy"> {
@@ -108,7 +117,7 @@ export class ProbeService {
     if (outcome === "busy") {
       return { status: 202, view: await this.getView(sessionId), providerCalls: calls };
     }
-    return { status: 200, view: outcome, providerCalls: calls };
+    return { status: 200, view: await this.withTurns(outcome), providerCalls: calls };
   }
 
   /**
@@ -135,6 +144,6 @@ export class ProbeService {
     if (outcome === "busy") {
       return { status: 202, view: await this.getView(sessionId), providerCalls: calls };
     }
-    return { ...outcome, providerCalls: calls };
+    return { ...outcome, view: await this.withTurns(outcome.view), providerCalls: calls };
   }
 }

@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "zusik:migrate": "tsx scripts/zusik-migrate.ts",
-    "zusik:seed-probe": "tsx scripts/zusik-seed-probe.ts"
+    "zusik:seed-probe": "tsx scripts/zusik-seed-probe.ts",
+    "zusik:import-marta": "tsx scripts/zusik-import-marta.ts",
+    "zusik:eval-marta": "tsx scripts/zusik-eval-marta.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.94",
