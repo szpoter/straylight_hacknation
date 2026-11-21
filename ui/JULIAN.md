@@ -37,6 +37,12 @@
 
 **Scena do przeklikania.** Rodzic otwiera wniosek Oli i klika zaproszenie. Zusik pyta o początek urlopu. Po odpowiedzi „17 czerwca” ta data pojawia się w polu „Początek urlopu”. Rodzic wybiera przy nim „Zmień” i wpisuje 18 czerwca. Przy kolejnym pytaniu o początek urlopu odpowiedź Zusika ma być zgodna z wartością 18 czerwca. Maciej wykorzystuje tę scenę przy szkicu, a Nikodem może pokazać w jednym kadrze rozmowę i efekt poprawki.
 
+### Źródła RAG przy odpowiedzi Zusika
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Przy zdaniu opartym na materiale źródłowym umieszczamy małe, domyślnie zwinięte oznaczenie w stylu AI Elements, np. „Pokaż fragment poradnika · ZUS, s. 33”. Kliknięcie, dotknięcie lub aktywacja klawiaturą rozwija pod zdaniem dokładny cytat z fragmentu użytego przez RAG, zgodnie z pomysłem „Zoom In” z Granoli. Na komputerze szkic pozostaje obok rozmowy, a na telefonie cytat rozwija się w treści wiadomości. [AI Elements — Inline Citation](https://elements.ai-sdk.dev/components/inline-citation) · [Granola — Zoom In](https://www.granola.ai/blog/announcement#:~:text=Zoom%20In)
+
+**Przykład do odbioru.** Rodzic pyta „Czy mogę podzielić urlop ojcowski?”. Po rozwinięciu źródła widzi tytuł poradnika, wydawcę, rok i drukowaną stronę 33 oraz cytat „Tata może go wykorzystać jednorazowo lub w dwóch 7-dniowych częściach.” Osobny link „Otwórz stronę w PDF” prowadzi do 34. strony tego wydania pliku. Ponowne wybranie oznaczenia zwija cytat. Gdy materiały nie potwierdzają danej informacji, Zusik wskazuje, czego nie udało się ustalić. [Poradnik ZUS 2026](../Materiały%20hackathonowe/Materiały%20dla%20uczestników/Poradnik%20dla%20rodziców%2C%20ZUS%202026.pdf#page=34)
+
 ### Kolor i ruch w rozmowie
 
 Wartości do pierwszej próby w makiecie. [Wspólna paleta i fokus klawiatury](../DESIGN.md)
