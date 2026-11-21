@@ -39,3 +39,12 @@ Brak zmiennej daje odpowiedź `500 {"error":"config_missing","variable":"<NAZWA>
 ## Vercel
 
 Root Directory `app`, Framework Next.js, `npm ci`, `npm run build`, Node 24. Endpointy działają w Node.js z `maxDuration = 30`. Limit czasu Sherlocka to 8 s, Qdrant 5 s, dzierżawa operacji 90 s.
+
+## Odbiór demo
+
+Wejście rodzica to `/app`. W tej samej sesji można przejść do `/app/kamil` i `/app/chorobowe`. Daty i kwoty obliczają reguły. Zatwierdzony wniosek Marty i druk ZAM można pobrać. Przekazanie jest symulacją. Podgląd oryginałów wgranych przez rodzica jest lokalny w przeglądarce.
+
+- `npm run zusik:acceptance -- https://straylight-hacknation.vercel.app` uruchamia sześć nowych spraw w osobnych profilach Chrome oraz test cytowanej odpowiedzi po F5. Na laptopie wymaga zainstalowanego Google Chrome. Drugi argument, np. `M1,K1,D1,RAG`, wybiera próby.
+- [Korpus i polecenia eval](corpus/README.md) opisują źródła, import Qdrant, klucze odczytu i powtarzanie oceny.
+- [Instrukcja serwera modeli](MODELE-NA-VERCELU.md) opisuje połączenie Vercela z laptopem. [Lokalny pomiar obu modeli](corpus/local-models.md) dotyczy identycznych promptów ze wskazanymi fragmentami.
+- Prywatne akta można przeszukać lokalnie przez `python3 scripts/private-case-index.py search "okres ubezpieczenia" --locations`. Wynik wskazuje dokument przez SHA i numer strony. Wspólna aplikacja na Vercelu korzysta z publicznych przepisów oraz z danych bieżącej sesji.
