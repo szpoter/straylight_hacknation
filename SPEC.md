@@ -117,9 +117,9 @@ Bezpośrednio pod przyciskiem znajduje się stopka z nazwą przewodnika i dwiema
 - **Oficjalne informacje** — [ZUS o zasiłku macierzyńskim](https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/komu-przysluguje), [ministerstwo o urlopie rodzicielskim](https://www.gov.pl/web/rodzina/urlop-rodzicielski) i [Państwowa Inspekcja Pracy o prawach rodziców](https://www.pip.gov.pl/dla-pracodawcow/porady-prawne/rodzicielstwo).
 - **Pomoc w trudnej sytuacji** — link otwiera istniejący panel „Informacje i wsparcie” także przed logowaniem. W panelu przy każdej organizacji podajemy, komu pomaga i gdzie uzyskać bezpłatne wsparcie. Przykładem jest pomoc dla rodziców po stracie lub w innej trudnej sytuacji okołoporodowej. [Fundacja Ernesta — jak pomagamy](https://fundacjaernesta.pl/jak-pomagamy/)
 
-## Po kliknięciu „Sprawdź moją sytuację” — logowanie i pierwszy ekran rodzica
+## Po kliknięciu „Sprawdź moją sytuację” — logowanie i wczytywanie danych
 
-**Propozycja do omówienia.** Oba przyciski na stronie głównej otwierają ten sam widok. Logowanie przez mObywatel i pobranie danych z ZUS są w konkursie symulowane. Przez całą ścieżkę widoczne jest oznaczenie „Wersja demonstracyjna”. [Opis zadania, s. 12–15](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
+**Uzgodniony przebieg.** Oba przyciski „Sprawdź moją sytuację” otwierają ekran logowania przez mObywatel. Po potwierdzeniu automatycznie wczytują się przykładowe dane z ZUS. Na tym etapie kończą się obecne ustalenia. Logowanie i pobieranie danych są symulowane. Przez całą ścieżkę widoczne jest oznaczenie „Wersja demonstracyjna”. [Opis zadania, s. 12–15](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
 
 ### 1. Logowanie przez mObywatel
 
@@ -127,9 +127,9 @@ Na środku ekranu znajduje się jedna karta z nagłówkiem **„Zaloguj się prz
 
 ### 2. Automatyczne wczytanie danych
 
-Po potwierdzeniu przewodnik wyświetla „Wczytujemy przykładowe dane z ZUS…”. Gdy dane profilu są gotowe, od razu otwiera podsumowanie. Jeśli wczytanie się nie powiedzie, rodzic pozostaje zalogowany w demo i ma do wyboru **„Spróbuj ponownie”** lub **„Wpisz dane samodzielnie”**.
+Po potwierdzeniu przewodnik wyświetla „Wczytujemy przykładowe dane z ZUS…”. Jeśli wczytanie się nie powiedzie, rodzic pozostaje zalogowany w demo i ma do wyboru **„Spróbuj ponownie”** lub **„Wpisz dane samodzielnie”**.
 
-### 3. Pierwszy widok po wczytaniu — „Twoja sytuacja”
+## Szkic do późniejszego omówienia — pierwszy widok po wczytaniu danych
 
 Najpierw pokazujemy krótką kartę **„Dane z ZUS · przykład”**. W domyślnym fikcyjnym profilu pracownika widać trzy pozycje: „Ubezpieczenie chorobowe — aktywne”, „Tytuł ubezpieczenia — umowa o pracę” oraz „Początek okresu ubezpieczenia — 1 marca 2025 r.”. Akcja **„Uzupełnij lub popraw dane”** pozwala podać własny wariant na potrzeby symulacji. Wartości wpisane ręcznie są oznaczone jako „Podane przez Ciebie”.
 
