@@ -35,3 +35,17 @@
 - **Ręczna poprawka.** Rodzic może wybrać „Zmień” przy konkretnej wartości i poprawić ją w formularzu. Kolejne pytanie Zusika uwzględnia aktualną wartość szkicu. Zatwierdzenie gotowego dokumentu i jego przekazanie mają osobne działania. [Wiersz z akcją Change w GOV.UK](https://design-system.service.gov.uk/patterns/check-answers/)
 
 **Scena do przeklikania.** Rodzic otwiera wniosek Oli i klika zaproszenie. Zusik pyta o początek urlopu. Po odpowiedzi „17 czerwca” ta data pojawia się w polu „Początek urlopu”. Rodzic wybiera przy nim „Zmień” i wpisuje 18 czerwca. Przy kolejnym pytaniu o początek urlopu odpowiedź Zusika ma być zgodna z wartością 18 czerwca. Maciej wykorzystuje tę scenę przy szkicu, a Nikodem może pokazać w jednym kadrze rozmowę i efekt poprawki.
+
+### Kolor i ruch w rozmowie
+
+Wartości do pierwszej próby w makiecie. [Wspólna paleta i fokus klawiatury](../DESIGN.md)
+
+| Moment | Wygląd i zachowanie czatu |
+| --- | --- |
+| Rodzic wysyła wiadomość | Jasnozielony dymek (#E6F3E9) z ciemnozielonym tekstem (#176343) pojawia się po prawej. Przez 150 ms nabiera krycia i przesuwa się o 4 px w górę. |
+| Zusik pracuje | Na obrysie pola pisania biegnie zielony akcent (#009C44). Zmiana opisu czynności w zwiniętym nagłówku ma krótkie przenikanie w miejscu. Rodzic może czytać wcześniejsze wiadomości na tej samej wysokości. |
+| Zusik odpowiada | Tekst odpowiedzi jest ciemny (#21342D) na bieli. Potwierdzoną zmianę poprzedza zielony znak ✓, a następujące po niej pytanie jest pogrubione w osobnym wierszu. Dwie sugestie pojawiają się razem po zakończeniu odpowiedzi. |
+| Rodzic sprawdza źródło albo szczegóły | Źródło z RAG ma jasnoniebieskie tło (#E8F2F9) i podkreślony link (#1E5479). Rozwinięcie przebiegu płynnie odsłania kroki pod nagłówkiem przez około 160 ms. Fokus pozostaje przy przycisku rozwijania. |
+| Operacja się nie udała | Obrys pracy gaśnie. Przy wiadomości pojawia się powód błędu (#9E3039 na #FDEDEF) i dostępna czynność, np. „Spróbuj ponownie”. |
+
+Przy ograniczonym ruchu od razu pokazujemy końcową treść, statyczny obrys i podpis stanu. Nowe wiadomości zachowują pozycję przewijania, gdy rodzic czyta starszy fragment rozmowy.
