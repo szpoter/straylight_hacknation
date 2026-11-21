@@ -1,7 +1,7 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { relevantFragment } from "../rag/relevance";
-import { extractiveAnswer } from "../rag/excerpt";
+import { extractiveAnswer, needsStatutoryText } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
@@ -117,9 +117,10 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
 
   const { answer, report } = validateAnswer(corpus, fragments, generated.output);
   trace.report = report;
-  if (answer.status === "insufficient_evidence") {
+  if (answer.status === "insufficient_evidence" || (answer.status === "answered" && needsStatutoryText(projected, answer))) {
     const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
     if (quote) return { answer: quote, trace };
+    if (answer.status === "answered") return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
   }
   return { answer, trace };
 }

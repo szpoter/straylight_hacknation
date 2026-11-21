@@ -99,6 +99,21 @@ describe("public knowledge partitions", () => {
     expect(result.answer.claims[0].text).toBe(f.sourceText);
   });
 
+  it("replaces a paraphrase turning the post-coverage exception into a universal condition", async () => {
+    const ordinary = corpus.fragments.get("uz-art6-ust1")!;
+    const later = corpus.fragments.get("uz-art7")!;
+    const result = await answerQuestion({
+      corpus, selectCorpus: loadCorpus,
+      search: { search: async () => ({ status: "ok", ms: 0, hits: [ordinary,later].map(f => ({logicalId:f.logicalId,fragmentSha256:f.fragmentSha256,score:0.9})) }) },
+      generate: async () => ({ status:"ok", ms:0, model:"test", output:{ status:"answered", message:"", claims:[{
+        text:"Niezdolność do pracy musi powstać po ustaniu ubezpieczenia.",
+        evidence:[{id:later.logicalId,quote:"po ustaniu tytułu ubezpieczenia chorobowego"}],
+      }] } }),
+    }, "Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego?");
+    expect(result.answer.claims.map(c=>c.text)).toEqual([ordinary.sourceText, later.sourceText]);
+    expect(result.answer.message).toContain("Cytuję");
+  });
+
   it("drops an invented number and a verdict hidden in an uncited abstention message", () => {
     const fragment = corpus.fragments.get("uz-art6-ust1")!;
     const model = validateAnswer(corpus, [fragment], {
