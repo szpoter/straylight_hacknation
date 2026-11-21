@@ -1,0 +1,25 @@
+{
+  "corpusVersion": "programy-2026-11-v1",
+  "locale": "pl",
+  "description": "Katalog świadczeń rodzinnych ZUS. Informacje o programach i sposobie składania wniosków. Indywidualna kwalifikacja wymaga zweryfikowania szczegółowych warunków.",
+  "verifiedAt": "2026-11-21",
+  "fragmentsFile": "fragments.jsonl",
+  "expectedFragments": 3,
+  "documents": [
+    {
+      "id": "katalog-zus",
+      "title": "Świadczenia dla rodziny z ZUS",
+      "shortTitle": "ZUS, Świadczenia dla rodziny",
+      "authority": "zus_guidance",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "sourceType": "html",
+      "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin",
+      "landingUrl": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin",
+      "retrievedAt": "2026-11-21",
+      "sourceSha256": "2f601a9fa512698c92f50d34b15f234a5e25944229db2c97594cc3200947807a",
+      "validFrom": null,
+      "validTo": null,
+      "versionNote": "Katalog opublikowany 1 października 2024 r. Stan zapisanego źródła 21 listopada 2026 r. Strona przeglądowa programów."
+    }
+  ]
+}

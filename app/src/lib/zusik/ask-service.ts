@@ -1,6 +1,8 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
-import { validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
-import { excludedTopics, expandQuery, explicitLocatorKeys, sanitizeQuestion, scopeGate } from "../rag/query";
+import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
+import { extractiveAnswer } from "../rag/excerpt";
+import { publicQuestion, type PublicQuestion } from "../rag/public-query";
+import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
 import type { CaseStore } from "./case-store";
 import type { TurnStore } from "./turn-store";
@@ -11,8 +13,9 @@ export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Sprób
 export interface AnswerDeps {
   corpus: Corpus;
   search: KnowledgeSearch;
+  selectCorpus?(name: PublicQuestion["corpus"]): Corpus;
   /** Bielik via Sherlock. Receives only the sanitised question and public fragments. */
-  generate(question: string, evidence: Fragment[]): Promise<GenerationResult>;
+  generate(question: string, evidence: Fragment[], corpus: Corpus): Promise<GenerationResult>;
   /** Case date for validity checks (YYYY-MM-DD). */
   asOf?: () => string;
 }
@@ -37,8 +40,10 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 /** Question → scope gate → privacy rewrite → search → evidence → Bielik → validation. */
 export async function answerQuestion(deps: AnswerDeps, question: string): Promise<{ answer: AskAnswer; trace: AnswerTrace }> {
-  const version = deps.corpus.manifest.corpusVersion;
-  const sanitized = sanitizeQuestion(question);
+  const projected = publicQuestion(question);
+  const corpus = projected && deps.selectCorpus ? deps.selectCorpus(projected.corpus) : deps.corpus;
+  const version = corpus.manifest.corpusVersion;
+  const sanitized = projected?.question ?? "";
   const trace: AnswerTrace = {
     gate: null,
     sanitized,
@@ -61,21 +66,27 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
     corpusVersion: version,
   });
 
-  const gate = scopeGate(question);
+  // The family-program catalogue supports general 800+ information.
+  const gate = projected?.corpus === "oferta" && deps.selectCorpus ? null : scopeGate(question);
   if (gate) {
     trace.gate = gate.kind;
     return { answer: plain(gate.kind === "amount" ? "insufficient_evidence" : "needs_clarification", gate.message), trace };
   }
 
-  trace.expanded = expandQuery(sanitized);
+  if (projected?.clarify) {
+    trace.gate = "clarify";
+    return { answer: plain("needs_clarification", projected.clarify), trace };
+  }
+  if (!projected) return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
+  trace.expanded = projected.corpus === "marta" ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   const found = await deps.search.search({ query: sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
   trace.search = found.status;
   if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   trace.vectorHits = found.hits;
 
-  const evidence = assembleEvidence(deps.corpus, found.hits, {
-    locatorKeys: explicitLocatorKeys(question),
+  const evidence = assembleEvidence(corpus, found.hits, {
+    locatorKeys: projected.locators ?? explicitLocatorKeys(question),
     excludeTopics: excludedTopics(question),
     asOf: (deps.asOf ?? today)(),
   });
@@ -83,19 +94,27 @@ export async function answerQuestion(deps: AnswerDeps, question: string): Promis
   const fragments = evidence.items.map((i) => i.fragment);
   trace.evidenceIds = fragments.map((f) => f.logicalId);
   if (fragments.length === 0) {
-    const { answer } = validateAnswer(deps.corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
+    const { answer } = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
     return { answer, trace };
   }
 
   trace.calls.sherlock += 1;
-  const generated = await deps.generate(sanitized, fragments);
+  const generated = await deps.generate(sanitized, fragments, corpus);
   trace.model = generated.status;
   trace.modelMs = generated.ms;
   trace.finishReason = generated.finishReason ?? null;
-  if (generated.status !== "ok" || !generated.output) return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
+  if (generated.status !== "ok" || !generated.output) {
+    // An unusable generation can still leave an exact, reviewed statute already retrieved.
+    const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
+    return { answer: quote ?? plain("unavailable", UNAVAILABLE_MESSAGE), trace };
+  }
 
-  const { answer, report } = validateAnswer(deps.corpus, fragments, generated.output);
+  const { answer, report } = validateAnswer(corpus, fragments, generated.output);
   trace.report = report;
+  if (answer.status === "insufficient_evidence") {
+    const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
+    if (quote) return { answer: quote, trace };
+  }
   return { answer, trace };
 }
 

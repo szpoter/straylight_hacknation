@@ -151,11 +151,12 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
 
     it.each([
       ["Qdrant error", { search: { status: "error", hits: [], ms: 5 } as VectorSearchResult }],
-      ["Bielik timeout", { model: { status: "timeout", output: null, model: "bielik-test", ms: 18000 } as GenerationResult }],
-      ["Bielik invalid JSON", { model: { status: "invalid_json", output: null, model: "bielik-test", ms: 900 } as GenerationResult }],
+      ["Bielik timeout without an applicable reviewed excerpt", { model: { status: "timeout", output: null, model: "bielik-test", ms: 18000 } as GenerationResult }],
+      ["Bielik invalid JSON without an applicable reviewed excerpt", { model: { status: "invalid_json", output: null, model: "bielik-test", ms: 900 } as GenerationResult }],
     ])("%s → 503 unavailable, nothing saved, retry with same id works", async (_name, failure) => {
       const w = world(failure);
-      const res = await w.ask().ask("s", Q_ODPIS, "req-outage-01");
+      const question = _name.includes("without an applicable") ? "Czy mogę wysłać to elektronicznie?" : Q_ODPIS;
+      const res = await w.ask().ask("s", question, "req-outage-01");
       expect(res.status).toBe(503);
       expect(res.turn).toMatchObject({ status: "unavailable", message: UNAVAILABLE_MESSAGE, claims: [] });
       const threadId = (await w.store.findBySession("s"))!.threadId;
@@ -168,7 +169,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
         search: { search: async () => ({ status: "ok", hits: [hit("rozp-2025-322-par15-ust2-pkt1")], ms: 3 }) },
         generate: async () => ({ status: "ok", output: ODPIS_MODEL, model: "bielik-test", ms: 3 }),
         asOf: () => "2026-11-21",
-      }).ask("s", Q_ODPIS, "req-outage-01");
+      }).ask("s", question, "req-outage-01");
       expect(retry.status).toBe(200);
       expect(retry.turn!.status).toBe("answered");
     });

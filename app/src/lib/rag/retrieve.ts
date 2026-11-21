@@ -128,6 +128,12 @@ export function assembleEvidence(
     items.push({ fragment: f, via, score });
   };
 
+  // An empty remote partition (or only stale hashes) cannot substantiate a local anchor.
+  if (!hits.some((hit) => {
+    const fragment = corpus.fragments.get(hit.logicalId);
+    return usable(fragment) && fragment.fragmentSha256 === hit.fragmentSha256;
+  })) return { vectorIds: [], items: [] };
+
   const keys = new Set(options.locatorKeys ?? []);
   if (keys.size) {
     for (const f of corpus.fragments.values()) {

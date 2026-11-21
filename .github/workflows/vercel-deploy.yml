@@ -42,6 +42,14 @@ jobs:
         with:
           node-version: 24
 
+      - name: Verify agent, OCR, form exports and grounded answers
+        working-directory: app
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run lint
+          npm test
+
       - name: Install Vercel CLI
         run: npm install --global vercel@65.11.0
 
@@ -74,3 +82,8 @@ jobs:
           echo "$label: $url"
           echo "### $label: $url" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit \`${GITHUB_SHA::7}\` na \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Exercise the deployed production agent with synthetic cases
+        if: github.ref == 'refs/heads/main'
+        working-directory: app
+        run: npm run zusik:acceptance -- https://straylight-hacknation.vercel.app

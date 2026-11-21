@@ -16,7 +16,11 @@ import { DEFAULT_EMBED_MODEL } from "../src/lib/zusik/config";
 import { corpusDigest, embeddingText, pointId } from "../src/lib/rag/corpus";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 
-const OP = "zusik:import-marta";
+// Explicit destination is useful when a deployment has its own collection-scoped reader.
+const corpusName = process.argv.find((arg) => arg.startsWith("--corpus="))?.slice(9) ?? "marta";
+if (!["marta", "publiczne", "oferta"].includes(corpusName)) throw new Error("Unknown public corpus");
+const collectionOverride = process.argv.find((arg) => arg.startsWith("--collection="))?.slice(13);
+const OP = `zusik:import-${corpusName}`;
 const INDEXED_FIELDS = ["corpusVersion", "logicalId", "topic"] as const;
 
 function env(name: string, fallback?: string): string {
@@ -40,13 +44,13 @@ type ScrollResponse = {
 };
 
 async function main() {
-  const corpus = loadCorpus("marta");
+  const corpus = loadCorpus(corpusName);
   const version = corpus.manifest.corpusVersion;
   console.log(`${OP}: manifest ${version} OK · ${corpus.documents.size} documents · ${corpus.fragments.size} units · digest ${corpusDigest(corpus).slice(0, 16)}`);
 
   const url = env("QDRANT_URL").replace(/\/$/, "");
   const writeKey = env("QDRANT_WRITE_KEY");
-  const collection = env("QDRANT_KNOWLEDGE_COLLECTION", "zusik_marta_v1");
+  const collection = collectionOverride || (process.env.QDRANT_KNOWLEDGE_READ_KEY && process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim()) || env("QDRANT_COLLECTION");
   const model = env("QDRANT_EMBED_MODEL", DEFAULT_EMBED_MODEL);
   const headers = { "content-type": "application/json", "api-key": writeKey };
   const base = `${url}/collections/${encodeURIComponent(collection)}`;
@@ -94,7 +98,7 @@ async function main() {
   console.log(`${OP}: before import: ${before.size} points of ${version}`);
 
   // 5. one batch, stable ids, wait=true
-  const points = [...corpus.fragments.values()].map((f) => {
+  const points = [...corpus.fragments.values()].filter((f) => !before.has(f.logicalId)).map((f) => {
     const doc = corpus.documents.get(f.documentId)!;
     return {
       id: pointId(version, f.logicalId),
@@ -117,9 +121,14 @@ async function main() {
     };
   });
   const started = Date.now();
-  const upsert = await fetch(`${base}/points?wait=true`, { method: "PUT", headers, body: JSON.stringify({ points }) });
-  if (!upsert.ok) throw new Error(`upsert HTTP ${upsert.status}: ${(await upsert.text()).slice(0, 300)}`);
-  console.log(`${OP}: upserted ${points.length} points in ${Date.now() - started} ms`);
+  const batchSize = 16;
+  for (let start = 0; start < points.length; start += batchSize) {
+    const batch = points.slice(start, start + batchSize);
+    const upsert = await fetch(`${base}/points?wait=true`, { method: "PUT", headers, body: JSON.stringify({ points: batch }), signal: AbortSignal.timeout(90_000) });
+    if (!upsert.ok) throw new Error(`upsert HTTP ${upsert.status}, batch ${start / batchSize + 1}`);
+    console.log(`${OP}: ${start + batch.length}/${points.length} new points`);
+  }
+  console.log(`${OP}: upserted ${points.length} new points in ${Date.now() - started} ms`);
 
   // 6. read back and compare
   const after = await readVersion(base, headers, versionFilter);
@@ -129,7 +138,7 @@ async function main() {
   const remoteDigest = corpusDigest({ ...corpus, fragments: new Map([...after].map(([id, hash]) => [id, { ...corpus.fragments.get(id)!, fragmentSha256: hash }])) });
   console.log(`${OP}: read-back ${after.size} points · ids+hashes identical · remote digest ${remoteDigest.slice(0, 16)}`);
 
-  await checkAppKey(base, version, model);
+  await checkAppKey(base, version, model, collection);
   console.log(`${OP}: OK · ${version} in ${collection}`);
 }
 
@@ -153,8 +162,8 @@ async function readVersion(base: string, headers: Record<string, string>, filter
 }
 
 /** The app key must read this collection and must not be able to write it. */
-async function checkAppKey(base: string, version: string, model: string) {
-  const readKey = process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim();
+async function checkAppKey(base: string, version: string, model: string, collection: string) {
+  const readKey = collection === process.env.QDRANT_KNOWLEDGE_COLLECTION ? process.env.QDRANT_KNOWLEDGE_READ_KEY : collection === process.env.QDRANT_COLLECTION ? process.env.QDRANT_READ_KEY : undefined;
   if (!readKey) {
     console.log(`${OP}: QDRANT_KNOWLEDGE_READ_KEY not set — app key scope not checked`);
     return;

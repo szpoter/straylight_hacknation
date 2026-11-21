@@ -16,16 +16,17 @@ import s from "./kamil.module.css";
  * <ChatStep>, <DocumentStep>, <ResultStep>, <ZamStep> once its layout is ready.
  */
 export function KamilWorkspace() {
-  const { view, busy, error, send, clearError, reload } = useKamilCase();
+  const { view, documentCache, busy, error, send, clearError, reload } = useKamilCase();
   const [pages, setPages] = useState<PageImage[] | null>(null);
   const [reading, setReading] = useState<string | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPages().then((stored) => {
-      if (stored) setPages(stored.pages);
-    });
-  }, []);
+    if (!documentCache) return;
+    let active = true;
+    loadPages(documentCache).then(stored => { if (active) setPages(stored?.pages ?? null); });
+    return () => { active = false; };
+  }, [documentCache]);
 
   const onFile = async (file: File) => {
     setReadError(null);
@@ -38,7 +39,7 @@ export function KamilWorkspace() {
         const saved = await send({ type: "set_candidates", candidates: read.candidates });
         if (saved) {
           setPages(read.pages);
-          await savePages(read.fileName, read.pages);
+          await savePages(documentCache, read.fileName, read.pages);
         }
       }
     } catch {
@@ -87,7 +88,7 @@ export function KamilWorkspace() {
             onClick={async () => {
               if (!(await send({ type: "reset" }))) return;
               await send({ type: "load_profile" });
-              await clearPages();
+              await clearPages(documentCache);
               setPages(null);
             }}
           >
