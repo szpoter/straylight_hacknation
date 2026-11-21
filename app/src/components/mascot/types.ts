@@ -23,6 +23,8 @@ export type BabelekFrame = "tight" | "reference";
  *                     with every keystroke, calms down when nothing happens, and hops now and then.
  * - "attention":   6. an operation failed; a quick liquid "!", then droops with worried eyes, shakes
  *                     once and points at the fix.
+ * - "folder":         Zusik turns into a closed folder (no index cards); its cover opens a little once,
+ *                     then the folder stands still and only blinks.
  */
 export type ZusikState =
   | "available"
@@ -34,7 +36,8 @@ export type ZusikState =
   | "answering"
   | "confirming"
   | "waiting"
-  | "attention";
+  | "attention"
+  | "folder";
 
 export type BabelekProps = {
   /** Width in px (number) or any CSS length; height follows the viewBox ratio. Omit to size with CSS. */
@@ -71,4 +74,12 @@ export type BabelekProps = {
   typingTick?: number;
   /** Flow in from below (as a drop) when the mascot first appears. */
   entrance?: boolean;
+  /**
+   * "writing" and "calculating": the object does its work one time, then rests (default false: the
+   * work loops for as long as the state lasts). The pencil draws three quick strokes one under another
+   * and stands still on its tip; the calculator runs its digits and lights two or three keys, then keeps
+   * the last value. Afterwards Zusik only blinks. Entering the state again (a state change or a new
+   * mount) plays the work again; with reduced motion there is no work at all.
+   */
+  once?: boolean;
 };

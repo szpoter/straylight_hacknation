@@ -12,26 +12,26 @@ colors:
   on-primary: "#FFFFFF"
   secondary: "#A6D0B8"
   tertiary: "#FCDCAA"
-  background: "#F5FAF7"
-  surface: "#FFFFFF"
+  background: "#FFFFFF"
+  surface: "#F5FAF7"
   on-surface: "#283754"
   on-surface-variant: "#5E697F"
   outline: "#D4D7DD"
 typography:
   display:
-    fontFamily: Literata
+    fontFamily: Domine
     fontSize: 86.4px
     fontWeight: 400
     lineHeight: 0.93
     letterSpacing: -0.02em
   headline:
-    fontFamily: Literata
+    fontFamily: Domine
     fontSize: 48px
     fontWeight: 400
     lineHeight: 1
     letterSpacing: -0.015em
   title:
-    fontFamily: Literata
+    fontFamily: Domine
     fontSize: 24px
     fontWeight: 400
     lineHeight: 1.05
@@ -87,24 +87,24 @@ Na czym się opieram: computed styles i zrzuty z trzech podstron źródła (stro
 
 ## Colors
 
-Paleta źródła ma role, które tu zostały: jasne tło, odcinające się od niego karty, prawie czarny tusz do tekstu i ciemnych bloków, jeden nasycony kolor dla głównej akcji, jego jasna wersja dla dużych bloków i jeden ciepły akcent. Barwy źródła zastąpiono kolorami ZUS w wersji bardziej pastelowej. W odróżnieniu od źródła tło nie jest czysto białe: ma ledwie widoczny odcień zieleni, a biel przeszła na karty.
+Paleta źródła ma role, które tu zostały: jasne tło, odcinające się od niego karty, prawie czarny tusz do tekstu i ciemnych bloków, jeden nasycony kolor dla głównej akcji, jego jasna wersja dla dużych bloków i jeden ciepły akcent. Barwy źródła zastąpiono kolorami ZUS w wersji bardziej pastelowej. Tło strony jest białe, tak jak w źródle. Ledwie widoczny odcień zieleni mają karty i inne powierzchnie.
 
 Kolory ZUS zmierzono w computed styles na zus.pl (strona główna i strona o zasiłku macierzyńskim): zieleń `#007834` (aktywne menu, stopka), ciemny granat `#283754` (kafle nawigacyjne), bursztyn `#FAB856` (przycisk logowania). Oficjalnej księgi znaku nie udało się znaleźć w sieci. Pastelowe wersje to te kolory zmieszane z bielą w sRGB, w proporcji podanej przy każdym z nich.
 
 - **Primary (#1A8648):** zieleń ZUS z 10% bieli. Wypełnienie głównego przycisku. Biały tekst ma na niej kontrast 4,62:1.
 - **Secondary (#A6D0B8):** zieleń ZUS z 65% bieli. Duże pełnoszerokościowe bloki i kafle ilustracji, tak jak w źródle jego jedyny mocny kolor. Tekst w kolorze tuszu ma na niej 6,99:1.
 - **Tertiary (#FCDCAA):** bursztyn ZUS z 50% bieli. Drobne wyróżnienia, etykiety „nowe”, zaznaczenia w tekście.
-- **Background (#F5FAF7):** zieleń ZUS z 96% bieli. Tło strony: nie całkiem białe, z ledwie widocznym zielonym odcieniem.
-- **Surface (#FFFFFF):** biel. Karty, okna-makiety, sekcje naprzemienne i przycisk drugorzędny odcinają się nią od tła.
-- **On-surface (#283754):** ciemny granat ZUS bez zmian, bo tusz musi pozostać ciemny. Tekst, obrysy przycisków drugorzędnych i ciemne pełnoszerokościowe bloki z białym tekstem (11,9:1). Na tle strony ma 11,28:1.
-- **On-surface-variant (#5E697F):** tusz z 25% bieli. Tekst pomocniczy, podpisy, metadane (5,23:1 na tle strony, 5,52:1 na bieli).
+- **Background (#FFFFFF):** biel. Tło strony.
+- **Surface (#F5FAF7):** zieleń ZUS z 96% bieli. Karty, okna-makiety, sekcje naprzemienne i przycisk drugorzędny odcinają się nią od białego tła ledwie widocznym zielonym odcieniem.
+- **On-surface (#283754):** ciemny granat ZUS bez zmian, bo tusz musi pozostać ciemny. Tekst, obrysy przycisków drugorzędnych i ciemne pełnoszerokościowe bloki z białym tekstem (11,9:1). Na powierzchniach ma 11,28:1.
+- **On-surface-variant (#5E697F):** tusz z 25% bieli. Tekst pomocniczy, podpisy, metadane (5,52:1 na białym tle strony, 5,23:1 na powierzchniach).
 - **Outline (#D4D7DD):** tusz z 80% bieli. Cienkie linie oddzielające karty i wiersze. Źródło robi to samo: jego linie to kolor tekstu z przezroczystością 20%.
 
 ## Typography
 
-Dwa kroje o wyraźnie podzielonych rolach. Szeryfowy niesie treść redakcyjną: nagłówki, liczby w cenach, cytaty. Bezszeryfowy obsługuje wszystko, co jest interfejsem: tekst ciągły, przyciski, nawigację, etykiety. Źródło używa licencjonowanych krojów. Literata i Inter to zamienniki wybrane wzrokowo. Oba mają polskie znaki i cyrylicę, więc obsłużą też wersję ukraińską.
+Dwa kroje o wyraźnie podzielonych rolach. Szeryfowy niesie treść redakcyjną: nagłówki, liczby w cenach, cytaty. Bezszeryfowy obsługuje wszystko, co jest interfejsem: tekst ciągły, przyciski, nawigację, etykiety. Źródło używa licencjonowanych krojów (Quadrant i Melange). Domine i Inter to zamienniki wybrane wzrokowo: Domine łamie nagłówek źródła w te same linie i ma podobną szerokość, ciężar i szeryfy. Oba mają polskie znaki. Domine nie ma cyrylicy, więc wersja ukraińska będzie potrzebować osobnego kroju szeryfowego.
 
-- **Display:** nagłówek hero, jeden na stronę. W źródle rośnie płynnie z szerokością okna: od 48 px na telefonie (390 px) do 86,4 px przy 1440 px, przy tej samej interlinii i światłach. Przy polskich wielkich literach z akcentami interlinia 0,93 może być za ciasna, wtedy tendencja jest raczej ku 1,0 niż ku mniejszemu rozmiarowi.
+- **Display:** nagłówek hero, jeden na stronę. W źródle ma 48 px na telefonie, 72 px od 640 px szerokości okna, a od 1024 px 6vw w granicach 68–110 px (86,4 px przy 1440 px), przy tej samej interlinii i światłach. Szerokość nagłówka to 6,5 em. Przy polskich wielkich literach z akcentami interlinia 0,93 może być za ciasna, wtedy tendencja jest raczej ku 1,0 niż ku mniejszemu rozmiarowi.
 - **Headline:** tytuły sekcji. Na telefonie źródło używa 36 px z interlinią 40 px. Pojedyncze hasła-przerywniki bywają znacznie większe (zmierzono 60, 108 i 160 px), ale to wyjątki, a nie stopień skali.
 - **Title:** nagłówki kart, kroków i pytań w FAQ. Duże ceny i cytaty też są szeryfowe, w rozmiarach 30–36 px.
 - **Body:** tekst ciągły. Lead pod nagłówkiem bywa większy (zmierzono 18–22 px), czasem w lżejszej grubości 300.
@@ -126,7 +126,7 @@ Gęstość jest niska. Każda sekcja niesie jedną myśl i często zajmuje mniej
 
 Język kształtów łączy miękkie z prostym. Elementy klikalne mają zwykle kształt pigułki (`full`): przyciski, nawigacja, etykiety, przełączniki. Pól formularzy źródło prawie nie pokazuje, więc ich kształt jest do wyboru. Duże karty i okna-makiety mają 24 px (w źródle także 28 px). Małe karty, tabele i zdjęcia mają 8 px lub mniej. Pełnoszerokościowe bloki koloru nie mają zaokrągleń: są prostymi pasami od krawędzi do krawędzi.
 
-Głębię dają tonalne powierzchnie i linie 1 px w kolorze `outline`, a nie cienie. Delikatny, ledwie widoczny cień pojawia się tylko pod oknami-makietami. Przycisk drugorzędny to biała pigułka z obrysem 1 px w kolorze tuszu. Na telefonie przyciski mają 48 px wysokości zamiast 56. Wypełnienie 24 px w tokenach dotyczy boków, wysokość wynika z tokenu `height`. Przy wielu powtórzonych wezwaniach w dolnej części strony źródło używa też pigułki wypełnionej tuszem z białym tekstem.
+Głębię dają tonalne powierzchnie i linie 1 px w kolorze `outline`, a nie cienie. Delikatny, ledwie widoczny cień pojawia się tylko pod oknami-makietami. Przycisk drugorzędny to pigułka w kolorze `surface` z obrysem 1 px w kolorze tuszu. Na telefonie przyciski mają 48 px wysokości zamiast 56. Wypełnienie 24 px w tokenach dotyczy boków, wysokość wynika z tokenu `height`. Przy wielu powtórzonych wezwaniach w dolnej części strony źródło używa też pigułki wypełnionej tuszem z białym tekstem.
 
 ## Do's and Don'ts
 

@@ -21,6 +21,19 @@
   --color-babelek-shadow: #D1D1D1;   /* ground shadow */
 }
 
+/* DESIGN.md tokens used by the illustrations (components/folder, envelope, illustrations), named as in
+   the app (../app/src/app/globals.css), so the components move over unchanged. */
+:root {
+  --color-primary: #1a8648;
+  --color-on-primary: #ffffff;
+  --color-background: #ffffff;
+  --color-secondary: #a6d0b8;
+  --color-tertiary: #fcdcaa;
+  --color-surface: #f5faf7;
+  --color-on-surface: #283754;
+  --color-outline: #d4d7dd;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

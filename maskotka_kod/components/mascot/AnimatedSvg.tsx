@@ -18,7 +18,7 @@ import { armTurn, bendArm, sagWarp } from "./pose";
 import { BODY_POINTS, BOOK, CALCULATOR, DOT, SHAPES, smoothPath, type ShapeName } from "./shapes";
 import { travelShadow, travelWarp, tuckArm } from "./travel";
 import type { BabelekProps } from "./types";
-import { lookAt, useStateAnimation, usePose } from "./useStateAnimation";
+import { calculatingOnce, lookAt, useStateAnimation, usePose, writingOnce } from "./useStateAnimation";
 
 /* Idle life settings. Distances are in viewBox units (pixels of the 2048 px reference), times in seconds.
    The fluid body has its own settings in fluid.ts, the travelling drop in travel.ts, the shapes in
@@ -51,6 +51,8 @@ const FINE_PIECES = 4;
 const DETAILS = {
   /** They fade in over the last part of the change into the shape. */
   appearFrom: 0.75,
+  /** They are not warped like the body, so they wait until a travelling drop has settled below this `travel`. */
+  settledBelow: 0.3,
   /** A page turns every `cycle` seconds and takes `turn` seconds. */
   page: { cycle: 1.6, turn: 0.7 },
   /** The folder's index cards pop up one after another. */
@@ -74,7 +76,7 @@ type LiveState = {
   face: SVGElement | null;
   stage: SVGElement | null;
   shadow: SVGElement | null;
-  details: Partial<Record<"book" | "folder" | "calculator" | "pencil" | "dot", SVGElement | null>>;
+  details: Partial<Record<"book" | "folder" | "calculator" | "pencil" | "dot" | "closedFolder", SVGElement | null>>;
   page: SVGElement | null;
   cards: SVGElement[];
   digits: SVGElement | null;
@@ -142,6 +144,7 @@ export function AnimatedSvg({
   inviting = false,
   typingTick,
   entrance = false,
+  once = false,
   ...props
 }: AnimatedSvgProps) {
   const [scope, animate] = useAnimate<SVGSVGElement>();
@@ -158,6 +161,10 @@ export function AnimatedSvg({
     stateRef.current = state;
     towardRef.current = toward;
   }, [state, toward]);
+  const onceRef = useRef(once);
+  useEffect(() => {
+    onceRef.current = once;
+  }, [once]);
 
   // hops and the entrance: vertical speed → stretch, landing → squash
   const liftVelocity = useVelocity(pose.lift);
@@ -165,7 +172,7 @@ export function AnimatedSvg({
   const hopTravel = useSpring(hopSpeed, HOP.settle);
   const hopHeading = useVerticalHeading(liftVelocity);
 
-  useStateAnimation({ enabled, state, toward, inviting, animate, pose, lastKeystrokeRef });
+  useStateAnimation({ enabled, state, toward, inviting, animate, pose, lastKeystrokeRef, travel, once });
 
   // a keystroke while waiting: a ripple on the side facing the input
   const firstTick = useRef(typingTick);
@@ -242,7 +249,8 @@ export function AnimatedSvg({
 
     // details of the shape: shown once it has formed, each with its own little motion
     const active = detailOf(shapeName);
-    const visible = smoothstep((shaped - DETAILS.appearFrom) / (1 - DETAILS.appearFrom));
+    const settled = 1 - smoothstep(Math.abs(amount) / DETAILS.settledBelow); // landing straight into a shape
+    const visible = smoothstep((shaped - DETAILS.appearFrom) / (1 - DETAILS.appearFrom)) * settled;
     for (const [name, element] of Object.entries(state.details)) {
       element?.setAttribute("opacity", (name === active ? visible : 0).toFixed(2));
     }
@@ -260,12 +268,14 @@ export function AnimatedSvg({
     }
     if (active === "calculator") {
       const { tick, values, keys } = DETAILS.calculator;
-      const step = Math.floor(time / tick);
+      // with `once`: the digits run one time from when it formed, then the last value stays (calculatingOnce)
+      const oneRun = onceRef.current ? calculatingOnce(since, tick, values.length) : null;
+      const step = oneRun ? oneRun.step : Math.floor(time / tick);
       if (state.digits) state.digits.textContent = values[step % values.length];
       const key = keys[step % keys.length];
       state.press?.setAttribute("cx", String(CALCULATOR.keys.columns[key % 3]));
       state.press?.setAttribute("cy", String(CALCULATOR.keys.rows[Math.floor(key / 3)]));
-      state.press?.setAttribute("opacity", (0.7 * (1 - (time / tick - step))).toFixed(2));
+      state.press?.setAttribute("opacity", (0.7 * (oneRun ? oneRun.press : 1 - (time / tick - step))).toFixed(2));
     }
     if (active === "dot") {
       const drip = smoothstep(since / DETAILS.drip.seconds);
@@ -277,10 +287,9 @@ export function AnimatedSvg({
     const scribble = active === "pencil" ? visible : 0;
     const [sx, sy] = DETAILS.scribble.size;
     const [vx, vy] = DETAILS.scribble.speed;
-    state.stage?.setAttribute(
-      "transform",
-      translate([pose.shift.get() + scribble * sx * Math.sin(vx * time), -lift + scribble * sy * Math.sin(vy * time)]),
-    );
+    // with `once`: three strokes from when it formed, then the pencil stands still (writingOnce)
+    const [wx, wy] = onceRef.current ? writingOnce(since) : [sx * Math.sin(vx * time), sy * Math.sin(vy * time)];
+    state.stage?.setAttribute("transform", translate([pose.shift.get() + scribble * wx, -lift + scribble * wy]));
 
     const travelled = travelShadow(amount, direction);
     const high = 1 - Math.max(0, lift) / 1600; // smaller while hopping
@@ -319,6 +328,8 @@ export function AnimatedSvg({
         calculator: find("detail-calculator"),
         pencil: find("detail-pencil"),
         dot: find("detail-dot"),
+        // the closed folder's cover; it opens from useStateAnimation ("folder")
+        closedFolder: find("detail-closed-folder"),
       },
       page: find("book-page"),
       cards: [...svg.querySelectorAll<SVGElement>("[data-part=folder-card]")],

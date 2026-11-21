@@ -4,7 +4,7 @@
  * until a shape has formed; the frame loop in AnimatedSvg shows and moves them.
  * Only rendered for the animated mascot, so the static drawing stays as it was.
  */
-import { BOOK, CALCULATOR, DOT, FOLDER, PENCIL, pencilPoint } from "./shapes";
+import { BOOK, CALCULATOR, CLOSED_FOLDER, COVER_PATHS, DOT, FOLDER, PENCIL, pencilPoint } from "./shapes";
 import type { Point } from "./geometry";
 
 const fmt = (points: readonly Point[]) => points.map(([x, y]) => `${x} ${y}`).join(" L ");
@@ -116,6 +116,25 @@ export function DetailsFront() {
         opacity={0}
         className="fill-babelek-fill stroke-babelek-rim"
       />
+
+      <ClosedFolderCover />
     </>
+  );
+}
+
+/** The closed folder's cover (state "folder"), with the darker inside that shows when it opens a little. */
+function ClosedFolderCover() {
+  const [x0, x1, y0, y1] = CLOSED_FOLDER.inside;
+  return (
+    <g data-part="detail-closed-folder" opacity={0}>
+      <rect x={x0} y={y0} width={x1 - x0} height={y1 - y0} className="fill-babelek-rim" opacity={0.35} />
+      <path
+        data-part="folder-cover"
+        d={COVER_PATHS.closed}
+        strokeWidth={22}
+        strokeLinejoin="round"
+        className="fill-babelek-fill stroke-babelek-rim"
+      />
+    </g>
   );
 }
