@@ -31,9 +31,9 @@ Na komputerze po lewej znajdują się nagłówek, opis i ciemnozielony przycisk 
 
 **Uzgodnione.** Zusik, maskotka Przewodnika Rodzica, towarzyszy rodzicowi już od Hero. Podczas przewijania podąża za stroną i przy kolejnych sekcjach wyjaśnia, w czym przewodnik może pomóc.
 
-**Proponowany przebieg.** Zusik zaczyna przy krawędzi karty przykładowego planu. Gdy rodzic przewija stronę, maskotka płynnie przesuwa się wzdłuż bocznego marginesu i zatrzymuje przy aktualnie czytanej sekcji. Tam pojawia się jedno krótkie zdanie, które można czytać we własnym tempie. Przewinięcie w górę przywraca komunikat poprzedniej sekcji.
+**Uzgodniony przebieg.** Zusik zaczyna przy krawędzi karty przykładowego planu. Gdy rodzic przewija stronę, maskotka płynnie przesuwa się wzdłuż bocznego marginesu i zatrzymuje przy aktualnie czytanej sekcji. Tam pojawia się jedno krótkie zdanie, które można czytać we własnym tempie. Przewinięcie w górę przywraca komunikat poprzedniej sekcji.
 
-| Miejsce | Proponowana wypowiedź Zusika |
+| Miejsce | Uzgodniona wypowiedź Zusika |
 | --- | --- |
 | Przy podglądzie „Moja sytuacja / Mój plan” | „Spójrz na ten przykład. Tata chce wziąć urlop i od razu widzi, do kiedy złożyć wniosek.” |
 | Przy sytuacjach rodzinnych | „Możesz tu podejrzeć kilka planów. Zobacz, jak różnią się sprawy przed porodem i po narodzinach.” |
@@ -68,12 +68,20 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 
 ## Pod przykładami — pytania rodziców
 
-**Propozycja do omówienia.** Nagłówek **„Co najtrudniej ustalić samodzielnie?”**. Trzy krótkie pary pokazują problem słowami rodzica i konkretną pomoc przewodnika.
+**Propozycja do omówienia.** Nagłówek **„Co najtrudniej ustalić samodzielnie?”**. Każde pytanie stoi obok krótkiego fragmentu przykładowego planu. Odpowiedź jest od razu widoczna, również bez logowania. Na telefonie pokazujemy ją bezpośrednio pod pytaniem.
 
-| Pytanie rodzica | Co pokaże przewodnik |
+| Pytanie na stronie | Co pokazujemy obok na fikcyjnym przykładzie |
 | --- | --- |
-| Czy muszę to złożyć, czy tylko wtedy, gdy chcę skorzystać z urlopu? | Przy każdej sprawie zobaczysz, czy jest obowiązkowa, czy wynika z Twojego wyboru. |
-| Do kogo z tym wnioskiem? | Przy dokumencie znajdziesz adresata, np. pracodawcę, ZUS albo urząd stanu cywilnego. |
-| Od którego dnia mam liczyć termin? | Obok terminu zobaczysz zdarzenie, od którego jest liczony, np. wystawienie karty urodzenia. |
+| Co po narodzinach dziecka muszę załatwić, a co zależy ode mnie? | Dwie pozycje z planu rodzica. „Do załatwienia — zgłoszenie urodzenia” i „Jeśli wybierasz urlop ojcowski — wniosek o urlop”. |
+| Ten wniosek mam złożyć w ZUS czy w pracy? | Fragment karty dokumentu. „Wniosek o urlop ojcowski” i bezpośrednio pod tytułem „Złóż u pracodawcy”. |
+| Chcę zacząć urlop 18 czerwca. Do kiedy złożyć wniosek? | Dwie daty z przykładowego planu pracownika. „11 czerwca — ostatni dzień na złożenie wniosku” i „18 czerwca — początek urlopu ojcowskiego”. Obok znajduje się wyjaśnienie, że termin liczymy wstecz od początku urlopu. [Urlop ojcowski](https://www.gov.pl/web/rodzina/urlop-ojcowski) |
+| Co się zmieni w naszej wypłacie, jeśli podzielimy się opieką? | Porównanie dwóch przykładowych planów. W obu widać, kto w danym okresie opiekuje się dzieckiem, przez ile tygodni i jaka jest szacowana kwota zasiłku dla każdego rodzica. Wartości do demonstracji pochodzą ze sprawdzonego przykładu kalkulatora. |
+| Czy muszę od nowa wpisywać dane do każdego wniosku? | Fragment szkicu z uzupełnionym polem i jednym pytaniem o brakującą datę. Ten przykład prowadzi do sekcji o agencie AI. |
 
-Po sekcji z pytaniami proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do tego samego ekranu logowania. Rodzic może rozpocząć demonstrację także po przeczytaniu przykładów.
+## Pod pytaniami — agent AI pomaga przygotować wniosek
+
+**Planowana funkcja.** Po zalogowaniu agent wykorzysta dostępne dane sprawy i odpowiedzi z rozmowy do przygotowania szkicu. Dopyta o brakujące informacje i decyzje rodzica. Przy pytaniu o zasady wyszuka odpowiedni fragment materiałów ZUS i wskaże źródło. Rodzic będzie mógł poprawić dane i zatwierdzić szkic. W projekcie rozważane są polskie modele PLLuM lub Bielik oraz wyszukiwanie w materiałach ZUS (RAG). [Rozmowa o agencie](thread://01a1f4d5-2dd5-77f0-b878-7bc6bdec55c6?hostId=local)
+
+**Propozycja na stronę.** Nagłówek **„Agent AI pomoże Ci wypełnić wniosek”**. Pod nim gotowy „Przykład rozmowy” obok fragmentu formularza. Agent pyta „Od kiedy chcesz zacząć urlop ojcowski?”. Rodzic odpowiada „Od 18 czerwca”. W szkicu widać pole „Początek urlopu — 18 czerwca”. Podpis „Przed zatwierdzeniem możesz poprawić każde pole” wyjaśnia, co dalej. Przed logowaniem cały przykład jest ilustracją na fikcyjnych danych.
+
+Po przykładzie proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do ekranu demonstracyjnego logowania przez mObywatel.
