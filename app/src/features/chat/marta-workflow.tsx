@@ -119,6 +119,7 @@ function Comparison({ view }: { view: MartaView }) {
           ))}
         </tbody>
       </table>
+      <p className={s.comparisonNote}>Przy urlopach jeden po drugim opieka trwa o {sequential.calendarDays - together.calendarDays} dni dłużej.</p>
       <details>
         <summary>Skąd te kwoty?</summary>
         <p>
@@ -322,7 +323,8 @@ export function MartaInterview({ state, attachment, onAttach }: { state: Case } 
   );
 }
 
-export function MartaDraft({ view, phone }: { view: MartaView | null; phone: boolean }) {
+export type DeadlineSource = {label:string;text:string;url:string};
+export function MartaDraft({ view, phone, source }: { view: MartaView | null; phone: boolean; source?:DeadlineSource }) {
   const selected = view?.selected ? view.variants[view.selected] : null;
   const status = view?.submitted ? "Przekazano w symulacji" : view?.confirmed ? "Zatwierdzony" : "Szkic";
   return (
@@ -332,11 +334,16 @@ export function MartaDraft({ view, phone }: { view: MartaView | null; phone: boo
       <p>
         Do pracodawcy · Studio Lipa <span className={s.badge}>{status}</span>
       </p>
-      {selected && (
-        <p className={s.deadline}>
-          Złóż wniosek do <strong>{date(selected.first.deadline)}</strong>
-        </p>
+      {selected && !view?.submitted && (
+        <div className={s.deadline}>
+          <p>Złóż wniosek do <strong>{date(selected.first.deadline)}</strong></p>
+          {source && <details><summary>Skąd ten termin?</summary>
+            <p>Początek urlopu · {date(selected.first.from)}</p>
+            <blockquote>{source.text}</blockquote><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a>
+          </details>}
+        </div>
       )}
+      {view?.submittedAt && <p className={s.deadline}>Przekazano do Studia Lipa w symulacji · <strong>{date(view.submittedAt.slice(0,10))}</strong></p>}
       {!phone && (
         <dl className={s.summary}>
           {[

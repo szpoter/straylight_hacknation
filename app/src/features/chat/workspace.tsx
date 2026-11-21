@@ -3,7 +3,7 @@
 import { ScenarioNav } from "./scenario-nav";
 import { useRouter } from "next/navigation";
 import { useCaseResource } from "./use-case-resource";
-import { MartaDraft, MartaInterview } from "./marta-workflow";
+import { MartaDraft, MartaInterview, type DeadlineSource } from "./marta-workflow";
 import { martaInput } from "./marta-input";
 import type { MartaView } from "@/lib/marta/types";
 import { flushSync } from "react-dom";
@@ -98,7 +98,7 @@ function caseErrorText(error: CaseError | null): string | null {
   }
 }
 
-export function ZusikWorkspace({ initialChatOpen = false }: { initialChatOpen?: boolean }) {
+export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { initialChatOpen?: boolean; deadlineSource?:DeadlineSource }) {
   const zusik = useZusikCase();
   const router = useRouter();
   const marta = useCaseResource<MartaView>("/api/zusik/marta", initialChatOpen && zusik.view !== null, false);
@@ -268,7 +268,7 @@ export function ZusikWorkspace({ initialChatOpen = false }: { initialChatOpen?: 
             role="region"
             aria-label="Szkic wniosku"
           >
-            {initialChatOpen ? <MartaDraft view={marta.view} phone={formMode === "fragment"} /> : <DraftForm
+            {initialChatOpen ? <MartaDraft source={deadlineSource} view={marta.view} phone={formMode === "fragment"} /> : <DraftForm
               savedChoice={view?.state === "completed" ? view.choice : null}
               pendingChoice={zusik.pendingChoice}
               preview={activePreview}

@@ -200,3 +200,9 @@
     padding: 4px 8px;
   }
 }
+
+.deadline summary { font-size: 14px; color: #534322; cursor:pointer; }
+.deadline details[open] { margin-top: 8px; }
+.deadline blockquote { padding: 8px 0; font-size: 14px; }
+.deadline a { color:#1e5479; font-size:14px; }
+.comparison .comparisonNote { margin-top: 10px; font-size: 14px; }
