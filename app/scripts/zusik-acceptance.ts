@@ -297,6 +297,15 @@ async function testFollowUps(page: Page) {
     }
     history.add(turn.requestId);
   }
+  const control = await page.request.post(origin + "/api/zusik/ask", {
+    headers: await browserHeaders(page),
+    data: { scenario: "chorobowe", requestId: randomUUID(), question: cases[1].question },
+  });
+  assert.equal(control.status(), 200);
+  const result = await control.json();
+  assert.equal(result.turn.status, "needs_clarification", "The same follow-up in an empty case needs a subject");
+  assert.equal(result.turn.citations.length, 0);
+  assert.equal(result.retrieval, null);
 }
 async function testGreetings(page: Page) {
   // Reproduce a cold session while the parent is already typing the first message.
