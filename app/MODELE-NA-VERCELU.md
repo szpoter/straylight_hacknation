@@ -21,3 +21,9 @@ Aplikacja na Vercelu wywołuje jeden wybrany model czatu zgodny z OpenAI Chat Co
 7. Na czas pokazu Mac musi być aktywny, podłączony do zasilania i Internetu, z działającym serwerem i tunelem. Powrót do hostowanego dostawcy wymaga przywrócenia jego adresu, ID i klucza oraz ponownego wdrożenia. Ustawienia tokenu tunelu są ograniczone w kodzie do jednego originu HTTPS.
 
 [Serwer LM Studio](https://lmstudio.ai/docs/developer/core/server) · [Uwierzytelnianie LM Studio](https://lmstudio.ai/docs/developer/core/authentication) · [Tokeny usługowe Cloudflare](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/) · [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+
+## Wariant dla Ollamy już działającej na Macu
+
+Na tym laptopie lokalny Bielik odpowiedział przez OpenAI-compatible API na porcie 11434. Dla tego wariantu skieruj trasę tunelu do `http://127.0.0.1:11434`, ustaw w opcjach originu **HTTP Host Header** na `localhost`. Ogranicz przekazywaną ścieżkę do `^/v1/(models|chat/completions)$` i pozostaw domyślną odpowiedź 404 dla pozostałych ścieżek. Polityka Access ma nadal obejmować cały hostname. Pozwala to wywołać czat bez publikowania interfejsu zarządzania Ollamą. Wartość `SHERLOCK_API_KEY=ollama` zaspokaja klienta SDK; autoryzację zapewnia Cloudflare Access. Ustaw `SHERLOCK_MODEL=SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M` lub `hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M` dla lokalnie sprawdzonego PLLuM. Oba modele mogą być zainstalowane w jednej Ollamie. Zmieniasz tylko ID modelu i wykonujesz nowy deploy.
+
+[OpenAI compatibility w Ollamie](https://docs.ollama.com/api/openai-compatibility) · [Ustawienia originu Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/origin-configuration/)

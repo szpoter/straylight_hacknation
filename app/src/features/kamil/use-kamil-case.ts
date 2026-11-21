@@ -29,6 +29,7 @@ function opKey(): string {
 
 export function useKamilCase() {
   const [view, setView] = useState<KamilView | null>(null);
+  const [documentCache, setDocumentCache] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<CaseError | null>(null);
   const versionRef = useRef(0);
@@ -47,6 +48,8 @@ export function useKamilCase() {
       try {
         const session = await fetch("/api/zusik/session", { ...init, method: "POST" });
         if (!session.ok) throw new Error("network");
+        const { documentCache } = await session.json();
+        if (!controller.signal.aborted) setDocumentCache(documentCache);
         const res = await fetch("/api/kamil", init);
         let body = await res.json() as {view?: KamilView; error?: string};
         if (!res.ok || !body.view) throw new Error(body.error ?? "network");
@@ -111,5 +114,5 @@ export function useKamilCase() {
     [accept],
   );
 
-  return { view, busy, error, send, reload: () => setAttempt(current => current + 1), clearError: () => setError(null) };
+  return { view, documentCache, busy, error, send, reload: () => setAttempt(current => current + 1), clearError: () => setError(null) };
 }
