@@ -125,7 +125,19 @@ Typy: **Obowiązek**, **Na wniosek** („Jeśli chcesz skorzystać”), **Inform
 | **Narodziny** | „Zgłoś urodzenie” (Obowiązek, USC, 21 dni); „Zamów odpis aktu urodzenia” (Na wniosek, symulacja); „Zgłoś dziecko do ubezpieczenia zdrowotnego” (Obowiązek warunkowy); „Wniosek o urlop i zasiłek macierzyński” (g); „Urlop ojcowski” (g); sytuacje szczególne: uzupełniający urlop macierzyński przy wcześniactwie lub hospitalizacji, „Za życiem”, martwe urodzenie lub zgon dziecka z widokiem „Wsparcie” (b, i); badania przesiewowe (Program zdrowotny). |
 | **Po narodzinach** | „Urlop rodzicielski” — pula, części, równocześnie lub kolejno (d); „Drugi rodzic przejmuje część macierzyńskiego” po 14 tygodniach (d); „Łączę urlop rodzicielski z pracą” (c); „Urlop ojcowski” do 12. miesiąca życia dziecka (g); „Powrót do pracy i ochrona przed zwolnieniem” (h); 800+, Aktywny Rodzic, becikowe, wybór POZ, kalendarz szczepień. |
 
-**Do sprawdzenia:** terminy i warunki spraw spoza ZUS (USC, 800+, becikowe, NFZ, POZ) według aktualnych stron gov.pl przed zapisem.
+#### Sprawy spoza ZUS — sprawdzone 21.11.2026
+
+| Sprawa | Ustalenia do karty przystanku | Źródło |
+| --- | --- | --- |
+| Zgłoś urodzenie | USC, 21 dni od wystawienia karty urodzenia, bezpłatnie. Online z profilem zaufanym, e-dowodem lub podpisem kwalifikowanym; od 1.01.2026 sprawy online wymagają adresu do e-Doręczeń. Po 21 dniach imię nadaje kierownik USC. | [gov.pl](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) |
+| Zgłoś dziecko do ubezpieczenia zdrowotnego | Pracownik przez pracodawcę, przedsiębiorca sam na ZUS ZCNA. Termin 7 dni od nadania dziecku numeru PESEL. Rejestracja urodzenia nie zgłasza dziecka automatycznie. | [pacjent.gov.pl](https://pacjent.gov.pl/artykul/jak-ubezpieczyc-czlonka-rodziny) |
+| 800+ | Wniosek do 3 miesięcy od urodzenia daje wypłatę od urodzenia. Wyłącznie elektronicznie: eZUS, mZUS, Emp@tia, bankowość elektroniczna. Wniosek SW-R. | [zus.pl](https://www.zus.pl/en/-/termin-z%C5%82o%C5%BCenia-wniosku-o-800-plus-ma-znaczenie) |
+| Becikowe | 1000 zł, wniosek do 12 miesięcy od urodzenia (po terminie bez rozpoznania). Opieka medyczna od najpóźniej 10. tygodnia ciąży (nie dotyczy opiekunów prawnych, faktycznych i rodziców adopcyjnych). Próg dochodu 1922 zł netto na osobę. | [gov.pl](https://www.gov.pl/web/gov/uzyskaj-becikowe), Dz.U. 2026 poz. 1240, art. 15b |
+| Aktywny Rodzic | „Aktywni rodzice w pracy” 1500 zł (1900 zł przy niepełnosprawności), dziecko 12–35 mies. „Aktywnie w żłobku” do 1500 zł (1900 zł), nie więcej niż opłata, bez przedziału wieku, wypłata do placówki. „Aktywnie w domu” 500 zł, dziecko 12–35 mies. | [gov.pl](https://www.gov.pl/web/rodzina/pytania-i-odpowiedzi---program-aktywny-rodzic) |
+| Wybierz przychodnię dla dziecka | Deklaracja POZ w IKP na koncie dziecka albo w przychodni. | [pacjent.gov.pl](https://pacjent.gov.pl/aktualnosc/wybierz-dziecku-lekarza-rodzinnego) |
+| Badania prenatalne | Wszystkie ciężarne, bez limitu wieku: USG w 11–14 i 18–22+6 tyg. oraz biochemia. Diagnostyka inwazyjna przy spełnieniu kryteriów, ze skierowaniem. | [pacjent.gov.pl](https://pacjent.gov.pl/program-profilaktyczny/program-badan-prenatalnych) |
+| Badania przesiewowe noworodka | Karta mówi ogólnie o programie badań przesiewowych noworodków, bez lat w nazwie: obecny program obejmuje lata 2019–2026, a następny nie jest jeszcze ogłoszony. | [przesiew.imid.med.pl](https://przesiew.imid.med.pl/) |
+| Kalendarz szczepień | Program na 2026 r. | [pacjent.gov.pl](https://pacjent.gov.pl/kalendarz-szczepien-dzieci-i-mlodziezy-na-2026-rok) |
 
 #### Adopcja i niezawodowa piecza zastępcza
 
@@ -188,7 +200,17 @@ Spokojny widok bez animacji, podzielony według sytuacji: strata dziecka lub por
 
 Wejścia: link w onboardingu, przełącznik spokojnego widoku na ścieżce, stopka każdej karty, karta sprawy po podaniu martwego urodzenia, wcześniactwa lub „Za życiem”. Przy stracie aplikacja proponuje przełączenie na ścieżkę wsparcia, a rodzic sam decyduje.
 
-**Do sprawdzenia:** lista 4–6 organizacji z weryfikacją źródeł.
+Organizacje sprawdzone na ich stronach 21.11.2026:
+
+| Organizacja | Pomoc | Dla kogo |
+| --- | --- | --- |
+| [Fundacja Ernesta](https://fundacjaernesta.pl/jak-pomagamy/) | Kierowanie do wsparcia psychologicznego, doradztwo prawne o uprawnieniach, bezpłatna diagnostyka, edukacja | Po poronieniu, martwym urodzeniu, w trudnych sytuacjach okołoporodowych |
+| [Fundacja Gajusz — hospicjum perinatalne](https://gajusz.org.pl/hospicjum-perinatalne/) | Bezpłatna opieka lekarska, położnicza i psychologiczna w ciąży, przy porodzie i po nim | Rodziny dziecka nieuleczalnie chorego przed narodzinami |
+| [Fundacja Warszawskie Hospicjum dla Dzieci](https://hospicjum.waw.pl/) | Hospicjum perinatalne, opieka paliatywna nad noworodkiem, grupy wsparcia w żałobie, konsultacje psychologiczne | Rodzice i rodzeństwo |
+| [Fundacja Wcześniak Rodzice-Rodzicom](https://www.wczesniak.pl/) | Bezpłatny poradnik, wypożyczalnia sprzętu, program mentorski, grupy wsparcia, infolinia | Rodzice wcześniaków |
+| [Fundacja Koalicja dla Wcześniaka](https://koalicjadlawczesniaka.pl/) | Poradniki, informacje o pierwszych dniach i opiece w domu | Rodzice wcześniaków |
+
+Przy każdej organizacji pokazujemy tylko to, co potwierdza jej strona (np. bezpłatność). Stowarzyszenie „Dlaczego” i Fundacja Rodzić po Ludzku wymagają osobnego sprawdzenia, zanim trafią na listę.
 
 ## Pod mapą — najbliższa sprawa i kalkulator
 
@@ -246,14 +268,15 @@ Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodni
 | Urlop macierzyński i na warunkach urlopu macierzyńskiego | 20 / 31 / 33 / 35 / 37 tygodni według liczby dzieci, 100%. Matka wykorzystuje co najmniej 14 tygodni po porodzie, przed porodem najwyżej 6 tygodni. Na warunkach macierzyńskiego nie krócej niż 9 tygodni. |
 | Uzupełniający urlop macierzyński | Tydzień za tydzień hospitalizacji, limit 8 lub 15 tygodni według tygodnia ciąży i masy urodzeniowej, 100%, jednorazowo. |
 | Urlop rodzicielski | 41 tygodni (1 dziecko), 43 (więcej), 65 / 67 przy „Za życiem”, 70%. Po 9 tygodni nieprzenoszalnych dla każdego rodzica. Najwyżej 5 części, do końca roku kalendarzowego, w którym dziecko kończy 6 lat. |
+| Rodzicielski po przyjęciu dziecka (adopcja, piecza niezawodowa) | Jak wyżej: 41 / 43 tygodnie, przy „Za życiem” 65 / 67. Gdy urlop na warunkach urlopu macierzyńskiego wynosi tylko minimalne 9 tygodni (art. 183 § 3 KP), rodzicielski wynosi 38 tygodni, a przy „Za życiem” 62 tygodnie. Przy adopcji nie dłużej niż do 14. roku życia dziecka (art. 1821a § 41–45 KP). |
 | Urlop ojcowski | 2 tygodnie, 100%, jednorazowo lub w dwóch częściach po co najmniej tydzień. Nie zużywa puli rodzicielskiego. |
 | Sposób wypłaty 81,5% | Wniosek do 21 dni po porodzie: 81,5% za macierzyński i rodzicielski, z wyjątkiem 9 tygodni drugiego rodzica (70%). Bez dnia rodzicielskiego w pierwszym roku życia dziecka rodzicielski wynosi 70%, a na wniosek przysługuje wyrównanie macierzyńskiego do 100% (art. 31 ust. 3–4). |
-| Kwota minimalna | Zasiłek niższy od świadczenia rodzicielskiego podnosi się do jego wysokości (art. 31 ust. 3a). |
+| Kwota minimalna | Zasiłek niższy od świadczenia rodzicielskiego (1000 zł miesięcznie, art. 17c ustawy o świadczeniach rodzinnych, sprawdzone 21.11.2026) podnosi się do tej kwoty (art. 31 ust. 3a). |
 | Praca podczas rodzicielskiego | Do połowy etatu. Urlop wydłuża się proporcjonalnie, najwyżej do 82 / 86 tygodni. Zasiłek maleje proporcjonalnie do wymiaru pracy (art. 31 ust. 4a). |
 | Kwota dzienna | 1/30 miesięcznego zasiłku. |
-| Podstawa | Średnia z 12 miesięcy minus 13,71%. Minimalna w 2026 r. około 4 147 zł. Maksymalna dla niebędących pracownikami 20 321,30 zł. |
+| Podstawa | Średnia z 12 miesięcy minus 13,71%. Minimalna w 2026 r. roboczo 4 147,10 zł (4 806 zł − 13,71%, nasze wyliczenie; do potwierdzenia u mentorów ZUS, zgodnie ze specyfikacją panelu administracyjnego). Maksymalna dla niebędących pracownikami 20 321,30 zł. |
 
-**Do sprawdzenia:** kwota świadczenia rodzicielskiego, wymiar rodzicielskiego przy adopcji dziecka z „Za życiem” (KP, art. 1821a), dokładna minimalna podstawa 2026.
+**Do sprawdzenia:** minimalna podstawa 2026 do potwierdzenia u mentorów ZUS ([PYTANIA-MENTORZY-ZUS.md](PYTANIA-MENTORZY-ZUS.md)). Wymiar przy adopcji i pieczy sprawdzony w KP 21.11.2026.
 
 #### Ekran
 
@@ -384,7 +407,7 @@ Przystanki „Informacja” i „Program zdrowotny” nie mają statusu urzędow
 
 Nowa sekcja **„Moje konto w ZUS (symulacja eZUS)”**, tylko do odczytu, ze źródłem i datą pobrania: tytuły i okresy ubezpieczenia, płatnicy, podstawy składek, członkowie rodziny zgłoszeni do ubezpieczenia zdrowotnego, e-ZLA, przyznane świadczenia, stan zadłużenia. „Odśwież dane” symuluje ponowne pobranie.
 
-**„Zapytaj ZUS”** zapisuje wiadomość jako „Wysłano w symulacji” w korespondencji w „Dokumentach i wnioskach”. Nic nie opuszcza aplikacji. Wizualnie odróżnia się od czatu Zusika. Roboczo: bez symulowanej odpowiedzi, z informacją „W prawdziwej usłudze odpowiedź przyjdzie do skrzynki eZUS” (do potwierdzenia).
+**„Zapytaj ZUS”** zapisuje wiadomość jako „Wysłano w symulacji” w korespondencji w „Dokumentach i wnioskach”. Nic nie opuszcza aplikacji. Wizualnie odróżnia się od czatu Zusika. Bez symulowanej odpowiedzi: po wysłaniu rodzic widzi informację „W prawdziwej usłudze odpowiedź przyjdzie do skrzynki eZUS” (uzgodnione 21.11.2026, Maciej).
 
 Podgląd e-ZLA znajduje się w karcie „Zasiłek chorobowy w ciąży”. Zadłużenie przy działalności lub współpracy widać w karcie sprawy zasiłkowej i w tej sekcji, z akcją „Wystaw zaświadczenie (symulacja)”.
 
