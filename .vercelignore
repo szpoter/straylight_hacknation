@@ -1,0 +1,6 @@
+# Vercel buduje tylko app/ (Root Directory). Reszty repo, w tym PDF-ów ze sprawami, nie wysyłamy.
+/*
+!/app
+/app/node_modules
+/app/.next
+/app/.env*

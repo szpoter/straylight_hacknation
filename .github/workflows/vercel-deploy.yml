@@ -1,0 +1,67 @@
+# Deploy na Vercel przy każdym pushu, niezależnie od autora commita.
+#
+# Projekt Vercel jest na planie Hobby z prywatnym repo, więc natywna integracja
+# z GitHubem buduje tylko commity właściciela konta. Ten workflow deployuje tokenem
+# właściciela i usuwa .git przed wysłaniem, żeby Vercel nie zablokował deployu
+# z powodu autora commita. main idzie na produkcję, inne gałęzie na preview.
+#
+# Wymaga sekretu repozytorium VERCEL_TOKEN (token konta właściciela projektu).
+
+name: Vercel deploy
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: team_fZ9QMCOSov7V5gdXroBltQov
+  VERCEL_PROJECT_ID: prj_DuXeWy7ZIfmVwHNM9i1c76hN0oFM
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Brak sekretu VERCEL_TOKEN. Dodaj go w Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@65.11.0
+
+      - name: Remove git metadata
+        run: rm -rf .git
+
+      - name: Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            target="--prod"
+            label="Produkcja"
+          else
+            target=""
+            label="Preview"
+          fi
+          vercel deploy $target --yes --token "$VERCEL_TOKEN" \
+            --meta ciRef="$GITHUB_REF_NAME" \
+            --meta ciSha="$GITHUB_SHA" | tee deploy.txt
+          url=$(grep -oE 'https://[a-z0-9.-]+\.vercel\.app' deploy.txt | head -1)
+          echo "### $label: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit \`${GITHUB_SHA::7}\` na \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
