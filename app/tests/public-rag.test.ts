@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { loadCorpus } from "@/lib/rag/corpus-fs";
 import { citationUrl } from "@/lib/rag/corpus";
+import { validateAnswer } from "@/lib/rag/answer";
 import { publicQuestion } from "@/lib/rag/public-query";
 import { assembleEvidence } from "@/lib/rag/retrieve";
 import { answerQuestion } from "@/lib/zusik/ask-service";
@@ -96,6 +97,17 @@ describe("public knowledge partitions", () => {
     expect(result.answer.status).toBe("answered");
     expect(result.answer.message).toContain("Cytuję");
     expect(result.answer.claims[0].text).toBe(f.sourceText);
+  });
+
+  it("drops an invented number and a verdict hidden in an uncited abstention message", () => {
+    const fragment = corpus.fragments.get("uz-art6-ust1")!;
+    const model = validateAnswer(corpus, [fragment], {
+      status: "answered", message: "", claims: [{ text: "Masz 999 dni ochrony.",
+        evidence: [{ id: fragment.logicalId, quote: "w czasie trwania ubezpieczenia chorobowego" }] }],
+    });
+    expect(model.answer.status).toBe("insufficient_evidence");
+    const no = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "Zasiłek za ten okres Ci nie przysługuje.", claims: [] });
+    expect(no.answer.message).not.toContain("nie przysługuje");
   });
 
   it("preserves conditions or asks for a case when a date or a second title matters", () => {

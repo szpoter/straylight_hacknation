@@ -108,8 +108,11 @@ const OTHER_TOPICS: ReadonlyArray<readonly [RegExp, string]> = [
 export function publicQuestion(input: string): PublicQuestion | null {
   const topic = routeTopic(input);
   const limited = (clarify: string): PublicQuestion => ({ corpus: topic?.corpus ?? "publiczne", question: "", clarify });
-  if (/(?:\d{1,2}[./-]){2}\d{2,4}|20\d{2}-\d{2}-\d{2}|\b(?:19|20)\d{2}\s*(?:r\.|roku)|(?:w|od|do|za)\s+(?:stycz|lut|marc|kwiet|maj|czerwc|lipc|sierp|wrześ|paździer|listop|grud)/iu.test(input)) {
+  if (/(?:\d{1,2}[./-]){2}\d{2,4}|20\d{2}-\d{2}-\d{2}|\b(?:19|20)\d{2}\b|(?:w|od|do|za)\s+(?:stycz|lut|marc|kwiet|maj|czerwc|lipc|sierp|wrześ|paździer|listop|grud)/iu.test(input)) {
     return limited("Czy chodzi Ci o ocenę konkretnego okresu? Wybierz sprawę w panelu, aby sprawdzić daty i dokumenty.");
+  }
+  if (/(?:moje dziecko|mój syn|moja córka|dziecko ma).{0,32}\d+\s*(?:miesię|lat|rok)/iu.test(input) && topic) {
+    return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Wybierz sprawę i potwierdź datę urodzenia.");
   }
   if (/czy (?:mi |nam )?przysługuje|czy (?:mi |nam )?należy się|czy dostanę|czy mam prawo/iu.test(input) &&
       !/800|300|aktywny rodzic/u.test(input) && topic?.corpus === "publiczne") {

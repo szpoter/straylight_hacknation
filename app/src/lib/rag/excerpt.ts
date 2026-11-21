@@ -20,7 +20,7 @@ export function extractiveAnswer(
     [projected.question.startsWith("Kadry mają już odpis"), ["rozp-2025-322-par22", "rozp-2025-322-par15-ust2-pkt1"]],
     [projected.question.startsWith("Ile wcześniej i do kogo"), ["kp-art182-1d-par1"]],
     [projected.question.startsWith("Czy oboje rodzice mogą"), ["kp-art182-1a-par6"]],
-    [projected.question.startsWith("Co wpisać o drugim rodzicu"), ["rozp-2025-322-par15-ust2-pkt2"]],
+    [/^Co (?:wpisać o drugim rodzicu|oświadczyć we wniosku)/u.test(projected.question), ["rozp-2025-322-par15-ust2-pkt2"]],
   ];
   const ids = reviewed.find(([applies]) => applies)?.[1] ?? [];
   if (!ids.length || !ids.some((id) => vectorIds.includes(id))) return null;
