@@ -50,6 +50,12 @@
 
 **Scena do przeklikania.** Po wyborze 17 czerwca 2027 rodzic widzi swoją odpowiedź w rozmowie. Dopiero gdy zapis się powiedzie, Zusik potwierdza zmianę i wyróżnia pole „Początek urlopu” w szkicu Oli. Na komputerze pole widać po lewej, na telefonie nad rozmową. Wybrana data pozostaje czytelna w historii wątku.
 
+### Zatrzymanie odpowiedzi
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Podczas generowania kwadrat Stop zastępuje strzałkę „Wyślij” w tym samym przycisku. Jego etykieta dla czytnika ekranu to „Zatrzymaj odpowiedź”. Po zatrzymaniu wraca strzałka, gaśnie Border Beam pola wiadomości, a dotychczasowy fragment odpowiedzi pozostaje w rozmowie. Bezpośrednio pod nim pojawia się spokojny dopisek „Zatrzymano odpowiedź”, widoczny także na telefonie. [assistant-ui — Stopped run](https://www.assistant-ui.com/elements/stopped-run#freeze-the-words-when-a-stream-stops)
+
+**Scena do przeklikania.** Rodzic naciska Stop po podaniu daty 17 czerwca 2027. Jeśli zapis jest potwierdzony, dopisek brzmi „Zatrzymano odpowiedź · W szkicu zapisano 17 czerwca 2027”. Jeśli wynik jest jeszcze nieznany, dopisek pokazuje „Zatrzymano odpowiedź · Sprawdzam zapis daty…”. Po sprawdzeniu w tym samym miejscu pojawia się wynik zapisu. Jeśli data nie została zapisana, rodzic widzi „Zatrzymano odpowiedź · Data nie została zapisana”. Rodzic może wpisać poprawkę w tej samej rozmowie.
+
 ### Historia rozmów
 
 **Julian · 21 listopada 2026 · Uzgodnione.** „Historia” w nagłówku Zusika otwiera listę w miejscu rozmowy. W widoku dzielonym rodzic nadal widzi formularz po lewej, a na telefonie fragment bieżącej sprawy nad listą. Samo otwarcie historii zachowuje bieżącą sprawę. [Linear Agent — wejście z paska czatu](https://linear.app/docs/linear-agent#chat-history)
