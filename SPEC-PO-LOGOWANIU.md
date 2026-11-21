@@ -125,7 +125,7 @@ Pytania odpowiadają rzeczywistemu stanowi ekranu. Przykładowo przy jednym wari
 
 Zapisany formularz pozostaje w dokumentach roboczych aż do wysłania. Po autoryzacji i wysłaniu do ZUS trafia do dokumentów wysłanych. Elektroniczne urzędowe poświadczenie przedłożenia (UPP) potwierdza wpływ dokumentu. Pisma od ZUS trafiają do skrzynki odbiorczej, a szczegóły obsługi zależą od świadczenia. Przykładowo przy 800+ rodzic może dostać wezwanie z terminem na uzupełnienie. Informacja o przyznaniu i decyzja odmowna są różnymi rodzajami odpowiedzi. [Wysyłanie i odbieranie pism w eZUS](https://bip.zus.pl/web/guest/baza-wiedzy/o-portalu-pue-/w-jaki-sposob-wysylac-do-zus-i-odbierac-pisma-) · [Obsługa wniosków 800+](https://www.zus.pl/portal/pomoc/kub0030.html) · [Zasady 800+](https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/swiadczenie-wychowawcze-800-plus)
 
-### Lista dla rodzica — proponowany układ
+### Lista dla rodzica — uzgodniony podział
 
 Na górze nazwa dziecka oraz dwa widoki: **„Sprawy”** (domyślny) i **„Pliki dziecka”**. W „Sprawach” jeden wiersz odpowiada jednej sprawie. Pod nim w szczegółach znajdują się formularz, załączniki, potwierdzenie i korespondencja. Nazwy grup poniżej to etykiety przewodnika. Każda sprawa jest w jednej grupie, zgodnie z ostatnim zdarzeniem i tym, kto ma wykonać kolejny krok.
 
@@ -146,6 +146,26 @@ Na komputerze wiersz ma tytuł sprawy językiem rodzica, status, odbiorcę, term
 2. **Jedno konkretne pytanie.** Zusik mówi np. „Masz już wpisane dane pracodawcy. Od którego dnia chcesz zacząć urlop?”. Rodzic może odpowiedzieć w rozmowie albo użyć selektora daty. Odpowiedź aktualizuje to samo pole, pokazuje zmienioną wartość i zapisuje postęp. Brakujący załącznik ma nazwę oraz akcję „Dodaj dokument”. Zamknięcie panelu pozwala później wznowić ten sam szkic.
 3. **Sprawdzenie.** Po uzupełnieniu wymaganych pól i załączników sprawa otrzymuje status „Wypełniony · do sprawdzenia”. Rodzic widzi podsumowanie, może poprawić dowolne pole i wybiera „Zatwierdź”. Jeśli dokument obsługuje demonstracyjną wysyłkę, osobna akcja „Wyślij w symulacji” pokazuje odbiorcę. Status „Wysłano w symulacji” pojawia się po potwierdzeniu powodzenia. Przy błędzie zatwierdzony dokument pozostaje dostępny do ponowienia.
 4. **Odpowiedź odbiorcy.** W szczegółach jest historia z datami, np. „Wysłano”, „Potwierdzono wpływ”, „Otrzymano wezwanie”. Po wezwaniu Zusik otwiera pismo i pomaga przygotować wyłącznie wskazane uzupełnienie. Status i termin odczytujemy ze zdarzeń scenariusza demo, a po ręcznym oznaczeniu wyraźnie wskazujemy „Podane przez Ciebie”.
+
+### Po wysłaniu — przebieg jednej sprawy
+
+**Propozycja do omówienia.** „Zobacz przebieg sprawy” otwiera szczegóły. U góry widnieją dziecko, nazwa sprawy, odbiorca i oznaczenie symulacji. Bezpośrednio poniżej znajduje się karta ostatniej potwierdzonej zmiany z datą, odpowiedzią na pytanie **„Czy mam teraz coś zrobić?”** i jednym działaniem. Po potwierdzeniu wpływu może brzmieć „Wniosek dotarł do ZUS. Na razie nic nie musisz robić” z przyciskiem „Zobacz potwierdzenie”. Po nadejściu pisma jej miejsce zajmuje informacja wymagająca uwagi.
+
+**Układ etapów.** Na komputerze proponujemy poziomy pasek etapów, na telefonie pionową listę. Zakończony etap ma znacznik wykonania i datę, bieżący ma podpis „Teraz” i rozwinięte szczegóły, a przy przyszłym widnieje „Przed Tobą”. Wybranie etapu otwiera powiązane dokumenty. Znacznik postępu zmienia się po zdarzeniu w sprawie. Dzięki temu rodzic może zajrzeć do wyniku lub potwierdzenia, zachowując faktyczny status.
+
+| Etap | Co widać po rozwinięciu |
+| --- | --- |
+| **1. Wysłano** | Kiedy i do kogo przekazano wniosek w symulacji, wysłana wersja oraz lista przekazanych załączników. |
+| **2. Potwierdzenie wpływu** | Dla sprawy ZUS po udostępnieniu UPP pokazujemy datę wpływu i „Otwórz potwierdzenie UPP”. Można pobrać oznaczoną jako demonstracyjna kopię. Do tego czasu etykieta brzmi „Oczekujemy na potwierdzenie”. Dla innego odbiorcy etapy wynikają z dostępnego sposobu potwierdzenia. |
+| **3. Przebieg sprawy** | Zdarzenia z datą i autorem. Po wpływie domyślny opis to „Oczekujemy na wiadomość”. „W trakcie rozpatrywania” wymaga takiego statusu w danych sprawy. Każda wymiana „Wezwanie → odpowiedź → potwierdzenie” ma własne wpisy pod tym samym etapem. |
+| **4. Wynik** | Po odebraniu informacji lub decyzji karta pokazuje rzeczywisty wynik scenariusza, datę, oryginalne pismo i ewentualne dalsze kroki zgodne z pouczeniem. Jeżeli wynik wymaga reakcji, rodzic widzi ją także w podsumowaniu. |
+
+### Wezwanie — lista czynności rodzica
+
+1. **Odbierz pismo.** W szczegółach i na liście spraw pojawia się „Nowe pismo do odbioru”. Jeżeli pismo wymaga poświadczenia doręczenia, akcja „Odbierz pismo w demo” symuluje UPD. Po odbiorze wezwania karta pokazuje „Twój krok — uzupełnij dokumenty”, nadawcę, treść pisma i termin zgodny z wezwaniem. Jeśli podano okres liczony od doręczenia, dokładną datę pokazujemy dopiero po ustaleniu daty doręczenia zgodnie z właściwą regułą. [Odbiór pism i poświadczenia w eZUS](https://bip.zus.pl/web/guest/baza-wiedzy/o-portalu-pue-/w-jaki-sposob-wysylac-do-zus-i-odbierac-pisma-)
+2. **Zobacz, czego brakuje.** Przykład fikcyjnej sprawy: „Dołącz zaświadczenie ze szpitala wskazane w piśmie”. Pod spodem krótka lista zadań z tego wezwania. Plik otrzymuje oznaczenie „Dodano do szkicu” po faktycznym dołączeniu. Obok streszczenia stale dostępny jest oryginał pisma.
+3. **„Uzupełnij z Zusikiem”.** Po lewej otwiera się szkic odpowiedzi na konkretne wezwanie, po prawej jego rozmowa. Rodzic dodaje plik z „Plików dziecka” lub z urządzenia, sprawdza adresata i załączniki, a następnie wybiera „Wyślij uzupełnienie w symulacji”. Może wyjść i wznowić ten sam szkic. Wysłany wcześniej wniosek pozostaje dostępny do odczytu. Forma uzupełnienia zależy od rodzaju sprawy. [Przykład obsługi załączników do wniosku 800+](https://www.zus.pl/portal/pomoc/kub0030.html)
+4. **Sprawdź, co dalej.** Po udanej wysyłce na osi pojawia się „Wysłano uzupełnienie”, a potwierdzenie wpływu uzupełnienia trafia do tego wpisu po jego udostępnieniu. Gdy wszystkie wezwania mają wysłaną odpowiedź i brak innych czynności rodzica, sprawa wraca do „Wysłane i w toku”. Błąd wysyłki zachowuje szkic w „Do załatwienia”. Kolejne wezwanie ponownie aktywuje tę samą sprawę. Sam upływ terminu oznaczamy „Termin minął”, a zakończenie sprawy wynika z otrzymanego rozstrzygnięcia.
 
 ## Zakres konkursowy do dalszego rozpisania
 
