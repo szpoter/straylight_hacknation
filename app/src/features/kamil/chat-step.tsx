@@ -1,12 +1,13 @@
 "use client";
 
-
+import chat from "../chat/zusik.module.css";
 import { FIELD_LABELS, type KamilView } from "@/lib/kamil/contract";
 import { formatLong } from "@/lib/rules/dates";
 import { Crop, originText } from "./document-step";
 import type { PageImage } from "./read-document";
 import type { Action } from "./use-kamil-case";
 import s from "./kamil.module.css";
+import type { CaseChatEntry } from "../chat/case-chat-window";
 
 /** Suggestions follow the conversation from TECH-SPEC-AGENT.md, scenario 2. */
 function suggestions(view: KamilView): string[] {
@@ -16,6 +17,29 @@ function suggestions(view: KamilView): string[] {
   if (!view.request?.start) return ["Od 8 grudnia. Jeden tydzień, drugi zostawię na później"];
   if (view.result.status === "eligible" && !view.reminder) return ["Przypomnij mi 4 grudnia", "Jednak od 11 stycznia"];
   return [];
+}
+
+export function kamilEntries(view: KamilView | null): CaseChatEntry[] {
+  if (!view) return [];
+  return view.chat.map(turn => ({
+    id: turn.id,
+    at: turn.at,
+    content: turn.role === "kamil" ? (
+      <div className={chat.userRow}><p className={chat.userBubble}>{turn.text}</p></div>
+    ) : (
+      <div className={chat.aiMessage} data-chat-reply>
+        <p className={s.reply}>{turn.text}</p>
+        {turn.citationIds?.length ? (
+          <p className={s.author}>Źródło: {turn.citationIds.map((id, i) => {
+            const citation = view.citations.find(item => item.id === id);
+            return citation && <span key={id}>{i > 0 && " · "}
+              <a href={citation.url} target="_blank" rel="noreferrer">{citation.title.replace(/^ZUS, /, "")}</a>
+            </span>;
+          })}</p>
+        ) : null}
+      </div>
+    ),
+  }));
 }
 
 interface Props {
@@ -34,43 +58,7 @@ export function ChatStep({ view, pages, busy, send }: Props) {
     : null;
 
   return (
-    <section className={s.card} aria-labelledby="chat-title">
-      <h2 id="chat-title" className={s.cardTitle}>
-        <span className={s.step}>2</span> Rozmowa z Zusikiem
-      </h2>
-      <div className={s.chat} role="log" aria-live="polite" aria-label="Rozmowa">
-        {view.chat.length === 0 && (
-          <p className={s.bubbleZusik}>
-            Cześć, Kamil. Zapytaj o zasiłek za okres ojcowski. Daty i terminy liczy kod, ja je wyjaśniam i podaję źródło.
-          </p>
-        )}
-        {view.chat.map((turn) =>
-          turn.role === "kamil" ? (
-            <p key={turn.id} className={s.bubbleKamil}>
-              {turn.text}
-            </p>
-          ) : (
-            <div key={turn.id} className={s.bubbleZusik} data-chat-reply>
-              <p>{turn.text}</p>
-              {turn.citationIds && turn.citationIds.length > 0 && (
-                <p className={s.author}>
-                  Źródło:{" "}
-                  {turn.citationIds.map((id, i) => {
-                    const c = view.citations.find((x) => x.id === id);
-                    return c ? (
-                      <span key={id}>
-                        {i > 0 && " · "}
-                        <a href={`#src-${id}`}>{c.title.replace(/^ZUS, /, "")}</a>
-                      </span>
-                    ) : null;
-                  })}
-                </p>
-              )}
-            </div>
-          ),
-        )}
-      </div>
-
+    <>
       {conflict && (
         <div className={s.conflict} role="group" aria-labelledby="conflict-title">
           <p id="conflict-title">
@@ -117,6 +105,6 @@ export function ChatStep({ view, pages, busy, send }: Props) {
           </button>
         ))}
       </div>
-    </section>
+    </>
   );
 }

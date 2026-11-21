@@ -1001,6 +1001,7 @@
   align-self: stretch;
   border-inline: 1px solid var(--outline);
 }
+.caseActions { margin: 0; padding: 0; min-width: 0; border: 0; }
 .caseWindow summary { cursor: pointer; }
 .caseWindow .chatHead { position: relative; z-index: 2; }
 
