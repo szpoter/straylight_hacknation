@@ -2,59 +2,59 @@
   {
     "id": "q01",
     "question": "Czy przez cztery tygodnie możemy być w domu razem?",
-    "sanitized": "Czy przez cztery tygodnie możemy być w domu razem?",
+    "sanitized": "Czy oboje rodzice mogą być jednocześnie na urlopie rodzicielskim w tych samych tygodniach?",
     "top": [
-      {
-        "logicalId": "kp-art182-1a-par5",
-        "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
-        "score": 0.8333334
-      },
       {
         "logicalId": "kp-art182-1a-par6",
         "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
-        "score": 0.5
+        "score": 1
       },
       {
-        "logicalId": "kp-art182-1a-par4",
-        "fragmentSha256": "2384b9e03ec1ae4a9a04202271ef13f977a96cd369c6a64aaa875aa0285d9ccb",
-        "score": 0.34285715
+        "logicalId": "mrpips-dzielenie-jednoczesnie",
+        "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+        "score": 0.5833334
       },
       {
-        "logicalId": "zus-przyklad-podzialu",
-        "fragmentSha256": "a599162339021b6e176458a60c7c523e815671604d35ad4282aecf58a8c2173f",
-        "score": 0.33333334
+        "logicalId": "mrpips-dzielenie-zasilek",
+        "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+        "score": 0.53333336
+      },
+      {
+        "logicalId": "kp-art182-1a-par7",
+        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+        "score": 0.4166667
       },
       {
         "logicalId": "mrpips-nieprzenoszalna",
         "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
-        "score": 0.2916667
+        "score": 0.34285715
       }
     ],
     "evidence": [
-      "kp-art182-1a-par5",
-      "kp-art182-1a-par4",
       "kp-art182-1a-par6",
       "kp-art182-1a-par1",
-      "zus-przyklad-podzialu"
+      "kp-art182-1a-par7",
+      "kp-art182-1a-par4",
+      "kp-art182-1a-par5"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Możesz być w domu razem z dzieckiem przez cztery tygodnie, korzystając z urlopu rodzicielskiego, o ile oboje rodzice skorzystają z urlopu jednocześnie, zgodnie z art. 182¹a § 6 Kodeksu pracy.",
+          "text": "Oboje rodzice mogą jednocześnie korzystać z urlopu rodzicielskiego w tych samych tygodniach, ale łączny wymiar urlopu nie może przekroczyć wymiaru określonego w art. 182¹a § 1 lub 2 Kodeksu pracy.",
           "citationIds": [
             "c1"
           ]
         },
         {
-          "text": "Urlop rodzicielski może być wykorzystany przez oboje rodziców jednocześnie, a łączny wymiar urlopu nie może przekroczyć wymiaru określonego w art. 182¹a § 1 lub 2 Kodeksu pracy.",
+          "text": "Wymiar urlopu rodzicielskiego wynosi do 41 tygodni lub 43 tygodni, w zależności od przypadku, zgodnie z art. 182¹a § 1 Kodeksu pracy.",
           "citationIds": [
             "c2"
           ]
         },
         {
-          "text": "Każdy z rodziców ma prawo do wyłącznych 9 tygodni urlopu rodzicielskiego, które nie mogą być przeniesione na drugiego rodzica, zgodnie z art. 182¹a § 4 Kodeksu pracy.",
+          "text": "Każdemu z rodziców przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego, które nie może być przeniesione na drugiego rodzica, zgodnie z art. 182¹a § 4 Kodeksu pracy.",
           "citationIds": [
             "c3"
           ]
@@ -67,7 +67,7 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹a § 6",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "Z urlopu rodzicielskiego mogą jednocześnie korzystać oboje pracownicy – rodzice dziecka.",
+          "quote": "§ 6. Z urlopu rodzicielskiego mogą jednocześnie korzystać oboje pracownicy – rodzice dziecka. W takim przypadku łączny wymiar urlopu rodzicielskiego nie może przekraczać wymiaru, o którym mowa w § 1 albo 2.",
           "headingPath": [],
           "page": 66,
           "authority": "statute",
@@ -75,11 +75,11 @@
         },
         {
           "id": "c2",
-          "fragmentId": "kp-art182-1a-par6",
+          "fragmentId": "kp-art182-1a-par1",
           "title": "Kodeks pracy",
-          "locator": "art. 182¹a § 6",
+          "locator": "art. 182¹a § 1",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "W takim przypadku łączny wymiar urlopu rodzicielskiego nie może przekraczać wymiaru, o którym mowa w § 1 albo 2.",
+          "quote": "Art. 182¹a. § 1. Pracownicy – rodzice dziecka mają prawo do urlopu rodzicielskiego w celu sprawowania opieki nad dzieckiem w wymiarze do: 1) 41 tygodni – w przypadku, o którym mowa w art. 180 § 1 pkt 1; 2) 43 tygodni – w przypadkach, o których mowa w art. 180 § 1 pkt 2–5.",
           "headingPath": [],
           "page": 66,
           "authority": "statute",
@@ -91,7 +91,7 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹a § 4",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
+          "quote": "§ 4. Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
           "headingPath": [],
           "page": 66,
           "authority": "statute",
@@ -106,108 +106,58 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 21317,
+    "modelMs": 12973,
     "finishReason": "stop"
   },
   {
     "id": "q02",
     "question": "Ile wcześniej mam złożyć wniosek i komu?",
-    "sanitized": "Ile wcześniej mam złożyć wniosek i komu?",
+    "sanitized": "Ile wcześniej i do kogo trzeba złożyć wniosek o urlop rodzicielski?",
     "top": [
+      {
+        "logicalId": "kp-art182-1d-par1",
+        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+        "score": 0.8333334
+      },
       {
         "logicalId": "mrpips-korzystanie-wniosek",
         "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
         "score": 0.8333334
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.6666667
-      },
-      {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 0.5
+        "logicalId": "rozp-2025-322-par15-ust1",
+        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+        "score": 0.39285713
       },
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
         "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.45
+        "score": 0.36666667
       },
       {
         "logicalId": "kp-art182-1e-par2",
         "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
-        "score": 0.39285713
+        "score": 0.3611111
       }
     ],
     "evidence": [
       "kp-art182-1d-par1",
-      "rozp-2025-322-par15-ust2-pkt3",
-      "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt2"
-    ],
-    "answer": {
-      "status": "unavailable",
-      "message": "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.",
-      "claims": [],
-      "citations": [],
-      "corpusVersion": "marta-v1"
-    },
-    "report": null,
-    "model": "invalid_json",
-    "modelMs": 28435,
-    "finishReason": "length"
-  },
-  {
-    "id": "q03",
-    "question": "Co wpisać o Pawle, skoro też bierze urlop?",
-    "sanitized": "Co wpisać o drugim rodzicu, skoro też bierze urlop?",
-    "top": [
-      {
-        "logicalId": "mrpips-dzielenie-zasilek",
-        "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
-        "score": 0.75
-      },
-      {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
-        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.7
-      },
-      {
-        "logicalId": "kp-art182-1a-par7",
-        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
-        "score": 0.5
-      },
-      {
-        "logicalId": "mrpips-dzielenie-jednoczesnie",
-        "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
-        "score": 0.4761905
-      },
-      {
-        "logicalId": "kp-art182-1a-par6",
-        "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
-        "score": 0.45
-      }
-    ],
-    "evidence": [
-      "kp-art182-1a-par7",
+      "rozp-2025-322-par15-ust1",
       "rozp-2025-322-par15-ust2-pkt2",
-      "rozp-2025-322-par22",
-      "kp-art182-1a-par1",
-      "kp-art182-1a-par6"
+      "rozp-2025-322-par22"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "W okresie pobierania przez jednego z rodziców dziecka zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego drugi rodzic może korzystać z urlopu rodzicielskiego.",
+          "text": "Wniosek o urlop rodzicielski należy złożyć do pracodawcy nie później niż 21 dni przed rozpoczęciem korzystania z urlopu.",
           "citationIds": [
             "c1"
           ]
         },
         {
-          "text": "Do wniosku o urlop rodzicielski należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem.",
+          "text": "Do wniosku należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu.",
           "citationIds": [
             "c2"
           ]
@@ -216,13 +166,13 @@
       "citations": [
         {
           "id": "c1",
-          "fragmentId": "kp-art182-1a-par7",
+          "fragmentId": "kp-art182-1d-par1",
           "title": "Kodeks pracy",
-          "locator": "art. 182¹a § 7",
-          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "§ 7. W okresie pobierania przez jednego z rodziców dziecka zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego drugi rodzic może korzystać z urlopu rodzicielskiego.",
+          "locator": "art. 182¹d § 1",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=67",
+          "quote": "Urlop rodzicielski jest udzielany na wniosek w postaci papierowej lub elektronicznej składany przez pracownika – rodzica dziecka w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
           "headingPath": [],
-          "page": 66,
+          "page": 67,
           "authority": "statute",
           "corpusVersion": "marta-v1"
         },
@@ -232,7 +182,7 @@
           "title": "Rozporządzenie w sprawie wniosków pracownika",
           "locator": "§ 15 ust. 2 pkt 2",
           "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "2. Do wniosku dołącza się: 2) oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
+          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
           "headingPath": [],
           "page": 8,
           "authority": "regulation",
@@ -247,13 +197,105 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 13098,
+    "modelMs": 13476,
     "finishReason": "length"
+  },
+  {
+    "id": "q03",
+    "question": "Co wpisać o Pawle, skoro też bierze urlop?",
+    "sanitized": "Co wpisać o drugim rodzicu, skoro też bierze urlop rodzicielski?",
+    "top": [
+      {
+        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+        "score": 0.75
+      },
+      {
+        "logicalId": "mrpips-dzielenie-zasilek",
+        "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+        "score": 0.75
+      },
+      {
+        "logicalId": "kp-art182-1a-par7",
+        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+        "score": 0.53333336
+      },
+      {
+        "logicalId": "kp-art182-1a-par6",
+        "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+        "score": 0.53333336
+      },
+      {
+        "logicalId": "mrpips-dzielenie-jednoczesnie",
+        "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+        "score": 0.30952382
+      }
+    ],
+    "evidence": [
+      "rozp-2025-322-par15-ust2-pkt2",
+      "rozp-2025-322-par22",
+      "kp-art182-1a-par7",
+      "kp-art182-1a-par1",
+      "kp-art182-1a-par6"
+    ],
+    "answer": {
+      "status": "answered",
+      "message": "",
+      "claims": [
+        {
+          "text": "Do wniosku o urlop rodzicielski należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem.",
+          "citationIds": [
+            "c1"
+          ]
+        },
+        {
+          "text": "Oboje rodzice mogą jednocześnie korzystać z urlopu rodzicielskiego, ale łączny wymiar urlopu rodzicielskiego nie może przekraczać wymiaru określonego w art. 182¹a § 1 lub 2 Kodeksu pracy.",
+          "citationIds": [
+            "c2"
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
+          "title": "Rozporządzenie w sprawie wniosków pracownika",
+          "locator": "§ 15 ust. 2 pkt 2",
+          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
+          "quote": "2. Do wniosku dołącza się: 2) oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
+          "headingPath": [],
+          "page": 8,
+          "authority": "regulation",
+          "corpusVersion": "marta-v1"
+        },
+        {
+          "id": "c2",
+          "fragmentId": "kp-art182-1a-par6",
+          "title": "Kodeks pracy",
+          "locator": "art. 182¹a § 6",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
+          "quote": "§ 6. Z urlopu rodzicielskiego mogą jednocześnie korzystać oboje pracownicy – rodzice dziecka. W takim przypadku łączny wymiar urlopu rodzicielskiego nie może przekraczać wymiaru, o którym mowa w § 1 albo 2.",
+          "headingPath": [],
+          "page": 66,
+          "authority": "statute",
+          "corpusVersion": "marta-v1"
+        }
+      ],
+      "corpusVersion": "marta-v1"
+    },
+    "report": {
+      "removedClaims": 0,
+      "rejectedEvidence": [],
+      "polarityRemoved": 0
+    },
+    "model": "ok",
+    "modelMs": 12330,
+    "finishReason": "stop"
   },
   {
     "id": "q04",
     "question": "Kadry mają już odpis aktu Oli w moich aktach. Mam dać drugi?",
-    "sanitized": "Kadry mają już odpis aktu dziecka w moich aktach. Mam dać drugi?",
+    "sanitized": "Kadry mają już odpis aktu urodzenia dziecka w aktach. Czy trzeba dołączyć kolejny odpis?",
     "top": [
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt1",
@@ -261,31 +303,31 @@
         "score": 1
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
-        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.6666667
+        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+        "score": 0.53333336
       },
       {
         "logicalId": "rozp-2025-322-par22",
         "fragmentSha256": "a23f6a3ab6cdbce2226edb584bd270fb1184ee7b44ded0f49d258323b3857ce6",
-        "score": 0.5
+        "score": 0.53333336
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.36666667
+        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+        "score": 0.5
       },
       {
         "logicalId": "rozp-2025-322-par15-ust1",
         "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 0.36666667
+        "score": 0.33333334
       }
     ],
     "evidence": [
       "rozp-2025-322-par15-ust2-pkt1",
       "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt2",
       "rozp-2025-322-par15-ust2-pkt3",
+      "rozp-2025-322-par15-ust2-pkt2",
       "rozp-2025-322-par15-ust1"
     ],
     "answer": {
@@ -293,7 +335,7 @@
       "message": "",
       "claims": [
         {
-          "text": "Jeśli odpis aktu urodzenia dziecka znajduje się już w aktach osobowych pracownika, nie trzeba go ponownie dołączać do wniosku o urlop rodzicielski.",
+          "text": "Jeśli odpis aktu urodzenia dziecka znajduje się już w aktach osobowych pracownika, nie trzeba dołączać go ponownie do wniosku o urlop rodzicielski.",
           "citationIds": [
             "c1"
           ]
@@ -321,23 +363,18 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 4603,
+    "modelMs": 5164,
     "finishReason": "stop"
   },
   {
     "id": "q05",
     "question": "Chcemy zostać oboje w domu w tym samym miesiącu",
-    "sanitized": "Chcemy zostać oboje w domu w tym samym miesiącu",
+    "sanitized": "Czy oboje rodzice mogą być jednocześnie na urlopie rodzicielskim w tych samych tygodniach?",
     "top": [
       {
         "logicalId": "kp-art182-1a-par6",
         "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
-        "score": 0.64285713
-      },
-      {
-        "logicalId": "mrpips-korzystanie-czesci",
-        "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
-        "score": 0.5909091
+        "score": 1
       },
       {
         "logicalId": "mrpips-dzielenie-jednoczesnie",
@@ -350,27 +387,43 @@
         "score": 0.53333336
       },
       {
-        "logicalId": "kp-art182-1a-par3",
-        "fragmentSha256": "82fa508d72ca89a3ac3411a344c42beb88d9b3bdcf3b4f42ccae1ded9991a79b",
-        "score": 0.3611111
+        "logicalId": "kp-art182-1a-par7",
+        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+        "score": 0.4166667
+      },
+      {
+        "logicalId": "mrpips-nieprzenoszalna",
+        "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+        "score": 0.34285715
       }
     ],
     "evidence": [
       "kp-art182-1a-par6",
       "kp-art182-1a-par1",
-      "kp-art182-1c",
       "kp-art182-1a-par7",
-      "kp-art182-1a-par3"
+      "kp-art182-1a-par4",
+      "kp-art182-1a-par5"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Oboje rodzice mogą jednocześnie korzystać z urlopu rodzicielskiego, ale łączny wymiar urlopu nie może przekroczyć 41 lub 43 tygodni, w zależności od przypadku.",
+          "text": "Oboje rodzice mogą jednocześnie korzystać z urlopu rodzicielskiego w tych samych tygodniach, ale łączny wymiar urlopu nie może przekroczyć wymiaru określonego w art. 182¹a § 1 lub 2 Kodeksu pracy.",
           "citationIds": [
-            "c1",
+            "c1"
+          ]
+        },
+        {
+          "text": "Wymiar urlopu rodzicielskiego wynosi do 41 tygodni lub 43 tygodni, w zależności od przypadku, zgodnie z art. 182¹a § 1 Kodeksu pracy.",
+          "citationIds": [
             "c2"
+          ]
+        },
+        {
+          "text": "Każdemu z rodziców przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego, które nie może być przeniesione na drugiego rodzica, zgodnie z art. 182¹a § 4 Kodeksu pracy.",
+          "citationIds": [
+            "c3"
           ]
         }
       ],
@@ -381,7 +434,7 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹a § 6",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "Z urlopu rodzicielskiego mogą jednocześnie korzystać oboje pracownicy – rodzice dziecka. W takim przypadku łączny wymiar urlopu rodzicielskiego nie może przekraczać wymiaru, o którym mowa w § 1 albo 2.",
+          "quote": "§ 6. Z urlopu rodzicielskiego mogą jednocześnie korzystać oboje pracownicy – rodzice dziecka. W takim przypadku łączny wymiar urlopu rodzicielskiego nie może przekraczać wymiaru, o którym mowa w § 1 albo 2.",
           "headingPath": [],
           "page": 66,
           "authority": "statute",
@@ -393,7 +446,19 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹a § 1",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "Pracownicy – rodzice dziecka mają prawo do urlopu rodzicielskiego w celu sprawowania opieki nad dzieckiem w wymiarze do: 1) 41 tygodni – w przypadku, o którym mowa w art. 180 § 1 pkt 1; 2) 43 tygodni – w przypadkach, o których mowa w art. 180 § 1 pkt 2–5.",
+          "quote": "Art. 182¹a. § 1. Pracownicy – rodzice dziecka mają prawo do urlopu rodzicielskiego w celu sprawowania opieki nad dzieckiem w wymiarze do: 1) 41 tygodni – w przypadku, o którym mowa w art. 180 § 1 pkt 1; 2) 43 tygodni – w przypadkach, o których mowa w art. 180 § 1 pkt 2–5.",
+          "headingPath": [],
+          "page": 66,
+          "authority": "statute",
+          "corpusVersion": "marta-v1"
+        },
+        {
+          "id": "c3",
+          "fragmentId": "kp-art182-1a-par4",
+          "title": "Kodeks pracy",
+          "locator": "art. 182¹a § 4",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
+          "quote": "§ 4. Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
           "headingPath": [],
           "page": 66,
           "authority": "statute",
@@ -408,54 +473,60 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 7896,
+    "modelMs": 12517,
     "finishReason": "stop"
   },
   {
     "id": "q06",
     "question": "Kiedy najpóźniej napisać do kadr?",
-    "sanitized": "Kiedy najpóźniej napisać do kadr?",
+    "sanitized": "Ile wcześniej i do kogo trzeba złożyć wniosek o urlop rodzicielski?",
     "top": [
-      {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 1
-      },
-      {
-        "logicalId": "kp-art182-1e-par2",
-        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
-        "score": 0.6666667
-      },
       {
         "logicalId": "mrpips-korzystanie-wniosek",
         "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
-        "score": 0.45
+        "score": 0.8333334
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.4166667
+        "logicalId": "kp-art182-1d-par1",
+        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+        "score": 0.8333334
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust1",
+        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+        "score": 0.39285713
       },
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
         "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.31111112
+        "score": 0.36666667
+      },
+      {
+        "logicalId": "kp-art182-1e-par2",
+        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
+        "score": 0.3611111
       }
     ],
     "evidence": [
       "kp-art182-1d-par1",
-      "rozp-2025-322-par15-ust2-pkt3",
-      "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt2"
+      "rozp-2025-322-par15-ust1",
+      "rozp-2025-322-par15-ust2-pkt2",
+      "rozp-2025-322-par22"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Urlop rodzicielski jest udzielany na wniosek składany w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
+          "text": "Wniosek o urlop rodzicielski należy złożyć do pracodawcy nie później niż 21 dni przed rozpoczęciem korzystania z urlopu.",
           "citationIds": [
             "c1"
+          ]
+        },
+        {
+          "text": "Do wniosku należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu.",
+          "citationIds": [
+            "c2"
           ]
         }
       ],
@@ -466,10 +537,22 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹d § 1",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=67",
-          "quote": "Art. 182¹d. § 1. Urlop rodzicielski jest udzielany na wniosek w postaci papierowej lub elektronicznej składany przez pracownika – rodzica dziecka w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
+          "quote": "Urlop rodzicielski jest udzielany na wniosek w postaci papierowej lub elektronicznej składany przez pracownika – rodzica dziecka w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
           "headingPath": [],
           "page": 67,
           "authority": "statute",
+          "corpusVersion": "marta-v1"
+        },
+        {
+          "id": "c2",
+          "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
+          "title": "Rozporządzenie w sprawie wniosków pracownika",
+          "locator": "§ 15 ust. 2 pkt 2",
+          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
+          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
+          "headingPath": [],
+          "page": 8,
+          "authority": "regulation",
           "corpusVersion": "marta-v1"
         }
       ],
@@ -481,52 +564,52 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 5106,
-    "finishReason": "stop"
+    "modelMs": 13447,
+    "finishReason": "length"
   },
   {
     "id": "q07",
     "question": "Czy mogę wysłać to elektronicznie?",
-    "sanitized": "Czy mogę wysłać to elektronicznie?",
+    "sanitized": "Czy wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie?",
     "top": [
       {
-        "logicalId": "kp-art182-1e-par2",
-        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
-        "score": 1
+        "logicalId": "kp-art182-1d-par1",
+        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+        "score": 0.8333334
       },
       {
         "logicalId": "mrpips-korzystanie-wniosek",
         "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
-        "score": 0.6666667
+        "score": 0.8333334
       },
       {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+        "logicalId": "kp-art182-1e-par2",
+        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
         "score": 0.5
-      },
-      {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.4
       },
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
         "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.33333334
+        "score": 0.36666667
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust1",
+        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+        "score": 0.34285715
       }
     ],
     "evidence": [
       "kp-art182-1d-par1",
-      "rozp-2025-322-par15-ust2-pkt3",
+      "rozp-2025-322-par15-ust2-pkt2",
       "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt2"
+      "rozp-2025-322-par15-ust1"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Wniosek o urlop rodzicielski można złożyć elektronicznie.",
+          "text": "Wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie.",
           "citationIds": [
             "c1"
           ]
@@ -554,105 +637,69 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 5059,
+    "modelMs": 4945,
     "finishReason": "stop"
   },
   {
     "id": "q08",
     "question": "On też bierze wolne w tym czasie. Co mam napisać o drugim rodzicu?",
-    "sanitized": "On też bierze wolne w tym czasie. Co mam napisać o drugim rodzicu?",
+    "sanitized": "Co wpisać o drugim rodzicu, skoro też bierze urlop rodzicielski?",
     "top": [
       {
         "logicalId": "mrpips-dzielenie-zasilek",
         "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
-        "score": 0.8333334
+        "score": 0.75
       },
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
         "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.7
-      },
-      {
-        "logicalId": "kp-art182-1a-par7",
-        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
-        "score": 0.5833334
+        "score": 0.75
       },
       {
         "logicalId": "kp-art182-1a-par6",
         "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
-        "score": 0.45
+        "score": 0.53333336
+      },
+      {
+        "logicalId": "kp-art182-1a-par7",
+        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+        "score": 0.53333336
       },
       {
         "logicalId": "mrpips-dzielenie-jednoczesnie",
         "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
-        "score": 0.33333334
+        "score": 0.30952382
       }
     ],
     "evidence": [
       "kp-art182-1a-par7",
       "rozp-2025-322-par15-ust2-pkt2",
       "rozp-2025-322-par22",
-      "kp-art182-1a-par1",
-      "kp-art182-1a-par6"
+      "kp-art182-1a-par6",
+      "kp-art182-1a-par1"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "W okresie pobierania przez jednego z rodziców dziecka zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego drugi rodzic może korzystać z urlopu rodzicielskiego.",
+          "text": "Jeśli drugi rodzic również bierze urlop rodzicielski, we wniosku należy złożyć oświadczenie o okresie, w którym drugi rodzic zamierza korzystać z urlopu rodzicielskiego lub zasiłku macierzyńskiego za ten okres.",
           "citationIds": [
             "c1"
-          ]
-        },
-        {
-          "text": "Do wniosku o urlop rodzicielski należy dołączyć oświadczenie o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego.",
-          "citationIds": [
-            "c2"
-          ]
-        },
-        {
-          "text": "Łączny wymiar urlopu rodzicielskiego i okresu pobierania zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego nie może przekraczać wymiaru określonego w art. 182¹a § 1 lub 2 Kodeksu pracy.",
-          "citationIds": [
-            "c3"
           ]
         }
       ],
       "citations": [
         {
           "id": "c1",
-          "fragmentId": "kp-art182-1a-par7",
-          "title": "Kodeks pracy",
-          "locator": "art. 182¹a § 7",
-          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "§ 7. W okresie pobierania przez jednego z rodziców dziecka zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego drugi rodzic może korzystać z urlopu rodzicielskiego.",
-          "headingPath": [],
-          "page": 66,
-          "authority": "statute",
-          "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c2",
           "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
           "title": "Rozporządzenie w sprawie wniosków pracownika",
           "locator": "§ 15 ust. 2 pkt 2",
           "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "2. Do wniosku dołącza się: 2) oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
+          "quote": "o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
           "headingPath": [],
           "page": 8,
           "authority": "regulation",
-          "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c3",
-          "fragmentId": "kp-art182-1a-par7",
-          "title": "Kodeks pracy",
-          "locator": "art. 182¹a § 7",
-          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "W takim przypadku łączny wymiar urlopu rodzicielskiego i okresu pobierania zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego nie może przekraczać wymiaru, o którym mowa w § 1 albo 2.",
-          "headingPath": [],
-          "page": 66,
-          "authority": "statute",
           "corpusVersion": "marta-v1"
         }
       ],
@@ -664,13 +711,13 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 12680,
+    "modelMs": 5928,
     "finishReason": "stop"
   },
   {
     "id": "q09",
     "question": "Mąż wtedy pracuje i nie bierze urlopu. Co oświadczam we wniosku?",
-    "sanitized": "Mąż wtedy pracuje i nie bierze urlopu. Co oświadczam we wniosku?",
+    "sanitized": "Co oświadczyć we wniosku, jeśli drugi rodzic nie korzysta z urlopu rodzicielskiego?",
     "top": [
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
@@ -678,40 +725,40 @@
         "score": 1
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.5833334
-      },
-      {
         "logicalId": "rozp-2025-322-par15-ust1",
         "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
         "score": 0.53333336
       },
       {
-        "logicalId": "kp-art182-1e-par2",
-        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
-        "score": 0.4166667
+        "logicalId": "mrpips-korzystanie-wniosek",
+        "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+        "score": 0.5
       },
       {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 0.36666667
+        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+        "score": 0.5
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+        "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+        "score": 0.3
       }
     ],
     "evidence": [
       "rozp-2025-322-par15-ust2-pkt2",
       "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt3",
       "rozp-2025-322-par15-ust1",
-      "kp-art182-1e-par2",
-      "kp-art182-1d-par1"
+      "kp-art182-1d-par1",
+      "rozp-2025-322-par15-ust2-pkt3",
+      "rozp-2025-322-par15-ust2-pkt1"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "We wniosku o urlop rodzicielski należy złożyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego lub zasiłku macierzyńskiego przez drugiego rodzica dziecka w okresie objętym wnioskiem.",
+          "text": "Do wniosku o urlop rodzicielski należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi rodzic zamierza korzystać z urlopu rodzicielskiego.",
           "citationIds": [
             "c1"
           ]
@@ -724,7 +771,7 @@
           "title": "Rozporządzenie w sprawie wniosków pracownika",
           "locator": "§ 15 ust. 2 pkt 2",
           "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku",
+          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
           "headingPath": [],
           "page": 8,
           "authority": "regulation",
@@ -739,13 +786,13 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 5536,
+    "modelMs": 7437,
     "finishReason": "stop"
   },
   {
     "id": "q10",
     "question": "Nie wiem, czy kadry mają mój odpis aktu urodzenia. Dołączyć go?",
-    "sanitized": "Nie wiem, czy kadry mają mój odpis aktu urodzenia. Dołączyć go?",
+    "sanitized": "Nie wiadomo, czy kadry mają już odpis aktu urodzenia. Czy trzeba dołączyć kolejny odpis?",
     "top": [
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt1",
@@ -753,14 +800,14 @@
         "score": 1
       },
       {
+        "logicalId": "rozp-2025-322-par22",
+        "fragmentSha256": "a23f6a3ab6cdbce2226edb584bd270fb1184ee7b44ded0f49d258323b3857ce6",
+        "score": 0.5833334
+      },
+      {
         "logicalId": "rozp-2025-322-par15-ust2-pkt3",
         "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
         "score": 0.53333336
-      },
-      {
-        "logicalId": "rozp-2025-322-par22",
-        "fragmentSha256": "a23f6a3ab6cdbce2226edb584bd270fb1184ee7b44ded0f49d258323b3857ce6",
-        "score": 0.5
       },
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
@@ -770,7 +817,7 @@
       {
         "logicalId": "rozp-2025-322-par15-ust1",
         "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 0.4166667
+        "score": 0.33333334
       }
     ],
     "evidence": [
@@ -785,9 +832,14 @@
       "message": "",
       "claims": [
         {
-          "text": "Jeśli odpis aktu urodzenia dziecka nie znajduje się już w aktach osobowych pracownika, należy go dołączyć do wniosku o urlop rodzicielski.",
+          "text": "Jeśli odpis aktu urodzenia dziecka znajduje się już w aktach osobowych pracownika, nie trzeba dołączać go ponownie do wniosku o urlop rodzicielski.",
           "citationIds": [
-            "c1",
+            "c1"
+          ]
+        },
+        {
+          "text": "Do wniosku o urlop rodzicielski należy dołączyć odpis aktu urodzenia dziecka lub jego kopię, chyba że dokument ten jest już w posiadaniu pracodawcy.",
+          "citationIds": [
             "c2"
           ]
         }
@@ -811,7 +863,7 @@
           "title": "Rozporządzenie w sprawie wniosków pracownika",
           "locator": "§ 15 ust. 2 pkt 1",
           "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=7",
-          "quote": "1) odpis skrócony aktu urodzenia dziecka (dzieci) lub zagraniczny dokument potwierdzający urodzenie dziecka (dzieci), wydany przez uprawniony organ dokonujący rejestracji urodzenia w danym kraju, albo kopie tych dokumentów",
+          "quote": "Do wniosku dołącza się: 1) odpis skrócony aktu urodzenia dziecka (dzieci) lub zagraniczny dokument potwierdzający urodzenie dziecka (dzieci), wydany przez uprawniony organ dokonujący rejestracji urodzenia w danym kraju, albo kopie tych dokumentów",
           "headingPath": [],
           "page": 7,
           "authority": "regulation",
@@ -826,52 +878,52 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 5796,
+    "modelMs": 8704,
     "finishReason": "stop"
   },
   {
     "id": "q11",
     "question": "Czy mogę oddać Pawłowi moje 9 tygodni?",
-    "sanitized": "Czy mogę oddać drugiemu rodzicowi moje 9 tygodni?",
+    "sanitized": "Czy 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica można przekazać drugiemu?",
     "top": [
       {
         "logicalId": "mrpips-nieprzenoszalna",
         "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
-        "score": 1
-      },
-      {
-        "logicalId": "zus-czas-trwania-9-tygodni",
-        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 0.5833334
+        "score": 0.8333334
       },
       {
         "logicalId": "kp-art182-1a-par4",
         "fragmentSha256": "2384b9e03ec1ae4a9a04202271ef13f977a96cd369c6a64aaa875aa0285d9ccb",
-        "score": 0.5833334
+        "score": 0.8333334
       },
       {
         "logicalId": "mrpips-dzielenie-zasilek",
         "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
-        "score": 0.36666667
+        "score": 0.45
       },
       {
-        "logicalId": "zus-przyklad-podzialu",
-        "fragmentSha256": "a599162339021b6e176458a60c7c523e815671604d35ad4282aecf58a8c2173f",
-        "score": 0.31111112
+        "logicalId": "zus-czas-trwania-9-tygodni",
+        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
+        "score": 0.4166667
+      },
+      {
+        "logicalId": "kp-art182-1a-par7",
+        "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+        "score": 0.36666667
       }
     ],
     "evidence": [
       "kp-art182-1a-par4",
       "kp-art182-1a-par5",
       "kp-art182-1a-par7",
-      "zus-przyklad-podzialu"
+      "kp-art182-1a-par1"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Nie możesz przenieść 9 tygodni urlopu rodzicielskiego na drugiego rodzica, ponieważ jest to wyłączna i nieprzenoszalna część urlopu.",
+          "text": "Nie, 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica nie można przekazać drugiemu rodzicowi. Jest to wyłączne prawo przysługujące każdemu z rodziców osobno i nie podlega przeniesieniu.",
           "citationIds": [
             "c1"
           ]
@@ -884,7 +936,7 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹a § 4",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
+          "quote": "§ 4. Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
           "headingPath": [],
           "page": 66,
           "authority": "statute",
@@ -899,62 +951,87 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 5883,
+    "modelMs": 11076,
     "finishReason": "stop"
   },
   {
     "id": "q12",
     "question": "Ile tygodni urlopu rodzicielskiego mamy łącznie przy jednym dziecku?",
-    "sanitized": "Ile tygodni urlopu rodzicielskiego mamy łącznie przy jednym dziecku?",
+    "sanitized": "Jak wymiar urlopu rodzicielskiego zależy od liczby dzieci urodzonych przy jednym porodzie?",
     "top": [
       {
         "logicalId": "mrpips-korzystanie-czesci",
         "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
-        "score": 0.90159523
+        "score": 0.90626085
       },
       {
-        "logicalId": "mrpips-nieprzenoszalna",
-        "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
-        "score": 0.89881486
+        "logicalId": "kp-art182-1a-par3",
+        "fragmentSha256": "82fa508d72ca89a3ac3411a344c42beb88d9b3bdcf3b4f42ccae1ded9991a79b",
+        "score": 0.89995825
       },
       {
-        "logicalId": "zus-czas-trwania-9-tygodni",
-        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 0.89722306
+        "logicalId": "kp-art182-1a-par6",
+        "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+        "score": 0.8972363
       },
       {
-        "logicalId": "zus-przyklad-podzialu",
-        "fragmentSha256": "a599162339021b6e176458a60c7c523e815671604d35ad4282aecf58a8c2173f",
-        "score": 0.8916693
+        "logicalId": "kp-art182-1c",
+        "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+        "score": 0.89698255
       },
       {
-        "logicalId": "kp-art182-1a-par5",
-        "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
-        "score": 0.8912797
+        "logicalId": "kp-art182-1a-par1",
+        "fragmentSha256": "c005cf8d8b31e34db7496fd7e1f980a725c33e579f2629a327ebe7bb763c91b8",
+        "score": 0.8967245
       }
     ],
     "evidence": [
       "kp-art182-1c",
-      "kp-art182-1a-par4",
-      "kp-art182-1a-par5",
-      "zus-przyklad-podzialu"
+      "kp-art182-1a-par3",
+      "kp-art182-1a-par1",
+      "kp-art182-1a-par6",
+      "kp-art182-1d-par2"
     ],
     "answer": {
-      "status": "unavailable",
-      "message": "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.",
-      "claims": [],
-      "citations": [],
+      "status": "answered",
+      "message": "",
+      "claims": [
+        {
+          "text": "Wymiar urlopu rodzicielskiego zależy od liczby dzieci urodzonych przy jednym porodzie: 41 tygodni w przypadku jednego dziecka, 43 tygodnie w przypadku większej liczby dzieci (np. bliźniąt, trojaczków itd.).",
+          "citationIds": [
+            "c1"
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "kp-art182-1a-par1",
+          "title": "Kodeks pracy",
+          "locator": "art. 182¹a § 1",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
+          "quote": "1) 41 tygodni – w przypadku, o którym mowa w art. 180 § 1 pkt 1; 2) 43 tygodni – w przypadkach, o których mowa w art. 180 § 1 pkt 2–5.",
+          "headingPath": [],
+          "page": 66,
+          "authority": "statute",
+          "corpusVersion": "marta-v1"
+        }
+      ],
       "corpusVersion": "marta-v1"
     },
-    "report": null,
-    "model": "error",
-    "modelMs": 2551,
-    "finishReason": null
+    "report": {
+      "removedClaims": 0,
+      "rejectedEvidence": [],
+      "polarityRemoved": 0
+    },
+    "model": "ok",
+    "modelMs": 7803,
+    "finishReason": "stop"
   },
   {
     "id": "q13",
     "question": "Na ile kawałków można podzielić urlop rodzicielski?",
-    "sanitized": "Na ile kawałków można podzielić urlop rodzicielski?",
+    "sanitized": "Na ile części można podzielić urlop rodzicielski?",
     "top": [
       {
         "logicalId": "mrpips-korzystanie-czesci",
@@ -967,84 +1044,33 @@
         "score": 0.6666667
       },
       {
-        "logicalId": "zus-przyklad-podzialu",
-        "fragmentSha256": "a599162339021b6e176458a60c7c523e815671604d35ad4282aecf58a8c2173f",
+        "logicalId": "kp-art182-1d-par2",
+        "fragmentSha256": "377d583407d491165ab22acb209feac97788be2816c8cbc4e528ee6ee88a48a0",
         "score": 0.45
-      },
-      {
-        "logicalId": "zus-czas-trwania-9-tygodni",
-        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 0.34285715
       },
       {
         "logicalId": "mrpips-nieprzenoszalna",
         "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
-        "score": 0.33333334
-      }
-    ],
-    "evidence": [
-      "kp-art182-1c",
-      "kp-art182-1d-par2",
-      "zus-przyklad-podzialu",
-      "kp-art182-1a-par4",
-      "kp-art182-1a-par5"
-    ],
-    "answer": {
-      "status": "unavailable",
-      "message": "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.",
-      "claims": [],
-      "citations": [],
-      "corpusVersion": "marta-v1"
-    },
-    "report": null,
-    "model": "invalid_json",
-    "modelMs": 17207,
-    "finishReason": "stop"
-  },
-  {
-    "id": "q14",
-    "question": "Do kiedy najpóźniej trzeba wykorzystać urlop rodzicielski?",
-    "sanitized": "Do kiedy najpóźniej trzeba wykorzystać urlop rodzicielski?",
-    "top": [
-      {
-        "logicalId": "mrpips-korzystanie-wniosek",
-        "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
-        "score": 1
-      },
-      {
-        "logicalId": "mrpips-korzystanie-czesci",
-        "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
-        "score": 0.5833334
-      },
-      {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 0.43333334
-      },
-      {
-        "logicalId": "kp-art182-1c",
-        "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
-        "score": 0.4
+        "score": 0.36666667
       },
       {
         "logicalId": "kp-art182-1a-par5",
         "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
-        "score": 0.375
+        "score": 0.3611111
       }
     ],
     "evidence": [
-      "kp-art182-1d-par1",
       "kp-art182-1c",
       "kp-art182-1d-par2",
-      "kp-art182-1a-par5",
-      "kp-art182-1a-par4"
+      "kp-art182-1a-par4",
+      "kp-art182-1a-par5"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Urlop rodzicielski należy wykorzystać nie później niż do zakończenia roku kalendarzowego, w którym dziecko kończy 6 rok życia.",
+          "text": "Urlop rodzicielski można podzielić na nie więcej niż 5 części.",
           "citationIds": [
             "c1"
           ]
@@ -1072,67 +1098,129 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 5131,
+    "modelMs": 11031,
     "finishReason": "stop"
   },
   {
-    "id": "q15",
-    "question": "Czy szef może mi odmówić rodzicielskiego, jeśli złożę wniosek na czas?",
-    "sanitized": "Czy szef może mi odmówić rodzicielskiego, jeśli złożę wniosek na czas?",
+    "id": "q14",
+    "question": "Do kiedy najpóźniej trzeba wykorzystać urlop rodzicielski?",
+    "sanitized": "Do jakiego wieku dziecka można wykorzystać urlop rodzicielski?",
     "top": [
       {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 0.8333334
+        "logicalId": "mrpips-korzystanie-czesci",
+        "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
+        "score": 0.90613145
       },
       {
-        "logicalId": "kp-art182-1e-par2",
-        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
-        "score": 0.64285713
+        "logicalId": "kp-art182-1c",
+        "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+        "score": 0.90293187
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
-        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.5833334
+        "logicalId": "kp-art182-1a-par5",
+        "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
+        "score": 0.8976769
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.39285713
+        "logicalId": "kp-art182-1a-par1",
+        "fragmentSha256": "c005cf8d8b31e34db7496fd7e1f980a725c33e579f2629a327ebe7bb763c91b8",
+        "score": 0.8918777
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust1",
-        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 0.36666667
+        "logicalId": "mrpips-nieprzenoszalna",
+        "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+        "score": 0.89186597
       }
     ],
     "evidence": [
-      "kp-art182-1d-par1",
-      "rozp-2025-322-par15-ust2-pkt2",
-      "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt3",
-      "rozp-2025-322-par15-ust1"
+      "kp-art182-1c",
+      "kp-art182-1d-par2",
+      "kp-art182-1a-par5",
+      "kp-art182-1a-par4",
+      "kp-art182-1a-par1",
+      "kp-art182-1a-par3"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Pracodawca jest obowiązany uwzględnić wniosek pracownika o urlop rodzicielski, jeśli zostanie złożony w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
+          "text": "Urlop rodzicielski można wykorzystać do zakończenia roku kalendarzowego, w którym dziecko kończy 6 rok życia.",
           "citationIds": [
             "c1"
           ]
-        },
+        }
+      ],
+      "citations": [
         {
-          "text": "Do wniosku o urlop rodzicielski należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu.",
-          "citationIds": [
-            "c2"
-          ]
-        },
+          "id": "c1",
+          "fragmentId": "kp-art182-1c",
+          "title": "Kodeks pracy",
+          "locator": "art. 182¹c",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=67",
+          "quote": "Urlop rodzicielski jest udzielany jednorazowo albo nie więcej niż w 5 częściach nie później niż do zakończenia roku kalendarzowego, w którym dziecko kończy 6 rok życia.",
+          "headingPath": [],
+          "page": 67,
+          "authority": "statute",
+          "corpusVersion": "marta-v1"
+        }
+      ],
+      "corpusVersion": "marta-v1"
+    },
+    "report": {
+      "removedClaims": 0,
+      "rejectedEvidence": [],
+      "polarityRemoved": 0
+    },
+    "model": "ok",
+    "modelMs": 5166,
+    "finishReason": "stop"
+  },
+  {
+    "id": "q15",
+    "question": "Czy szef może mi odmówić rodzicielskiego, jeśli złożę wniosek na czas?",
+    "sanitized": "Czy pracodawca może odmówić udzielenia urlopu rodzicielskiego po złożeniu wniosku w terminie?",
+    "top": [
+      {
+        "logicalId": "mrpips-korzystanie-wniosek",
+        "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+        "score": 0.75
+      },
+      {
+        "logicalId": "kp-art182-1e-par2",
+        "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
+        "score": 0.75
+      },
+      {
+        "logicalId": "kp-art182-1d-par1",
+        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+        "score": 0.6666667
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+        "score": 0.34285715
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+        "score": 0.325
+      }
+    ],
+    "evidence": [
+      "kp-art182-1d-par1",
+      "rozp-2025-322-par15-ust2-pkt2",
+      "rozp-2025-322-par22",
+      "rozp-2025-322-par15-ust2-pkt3"
+    ],
+    "answer": {
+      "status": "answered",
+      "message": "",
+      "claims": [
         {
-          "text": "W przypadku wniosku o urlop rodzicielski w wymiarze określonym w art. 182¹a § 2 Kodeksu pracy, należy dołączyć kopię zaświadczenia z ustawy \"Za życiem\".",
+          "text": "Pracodawca jest obowiązany uwzględnić wniosek pracownika o urlop rodzicielski, jeśli został złożony w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
           "citationIds": [
-            "c3"
+            "c1"
           ]
         }
       ],
@@ -1148,30 +1236,6 @@
           "page": 67,
           "authority": "statute",
           "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c2",
-          "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
-          "title": "Rozporządzenie w sprawie wniosków pracownika",
-          "locator": "§ 15 ust. 2 pkt 2",
-          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
-          "headingPath": [],
-          "page": 8,
-          "authority": "regulation",
-          "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c3",
-          "fragmentId": "rozp-2025-322-par15-ust2-pkt3",
-          "title": "Rozporządzenie w sprawie wniosków pracownika",
-          "locator": "§ 15 ust. 2 pkt 3",
-          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "kopię zaświadczenia, o którym mowa w art. 4 ust. 3 ustawy z dnia 4 listopada 2016 r. o wsparciu kobiet w ciąży i rodzin „Za życiem” (Dz. U. z 2024 r. poz. 1829), w przypadku gdy wniosek o udzielenie urlopu rodzicielskiego lub jego części dotyczy urlopu rodzicielskiego w wymiarze, o którym mowa w art. 182¹a § 2 Kodeksu pracy.",
-          "headingPath": [],
-          "page": 8,
-          "authority": "regulation",
-          "corpusVersion": "marta-v1"
         }
       ],
       "corpusVersion": "marta-v1"
@@ -1182,62 +1246,61 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 13674,
-    "finishReason": "length"
+    "modelMs": 4921,
+    "finishReason": "stop"
   },
   {
     "id": "q16",
     "question": "Jakie informacje muszą być we wniosku o urlop rodzicielski?",
-    "sanitized": "Jakie informacje muszą być we wniosku o urlop rodzicielski?",
+    "sanitized": "Jakie informacje należy zawrzeć we wniosku do pracodawcy o urlop rodzicielski?",
     "top": [
-      {
-        "logicalId": "mrpips-korzystanie-wniosek",
-        "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
-        "score": 0.9063277
-      },
       {
         "logicalId": "rozp-2025-322-par15-ust1",
         "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 0.9006474
+        "score": 0.9072661
       },
       {
-        "logicalId": "kp-art182-1d-par1",
-        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 0.89933145
-      },
-      {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt1",
-        "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
-        "score": 0.89358
+        "logicalId": "mrpips-korzystanie-wniosek",
+        "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+        "score": 0.90431553
       },
       {
         "logicalId": "rozp-2025-322-par15-ust2-pkt2",
         "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.89280343
+        "score": 0.9041987
+      },
+      {
+        "logicalId": "kp-art182-1d-par1",
+        "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+        "score": 0.90344673
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+        "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+        "score": 0.9012572
       }
     ],
     "evidence": [
-      "kp-art182-1d-par1",
       "rozp-2025-322-par15-ust1",
-      "rozp-2025-322-par15-ust2-pkt1",
+      "kp-art182-1d-par1",
+      "rozp-2025-322-par15-ust2-pkt2",
       "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt2"
+      "rozp-2025-322-par15-ust2-pkt1"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Wniosek o urlop rodzicielski musi zawierać: imię i nazwisko pracownika, wskazanie okresu dotychczas wykorzystanego urlopu rodzicielskiego lub zasiłku macierzyńskiego oraz liczby wykorzystanych części urlopu rodzicielskiego, wskazanie okresu, na który ma być udzielony urlop rodzicielski lub jego część.",
+          "text": "Wniosek o urlop rodzicielski powinien zawierać: imię i nazwisko pracownika, wskazanie okresu dotychczas wykorzystanego urlopu rodzicielskiego lub zasiłku macierzyńskiego oraz liczby wykorzystanych części urlopu, wskazanie okresu, na który ma być udzielony urlop rodzicielski lub jego część.",
           "citationIds": [
             "c1"
           ]
         },
         {
-          "text": "Do wniosku należy dołączyć: odpis skrócony aktu urodzenia dziecka lub kopię tego dokumentu oraz oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego.",
+          "text": "Do wniosku należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu.",
           "citationIds": [
-            "c2",
-            "c3"
+            "c2"
           ]
         }
       ],
@@ -1248,7 +1311,7 @@
           "title": "Rozporządzenie w sprawie wniosków pracownika",
           "locator": "§ 15 ust. 1",
           "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=7",
-          "quote": "§ 15. 1. Wniosek […] zawiera: 1) imię i nazwisko pracownika; 2) wskazanie okresu dotychczas wykorzystanego urlopu rodzicielskiego […] oraz liczby wykorzystanych części urlopu rodzicielskiego […] 3) wskazanie okresu, na który ma być udzielony urlop rodzicielski",
+          "quote": "§ 15. 1. Wniosek, o którym mowa w art. 182¹d § 1 Kodeksu pracy, o udzielenie pracownikowi – rodzicowi dziecka urlopu rodzicielskiego lub jego części zawiera: 1) imię i nazwisko pracownika; 2) wskazanie okresu dotychczas wykorzystanego urlopu rodzicielskiego lub zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego oraz liczby wykorzystanych części urlopu rodzicielskiego lub liczby wniosków o zasiłek macierzyński za okres odpowiadający części urlopu rodzicielskiego; 3) wskazanie okresu, na który ma być udzielony urlop rodzicielski lub ma być udzielona jego część.",
           "headingPath": [],
           "page": 7,
           "authority": "regulation",
@@ -1256,23 +1319,11 @@
         },
         {
           "id": "c2",
-          "fragmentId": "rozp-2025-322-par15-ust2-pkt1",
-          "title": "Rozporządzenie w sprawie wniosków pracownika",
-          "locator": "§ 15 ust. 2 pkt 1",
-          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=7",
-          "quote": "2. Do wniosku dołącza się: 1) odpis skrócony aktu urodzenia dziecka […] albo kopie tych dokumentów",
-          "headingPath": [],
-          "page": 7,
-          "authority": "regulation",
-          "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c3",
           "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
           "title": "Rozporządzenie w sprawie wniosków pracownika",
           "locator": "§ 15 ust. 2 pkt 2",
           "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "2) oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego […] przez drugiego z rodziców dziecka […] albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego",
+          "quote": "2. Do wniosku dołącza się: 2) oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
           "headingPath": [],
           "page": 8,
           "authority": "regulation",
@@ -1287,45 +1338,45 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 14401,
+    "modelMs": 13303,
     "finishReason": "length"
   },
   {
     "id": "q17",
     "question": "Jakie dokumenty dołączyć do wniosku o rodzicielski?",
-    "sanitized": "Jakie dokumenty dołączyć do wniosku o rodzicielski?",
+    "sanitized": "Jakie dokumenty dołączyć do wniosku o urlop rodzicielski?",
     "top": [
-      {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt1",
-        "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
-        "score": 0.8729084
-      },
-      {
-        "logicalId": "rozp-2025-322-par15-ust1",
-        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 0.8719312
-      },
       {
         "logicalId": "mrpips-korzystanie-wniosek",
         "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
-        "score": 0.8669438
+        "score": 0.89778453
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
-        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.8632308
+        "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+        "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+        "score": 0.8924469
       },
       {
         "logicalId": "kp-art182-1d-par1",
         "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
-        "score": 0.8609301
+        "score": 0.8920662
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust1",
+        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+        "score": 0.891369
+      },
+      {
+        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+        "score": 0.88414055
       }
     ],
     "evidence": [
+      "kp-art182-1d-par1",
       "rozp-2025-322-par15-ust2-pkt1",
       "rozp-2025-322-par22",
       "rozp-2025-322-par15-ust1",
-      "kp-art182-1d-par1",
       "rozp-2025-322-par15-ust2-pkt2"
     ],
     "answer": {
@@ -1333,7 +1384,7 @@
       "message": "",
       "claims": [
         {
-          "text": "Do wniosku o urlop rodzicielski należy dołączyć odpis skrócony aktu urodzenia dziecka lub kopię tego dokumentu oraz oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu.",
+          "text": "Do wniosku o urlop rodzicielski należy dołączyć odpis skrócony aktu urodzenia dziecka lub jego kopię oraz oświadczenie dotyczące korzystania z urlopu przez drugiego rodzica.",
           "citationIds": [
             "c1",
             "c2"
@@ -1374,13 +1425,13 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 9098,
+    "modelMs": 8385,
     "finishReason": "stop"
   },
   {
     "id": "q18",
     "question": "Biorę zasiłek za okres rodzicielskiego. Czy mąż może w tym czasie pójść na urlop rodzicielski?",
-    "sanitized": "Biorę zasiłek za okres rodzicielskiego. Czy mąż może w tym czasie pójść na urlop rodzicielski?",
+    "sanitized": "Czy w okresie pobierania zasiłku macierzyńskiego za okres urlopu rodzicielskiego przez jednego rodzica drugi może korzystać z urlopu rodzicielskiego?",
     "top": [
       {
         "logicalId": "kp-art182-1a-par7",
@@ -1390,52 +1441,38 @@
       {
         "logicalId": "mrpips-dzielenie-zasilek",
         "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
-        "score": 0.5833334
+        "score": 0.6666667
       },
       {
         "logicalId": "zus-czas-trwania-9-tygodni",
         "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 0.45
+        "score": 0.5
       },
       {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
-        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+        "logicalId": "kp-art182-1a-par6",
+        "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+        "score": 0.4
+      },
+      {
+        "logicalId": "mrpips-dzielenie-jednoczesnie",
+        "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
         "score": 0.33333334
-      },
-      {
-        "logicalId": "zus-przyklad-podzialu",
-        "fragmentSha256": "a599162339021b6e176458a60c7c523e815671604d35ad4282aecf58a8c2173f",
-        "score": 0.3
       }
     ],
     "evidence": [
       "kp-art182-1a-par7",
       "kp-art182-1a-par1",
       "kp-art182-1a-par4",
-      "rozp-2025-322-par15-ust2-pkt2",
-      "rozp-2025-322-par22",
-      "zus-przyklad-podzialu"
+      "kp-art182-1a-par6"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Tak, mąż może pójść na urlop rodzicielski w czasie, gdy Ty pobierasz zasiłek za okres rodzicielskiego, pod warunkiem że łączny wymiar urlopu rodzicielskiego i okresu pobierania zasiłku nie przekroczy maksymalnego wymiaru określonego w Kodeksie pracy.",
+          "text": "Tak, w okresie pobierania przez jednego rodzica zasiłku macierzyńskiego za okres urlopu rodzicielskiego, drugi rodzic może korzystać z urlopu rodzicielskiego.",
           "citationIds": [
             "c1"
-          ]
-        },
-        {
-          "text": "Każdy z rodziców ma prawo do wyłącznych 9 tygodni urlopu rodzicielskiego, których nie może przenieść na drugiego rodzica.",
-          "citationIds": [
-            "c2"
-          ]
-        },
-        {
-          "text": "Do wniosku o urlop rodzicielski należy dołączyć oświadczenie o okresie, w którym drugi rodzic zamierza korzystać z urlopu lub zasiłku.",
-          "citationIds": [
-            "c3"
           ]
         }
       ],
@@ -1451,30 +1488,6 @@
           "page": 66,
           "authority": "statute",
           "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c2",
-          "fragmentId": "kp-art182-1a-par4",
-          "title": "Kodeks pracy",
-          "locator": "art. 182¹a § 4",
-          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66",
-          "quote": "Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
-          "headingPath": [],
-          "page": 66,
-          "authority": "statute",
-          "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c3",
-          "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
-          "title": "Rozporządzenie w sprawie wniosków pracownika",
-          "locator": "§ 15 ust. 2 pkt 2",
-          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
-          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
-          "headingPath": [],
-          "page": 8,
-          "authority": "regulation",
-          "corpusVersion": "marta-v1"
         }
       ],
       "corpusVersion": "marta-v1"
@@ -1485,62 +1498,54 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 14572,
+    "modelMs": 5072,
     "finishReason": "stop"
   },
   {
     "id": "q19",
     "question": "Ile tygodni zasiłku za rodzicielski jest zarezerwowane tylko dla taty?",
-    "sanitized": "Ile tygodni zasiłku za rodzicielski jest zarezerwowane tylko dla taty?",
+    "sanitized": "Czy 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica można przekazać drugiemu?",
     "top": [
-      {
-        "logicalId": "zus-czas-trwania-9-tygodni",
-        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 1
-      },
-      {
-        "logicalId": "zus-przyklad-podzialu",
-        "fragmentSha256": "a599162339021b6e176458a60c7c523e815671604d35ad4282aecf58a8c2173f",
-        "score": 0.53333336
-      },
       {
         "logicalId": "mrpips-nieprzenoszalna",
         "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+        "score": 0.8333334
+      },
+      {
+        "logicalId": "kp-art182-1a-par4",
+        "fragmentSha256": "2384b9e03ec1ae4a9a04202271ef13f977a96cd369c6a64aaa875aa0285d9ccb",
+        "score": 0.8333334
+      },
+      {
+        "logicalId": "mrpips-dzielenie-zasilek",
+        "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
         "score": 0.45
+      },
+      {
+        "logicalId": "zus-czas-trwania-9-tygodni",
+        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
+        "score": 0.4166667
       },
       {
         "logicalId": "kp-art182-1a-par7",
         "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
-        "score": 0.43333334
-      },
-      {
-        "logicalId": "kp-art182-1a-par2",
-        "fragmentSha256": "f2c7829ed670af3dab92ad6e86cedf3b071bf1544734375ca6f85ca3c32398c1",
-        "score": 0.375
+        "score": 0.36666667
       }
     ],
     "evidence": [
       "kp-art182-1a-par4",
-      "zus-przyklad-podzialu",
       "kp-art182-1a-par5",
       "kp-art182-1a-par7",
-      "kp-art182-1a-par1",
-      "kp-art182-1a-par2"
+      "kp-art182-1a-par1"
     ],
     "answer": {
       "status": "answered",
       "message": "",
       "claims": [
         {
-          "text": "Każdemu z pracowników – rodziców dziecka przysługuje wyłączne prawo do 9 tygodni urlopu rodzicielskiego z wymiaru urlopu określonego w § 1 i 2. Prawa tego nie można przenieść na drugiego z pracowników – rodziców dziecka.",
+          "text": "Nie, 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica nie można przekazać drugiemu rodzicowi. Jest to wyłączne prawo, którego nie można przenieść.",
           "citationIds": [
             "c1"
-          ]
-        },
-        {
-          "text": "Jeżeli na przykład jako matka wykorzystasz 32 tygodnie urlopu, to dodatkowe 9 tygodni może wykorzystać tylko ojciec dziecka.",
-          "citationIds": [
-            "c2"
           ]
         }
       ],
@@ -1556,21 +1561,6 @@
           "page": 66,
           "authority": "statute",
           "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c2",
-          "fragmentId": "zus-przyklad-podzialu",
-          "title": "ZUS, Zasiłek za okres urlopu rodzicielskiego",
-          "locator": "Czas trwania zasiłku, przykład podziału",
-          "url": "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/prawo-do-zasilku-i-okres-przyslugiwania/za-okres-dodatkowego-urlopu-rodzicielskiego",
-          "quote": "Jeżeli na przykład jako matka wykorzystasz 32 tygodnie urlopu, to dodatkowe 9 tygodni może wykorzystać tylko ojciec dziecka.",
-          "headingPath": [
-            "Zasiłek macierzyński za okres odpowiadający okresowi urlopu rodzicielskiego",
-            "Czas trwania zasiłku"
-          ],
-          "page": null,
-          "authority": "zus_guidance",
-          "corpusVersion": "marta-v1"
         }
       ],
       "corpusVersion": "marta-v1"
@@ -1581,61 +1571,56 @@
       "polarityRemoved": 0
     },
     "model": "ok",
-    "modelMs": 7897,
+    "modelMs": 9469,
     "finishReason": "stop"
   },
   {
     "id": "q20",
     "question": "Skąd wiadomo, ile części urlopu już wykorzystałam?",
-    "sanitized": "Skąd wiadomo, ile części urlopu już wykorzystałam?",
+    "sanitized": "Skąd wiadomo, ile części urlopu rodzicielskiego już wykorzystano?",
     "top": [
       {
         "logicalId": "mrpips-korzystanie-czesci",
         "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
-        "score": 0.8333334
-      },
-      {
-        "logicalId": "kp-art182-1d-par2",
-        "fragmentSha256": "377d583407d491165ab22acb209feac97788be2816c8cbc4e528ee6ee88a48a0",
-        "score": 0.7
-      },
-      {
-        "logicalId": "kp-art182-1c",
-        "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
-        "score": 0.53333336
+        "score": 1
       },
       {
         "logicalId": "kp-art182-1a-par5",
         "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
-        "score": 0.5
+        "score": 0.5833334
+      },
+      {
+        "logicalId": "kp-art182-1d-par2",
+        "fragmentSha256": "377d583407d491165ab22acb209feac97788be2816c8cbc4e528ee6ee88a48a0",
+        "score": 0.53333336
+      },
+      {
+        "logicalId": "kp-art182-1c",
+        "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+        "score": 0.45
       },
       {
         "logicalId": "rozp-2025-322-par15-ust1",
         "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 0.33333334
+        "score": 0.2916667
       }
     ],
     "evidence": [
       "kp-art182-1c",
-      "kp-art182-1d-par2",
       "kp-art182-1a-par5",
       "kp-art182-1a-par4",
+      "kp-art182-1d-par2",
       "rozp-2025-322-par15-ust1"
     ],
     "answer": {
       "status": "answered",
-      "message": "",
+      "corpusVersion": "marta-v1",
+      "message": "Cytuję treść ze wskazanego źródła urzędowego.",
       "claims": [
         {
-          "text": "Liczbę wykorzystanych części urlopu rodzicielskiego ustala się na podstawie liczby złożonych wniosków o udzielenie urlopu oraz wniosków o zasiłek macierzyński za okres odpowiadający urlopowi rodzicielskiemu.",
+          "text": "§ 2. Liczbę części urlopu ustala się w oparciu o liczbę złożonych wniosków o udzielenie urlopu. W liczbie wykorzystanych części urlopu uwzględnia się także liczbę wniosków o zasiłek macierzyński za okres odpowiadający okresowi urlopu rodzicielskiego albo jego części, złożonych przez ubezpieczoną – matkę dziecka lub ubezpieczonego – ojca dziecka.",
           "citationIds": [
             "c1"
-          ]
-        },
-        {
-          "text": "Wniosek o urlop rodzicielski musi zawierać wskazanie okresu dotychczas wykorzystanego urlopu rodzicielskiego lub zasiłku macierzyńskiego oraz liczby wykorzystanych części urlopu rodzicielskiego.",
-          "citationIds": [
-            "c2"
           ]
         }
       ],
@@ -1646,34 +1631,17 @@
           "title": "Kodeks pracy",
           "locator": "art. 182¹d § 2",
           "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=67",
-          "quote": "Liczbę części urlopu ustala się w oparciu o liczbę złożonych wniosków o udzielenie urlopu. W liczbie wykorzystanych części urlopu uwzględnia się także liczbę wniosków o zasiłek macierzyński za okres odpowiadający okresowi urlopu rodzicielskiego albo jego części, złożonych przez ubezpieczoną – matkę dziecka lub ubezpieczonego – ojca dziecka.",
+          "quote": "§ 2. Liczbę części urlopu ustala się w oparciu o liczbę złożonych wniosków o udzielenie urlopu. W liczbie wykorzystanych części urlopu uwzględnia się także liczbę wniosków o zasiłek macierzyński za okres odpowiadający okresowi urlopu rodzicielskiego albo jego części, złożonych przez ubezpieczoną – matkę dziecka lub ubezpieczonego – ojca dziecka.",
           "headingPath": [],
           "page": 67,
           "authority": "statute",
           "corpusVersion": "marta-v1"
-        },
-        {
-          "id": "c2",
-          "fragmentId": "rozp-2025-322-par15-ust1",
-          "title": "Rozporządzenie w sprawie wniosków pracownika",
-          "locator": "§ 15 ust. 1",
-          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=7",
-          "quote": "Wniosek, o którym mowa w art. 182¹d § 1 Kodeksu pracy, o udzielenie pracownikowi – rodzicowi dziecka urlopu rodzicielskiego lub jego części zawiera: 1) imię i nazwisko pracownika; 2) wskazanie okresu dotychczas wykorzystanego urlopu rodzicielskiego lub zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego oraz liczby wykorzystanych części urlopu rodzicielskiego lub liczby wniosków o zasiłek macierzyński za okres odpowiadający części urlopu rodzicielskiego; 3) wskazanie okresu, na który ma być udzielony urlop rodzicielski lub ma być udzielona jego część.",
-          "headingPath": [],
-          "page": 7,
-          "authority": "regulation",
-          "corpusVersion": "marta-v1"
         }
-      ],
-      "corpusVersion": "marta-v1"
+      ]
     },
-    "report": {
-      "removedClaims": 0,
-      "rejectedEvidence": [],
-      "polarityRemoved": 0
-    },
-    "model": "ok",
-    "modelMs": 12218,
+    "report": null,
+    "model": "invalid_json",
+    "modelMs": 24250,
     "finishReason": "stop"
   },
   {
@@ -1735,44 +1703,11 @@
   {
     "id": "n05",
     "question": "Ile dni urlopu wypoczynkowego mam w tym roku?",
-    "top": [
-      {
-        "logicalId": "mrpips-korzystanie-czesci",
-        "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
-        "score": 0.8595853
-      },
-      {
-        "logicalId": "zus-czas-trwania-9-tygodni",
-        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 0.8510827
-      },
-      {
-        "logicalId": "kp-art182-1a-par1",
-        "fragmentSha256": "c005cf8d8b31e34db7496fd7e1f980a725c33e579f2629a327ebe7bb763c91b8",
-        "score": 0.8508362
-      },
-      {
-        "logicalId": "kp-art182-1a-par2",
-        "fragmentSha256": "f2c7829ed670af3dab92ad6e86cedf3b071bf1544734375ca6f85ca3c32398c1",
-        "score": 0.8494726
-      },
-      {
-        "logicalId": "kp-art182-1c",
-        "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
-        "score": 0.8493061
-      }
-    ],
-    "evidence": [
-      "kp-art182-1c",
-      "kp-art182-1a-par4",
-      "kp-art182-1a-par1",
-      "kp-art182-1a-par3",
-      "kp-art182-1a-par2",
-      "kp-art182-1d-par2"
-    ],
+    "top": [],
+    "evidence": [],
     "answer": {
       "status": "insufficient_evidence",
-      "message": "Pytanie dotyczy urlopu wypoczynkowego, podczas gdy dostarczone fragmenty dotyczą urlopu rodzicielskiego. Potrzebne są dodatkowe informacje lub właściwe fragmenty dotyczące urlopu wypoczynkowego.",
+      "message": "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.",
       "claims": [],
       "citations": [],
       "corpusVersion": "marta-v1"
@@ -1782,44 +1717,11 @@
   {
     "id": "n06",
     "question": "Jak złożyć wniosek o zasiłek pogrzebowy?",
-    "top": [
-      {
-        "logicalId": "rozp-2025-322-par15-ust1",
-        "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
-        "score": 1
-      },
-      {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt2",
-        "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
-        "score": 0.5833334
-      },
-      {
-        "logicalId": "rozp-2025-322-par15-ust2-pkt3",
-        "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
-        "score": 0.4761905
-      },
-      {
-        "logicalId": "zus-czas-trwania-9-tygodni",
-        "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
-        "score": 0.39285713
-      },
-      {
-        "logicalId": "mrpips-korzystanie-wniosek",
-        "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
-        "score": 0.325
-      }
-    ],
-    "evidence": [
-      "rozp-2025-322-par15-ust1",
-      "rozp-2025-322-par15-ust2-pkt2",
-      "rozp-2025-322-par22",
-      "rozp-2025-322-par15-ust2-pkt3",
-      "kp-art182-1a-par4",
-      "kp-art182-1d-par1"
-    ],
+    "top": [],
+    "evidence": [],
     "answer": {
       "status": "insufficient_evidence",
-      "message": "Pytanie dotyczy zasiłku pogrzebowego, podczas gdy dostarczone fragmenty dotyczą wniosków o urlop rodzicielski. Brak podstawy prawnej do odpowiedzi na pytanie o zasiłek pogrzebowy.",
+      "message": "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.",
       "claims": [],
       "citations": [],
       "corpusVersion": "marta-v1"
@@ -1829,10 +1731,30 @@
   {
     "id": "q04-without-par22",
     "answer": {
-      "status": "insufficient_evidence",
-      "message": "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.",
-      "claims": [],
-      "citations": [],
+      "status": "answered",
+      "message": "",
+      "claims": [
+        {
+          "text": "Tak, należy dołączyć odpis aktu urodzenia dziecka lub jego kopię, nawet jeśli kadry już posiadają taki dokument w aktach.",
+          "citationIds": [
+            "c1"
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "id": "c1",
+          "fragmentId": "rozp-2025-322-par15-ust2-pkt1",
+          "title": "Rozporządzenie w sprawie wniosków pracownika",
+          "locator": "§ 15 ust. 2 pkt 1",
+          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=7",
+          "quote": "Do wniosku dołącza się: 1) odpis skrócony aktu urodzenia dziecka (dzieci) lub zagraniczny dokument potwierdzający urodzenie dziecka (dzieci), wydany przez uprawniony organ dokonujący rejestracji urodzenia w danym kraju, albo kopie tych dokumentów",
+          "headingPath": [],
+          "page": 7,
+          "authority": "regulation",
+          "corpusVersion": "marta-v1"
+        }
+      ],
       "corpusVersion": "marta-v1"
     }
   },
