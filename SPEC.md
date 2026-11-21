@@ -27,6 +27,20 @@ Na komputerze po lewej znajdują się nagłówek, opis i ciemnozielony przycisk 
 - **Moja sytuacja** — „Urodziła nam się córka. Pracuję na etacie i chcę wziąć urlop ojcowski.” Przykład dotyczy narodzin w Polsce.
 - **Mój plan** — dwa wiersze. „Do załatwienia · Zgłoś urodzenie córki. Online lub w USC, w ciągu 21 dni od wystawienia karty urodzenia.” Drugi wiersz dotyczy wybranego uprawnienia. „Jeśli chcesz wziąć urlop ojcowski · Złóż wniosek u pracodawcy co najmniej 7 dni przed rozpoczęciem urlopu.” [Zgłoszenie urodzenia](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Urlop ojcowski](https://www.gov.pl/web/rodzina/urlop-ojcowski)
 
+### Zusik podczas przewijania
+
+**Uzgodnione.** Zusik, maskotka Przewodnika Rodzica, towarzyszy rodzicowi już od Hero. Podczas przewijania podąża za stroną i przy kolejnych sekcjach wyjaśnia, w czym przewodnik może pomóc.
+
+**Proponowany przebieg.** Zusik zaczyna przy krawędzi karty przykładowego planu. Gdy rodzic przewija stronę, maskotka płynnie przesuwa się wzdłuż bocznego marginesu i zatrzymuje przy aktualnie czytanej sekcji. Tam pojawia się jedno krótkie zdanie, które można czytać we własnym tempie. Przewinięcie w górę przywraca komunikat poprzedniej sekcji.
+
+| Miejsce | Proponowana wypowiedź Zusika |
+| --- | --- |
+| Przy podglądzie „Moja sytuacja / Mój plan” | „Spójrz na ten przykład. Tata chce wziąć urlop i od razu widzi, do kiedy złożyć wniosek.” |
+| Przy sytuacjach rodzinnych | „Możesz tu podejrzeć kilka planów. Zobacz, jak różnią się sprawy przed porodem i po narodzinach.” |
+| Przy pytaniach rodziców | „W planie zobaczysz, co trzeba załatwić, a co zależy od tego, czy chcesz skorzystać z urlopu lub zasiłku.” |
+
+Na telefonie Zusik ma miejsce obok nagłówka sekcji, dzięki czemu treść i przyciski są widoczne także na małym ekranie. Przy włączonym ograniczeniu ruchu ilustracja jest statyczna, a te same wypowiedzi są dostępne jako tekst przy sekcjach. W panelu dotyczącym straty dziecka pierwszeństwo mają spokojna treść i informacje o wsparciu.
+
 ### Podstawa w materiałach konkursowych
 
 Opis zadania (s. 11–15) wskazuje na indywidualną ocenę sytuacji, oszacowanie kwoty i okresu zasiłku, pomoc z dokumentami i terminami oraz możliwość sprawdzenia przykładów w responsywnej demonstracji. Regulamin (§ 2) odsyła do kryteriów w opisie zadania.
@@ -61,7 +75,5 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 | Czy muszę to złożyć, czy tylko wtedy, gdy chcę skorzystać z urlopu? | Przy każdej sprawie zobaczysz, czy jest obowiązkowa, czy wynika z Twojego wyboru. |
 | Do kogo z tym wnioskiem? | Przy dokumencie znajdziesz adresata, np. pracodawcę, ZUS albo urząd stanu cywilnego. |
 | Od którego dnia mam liczyć termin? | Obok terminu zobaczysz zdarzenie, od którego jest liczony, np. wystawienie karty urodzenia. |
-
-**Uzgodnione.** Maskotka przewodnika nosi imię **Zusik** i będzie widoczna na stronie. Proponowane miejsce pierwszej ilustracji to nagłówek tej sekcji. Obok Zusika pojawia się pierwsze pytanie rodzica, a pod nim odpowiedź. Sprawy związane ze stratą przedstawiamy spokojnym, rzeczowym językiem.
 
 Po sekcji z pytaniami proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do tego samego ekranu logowania. Rodzic może rozpocząć demonstrację także po przeczytaniu przykładów.
