@@ -10,15 +10,8 @@ Zadanie wymaga wskazania w opisie projektu funkcji opartych na AI, a regulamin (
 
 ## Design i UI
 
-Wygląd opisuje folder [`design/`](design/README.md). Jest jedynym źródłem prawdy o wyglądzie i **zastępuje `DESIGN.md`**. Przy konflikcie z `DESIGN.md` wygrywa `design/`. Treść i zachowanie ekranów nadal określają `SPEC*.md` i `ui/*.md`.
+Wygląd opisuje [`DESIGN.md`](DESIGN.md), zapisany w otwartym formacie DESIGN.md. To kierunek, a nie sztywna specyfikacja. Tokeny kolorów, typografii, zaokrągleń i odstępów są w nagłówku YAML, a proza opisuje charakter strony. Treść i zachowanie ekranów określają `SPEC*.md` i `ui/*.md`.
 
-Kiedy czytać który plik:
-
-- **Każda praca nad UI:** [`design/README.md`](design/README.md) i [`design/zasady-agenta.md`](design/zasady-agenta.md).
-- **Nowy ekran lub sekcja:** dodatkowo [`kierunek.md`](design/kierunek.md), [`layout.md`](design/layout.md), [`komponenty.md`](design/komponenty.md), [`tokeny.md`](design/tokeny.md).
-- **Tylko style (kolor, typografia, odstępy):** [`design/tokeny.md`](design/tokeny.md).
-- **Animacje i ruch:** [`design/motion.md`](design/motion.md). Animacje dostarcza zespół, nie projektuj ich sam.
-- **Efekt zlewających się przycisków (`liquid-gooey`):** [`design/gooey.md`](design/gooey.md).
-- **Weryfikacja lub aktualizacja wartości:** [`design/zrodla.md`](design/zrodla.md).
-
-Wartości bierz wyłącznie z tokenów w `design/tokeny.md`. Jeśli brakuje wartości, zapytaj zespół. Jeśli nie możesz czekać, użyj najbliższego tokenu i oznacz miejsce w kodzie „do weryfikacji”. Nie zgaduj nowych wartości.
+- Kolory, kroje, zaokrąglenia i odstępy bierz z tokenów w `DESIGN.md`. Nowe komponenty mogą odbiegać od przykładów, jeśli zachowują opisany charakter.
+- Jeśli potrzebnej wartości nie ma w tokenach (np. koloru błędu), zapytaj zespół. Jeśli nie możesz czekać, użyj najbliższego tokenu i oznacz miejsce w kodzie „do weryfikacji”.
+- Animacje i ruch dostarcza zespół, nie projektuj ich sam.
