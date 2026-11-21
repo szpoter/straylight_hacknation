@@ -135,6 +135,34 @@ describe("Durable LangGraph sickness case", () => {
     expect(search).not.toHaveBeenCalled();
     expect((await service.change("alice", { type: "close", version: 4 })).status).toBe(422);
   });
+  it("restores each original message with its assessment after correction and retry", async () => {
+    const { service, fresh } = setup();
+    const first = "Hej! Mam zwolnienie, czy dostanę zasiłek?";
+    await service.change("parent", { type: "start", message: first });
+    const confirm = { type: "confirm", version: 1, answer: "no", message: "Nie" } as const;
+    await service.change("parent", confirm);
+    await service.change("parent", confirm);
+    await service.change("parent", { type: "confirm", version: 2, answer: "yes", message: "Tak, miałam też inny tytuł" });
+    const view = await fresh().get("parent");
+    expect(view?.history?.map(row => [row.version, row.message, row.assessment.status])).toEqual([
+      [1, first, "needs_fact"], [2, "Nie", "not_entitled_for_period"], [3, "Tak, miałam też inny tytuł", "requires_review"],
+    ]);
+    expect(view?.history?.every(row => Number.isFinite(Date.parse(row.at)))).toBe(true);
+  });
+  it("quotes case evidence in chat without re-assessing or changing the workflow version", async () => {
+    const { service, fresh, search } = setup();
+    const initial = (await service.change("parent", { type: "start" })).view!;
+    search.mockClear();
+    const request = { type: "sources", requestId: "4bfe35f1-6de2-48c7-bc76-1b0ff80c0376", version: 1, message: "Skąd są te dane?" } as const;
+    const result = (await service.change("parent", request)).view!;
+    expect(result).toMatchObject({ version: initial.version, assessment: initial.assessment, history: initial.history,
+      sourceRequests: [{ id: request.requestId, message: request.message, law: initial.assessment.law }] });
+    expect(result.sourceRequests?.[0].evidence.map(doc => doc.id)).toEqual(initial.assessment.evidenceIds);
+    expect((await service.change("parent", request)).view).toEqual(result);
+    expect(await fresh().get("parent")).toEqual(result);
+    expect((await service.change("other", request)).status).toBe(404);
+    expect(search).not.toHaveBeenCalled();
+  });
   it("imports a new packet only after confirmation and reopens a prior denial on new insurance", async () => {
     const { service } = setup();
     await service.change("p", { type: "start" });

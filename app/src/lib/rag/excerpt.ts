@@ -8,6 +8,9 @@ export function extractiveAnswer(
   corpus: Corpus, projected: PublicQuestion, evidence: Fragment[], vectorIds: string[],
 ): AskAnswer | null {
   const reviewed: Array<[boolean, string[]]> = [
+    [projected.locators?.includes("program:dobry-start:termin") === true, ["dobry-start-termin"]],
+    [projected.locators?.includes("program:dobry-start:kanaly") === true, ["dobry-start-kanaly"]],
+    [projected.locators?.includes("uz:19") === true, ["uz-19-1"]],
     [projected.corpus === "oferta" && projected.locators?.[0] === "program:800-plus", ["800-plus"]],
     [projected.corpus === "oferta" && projected.locators?.[0] === "program:aktywny-rodzic", ["aktywny-rodzic"]],
     [projected.corpus === "oferta" && projected.locators?.[0] === "program:dobry-start", ["dobry-start"]],
@@ -33,9 +36,12 @@ export function extractiveAnswer(
     const fragment = evidence.find((f) => f.logicalId === id);
     const doc = fragment && corpus.documents.get(fragment.documentId);
     if (!fragment || !doc) return null;
+    let quote = fragment.sourceText;
+    if (id === "uz-19-1") quote = quote.split(" 2. ")[0];
+    if (id === "dobry-start") quote = quote.split(" Wniosek złożysz")[0];
     citations.push({
       id: "c" + (citations.length + 1), fragmentId: id, title: doc.shortTitle,
-      locator: fragment.locator, url: citationUrl(corpus, fragment), quote: fragment.sourceText,
+      locator: fragment.locator, url: citationUrl(corpus, fragment), quote,
       headingPath: fragment.headingPath, page: fragment.page, authority: doc.authority,
       corpusVersion: corpus.manifest.corpusVersion,
     });
@@ -50,6 +56,18 @@ export function extractiveAnswer(
 /** The current-title rule and the exception after coverage ended are alternatives.
  * Authentic citations alone did not prevent a model from calling the exception mandatory. */
 export function needsStatutoryText(projected: PublicQuestion, answer: AskAnswer): boolean {
+  const claims = answer.claims.map(c => c.text).join(" ");
+  if (projected.locators?.includes("program:dobry-start"))
+    return !answer.citations.some(c => c.fragmentId === "dobry-start") || !/300\s*(?:zł|PLN)/iu.test(claims);
+  if (projected.locators?.includes("program:dobry-start:termin"))
+    return !answer.citations.some(c => c.fragmentId === "dobry-start-termin") ||
+      !["1 lipca", "30 listopada", "orzeczen"].every(term => claims.toLowerCase().includes(term));
+  if (projected.locators?.includes("program:dobry-start:kanaly"))
+    return !answer.citations.some(c => c.fragmentId === "dobry-start-kanaly") ||
+      !["mzus", "ezus", "emp@tia", "bankowo"].every(term => claims.toLowerCase().includes(term));
+  if (projected.locators?.includes("uz:19"))
+    return !answer.citations.some(c => c.fragmentId === "uz-19-1") ||
+      !["90", "75", "100", "ciąż"].every(term => claims.toLowerCase().includes(term));
   if (/^Kiedy (?:i na jak długo )?przysługuje świadczenie rehabilitacyjne\?$/u.test(projected.question)) {
     const text = answer.claims.map(c => c.text).join(" ");
     return !answer.citations.some(c => c.fragmentId === "uz-18-1") ||

@@ -7,6 +7,7 @@ import { generateAnswer } from "../rag/answer";
 import { loadCorpus } from "../rag/corpus-fs";
 import { qdrantKnowledgeSearch } from "../rag/retrieve";
 import { AskService } from "./ask-service";
+import { suggestTopic } from "./topic-ranker";
 import { PgCaseStore } from "./case-store";
 import { PgTurnStore } from "./turn-store";
 import { queryQdrant } from "./qdrant";
@@ -79,6 +80,7 @@ export function askService(): AskService {
     },
     corpus,
     selectCorpus: (name) => loadCorpus(name),
+    suggestTopic,
     search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
     generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db }, activeCorpus, question, evidence),
   });

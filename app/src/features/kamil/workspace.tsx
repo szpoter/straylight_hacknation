@@ -2,14 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { CaseChatWindow } from "../chat/case-chat-window";
-import { asksAboutSources } from "@/lib/kamil/interpret";
-import { ChatStep } from "./chat-step";
+import { asksAboutSources, parseMessage } from "@/lib/kamil/interpret";
+import chat from "../chat/zusik.module.css";
+import { ChatStep, kamilEntries } from "./chat-step";
 import { DocumentStep } from "./document-step";
 import { clearPages, loadPages, readDocument, savePages, type PageImage } from "./read-document";
 import { ResultStep } from "./result-step";
 import { useKamilCase } from "./use-kamil-case";
 import { ZamStep } from "./zam-step";
 import s from "./kamil.module.css";
+
+// Factual declarations operate on the form. An incidental date or a question about another benefit belongs to chat.
+function addressesPaternityCase(text: string, today: string) {
+  if (asksAboutSources(text)) return true;
+  if (/(?:chcę|planuję|zamierzam).*(?:ojcowsk|zająć się (?:synem|córką|dzieckiem))/iu.test(text)) return true;
+  if (text.includes("?") || /^(?:(?:a|to|więc|czyli|zatem)\s+)*(?:jak|kiedy|ile|czy|co|komu|gdzie|skąd|dlaczego|do kiedy|w jaki|na jak|któr)/iu.test(text)) return false;
+  const facts = parseMessage(text, today, null);
+  const answersYesNo = /^(?:tak|nie|owszem|nigdy)[.! ]*$/iu.test(text) || /(?:brałem|korzystałem|pobierałem|mam zaległości|opłacam składki)/iu.test(text);
+  const specifiesPeriod = /^(?:(?:jednak|zaczynam|chcę)\s+)?(?:od\s+|\d)|^jeden tydzień|^tydzień|^dwa tygodnie|ojcowsk|urlop/iu.test(text);
+  return Boolean(facts.birthDate || facts.reminderDate || facts.priorPart || facts.wantsDraft || facts.wantsSend ||
+    (facts.startDate || facts.days) && specifiesPeriod || facts.yesNo && answersYesNo);
+}
 
 export function KamilWorkspace() {
   const { view, documentCache, busy, error, send, reload } = useKamilCase();
@@ -61,11 +74,12 @@ export function KamilWorkspace() {
   const blocked = busy || !!reading || !view;
   return (
     <CaseChatWindow scenario="kamil" label="Kamil · Zasiłek za okres ojcowski" busy={blocked} ready={!!view}
-      notice={readError ?? error?.message} onMessage={text => {
-        // Questions about principles use the same cited answers as Marta. Declarations still belong to Kamil's form.
-        const informational = /^(?:kiedy|jak(?:ie|i|a)?|ile|komu|komuż|na jak długo|w jakim|czy (?:pracownik|rodzic|oboje|można|świadczenie)|co (?:oznacza|to|mówi)|wyjaśnij|opowiedz)/iu.test(text);
-        if (informational && !asksAboutSources(text)) return Promise.resolve("ask");
-        return send({ type: "chat", text });
+      entries={kamilEntries(view)}
+      introduction={<p className={chat.aiMessage}>Cześć, Kamil. Pomogę Ci sprawdzić okres ojcowskiego i przygotować wniosek ZAM.</p>}
+      notice={readError ?? error?.message} onMessage={(text, original) => {
+        if (!view) return Promise.resolve(false);
+        if (addressesPaternityCase(text, view.today)) return send({ type: "chat", text: original });
+        return Promise.resolve("ask");
       }}
       documents={view && (
         <div className={s.caseTools} data-kamil-workspace>

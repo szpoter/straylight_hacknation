@@ -68,6 +68,8 @@ export async function POST(request: Request) {
       }
       // Only public source IDs and provider metadata belong in the browser's retrieval receipt.
       const retrieval = trace?.search === "ok" ? {
+        query: trace.sanitized,
+        contextRequestId: trace.contextRequestId,
         top: trace.vectorIds,
         evidence: trace.evidenceIds,
         backend: trace.backend ?? null,

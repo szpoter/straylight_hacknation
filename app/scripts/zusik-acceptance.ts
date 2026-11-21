@@ -177,7 +177,7 @@ async function testSickness(page:Page,partial:boolean) {
   await chat.getByText("Zmień sprawę", { exact: true }).click();
   await chat.getByRole("link", { name: /Chorobowe w ciąży/ }).click();
   await page.waitForURL("**/app/chorobowe");
-  await chat.getByRole("heading", { name: "Chorobowe w ciąży" }).waitFor();
+  await chat.getByText("Chorobowe w ciąży · Ocena prawa do zasiłku", {exact:true}).waitFor();
   await sendCaseMessage<SicknessView>(page, sickPath, "Czy za dni zwolnienia dostanę zasiłek?");
 
   const file=page.locator('input[type=file]');
@@ -219,27 +219,29 @@ async function testCitations(page:Page) {
   await page.reload();
   await page.getByText(turn.question,{exact:true}).first().waitFor();
 }
+async function askInChat(page: Page, question: string) {
+  const input = page.getByRole("textbox", {name: "Wiadomość do Zusika"});
+  await input.fill(question);
+  const received = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST", {timeout: 70000});
+  await page.getByRole("button", {name:"Wyślij", exact:true}).click();
+  const response = await received;
+  assert.match(response.headers()["content-type"], /application\/x-ndjson/);
+  const frames = (await response.text()).trim().split("\n").map(line => JSON.parse(line));
+  assert.equal(frames[0].type, "activity");
+  assert.ok(frames.some(frame => frame.type === "delta"));
+  const last = frames.at(-1);
+  assert.equal(last.type, "result");
+  assert.equal(last.status, 200);
+  const turn = last.body.turn as AskTurn;
+  assert.equal(turn.status, "answered");
+  await page.getByRole("button", {name: /^Źródło /}).last().waitFor();
+  return { turn, retrieval: last.body.retrieval };
+}
+
 async function testNewQuestion(page: Page) {
   await page.goto(origin + "/app");
   await page.waitForFunction(() => Array.from(document.querySelectorAll("button")).some(b => b.textContent === "Porównaj warianty" && !b.disabled));
-  async function ask(question: string) {
-    const input = page.getByRole("textbox", {name: "Wiadomość do Zusika"});
-    await input.fill(question);
-    const received = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST", {timeout: 70000});
-    await input.press("Enter");
-    const response = await received;
-    assert.match(response.headers()["content-type"], /application\/x-ndjson/);
-    const frames = (await response.text()).trim().split("\n").map(line => JSON.parse(line));
-    assert.equal(frames[0].type, "activity");
-    assert.ok(frames.some(frame => frame.type === "delta"));
-    const last = frames.at(-1);
-    assert.equal(last.type, "result");
-    assert.equal(last.status, 200);
-    const turn = last.body.turn as AskTurn;
-    assert.equal(turn.status, "answered");
-    await page.getByRole("button", {name: /^Źródło /}).last().waitFor();
-    return { turn, retrieval: last.body.retrieval };
-  }
+  const ask = (question: string) => askInChat(page, question);
   await page.evaluate(() => {
     const seen = new Set<string>();
     new MutationObserver(() => {
@@ -267,6 +269,44 @@ async function testNewQuestion(page: Page) {
   await page.getByRole("button", {name: new RegExp("^Źródło " + (index + 1) + ":")}).last().click();
   await page.getByRole("link", {name: /Otwórz dokument na s. 7/}).last().waitFor();
 }
+async function testFollowUps(page: Page) {
+  await page.goto(origin + "/app");
+  await page.getByRole("textbox", { name: "Wiadomość do Zusika" }).waitFor();
+  const cases = [
+    { question: "Moja córka zaczęła liceum. Wydałam sporo na szkolną wyprawkę. Czy jest jakieś dofinansowanie?", id: "dobry-start", text: /300/ },
+    { question: "A do kiedy mogę to załatwić?", id: "dobry-start-termin", text: /30 listopada/i },
+    { question: "A którędy mogę to wysłać?", id: "dobry-start-kanaly", text: /(?:mZUS|eZUS|Emp@tia|bankowoś)/i },
+  ];
+  const history = new Set<string>();
+  for (const item of cases) {
+    if (history.size === 1) {
+      await page.reload();
+      await page.getByText(cases[0].question, {exact:true}).waitFor();
+    }
+    const {turn, retrieval} = await askInChat(page, item.question);
+    const cited = turn.citations.find(c => c.fragmentId === item.id);
+    assert.ok(cited && retrieval?.top.includes(item.id) && retrieval.evidence.includes(item.id),
+      "Missing matching raw hit, evidence or citation: " + item.id);
+    const original = loadCorpus("oferta").fragments.get(item.id);
+    assert.ok(original?.sourceText.includes(cited.quote), "Citation must match the official source");
+    assert.match(turn.claims.map(c => c.text).join(" "), item.text);
+    if (history.size) {
+      assert.ok(history.has(retrieval.contextRequestId), "Follow-up must resolve against this case");
+      assert.equal(retrieval.top[0], item.id, "The requested detail should be the first Qdrant match");
+      assert.match(retrieval.query, /Dobry Start/i);
+    }
+    history.add(turn.requestId);
+  }
+  const control = await page.request.post(origin + "/api/zusik/ask", {
+    headers: await browserHeaders(page),
+    data: { scenario: "chorobowe", requestId: randomUUID(), question: cases[1].question },
+  });
+  assert.equal(control.status(), 200);
+  const result = await control.json();
+  assert.equal(result.turn.status, "needs_clarification", "The same follow-up in an empty case needs a subject");
+  assert.equal(result.turn.citations.length, 0);
+  assert.equal(result.retrieval, null);
+}
 async function testGreetings(page: Page) {
   // Reproduce a cold session while the parent is already typing the first message.
   let releaseSession!: () => void;
@@ -280,6 +320,11 @@ async function testGreetings(page: Page) {
     await page.goto(origin + route);
     const chat = page.getByRole("region", {name:"Czat z Zusikiem"});
     const input = chat.getByRole("textbox", {name:"Wiadomość do Zusika"});
+    if (route !== "/app") {
+      const log = chat.getByRole("log", {name:"Przebieg rozmowy"});
+      await log.waitFor();
+      assert.equal(await log.locator('[role="log"]').count(), 0, "A case has one conversation log");
+    }
     await input.fill(question);
     const send = chat.getByRole("button", {name:/Wyślij/});
     if (route === "/app") {
@@ -302,7 +347,7 @@ async function testGreetings(page: Page) {
 }
 async function run() {
   const browser=await chromium.launch({channel:"chrome", headless:true});
-  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false]] as const;
+  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false],["KONTEKST",testFollowUps,false]] as const;
   let failures=0;
   try {
     for (const [id,test,variation] of cases) {

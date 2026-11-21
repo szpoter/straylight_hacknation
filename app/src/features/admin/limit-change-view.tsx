@@ -31,6 +31,7 @@ export interface LimitActions {
   check: (form: LimitForm) => Promise<LimitActionResult>;
   publish: (request: { draftId: string; expectedRevision: number }) => Promise<LimitActionResult>;
   discard: () => Promise<LimitActionResult>;
+  preview: () => Promise<{ ok: boolean; error?: string }>;
 }
 
 interface Props {
@@ -139,6 +140,25 @@ export function LimitChangeView(props: Props) {
       setMessage("Szkic odrzucony.");
       router.refresh();
     });
+
+  // The tab opens synchronously (popup blockers allow it only inside the click), then gets its address.
+  const showAsParent = () => {
+    const tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+    if (!saved) {
+      if (tab) tab.location.href = "/app/kamil";
+      return;
+    }
+    run(async () => {
+      const r = await props.actions.preview();
+      if (!r.ok) {
+        tab?.close();
+        return setMessage(r.error ?? "Nie udało się włączyć podglądu.");
+      }
+      if (tab) tab.location.href = "/app/kamil";
+      setMessage("Podgląd szkicu otwarty w nowej karcie. Kończy się po publikacji, odrzuceniu szkicu albo po 30 minutach.");
+    });
+  };
 
   const statusBadge = published ? "Zaplanowana" : "Szkic";
 
@@ -256,12 +276,14 @@ export function LimitChangeView(props: Props) {
           <p className={s.empty}>Popraw wartość i datę, aby zobaczyć wpływ.</p>
         )}
         <div className={s.cardActions}>
-          <a href="/app/kamil" target="_blank" rel="noopener noreferrer" className={s.btnSecondary}>
+          <button type="button" className={s.btnSecondary} onClick={showAsParent} disabled={pending}>
             Pokaż oczami rodzica
-          </a>
+          </button>
         </div>
         <p className={cx(s.small, s.muted)} style={{ margin: "8px 0 0" }}>
-          Sprawa Kamila w tej samej sesji, z opublikowanymi wartościami.
+          {saved
+            ? "Otwiera sprawę Kamila z wartością ze szkicu, oznaczoną jako podgląd. Nic nie zostaje opublikowane."
+            : "Zapisz szkic, żeby zobaczyć go oczami rodzica. Bez szkicu sprawa Kamila pokazuje opublikowane wartości."}
         </p>
       </Card>
 

@@ -66,7 +66,9 @@ describe("public knowledge partitions", () => {
     }
     expect(corpus.fragments.get("rz-par33-ust1")?.sourceText).toContain("przed terminem rozpoczęcia");
     expect(corpus.fragments.has("rz-39-1")).toBe(false);
-    expect(loadCorpus("oferta").fragments.size).toBe(3);
+    expect([...loadCorpus("oferta").fragments.keys()]).toEqual(expect.arrayContaining([
+      "800-plus", "aktywny-rodzic", "dobry-start", "dobry-start-termin", "dobry-start-kanaly",
+    ]));
   });
 
   it("does not send personal input to either hosted service and selects evidence for the correct title", async () => {

@@ -22,7 +22,7 @@ export interface TurnStore {
   complete(threadId: string, requestId: string, token: string, answer: AskAnswer): Promise<AskTurn | null>;
   /** Drops a pending claim (e.g. provider outage) so the same request can be retried. */
   release(threadId: string, requestId: string, token: string): Promise<void>;
-  list(threadId: string, beforeRequestId?: string): Promise<AskTurn[]>;
+  list(threadId: string, beforeRequestId?: string, limit?: number): Promise<AskTurn[]>;
 }
 
 export function newTurnToken(): string {
@@ -54,6 +54,7 @@ function toTurn(row: TurnRow): AskTurn {
     claims: response.claims,
     citations: response.citations,
     corpusVersion: response.corpusVersion,
+    ...(response.publicQuery ? { publicQuery: response.publicQuery } : {}),
   };
 }
 
@@ -107,15 +108,15 @@ export class PgTurnStore implements TurnStore {
     );
   }
 
-  async list(threadId: string, beforeRequestId?: string): Promise<AskTurn[]> {
+  async list(threadId: string, beforeRequestId?: string, limit?: number): Promise<AskTurn[]> {
     try {
       const { rows } = await this.pool.query<TurnRow>(
         `SELECT request_id, question_hash, question, status, response, created_at, completed_at, false AS lease_expired
          FROM ${T} WHERE thread_id = $1 AND status <> 'pending'
-         AND ($2::text IS NULL OR id < (SELECT id FROM ${T} WHERE thread_id = $1 AND request_id = $2)) ORDER BY id`,
-        [threadId, beforeRequestId ?? null],
+         AND ($2::text IS NULL OR id < (SELECT id FROM ${T} WHERE thread_id = $1 AND request_id = $2)) ORDER BY id DESC LIMIT $3`,
+        [threadId, beforeRequestId ?? null, limit ?? null],
       );
-      return rows.map(toTurn);
+      return rows.reverse().map(toTurn);
     } catch (error) {
       // Before `npm run zusik:migrate` adds ask_turns, step 1 keeps working with no turns.
       if ((error as { code?: string }).code === "42P01") return [];

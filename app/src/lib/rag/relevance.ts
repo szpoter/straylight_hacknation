@@ -9,7 +9,8 @@ import type { PublicQuestion } from "./public-query";
  */
 export function relevantFragment(plan: PublicQuestion, corpus: Corpus): (fragment: Fragment) => boolean {
   if (!plan.locators?.length || plan.corpus === "marta") return () => true;
-  const keys = new Set(plan.locators.flatMap((key) => [key, key.split(":").slice(0, 2).join(":")]));
+  const keys = new Set(plan.corpus === "oferta" ? plan.locators :
+    plan.locators.flatMap((key) => [key, key.split(":").slice(0, 2).join(":")]));
   const anchors = new Set(
     [...corpus.fragments.values()].filter((f) => f.locatorKeys.some((key) => keys.has(key))).map((f) => f.logicalId),
   );

@@ -4,7 +4,7 @@
 | --- | --- | ---: | --- |
 | `marta` | `marta-v1` | 23 | Urlop rodzicielski pracownika, wniosek do pracodawcy i wyjątki w załącznikach |
 | `publiczne` | `rodzina-2026-11-v1` | 487 | Akty prawne z materiałów konkursowych, poradnik rodziców ZUS, instrukcje chorobowego i ZAM |
-| `oferta` | `programy-2026-11-v1` | 3 | Informacje o 800+, Dobrym Starcie i Aktywnym Rodzicu |
+| `oferta` | `programy-2026-11-v2` | 5 | Informacje o 800+, Dobrym Starcie i Aktywnym Rodzicu |
 
 [Inwentarz materiałów](materialy.json) rozlicza wszystkie 95 plików merytorycznych, organizacyjnych i akt. Oryginalne 87 plików akt spraw pozostaje poza wspólnym indeksem. Ich kopie zawierają 86 różnych dokumentów. Cztery wyciągi konkursowe mają odpowiedniki ze zbioru ELI. Sumy SHA-256 identyfikują pliki źródłowe, a strony PDF i jednostki redakcyjne prowadzą do konkretnych przepisów. Materiał szkoleniowy o stawkach i czasie świadczeń ma odsyłacze do źródeł ustawowych.
 

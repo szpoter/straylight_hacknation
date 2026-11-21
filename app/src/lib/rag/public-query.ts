@@ -7,6 +7,8 @@ export interface PublicQuestion {
   question: string;
   locators?: string[];
   clarify?: string;
+  /** A recognised follow-up for which the curated material has no matching search. */
+  uncovered?: string;
 }
 
 const sickness = /chorob|zwolnien|niezdolno|ubezpiecze|e-zla|składk|zleceni|samozatrud|działalno|przedsiębior/iu;
@@ -21,7 +23,12 @@ function routeTopic(input: string): PublicQuestion | null {
 
   const offer = (id: string, question: string): PublicQuestion => ({ corpus: "oferta", question, locators: ["program:" + id] });
   if (/800\s*(?:\+|plus)|świadczenie wychowawcze/u.test(q)) return offer("800-plus", "Jak ZUS opisuje program 800+ i kiedy można złożyć wniosek na nowy okres?");
-  if (/dobry start|300\s*(?:\+|plus)|wyprawk/u.test(q)) return offer("dobry-start", "Na czym polega program Dobry Start i w jaki sposób składa się wniosek?");
+  if (/dobry start|300\s*(?:\+|plus)|wyprawk/u.test(q)) {
+    if (/do kiedy|od kiedy|termin|najpóźniej/u.test(q)) return offer("dobry-start:termin", "W jakim terminie można złożyć wniosek o świadczenie Dobry Start?");
+    if (/sposób złożenia|którędy|gdzie|kanał|online|elektroniczn|bankowoś|mzus|przez co|jak.{0,15}(?:wysłać|złożyć)/u.test(q))
+      return offer("dobry-start:kanaly", "Jakimi kanałami rodzic może złożyć elektroniczny wniosek o Dobry Start?");
+    return offer("dobry-start", "Na czym polega świadczenie Dobry Start na wyprawkę szkolną?");
+  }
   if (/aktywn[yaie]+ rodzic|aktywnie w|żłobk|babciow/u.test(q)) return offer("aktywny-rodzic", "Jakie świadczenia wymienia ZUS w programie Aktywny Rodzic?");
   const explicit = explicitLocatorKeys(q);
   if (explicit.length) return { ...marta(`Jakie zasady określa wskazany przepis: ${explicit.join(", ")}?`), locators: explicit };
@@ -35,7 +42,7 @@ function routeTopic(input: string): PublicQuestion | null {
     const selfEmployed = /działalno|przedsiębior|samozatrud|prowadzę firm|niebędąc|nie jestem pracownikiem/u.test(q);
     const employee = !selfEmployed && /pracowni|eta[tc]|pracodawc/u.test(q);
     if (!selfEmployed && !employee && (period.test(q) || /dokument|odpis|dołącz|załącz/u.test(q)) && !/wiek|miesi|ukończe/u.test(q)) {
-      return { ...generic("Termin złożenia wniosku za okres ojcowskiego."), clarify: "Pytasz o urlop ojcowski na etacie czy o zasiłek za ten okres przy działalności?" };
+      return { ...generic(/dokument|odpis|dołącz|załącz/u.test(q) ? "Dokumenty do wniosku o urlop ojcowski." : "Termin złożenia wniosku za okres ojcowskiego."), clarify: "Pytasz o urlop ojcowski na etacie czy o zasiłek za ten okres przy działalności?" };
     }
     if (/dokument|dołącz|odpis|akt urodzenia|załącz|doł[ąa]cz/iu.test(q))
       return employee ? generic("Jakie dokumenty dołącza pracownik do wniosku o urlop ojcowski u pracodawcy?", ["rw:17"]) : generic("Jakich dokumentów potrzebuje przedsiębiorca, aby wystąpić o zasiłek macierzyński za okres urlopu ojcowskiego?", ["rz:33:1"]);
@@ -60,7 +67,7 @@ function routeTopic(input: string): PublicQuestion | null {
   if (namedRehabilitation || afterSickness) {
     if (/dokument|załącz|dołącz|formularz/u.test(q))
       return generic("Jakie dokumenty są potrzebne do świadczenia rehabilitacyjnego?", ["rz:11"]);
-    if (/procent|stawka|podstaw[ayę] wymiaru/u.test(q))
+    if (/procent|stawk|podstaw[ayę] wymiaru|ile.{0,22}wypłac/u.test(q))
       return generic("Jaki procent podstawy wymiaru wynosi świadczenie rehabilitacyjne?", ["uz:19"]);
     if (/emeryt|rent[ęay]|bezrobotn|uprawnienia wyłączają/u.test(q))
       return generic("Jakie uprawnienia wyłączają prawo do świadczenia rehabilitacyjnego?", ["uz:18"]);
@@ -128,6 +135,9 @@ const OTHER_TOPICS: ReadonlyArray<readonly [RegExp, string]> = [
   [/hospitaliz|szpital/iu, "pobyt dziecka w szpitalu"], [/wcześniak|przedwcześnie urodz/iu, "urodzenie dziecka przed terminem"],
   [/pół etatu|część etatu|niepełn/iu, "wykonywanie pracy w niepełnym wymiarze"],
 ];
+export function asksAboutOwnEligibility(input: string): boolean {
+  return /czy (?:mi |nam )(?:przysługuje|należy się)|czy (?:przysługuje|należy się) (?:mi|nam)\b|czy dostanę|czy mam prawo/iu.test(input);
+}
 export function publicQuestion(input: string): PublicQuestion | null {
   const topic = routeTopic(input);
   const limited = (clarify: string): PublicQuestion => ({ corpus: topic?.corpus ?? "publiczne", question: "", clarify });
@@ -137,7 +147,7 @@ export function publicQuestion(input: string): PublicQuestion | null {
   if (/(?:moje dziecko|mój syn|moja córka|dziecko ma).{0,32}\d+\s*(?:miesię|lat|rok)/iu.test(input) && topic) {
     return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Wybierz sprawę i potwierdź datę urodzenia.");
   }
-  if (/czy (?:mi |nam )(?:przysługuje|należy się)|czy (?:przysługuje|należy się) (?:mi|nam)\b|czy dostanę|czy mam prawo/iu.test(input) &&
+  if (asksAboutOwnEligibility(input) &&
       !/800|300|aktywny rodzic/u.test(input) && topic?.corpus === "publiczne") {
     return limited("Chcesz sprawdzić własne uprawnienie? Wskaż rodzaj świadczenia i tytuł ubezpieczenia w swojej sprawie.");
   }

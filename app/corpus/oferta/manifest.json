@@ -1,10 +1,10 @@
 {
-  "corpusVersion": "programy-2026-11-v1",
+  "corpusVersion": "programy-2026-11-v2",
   "locale": "pl",
   "description": "Katalog świadczeń rodzinnych ZUS. Informacje o programach i sposobie składania wniosków. Indywidualna kwalifikacja wymaga zweryfikowania szczegółowych warunków.",
-  "verifiedAt": "2026-11-21",
+  "verifiedAt": "2026-11-22",
   "fragmentsFile": "fragments.jsonl",
-  "expectedFragments": 3,
+  "expectedFragments": 5,
   "documents": [
     {
       "id": "katalog-zus",
@@ -20,6 +20,21 @@
       "validFrom": null,
       "validTo": null,
       "versionNote": "Katalog opublikowany 1 października 2024 r. Stan zapisanego źródła 21 listopada 2026 r. Strona przeglądowa programów."
+    },
+    {
+      "id": "zus-dobry-start",
+      "title": "Program Dobry Start",
+      "shortTitle": "ZUS, Program Dobry Start",
+      "authority": "zus_guidance",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "sourceType": "html",
+      "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/program-dobry-start",
+      "landingUrl": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/program-dobry-start",
+      "retrievedAt": "2026-11-22",
+      "sourceSha256": "d955b39f89ed60530eb2b38297ec08e524625a2ecb48e32369bcb96dbe863b39",
+      "validFrom": null,
+      "validTo": null,
+      "versionNote": "Oficjalna instrukcja ZUS dla rodziców, sprawdzona 22 listopada 2026 r."
     }
   ]
 }

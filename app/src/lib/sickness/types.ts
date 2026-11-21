@@ -29,7 +29,22 @@ export interface SicknessAssessment {
   law: Law[];
   question: string | null;
 }
+export interface SicknessExchange {
+  version: number;
+  at: string;
+  message?: string;
+  closed: boolean;
+  assessment: SicknessAssessment;
+}
 export interface SicknessView {
+  history?: SicknessExchange[];
+  sourceRequests?: {
+    id: string;
+    message: string;
+    at: string;
+    evidence: SicknessView["evidence"];
+    law: Law[];
+  }[];
   version: number;
   closed: boolean;
   assessment: SicknessAssessment;
