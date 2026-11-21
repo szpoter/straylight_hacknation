@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ASK_STREAM, readAskStream } from "@/lib/zusik/ask-stream";
 import type { Choice } from "@/lib/zusik/constants";
 import { answerFromAskBody, turnsFromView, type Answer, type ClientView, type Turn } from "./contract";
 
@@ -33,7 +34,7 @@ export type ConversationItem = { requestId: string; question: string; state: Loc
 
 type Payload = { documentCache?:string; view?: ClientView; error?: string; variable?: string };
 
-const ASK_TIMEOUT_MS = 30_000;
+const ASK_TIMEOUT_MS = 70_000;
 const POLL_MS = 1_500;
 const POLL_LIMIT = 20;
 
@@ -80,6 +81,10 @@ export function useZusikCase() {
   const [error, setError] = useState<CaseError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null);
+  const [activity, setActivity] = useState<string | null>(null);
+  const [partialText, setPartialText] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => activeRequest.current?.abort(), []);
   const [asks, setAsks] = useState<LocalAsk[]>([]);
   /** When this tab last got a confirmed save of the choice (drives the field highlight). */
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -207,7 +212,7 @@ export function useZusikCase() {
   /** Sends (or re-sends with the same requestId) a question to the knowledge base. */
   const send = useCallback(
     async (requestId: string, question: string): Promise<AskOutcome> => {
-      if (asking.current.has(requestId)) return { kind: "lost" };
+      if (activeRequest.current || asking.current.has(requestId)) return { kind: "lost" };
       asking.current.add(requestId);
       const upsert = (patch: Partial<LocalAsk>) =>
         setAsks((list) =>
@@ -218,13 +223,40 @@ export function useZusikCase() {
       const drop = () => setAsks((list) => list.filter((item) => item.requestId !== requestId));
       upsert({ state: "sending" });
       const controller = new AbortController();
+      activeRequest.current = controller;
+      setActivity("Wysyłam pytanie…");
+      setPartialText("");
+      const request = async () => {
+        const response = await fetch("/api/zusik/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: ASK_STREAM },
+          body: JSON.stringify({ question, requestId }),
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        return readAskStream(response, setActivity, async (text) => {
+          setActivity(null);
+          if (document.hidden || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            setPartialText((previous) => previous + text);
+            return;
+          }
+          const words = text.match(/\s*\S+\s*/g) ?? [text];
+          const step = Math.max(2, Math.ceil(words.length / 18));
+          for (let i = 0; i < words.length; i += step) {
+            controller.signal.throwIfAborted();
+            const part = words.slice(i, i + step).join("");
+            setPartialText((previous) => previous + part);
+            await sleep(24);
+          }
+        });
+      };
       const timer = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
       try {
-        let res = await post("/api/zusik/ask", { question, requestId }, controller.signal);
+        let res = await request();
         // 202: the same request is still running on the server. Ask again with the same requestId.
         for (let i = 0; res.status === 202 && i < POLL_LIMIT; i += 1) {
           await sleep(POLL_MS);
-          res = await post("/api/zusik/ask", { question, requestId }, controller.signal);
+          res = await request();
         }
         const body = res.body as Payload & { turn?: { message?: string } };
         if (res.status === 404 || res.status === 405 || (res.status === 500 && body.error === "config_missing")) {
@@ -261,6 +293,9 @@ export function useZusikCase() {
         return { kind: "lost" };
       } finally {
         clearTimeout(timer);
+        activeRequest.current = null;
+        setActivity(null);
+        setPartialText("");
         asking.current.delete(requestId);
       }
     },
@@ -284,6 +319,8 @@ export function useZusikCase() {
     notice,
     pendingChoice,
     savedAt,
+    activity,
+    partialText,
     conversation: mergeConversation(turnsFromView(view), asks),
     asking: asks.some((item) => item.state === "sending"),
     restore,
