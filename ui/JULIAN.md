@@ -38,6 +38,14 @@
 
 **Scena do przeklikania.** Rodzic otwiera wniosek Oli i klika zaproszenie. Zusik pyta o początek urlopu. Po odpowiedzi „17 czerwca” ta data pojawia się w polu „Początek urlopu”. Rodzic wybiera przy nim „Zmień” i wpisuje 18 czerwca. Przy kolejnym pytaniu o początek urlopu odpowiedź Zusika ma być zgodna z wartością 18 czerwca. Maciej wykorzystuje tę scenę przy szkicu, a Nikodem może pokazać w jednym kadrze rozmowę i efekt poprawki.
 
+### Historia rozmów
+
+**Julian · 21 listopada 2026 · Uzgodnione.** „Historia” w nagłówku Zusika otwiera listę w miejscu rozmowy. W widoku dzielonym rodzic nadal widzi formularz po lewej, a na telefonie fragment bieżącej sprawy nad listą. Samo otwarcie historii zachowuje bieżącą sprawę. [Linear Agent — wejście z paska czatu](https://linear.app/docs/linear-agent#chat-history)
+
+Rozmowy zalogowanego rodzica grupujemy według daty ostatniej wiadomości pod nagłówkami „Dzisiaj”, „Wczoraj” i „Wcześniej”, od najnowszej. Pierwszy wiersz wpisu pokazuje tytuł i godzinę lub datę, np. **Zmiana daty urlopu ojcowskiego** i **10:42**. Drugi, spokojniejszy wiersz wskazuje dziecko lub plan oraz sprawę, np. „Ola · Wniosek do pracodawcy”. Na wąskim ekranie długi tytuł może się zawinąć. [assistant-ui — grupy rozmów](https://www.assistant-ui.com/elements/thread-list) · [Notion Agents — dwuwierszowy wpis w historii](https://www.notion.com/help/notion-ai-app-for-ios#history)
+
+**Scena do przeklikania.** Rodzic zaczyna pisać wiadomość i dołącza plik, po czym otwiera historię. „Wróć do rozmowy” przywraca ten sam wątek z tekstem i plikiem. Wybranie wpisu „Zmiana daty urlopu ojcowskiego” wznawia rozmowę o Oli i jej szkic przy polu „Początek urlopu”. Niewysłany tekst i załącznik czekają w rozmowie, w której rodzic je przygotował.
+
 ### Źródła RAG przy odpowiedzi Zusika
 
 **Julian · 21 listopada 2026 · Uzgodnione.** Przy zdaniu opartym na materiale źródłowym umieszczamy małe, domyślnie zwinięte oznaczenie w stylu AI Elements, np. „Pokaż fragment poradnika · ZUS, s. 33”. Kliknięcie, dotknięcie lub aktywacja klawiaturą rozwija pod zdaniem dokładny cytat z fragmentu użytego przez RAG, zgodnie z pomysłem „Zoom In” z Granoli. Na komputerze szkic pozostaje obok rozmowy, a na telefonie cytat rozwija się w treści wiadomości. [AI Elements — Inline Citation](https://elements.ai-sdk.dev/components/inline-citation) · [Granola — Zoom In](https://www.granola.ai/blog/announcement#:~:text=Zoom%20In)
