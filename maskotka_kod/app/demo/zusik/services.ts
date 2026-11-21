@@ -11,9 +11,10 @@
 
 import type { DraftId, FieldKey } from "./data";
 
-type TestState = { saveFails: number; streamDrops: number; uploadFails: number; delay: number };
+type TestState = { saveFails: number; streamDrops: number; uploadFails: number; delay: number; saveCalls: number };
 
-const test: TestState = { saveFails: 0, streamDrops: 0, uploadFails: 0, delay: 900 };
+/** `saveCalls` counts field saves, so a test can check that retrying an answer does not save again. */
+const test: TestState = { saveFails: 0, streamDrops: 0, uploadFails: 0, delay: 900, saveCalls: 0 };
 
 export const testControls = {
   failNextSave: () => void (test.saveFails += 1),
@@ -41,6 +42,7 @@ export async function saveField(draftId: DraftId, field: FieldKey, value: string
   void draftId;
   void field;
   void value;
+  test.saveCalls += 1;
   await wait(test.delay);
   if (test.saveFails > 0) {
     test.saveFails -= 1;
