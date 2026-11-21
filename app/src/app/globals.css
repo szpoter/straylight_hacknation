@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/*
+ * Tokeny z DESIGN.md („Spokojna Kartka”). Domyślna paleta Tailwinda jest wyłączona,
+ * żeby w kodzie dało się użyć tylko kolorów z tokenów. Wartości spoza DESIGN.md są
+ * oznaczone „do weryfikacji”.
+ */
+@theme {
+  --color-*: initial;
+  --color-primary: #1a8648;
+  --color-on-primary: #ffffff;
+  --color-secondary: #a6d0b8;
+  --color-tertiary: #fcdcaa;
+  --color-background: #f5faf7;
+  --color-surface: #ffffff;
+  --color-on-surface: #283754;
+  --color-on-surface-variant: #5e697f;
+  --color-outline: #d4d7dd;
+
+  /* Maskotka Bąbelek (Zusik): wartości zespołu maskotki, zmierzone z design/mascot/base.jpg (maskotka_kod). */
+  --color-babelek-fill: #a3dab3;
+  --color-babelek-rim: #338c5c;
+  --color-babelek-ink: #1e3d5c;
+  --color-babelek-shine: #ffffff;
+  --color-babelek-shadow: #d1d1d1;
+
+  --font-serif: var(--font-literata), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Display rośnie płynnie od 48 px (390 px okna) do 86,4 px (1440 px okna). */
+  --text-display: clamp(48px, 33.7px + 3.66vw, 86.4px);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.02em;
+  --text-headline: 48px;
+  --text-headline--line-height: 1;
+  --text-headline--letter-spacing: -0.015em;
+  /* Headline na telefonie: 36 px / 40 px (DESIGN.md, Typography). */
+  --text-headline-mobile: 36px;
+  --text-headline-mobile--line-height: 40px;
+  --text-headline-mobile--letter-spacing: -0.015em;
+  --text-title: 24px;
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.01em;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-label: 16px;
+  --text-label--line-height: 1.5;
+  /* Nawigacja i metadane: 13–14 px w kroju interfejsu (DESIGN.md, Typography). */
+  --text-meta: 14px;
+  --text-meta--line-height: 1.4;
+  /* Lead pod nagłówkiem: 18–22 px (DESIGN.md, Typography). */
+  --text-lead: 20px;
+  --text-lead--line-height: 1.45;
+
+  --radius-sm: 8px;
+  --radius-lg: 24px;
+
+  --spacing-gutter-mobile: 16px;
+  --spacing-gutter-desktop: 40px;
+  --spacing-card: 24px;
+  --spacing-stack: 32px;
+  --spacing-section: 112px;
+  --spacing-section-mobile: 80px;
+
+  --container-page: 1280px;
+  /* Kolumna onboardingu ok. 640 px (ui/MACIEJ.md) — do weryfikacji, brak tokenu. */
+  --container-column: 640px;
+  /* Tekst ciągły do ok. 770 px (DESIGN.md, Layout). */
+  --container-prose: 770px;
+
+  /* Progi: telefon < 768, tablet 768–1079, desktop ≥ 1080 (ui/MACIEJ.md). */
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1080px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    /* Tło strony: surface (decyzja zespołu 21.11.2026; DESIGN.md podaje background — do aktualizacji). */
+    background: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+  }
+  :focus-visible {
+    /* Obrys fokusu w kolorze tuszu — do weryfikacji, brak tokenu fokusu. */
+    outline: 2px solid var(--color-on-surface);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+      animation-duration: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
