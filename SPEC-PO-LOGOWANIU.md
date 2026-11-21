@@ -276,7 +276,7 @@ Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodni
 | Kwota dzienna | 1/30 miesięcznego zasiłku. |
 | Podstawa | Średnia z 12 miesięcy minus 13,71%. Minimalna w 2026 r. roboczo 4 147,10 zł (4 806 zł − 13,71%, nasze wyliczenie; do potwierdzenia u mentorów ZUS, zgodnie ze specyfikacją panelu administracyjnego). Maksymalna dla niebędących pracownikami 20 321,30 zł. |
 
-**Do sprawdzenia:** minimalna podstawa 2026 do potwierdzenia u mentorów ZUS. Wymiar przy adopcji i pieczy sprawdzony w KP 21.11.2026.
+**Do sprawdzenia:** minimalna podstawa 2026 do potwierdzenia u mentorów ZUS ([PYTANIA-MENTORZY-ZUS.md](PYTANIA-MENTORZY-ZUS.md)). Wymiar przy adopcji i pieczy sprawdzony w KP 21.11.2026.
 
 #### Ekran
 
@@ -407,7 +407,7 @@ Przystanki „Informacja” i „Program zdrowotny” nie mają statusu urzędow
 
 Nowa sekcja **„Moje konto w ZUS (symulacja eZUS)”**, tylko do odczytu, ze źródłem i datą pobrania: tytuły i okresy ubezpieczenia, płatnicy, podstawy składek, członkowie rodziny zgłoszeni do ubezpieczenia zdrowotnego, e-ZLA, przyznane świadczenia, stan zadłużenia. „Odśwież dane” symuluje ponowne pobranie.
 
-**„Zapytaj ZUS”** zapisuje wiadomość jako „Wysłano w symulacji” w korespondencji w „Dokumentach i wnioskach”. Nic nie opuszcza aplikacji. Wizualnie odróżnia się od czatu Zusika. Roboczo: bez symulowanej odpowiedzi, z informacją „W prawdziwej usłudze odpowiedź przyjdzie do skrzynki eZUS” (do potwierdzenia).
+**„Zapytaj ZUS”** zapisuje wiadomość jako „Wysłano w symulacji” w korespondencji w „Dokumentach i wnioskach”. Nic nie opuszcza aplikacji. Wizualnie odróżnia się od czatu Zusika. Bez symulowanej odpowiedzi: po wysłaniu rodzic widzi informację „W prawdziwej usłudze odpowiedź przyjdzie do skrzynki eZUS” (uzgodnione 21.11.2026, Maciej).
 
 Podgląd e-ZLA znajduje się w karcie „Zasiłek chorobowy w ciąży”. Zadłużenie przy działalności lub współpracy widać w karcie sprawy zasiłkowej i w tej sekcji, z akcją „Wystaw zaświadczenie (symulacja)”.
 
