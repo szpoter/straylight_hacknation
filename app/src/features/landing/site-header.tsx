@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import styles from "./site-header.module.css";
 
-// Kotwice do sekcji strony głównej z SPEC.md. Sekcje pod hero jeszcze nie istnieją.
+// Kotwice do sekcji strony głównej, w kolejności na stronie. Nazwy jak tytuły sekcji.
 const SECTIONS = [
-  { href: "#sytuacje", label: "Sytuacje rodzinne" },
-  { href: "#pytania", label: "Pytania rodziców" },
+  { href: "#formalnosci", label: "Formalności" },
+  { href: "#dla-rodzicow", label: "Dla rodziców" },
   { href: "#agent", label: "Agent AI" },
   { href: "#liczby", label: "Urlop w liczbach" },
 ];

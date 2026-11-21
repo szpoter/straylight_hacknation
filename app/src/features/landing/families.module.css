@@ -38,6 +38,8 @@
  */
 .block {
   position: relative;
+  /* Po kliknięciu „Dla rodziców” w nawigacji fala bloku staje tuż pod paskiem nawigacji */
+  scroll-margin-top: 72px;
   z-index: 1;
   padding-block: calc(16px + var(--wave));
   background: var(--color-secondary);

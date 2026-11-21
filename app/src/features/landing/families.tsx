@@ -35,7 +35,9 @@ export function Families() {
         </SinkingHeading>
       </div>
 
-      <div className={styles.block}>
+      {/* Kotwica „Dla rodziców” z nawigacji: blok z kartami, a nie nagłówek, który w tym miejscu
+          jest w połowie schowany pod blokiem */}
+      <div id="dla-rodzicow" className={styles.block}>
         <div className={styles.inner}>
           <p className={styles.kicker}>Plan dopasowany do Twojej sytuacji</p>
           <ul className={styles.cards}>
