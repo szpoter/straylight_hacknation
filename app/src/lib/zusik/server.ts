@@ -21,7 +21,7 @@ import { askSherlock } from "./sherlock";
 let pool: Pool | null = null;
 let checkpointer: PostgresSaver | null = null;
 
-function runtime() {
+export function runtime() {
   if (!pool || !checkpointer) {
     pool = new Pool({ connectionString: requireEnv("DATABASE_URL"), max: 3, connectionTimeoutMillis: 5_000 });
     checkpointer = new PostgresSaver(pool, undefined, { schema: CHECKPOINT_SCHEMA });
@@ -39,7 +39,10 @@ function qdrantSettings() {
 }
 
 /** Knowledge collection (zusik_marta_v1) with its own read-scoped key; the probe keeps its own. */
-function knowledgeSettings() {
+export function knowledgeSettings() {
+  if (!process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || !process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim()) {
+    return qdrantSettings();
+  }
   return {
     url: requireEnv("QDRANT_URL"),
     apiKey: requireEnv("QDRANT_KNOWLEDGE_READ_KEY"),
@@ -76,8 +79,9 @@ export function askService(): AskService {
     store: new PgCaseStore(db),
     turns: new PgTurnStore(db),
     corpus,
+    selectCorpus: (name) => loadCorpus(name),
     search: qdrantKnowledgeSearch(knowledgeSettings()),
-    generate: (question, evidence) => generateAnswer(sherlockSettings(), corpus, question, evidence),
+    generate: (question, evidence, activeCorpus) => generateAnswer(sherlockSettings(), activeCorpus, question, evidence),
   });
 }
 

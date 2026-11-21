@@ -1,0 +1,77 @@
+{
+  "asOf": "2026-11-21",
+  "sourceDirectory": "Materiały hackathonowe",
+  "inputDocuments": 95,
+  "publicAndOrganizational": [
+    {
+      "file": "Kodeks pracy (wyciąg z przepisów).pdf",
+      "sha256": "8cea3a13e32dd8db0c3a00c0329ebd4f035d181b312fc312b967462ce08a88c4",
+      "sourceDocuments": [
+        "publiczne:kp",
+        "marta:kp-2026-1245"
+      ],
+      "handling": "Artykuły wymienione w wyciągu odtworzono z tekstu urzędowego ELI, bez warstwy redakcyjnej Legalis."
+    },
+    {
+      "file": "Poradnik dla rodziców, ZUS 2026.pdf",
+      "sha256": "0563cb35f54a84d2f3e1681f52fd614fac1efd29d0716968054285ad62a04dcf",
+      "sourceDocuments": [
+        "publiczne:poradnik"
+      ],
+      "handling": "Plik jest bitowo identyczny z publikacją ZUS. Indeks obejmuje merytoryczne strony PDF 8–40. Strony okładkowe, spis treści, wstęp, bibliografię i informacje kontaktowe pominięto."
+    },
+    {
+      "file": "Załącznik_ maksymalny czas trwania zasiłków, wysokość, podstawa wymiaru.docx",
+      "sha256": "2808b441d4a84d14187240ccf76ea57358d5db9897ae0f893d53f3c0a706ae48",
+      "sourceDocuments": [
+        "publiczne:kp",
+        "publiczne:uz"
+      ],
+      "handling": "Tabela organizatora jest materiałem pomocniczym. Czas, podstawy wymiaru i wysokości mają urzędowe odpowiedniki w ustawach i są wyszukiwane z tych źródeł. Tabela nie stanowi samoistnej podstawy decyzji."
+    },
+    {
+      "file": "rozporządzenie w spr. zakresu informacji o okolicznościach mających wpływ na prawo do zasiłków ...pdf",
+      "sha256": "1a81c9aaa3f41b8f97763494fcb1ebbeeefd870694b5fc69fd09c1098d911395",
+      "sourceDocuments": [
+        "publiczne:rz"
+      ],
+      "handling": "Paragrafy i załączniki z obowiązującego tekstu Dz.U. 2026 poz. 1316. § 39 ma odroczone stosowanie i został pominięty."
+    },
+    {
+      "file": "rozporządzenie w sprawie wniosków dot. uprawnień pracowników związanych z rodzicielstwem .pdf",
+      "sha256": "af34d9dbb36e12b4a3b20fff528a89e87e9dbbaa0b38ad4fee743839154e6b87",
+      "sourceDocuments": [
+        "publiczne:rw",
+        "marta:rozp-2025-322"
+      ],
+      "handling": "Jednostki z rozporządzenia Dz.U. 2025 poz. 322 i osobno sprawdzone wyjątki w pakiecie Marty."
+    },
+    {
+      "file": "wyciąg z ustawy o świadczeniach pieniężnych z ubezpieczeń społecznych w razie choroby i macierzyństwa (ustawa zasiłkowa).pdf",
+      "sha256": "ae7820edd5439d1322e028b71ac0d07a47c1aaacd17e184e95cdd89170b0655c",
+      "sourceDocuments": [
+        "publiczne:uz"
+      ],
+      "handling": "Wszystkie artykuły wskazane w wyciągu odwzorowano w ELI. Wyszukiwanie ograniczono do sprawdzanej wersji. Pominięto odroczone warianty brzmienia."
+    },
+    {
+      "file": "ZUS - Pełna treść zadania konkursowego.pdf",
+      "sha256": "bd832a769e91335673e37632b20cb9794e01f2a52fdc1517dcd38fe730782fc1",
+      "sourceDocuments": [],
+      "handling": "Dokument organizacyjny konkursu. Określa zadanie lub regulamin. Nie zawiera podstaw indywidualnych świadczeń."
+    },
+    {
+      "file": "ZUS - Regulamin zadania konkursowego.pdf",
+      "sha256": "30c90192f53f9c4a80188633d02ffa483da6763eb976e8727d818b56d69fef4b",
+      "sourceDocuments": [],
+      "handling": "Dokument organizacyjny konkursu. Określa zadanie lub regulamin. Nie zawiera podstaw indywidualnych świadczeń."
+    }
+  ],
+  "restrictedCaseFiles": {
+    "pattern": "Sprawy/*.pdf",
+    "count": 87,
+    "distinctContents": 86,
+    "sourceDocuments": [],
+    "handling": "Akta indywidualne. Wspólny RAG nie indeksuje żadnej strony, nazwy osoby, nazwy pliku ani OCR z tego katalogu. Sprawy demonstracyjne korzystają z odrębnych syntetycznych dowodów."
+  }
+}

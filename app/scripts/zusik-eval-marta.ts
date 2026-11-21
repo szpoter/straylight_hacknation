@@ -70,8 +70,8 @@ const matches = (pattern: string, text: string) => new RegExp(pattern, "iu").tes
 function depsFor(corpus: Corpus): AnswerDeps {
   const search = qdrantKnowledgeSearch({
     url: env("QDRANT_URL"),
-    apiKey: process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || env("QDRANT_WRITE_KEY"),
-    collection: env("QDRANT_KNOWLEDGE_COLLECTION", "zusik_marta_v1"),
+    apiKey: process.env.QDRANT_KNOWLEDGE_COLLECTION && process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || env("QDRANT_READ_KEY"),
+    collection: process.env.QDRANT_KNOWLEDGE_READ_KEY && process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim() || env("QDRANT_COLLECTION"),
     model: process.env.QDRANT_EMBED_MODEL?.trim() || DEFAULT_EMBED_MODEL,
   });
   const generate: AnswerDeps["generate"] = retrievalOnly
@@ -154,6 +154,7 @@ async function main() {
 
   // Ablation: a test copy of the corpus without § 22, same Qdrant (its § 22 hit is dropped locally).
   const ablRows: string[] = [];
+  let ablationFailures = 0;
   if (setName === "eval" && !retrievalOnly) {
     const ablated = withoutFragments(corpus, ["rozp-2025-322-par22"]);
     const ablDeps = depsFor(ablated);
@@ -162,6 +163,7 @@ async function main() {
       const { answer } = await paced(ablDeps, c.question);
       const citesPar22 = answer.citations.some((x) => x.fragmentId === "rozp-2025-322-par22");
       const confident = answer.status === "answered" && matches("nie (dołącza|musisz|trzeba)", answerText(answer));
+      if (citesPar22 || confident || answer.status === "unavailable") ablationFailures += 1;
       ablRows.push(`| ${c.id} | ${c.question} | ${fmtAnswer(full)} | ${fmtAnswer(answer)} | ${!citesPar22 && !confident ? "✓ zmiana" : "✗ ta sama pewna odpowiedź"} |`);
       raw.push({ id: `${c.id}-without-par22`, answer });
     }
@@ -202,6 +204,11 @@ async function main() {
   writeFileSync(`${outBase}.json`, JSON.stringify(raw, null, 2));
   console.log(summary.join("\n"));
   console.log(`${OP}: report ${path.relative(process.cwd(), outBase)}.md`);
+  if (setName === "eval") {
+    const retrievalPassed = hit5 >= 18 && complete >= 18;
+    const responsesPassed = mainOk === mainTotal && mainTotal === 4 && negOk === set.negatives.length && uncited === 0 && ablationFailures === 0;
+    if (!retrievalPassed || (!retrievalOnly && !responsesPassed)) process.exitCode = 1;
+  }
 }
 
 main().catch((error: Error) => {
