@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useId, useState } from "react";
-import { PARAMETERS, formatDate } from "./mock-data";
+import { PARAMETERS, formatDate, type Parameter } from "./mock-data";
 import { Badge, Card, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
-// Demo family from SPEC §12: daily base 200 zł, one period of 28 days.
+// Demo family from SPEC §12: daily base 200 zł, one period of parental leave lasting 28 days.
 const DAILY_BASE = 200;
 const DAYS = 28;
+const DEMO_PERIOD = "urlop rodzicielski";
 
 type CheckStatus = "zgodna" | "niezgodna";
 interface CheckRow {
@@ -18,59 +19,133 @@ interface CheckRow {
   status: CheckStatus;
 }
 
+type Kind = "rate" | "number" | "text";
+type Status = "new" | "draft" | "checked" | "scheduled";
+
 const pln = (value: number) => `${value.toLocaleString("pl-PL", { maximumFractionDigits: 2, useGrouping: "always" })} zł`;
 
 // Polish style used in the specs: "75%" without a space, "20 tyg." with one.
 const withUnit = (value: string, unit: string) => (unit === "%" ? `${value}%` : `${value} ${unit}`.trim());
 
 function parseNumber(raw: string): number | null {
-  const n = Number(raw.replace(",", ".").replace(/[^\d.]/g, ""));
-  return Number.isFinite(n) && raw.trim() !== "" ? n : null;
+  const cleaned = raw.replace(/\s/g, "").replace(",", ".");
+  if (!/^\d+(\.\d+)?/.test(cleaned)) return null;
+  return Number.parseFloat(cleaned);
+}
+
+/** SPEC §3 [P]: percent 0–100 with at most one decimal place; other numeric units as plain numbers. */
+function isValid(kind: Kind, raw: string): boolean {
+  const value = raw.trim().replace(/\s/g, "");
+  if (kind === "text") return value !== "";
+  if (kind === "rate") return /^\d{1,3}([.,]\d)?$/.test(value) && Number(value.replace(",", ".")) <= 100;
+  return /^\d+([.,]\d+)?$/.test(value);
+}
+
+/** Cases checked by „Sprawdź zmianę”, per change type (SPEC §7 table). Simulated until lib/rules exists. */
+function checksFor(p: Parameter, before: string, after: string, next: string): CheckRow[] {
+  const ok = (name: string, expected: string, result = expected): CheckRow => ({ name, expected, result, status: "zgodna" });
+  switch (p.group) {
+    case "Stawki":
+      return [
+        ok("Sprawa w zakresie zmiany", after),
+        ok("Sprawa dzień przed datą obowiązywania", before),
+        ok("Sprawa spoza zakresu", before),
+        ok("Okres przecinający datę zmiany", "dwie części, każda według swojej stawki"),
+      ];
+    case "Wymiary":
+    case "Uzupełniający":
+      return [
+        ok("Wniosek dokładnie na limicie", "przyznany"),
+        ok("Wniosek ponad limit", "odmowa z przyczyną: przekroczony limit"),
+        ok("Bliźnięta (wspólna pula)", `pula według ${after}`),
+        ok("Łączenie z pracą", "wydłużenie według nowego limitu"),
+      ];
+    case "Terminy":
+      return [
+        ok("Zdarzenie bazowe w dniu zmiany", `termin ${after}`),
+        ok("Zdarzenie bazowe dzień wcześniej", `termin ${before}`),
+      ];
+    case "Formularze":
+      return [
+        ok("Szkice rodziców na wycofanym formularzu", "oznaczone „Sprawdź po zmianie”"),
+        ok("Kierowanie płatnik / ZUS", "bez zmian"),
+      ];
+    case "Kto wypłaca": {
+      const threshold = Number.parseInt(next, 10) || 20;
+      return [
+        ok(`Płatnik z ${threshold} ubezpieczonymi`, "złóż w ZUS"),
+        ok(`Płatnik z ${threshold + 1} ubezpieczonymi`, "złóż u pracodawcy"),
+      ];
+    }
+    default:
+      return [
+        ok("Sprawa w zakresie zmiany", after),
+        ok("Sprawa dzień przed datą obowiązywania", before),
+        ok("Sprawa spoza zakresu", before),
+      ];
+  }
 }
 
 export function ChangeView({ parameterId }: { parameterId?: string }) {
   const parameter = PARAMETERS.find((p) => p.id === parameterId) ?? PARAMETERS[0];
-  const unit = parameter.value.replace(/^[\d\s,.]+/, "").trim();
   const current = parseNumber(parameter.value);
-  const isRate = unit === "%";
+  const unit = current === null ? "" : parameter.value.replace(/^[\d\s,.]+/, "").trim();
+  const kind: Kind = unit === "%" ? "rate" : current === null ? "text" : "number";
 
-  const [next, setNext] = useState(parameter.planned?.value.replace(/[^\d,.]/g, "") ?? "");
+  const initialNext = parameter.planned
+    ? kind === "text"
+      ? parameter.planned.value
+      : parameter.planned.value.replace(/[^\d,.]/g, "")
+    : "";
+
+  const [next, setNext] = useState(initialNext);
   const [scope, setScope] = useState("all");
-  const [from, setFrom] = useState("2027-01-01");
+  const [from, setFrom] = useState(parameter.planned?.from ?? "2027-01-01");
   const [source, setSource] = useState("");
   const [reason, setReason] = useState("");
-  const [status, setStatus] = useState<"new" | "draft" | "checked" | "scheduled">("new");
+  const [status, setStatus] = useState<Status>("new");
   const [checks, setChecks] = useState<CheckRow[] | null>(null);
   const formId = useId();
 
-  const nextValue = parseNumber(next);
-  const valid = nextValue !== null && (!isRate || (nextValue >= 0 && nextValue <= 100));
-  const nowDaily = isRate && current !== null ? (DAILY_BASE * current) / 100 : null;
-  const nextDaily = isRate && valid ? (DAILY_BASE * nextValue) / 100 : null;
+  // Any edit invalidates an earlier check, so a value is never published without being checked (SPEC §7, §12).
+  function edit<T>(setter: (value: T) => void) {
+    return (value: T) => {
+      setter(value);
+      setChecks(null);
+      setStatus((prev) => (prev === "new" ? "new" : "draft"));
+    };
+  }
+
+  const valid = isValid(kind, next);
+  const nextValue = valid && kind !== "text" ? parseNumber(next) : null;
+  const ready = valid && from !== "";
+  const newLabel = valid ? withUnit(next, unit) : "—";
+  const nowDaily = kind === "rate" && current !== null ? (DAILY_BASE * current) / 100 : null;
+  const nextDaily = kind === "rate" && nextValue !== null ? (DAILY_BASE * nextValue) / 100 : null;
 
   function runChecks() {
-    const after = nextDaily !== null ? pln(nextDaily * DAYS) : withUnit(next, unit);
     const before = nowDaily !== null ? pln(nowDaily * DAYS) : parameter.value;
-    setChecks([
-      { name: "Sprawa w zakresie zmiany", expected: after, result: after, status: "zgodna" },
-      { name: "Sprawa dzień przed datą obowiązywania", expected: before, result: before, status: "zgodna" },
-      { name: "Sprawa spoza zakresu", expected: before, result: before, status: "zgodna" },
-      {
-        name: "Okres przecinający datę zmiany",
-        expected: "podział na dwie części",
-        result: source ? "podział na dwie części" : "brak podstawy zmiany",
-        status: source ? "zgodna" : "niezgodna",
-      },
-    ]);
+    const after = nextDaily !== null ? pln(nextDaily * DAYS) : newLabel;
+    const rows = checksFor(parameter, before, after, next);
+    // SPEC §12: publication requires a filled-in source.
+    rows.push(
+      source.trim()
+        ? { name: "Podstawa zmiany", expected: "uzupełniona", result: "uzupełniona", status: "zgodna" }
+        : { name: "Podstawa zmiany", expected: "uzupełniona", result: "brak", status: "niezgodna" },
+    );
+    setChecks(rows);
     setStatus("checked");
   }
 
-  const allPass = checks?.every((c) => c.status === "zgodna") ?? false;
+  const passed = checks?.filter((c) => c.status === "zgodna").length ?? 0;
+  const allPass = checks !== null && passed === checks.length;
   const statusText = {
     new: "Nowa zmiana, niezapisana",
-    draft: "Zapisano szkic",
-    checked: allPass ? "Sprawdzenie zakończone, wszystkie sprawy zgodne" : "Sprawdzenie wykazało niezgodność, szkic do poprawy",
-    scheduled: `Zaplanowano zmianę od ${formatDate(from)}`,
+    draft: "Zapisano szkic. Przed publikacją uruchom „Sprawdź zmianę”.",
+    checked: allPass
+      ? `Gotowe do publikacji: ${parameter.value} → ${newLabel} od ${formatDate(from)} · ${passed} / ${checks?.length} zgodnych`
+      : `Sprawdzenie wykazało niezgodność (${passed} / ${checks?.length} zgodnych). Szkic do poprawy.`,
+    scheduled: `Zaplanowano zmianę ${parameter.value} → ${newLabel} od ${formatDate(from)}`,
   }[status];
 
   return (
@@ -90,7 +165,7 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
             </span>
             <div>
               <p className={s.eyebrow}>Po zmianie</p>
-              <span className={s.delta}>{valid ? withUnit(next, unit) : "—"}</span>
+              <span className={s.delta}>{newLabel}</span>
             </div>
             <span className={s.topbarSpacer} />
             <StateBadge state={status === "scheduled" ? "Zaplanowana" : "Szkic"} />
@@ -102,25 +177,38 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
               <span className={s.withUnit}>
                 <input
                   className={s.input}
-                  inputMode="decimal"
+                  inputMode={kind === "text" ? "text" : "decimal"}
                   value={next}
-                  onChange={(e) => setNext(e.target.value)}
+                  onChange={(e) => edit(setNext)(e.target.value)}
                   aria-invalid={next !== "" && !valid}
                 />
-                <span className={s.unit}>{unit}</span>
+                {unit ? <span className={s.unit}>{unit}</span> : null}
               </span>
-              <span className={s.hint}>{isRate ? "Od 0 do 100, jedno miejsce po przecinku." : `Jednostka: ${unit || "—"}.`}</span>
+              <span className={s.hint}>
+                {kind === "rate"
+                  ? "Od 0 do 100, jedno miejsce po przecinku."
+                  : kind === "number"
+                    ? `Liczba w jednostce: ${unit}.`
+                    : "Nowy stan, np. obowiązuje albo zlikwidowany."}
+              </span>
             </label>
             <label className={s.field}>
               <span className={s.labelText}>Stosuj od</span>
-              <input className={s.input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <input
+                className={s.input}
+                type="date"
+                value={from}
+                required
+                onChange={(e) => edit(setFrom)(e.target.value)}
+                aria-invalid={from === ""}
+              />
               <span className={s.hint}>Data zdarzenia, od którego liczy się nową wartość.</span>
             </label>
           </div>
 
           <label className={s.field}>
             <span className={s.labelText}>Zakres spraw</span>
-            <select className={s.select} value={scope} onChange={(e) => setScope(e.target.value)}>
+            <select className={s.select} value={scope} onChange={(e) => edit(setScope)(e.target.value)}>
               <option value="all">Wszystkie sprawy tego świadczenia</option>
               <option value="new">Tylko nowe wnioski od daty stosowania</option>
               <option value="birth">Dzieci urodzone od daty stosowania</option>
@@ -133,7 +221,7 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
               className={s.input}
               placeholder="np. ustawa, artykuł, odnośnik do źródła"
               value={source}
-              onChange={(e) => setSource(e.target.value)}
+              onChange={(e) => edit(setSource)(e.target.value)}
             />
           </label>
 
@@ -144,8 +232,8 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
         </form>
       </Card>
 
-      <Card className={cx(s.span5)} title="Wpływ na rodzinę" id="impact" meta="Przykładowa sprawa">
-        {isRate ? (
+      <Card className={s.span5} title="Wpływ na rodzinę" id="impact" meta="Przykładowa sprawa">
+        {kind === "rate" ? (
           <>
             <p className={cx(s.small, s.muted)} style={{ marginTop: 0 }}>
               Podstawa dzienna {pln(DAILY_BASE)}, jeden okres {DAYS} dni.
@@ -160,9 +248,14 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
               </thead>
               <tbody>
                 <tr>
+                  <td>Okres</td>
+                  <td>{DEMO_PERIOD}</td>
+                  <td>{DEMO_PERIOD}</td>
+                </tr>
+                <tr>
                   <td>Stawka</td>
                   <td>{parameter.value}</td>
-                  <td>{valid ? `${next}%` : "—"}</td>
+                  <td>{newLabel}</td>
                 </tr>
                 <tr>
                   <td>Liczba dni</td>
@@ -196,7 +289,27 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
             </table>
           </>
         ) : (
-          <p className={s.empty}>Podgląd wpływu dla tego typu parametru pojawi się po podłączeniu kalkulatora.</p>
+          <>
+            <table className={s.compare}>
+              <thead>
+                <tr>
+                  <th scope="col">Pozycja</th>
+                  <th scope="col">Obecnie</th>
+                  <th scope="col">Po zmianie</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{parameter.name}</td>
+                  <td>{parameter.value}</td>
+                  <td>{newLabel}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className={cx(s.small, s.muted)}>
+              Wynik dla przykładowej rodziny pokaże się, gdy panel zostanie podłączony do kalkulatora rodzica.
+            </p>
+          </>
         )}
         <div className={s.cardActions}>
           <button type="button" className={s.btnSecondary} aria-disabled="true" title="Dostępne po podłączeniu kalkulatora">
@@ -205,7 +318,7 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
         </div>
       </Card>
 
-      <Card className={s.span12} title="Wyniki sprawdzenia" id="checks" meta={checks ? undefined : "Jeszcze nie uruchomiono"}>
+      <Card className={s.span12} title="Wyniki sprawdzenia" id="checks" meta={checks ? `${passed} / ${checks.length} zgodnych` : "Jeszcze nie uruchomiono"}>
         {checks ? (
           <div className={s.tableWrap}>
             <table className={s.table}>
@@ -240,7 +353,7 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
         ) : (
           <p className={cx(s.muted, s.small)} style={{ margin: 0 }}>
             „Sprawdź zmianę” porówna wynik z oczekiwaniem dla zmienianej grupy, sprawy tuż przed wejściem reguły i
-            przypadku spoza jej zakresu.
+            przypadku spoza jej zakresu. Każda zmiana w formularzu wymaga ponownego sprawdzenia.
           </p>
         )}
       </Card>
@@ -252,16 +365,16 @@ export function ChangeView({ parameterId }: { parameterId?: string }) {
         <button type="button" className={s.btnSecondary} onClick={() => setStatus("draft")} disabled={!valid}>
           Zapisz szkic
         </button>
-        <button type="button" className={s.btnSecondary} onClick={runChecks} disabled={!valid}>
+        <button type="button" className={s.btnSecondary} onClick={runChecks} disabled={!ready}>
           Sprawdź zmianę
         </button>
         <button
           type="button"
           className={s.btn}
-          aria-disabled={!allPass}
+          aria-disabled={!allPass || status === "scheduled"}
           onClick={() => allPass && setStatus("scheduled")}
         >
-          Zaplanuj zmianę od {formatDate(from)}
+          {from ? `Zaplanuj zmianę od ${formatDate(from)}` : "Zaplanuj zmianę"}
         </button>
       </div>
     </div>

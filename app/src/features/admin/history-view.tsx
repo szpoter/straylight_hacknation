@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { HISTORY, formatDate, type HistoryEntry } from "./mock-data";
+import { HISTORY, PARAMETER_GROUPS, formatDate, formatDateTime, type HistoryEntry } from "./mock-data";
 import { Card, Drawer, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
-const FILTERS = ["Wszystkie", "Stawki", "Wymiary", "Podstawa", "Formularze"] as const;
+// Same groups as the parameter tabs in Reguły świadczeń (SPEC §8, §14 L3).
+const FILTERS = ["Wszystkie", ...PARAMETER_GROUPS] as const;
 type Filter = (typeof FILTERS)[number];
 
 export function HistoryView() {
@@ -80,7 +81,7 @@ export function HistoryView() {
         title={selected?.parameter ?? ""}
         footer={
           selected ? (
-            <Link href="/admin/zmiany" className={s.btnSecondary}>
+            <Link href={`/admin/zmiany?parametr=${selected.parameterId}`} className={s.btnSecondary}>
               Utwórz korektę jako szkic
             </Link>
           ) : null
@@ -100,10 +101,12 @@ export function HistoryView() {
               <dd>
                 <StateBadge state={selected.state} />
               </dd>
+              <dt>Zakres spraw</dt>
+              <dd>{selected.scope}</dd>
               <dt>Obowiązuje od</dt>
               <dd>{formatDate(selected.from)}</dd>
               <dt>Opublikowano</dt>
-              <dd>{formatDate(selected.publishedAt)}</dd>
+              <dd>{formatDateTime(selected.publishedAt)}</dd>
               <dt>Autor</dt>
               <dd>{selected.author}</dd>
               <dt>Podstawa</dt>
