@@ -56,6 +56,12 @@
 
 **Scena do przeklikania.** Rodzic naciska Stop po podaniu daty 17 czerwca 2027. Jeśli zapis jest potwierdzony, dopisek brzmi „Zatrzymano odpowiedź · W szkicu zapisano 17 czerwca 2027”. Jeśli wynik jest jeszcze nieznany, dopisek pokazuje „Zatrzymano odpowiedź · Sprawdzam zapis daty…”. Po sprawdzeniu w tym samym miejscu pojawia się wynik zapisu. Jeśli data nie została zapisana, rodzic widzi „Zatrzymano odpowiedź · Data nie została zapisana”. Rodzic może wpisać poprawkę w tej samej rozmowie.
 
+### Ponowienie zapisu pola
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Po potwierdzonym błędzie zapisu pod odpowiedzią Zusika pojawia się komunikat „Nie udało się zapisać daty 18 czerwca 2027” wraz z aktualną wartością pola „Początek urlopu” i przyciskiem „Ponów zapis”. Na telefonie przycisk jest pod tekstem. Ponowienie dotyczy tego pola w tym samym szkicu i wykorzystuje podaną już datę. Podczas próby przycisk pokazuje „Zapisywanie…”. Po potwierdzonym sukcesie ten sam komunikat zmienia się w klikalną adnotację „Początek urlopu ↗ · 17 czerwca → 18 czerwca”, a pole dostaje ustalone podświetlenie. [assistant-ui — Tool failure](https://www.assistant-ui.com/elements/tool-error) · [IBM Carbon — Inline notification](https://carbondesignsystem.com/components/notification/usage/#inline)
+
+**Scena do przeklikania.** Po nieudanej zmianie z 17 na 18 czerwca rodzic sam wpisuje 19 czerwca i wybiera „Ponów zapis” przy starszej wiadomości. Zusik sprawdza, czy pole było edytowane od poprzedniej próby. Zapis może zastosować tylko do tej samej wersji pola. Przy ręcznej poprawce zachowuje wartość rodzica i pokazuje „W szkicu jest już Twoja poprawka. Początek urlopu: 19 czerwca 2027”. Kliknięcie nazwy pola wskazuje tę datę w formularzu po lewej, a na telefonie nad rozmową.
+
 ### Historia rozmów
 
 **Julian · 21 listopada 2026 · Uzgodnione.** „Historia” w nagłówku Zusika otwiera listę w miejscu rozmowy. W widoku dzielonym rodzic nadal widzi formularz po lewej, a na telefonie fragment bieżącej sprawy nad listą. Samo otwarcie historii zachowuje bieżącą sprawę. [Linear Agent — wejście z paska czatu](https://linear.app/docs/linear-agent#chat-history)
