@@ -103,7 +103,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     const follow = await w.ask().ask("m", "Skąd są te dane?", "req-followup");
     expect(follow.turn?.citations).toEqual(first.turn?.citations);
     expect(follow.turn?.claims).toEqual(first.turn?.citations.map(c => ({ text: c.quote, citationIds: [c.id] })));
-    await w.ask().ask("m", "Co trzeba wysłać?", "req-no-citation");
+    await w.ask().ask("m", "A ile?", "req-no-citation");
     const absent = await w.ask().ask("m", "Pokaż źródła", "req-followup-empty");
     expect(absent.turn).toMatchObject({ status: "insufficient_evidence", citations: [], message: expect.stringContaining("nie było cytatu") });
     const other = await w.ask().ask("other", "Pokaż źródła", "req-followup");
@@ -252,7 +252,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
       ["Bielik invalid JSON without an applicable reviewed excerpt", { model: { status: "invalid_json", output: null, model: "bielik-test", ms: 900 } as GenerationResult }],
     ])("%s → 503 unavailable, nothing saved, retry with same id works", async (_name, failure) => {
       const w = world(failure);
-      const question = _name.includes("without an applicable") ? "Czy mogę wysłać to elektronicznie?" : Q_ODPIS;
+      const question = _name.includes("without an applicable") ? "Czy wniosek o urlop rodzicielski mogę wysłać elektronicznie?" : Q_ODPIS;
       const res = await w.ask().ask("s", question, "req-outage-01");
       expect(res.status).toBe(503);
       expect(res.turn).toMatchObject({ status: "unavailable", message: UNAVAILABLE_MESSAGE, claims: [] });
@@ -286,5 +286,108 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
       const retry = await w.ask().ask("s", Q_ODPIS, "req-neon-0001");
       expect(retry.status).toBe(200);
     });
+  });
+});
+
+describe("public searches in a continuing case", () => {
+  const publicCorpus = loadCorpus("publiczne");
+  const offer = loadCorpus("oferta");
+  function threadWorld(wrongFacet = false) {
+    const store = new MemoryCaseStore();
+    const turns = new MemoryTurnStore();
+    const queries: string[] = [];
+    const resources = [publicCorpus, offer];
+    const make = () => new AskService({
+      store, turns, corpus, selectCorpus: loadCorpus,
+      asOf: () => "2026-11-22",
+      search: { async search({ query, corpusVersion }) {
+        queries.push(query);
+        const selected = resources.find(c => c.manifest.corpusVersion === corpusVersion);
+        let id = "dobry-start";
+        if (query.includes("terminie") && !wrongFacet) id = "dobry-start-termin";
+        if (query.includes("kanałami")) id = "dobry-start-kanaly";
+        if (query.includes("rehabilitacyjne")) id = query.includes("procent") ? "uz-19-1" : "uz-18-1";
+        const f = selected?.fragments.get(id);
+        return { status: "ok", hits: f ? [{ logicalId: id, fragmentSha256: f.fragmentSha256, score: 0.8 }] : [], ms: 1 };
+      } },
+      // Exercise checked quotation when no model supplies a usable claim.
+      generate: async () => ({ status: "error", output: null, model: "test", ms: 1 }),
+    });
+    return { make, queries };
+  }
+
+  it("picks a new official fragment for each follow-up after reload and a source question", async () => {
+    const { make, queries } = threadWorld();
+    const ask = (q: string, id: string) => make().ask("visitor", q, id);
+    const a = await ask("Moja córka zaczęła liceum. Wydałam sporo na szkolną wyprawkę. Czy jest jakieś dofinansowanie?", "school");
+    expect(a.turn?.citations[0]?.fragmentId).toBe("dobry-start");
+    await ask("Dzięki!", "thanks");
+    await ask("Skąd te dane?", "sources");
+    const b = await ask("A do kiedy mogę to załatwić?", "date");
+    expect(b.trace?.contextRequestId).toBe("school");
+    expect(b.turn?.citations[0]?.fragmentId).toBe("dobry-start-termin");
+    expect(b.turn?.claims[0].text).toContain("30 listopada");
+    const c = await ask("A którędy mogę to wysłać?", "channel");
+    expect(c.trace?.contextRequestId).toBe("date");
+    expect(c.trace?.evidenceIds).toEqual(["dobry-start-kanaly"]);
+    expect(c.turn?.claims[0].text).toContain("bankowości elektronicznej");
+    expect(queries).toHaveLength(3);
+    expect(queries.join(" ")).not.toContain("liceum");
+    expect((await make().ask("other", "A którędy mogę to wysłać?", "fresh")).turn?.status).toBe("needs_clarification");
+    expect((await make().ask("visitor", "A którędy mogę to wysłać?", "fresh", undefined, undefined, "kamil")).turn?.status).toBe("needs_clarification");
+  });
+
+  it("understands alternate wording for registration closing and filing from a phone", async () => {
+    const { make } = threadWorld();
+    await make().ask("visitor", "Czy mogę dostać dofinansowanie na wyprawkę szkolną?", "start");
+    const cutoff = await make().ask("visitor", "A kiedy zamykają nabór?", "close");
+    expect(cutoff.turn?.citations[0]?.fragmentId).toBe("dobry-start-termin");
+    const mobile = await make().ask("visitor", "Da się to ogarnąć z telefonu?", "phone");
+    expect(mobile.trace?.contextRequestId).toBe("close");
+    expect(mobile.turn?.citations[0]?.fragmentId).toBe("dobry-start-kanaly");
+    const unrelated = await make().ask("visitor", "A ile kosztuje wymiana telefonu?", "replacement");
+    expect(unrelated.turn?.citations).toEqual([]);
+  });
+
+  it("switches from a different case subject to rehabilitation and follows duration then rate", async () => {
+    const { make, queries } = threadWorld();
+    await make().ask("visitor", "Jak działa Dobry Start?", "old");
+    const change = await make().ask("visitor", "A co to takiego świadczenie rehabilitacyjne?", "rehab");
+    expect(change.trace?.contextRequestId).toBeNull();
+    expect(change.turn?.citations[0]?.fragmentId).toBe("uz-18-1");
+    const duration = await make().ask("visitor", "A ile maksymalnie może to potrwać?", "how-long");
+    expect(duration.trace?.contextRequestId).toBe("rehab");
+    expect(duration.turn?.claims[0].text).toContain("12 miesięcy");
+    const rate = await make().ask("visitor", "A ile wtedy wypłacają?", "how-much");
+    expect(rate.trace?.contextRequestId).toBe("how-long");
+    expect(rate.turn?.citations[0]?.fragmentId).toBe("uz-19-1");
+    expect(rate.turn?.claims[0].text).toMatch(/90 %.*75 %.*100 %/u);
+    expect(queries.slice(-2).join(" ")).toMatch(/jak długo.*procent/u);
+    const vague = await make().ask("visitor", "A ile?", "ambiguous");
+    expect(vague.turn?.status).toBe("needs_clarification");
+    expect(queries).toHaveLength(4);
+    const personal = await make().ask("visitor", "A ile mi wypłacą na konto?", "personal");
+    expect(personal.turn?.status).toBe("insufficient_evidence");
+    expect(queries).toHaveLength(4);
+  });
+
+  it("acknowledges an uncovered facet and can still answer the next question about the benefit", async () => {
+    const { make, queries } = threadWorld();
+    await make().ask("visitor", "Co to jest świadczenie rehabilitacyjne?", "benefit");
+    const gap = await make().ask("visitor", "A którędy mogę to wysłać?", "channel");
+    expect(gap.turn?.status).toBe("insufficient_evidence");
+    expect(gap.turn?.message).toContain("świadczenie rehabilitacyjne");
+    const rate = await make().ask("visitor", "A ile wtedy wypłacają?", "rate");
+    expect(rate.turn?.citations[0]?.fragmentId).toBe("uz-19-1");
+    expect(queries).toHaveLength(2);
+  });
+
+  it("does not substantiate the closing date from a generic hit for the same programme", async () => {
+    const { make } = threadWorld(true);
+    await make().ask("visitor", "Dobry Start", "school");
+    const result = await make().ask("visitor", "A do kiedy mogę to załatwić?", "deadline");
+    expect(result.trace?.vectorIds).toEqual(["dobry-start"]);
+    expect(result.trace?.evidenceIds).toEqual([]);
+    expect(result.turn?.status).toBe("insufficient_evidence");
   });
 });

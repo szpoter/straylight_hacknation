@@ -11,6 +11,7 @@ import type { AskAnswer, AskTurn } from "./types";
 import type { MartaView } from "../marta/types";
 import { caseSources, previousSources, sourceIntent } from "./context-answer";
 
+import { resolveFollowUp } from "./retrieval-context";
 import { conversationInput, conversationOwner, type CaseName } from "./conversation";
 
 type Progress = (status: string) => void;
@@ -20,6 +21,8 @@ export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Sprób
 export interface AnswerDeps {
   corpus: Corpus;
   search: KnowledgeSearch;
+  /** Local-only fallback mapping the current utterance onto a reviewed public query. */
+  suggestTopic?(text: string): PublicQuestion | null;
   selectCorpus?(name: PublicQuestion["corpus"]): Corpus;
   /** Bielik via Sherlock. Receives only the sanitised question and public fragments. */
   generate(question: string, evidence: Fragment[], corpus: Corpus): Promise<GenerationResult>;
@@ -31,6 +34,7 @@ export interface AnswerDeps {
 export interface AnswerTrace {
   gate: "amount" | "clarify" | null;
   sanitized: string;
+  contextRequestId: string | null;
   expanded: string | null;
   vectorHits: VectorHit[];
   vectorIds: string[];
@@ -51,14 +55,25 @@ export interface AnswerTrace {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-/** Question → scope gate → privacy rewrite → search → evidence → Bielik → validation. */
-export async function answerQuestion(deps: AnswerDeps, question: string, onProgress?: Progress): Promise<{ answer: AskAnswer; trace: AnswerTrace }> {
-  const projected = publicQuestion(question);
+function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null {
+  const direct = publicQuestion(text);
+  const genericForm = direct?.question.startsWith("Jakie informacje należy zawrzeć") &&
+    !/rodzicielsk/iu.test(text);
+  if ((direct && !genericForm) || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
+  return deps.suggestTopic?.(text) ?? direct;
+}
+
+/** Resolve the public query locally before either provider receives it. */
+export async function answerQuestion(
+  deps: AnswerDeps, question: string, onProgress?: Progress,
+  projected = projectQuestion(deps, question), contextRequestId: string | null = null,
+): Promise<{ answer: AskAnswer; trace: AnswerTrace }> {
   const corpus = projected && deps.selectCorpus ? deps.selectCorpus(projected.corpus) : deps.corpus;
   const version = corpus.manifest.corpusVersion;
   const sanitized = projected?.question ?? "";
   const trace: AnswerTrace = {
     gate: null,
+    contextRequestId,
     sanitized,
     expanded: null,
     vectorHits: [],
@@ -83,11 +98,16 @@ export async function answerQuestion(deps: AnswerDeps, question: string, onProgr
 
   // The family-program catalogue supports general 800+ information.
   const gate = projected?.corpus === "oferta" && deps.selectCorpus ? null : scopeGate(question);
-  if (gate) {
+  // Article 19 states a public percentage; a personalised monetary calculation still requires case data.
+  const publicRate = projected?.locators?.includes("uz:19") &&
+    !/netto|brutto|na konto|(?<!\p{L})(?:mi|mnie|mój|moja|moje|dostanę|dostaniemy|pln|zł)(?!\p{L})|złotych|\d/iu.test(question);
+  if (gate && !(gate.kind === "amount" && publicRate) &&
+      !(gate.kind === "clarify" && contextRequestId && !projected?.clarify)) {
     trace.gate = gate.kind;
     return { answer: plain(gate.kind === "amount" ? "insufficient_evidence" : "needs_clarification", gate.message), trace };
   }
 
+  if (projected?.uncovered) return { answer: plain("insufficient_evidence", projected.uncovered), trace };
   if (projected?.clarify) {
     trace.gate = "clarify";
     return { answer: plain("needs_clarification", projected.clarify), trace };
@@ -215,7 +235,12 @@ export class AskService {
           : caseSources(snapshot?.view ?? null, this.deps.corpus);
         result = { answer, trace: null };
       } else {
-        result = await answerQuestion(this.deps, text, onProgress);
+        const history = await this.deps.turns.list(threadId, requestId, 24);
+        const context = resolveFollowUp(text, history, this.deps.suggestTopic);
+        const projected = context?.plan ?? projectQuestion(this.deps, text);
+        result = await answerQuestion(this.deps, text, onProgress, projected, context?.requestId);
+        if (projected?.question && result.answer.status !== "unavailable")
+          result.answer.publicQuery = projected.question;
       }
     } catch (error) {
       await this.deps.turns.release(threadId, requestId, token).catch(() => undefined);

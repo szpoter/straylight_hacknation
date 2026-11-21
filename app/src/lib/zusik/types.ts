@@ -84,6 +84,8 @@ export interface AskCitation {
 }
 
 export interface AskAnswer {
+  /** Reviewed public search used for resolving later follow-ups in the same thread. */
+  publicQuery?: string;
   status: AskStatus;
   message: string;
   claims: AskClaim[];
