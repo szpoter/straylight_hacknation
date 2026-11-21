@@ -68,7 +68,7 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 
 ## Pod przykładami — pytania rodziców
 
-**Propozycja do omówienia.** Nagłówek **„Co najtrudniej ustalić samodzielnie?”**. Każde pytanie stoi obok krótkiego fragmentu przykładowego planu. Odpowiedź jest od razu widoczna, również bez logowania. Na telefonie pokazujemy ją bezpośrednio pod pytaniem.
+**Uzgodnione.** W tej sekcji pokazujemy pięć poniższych pytań rodziców. Proponowany nagłówek to **„Co najtrudniej ustalić samodzielnie?”**. Przy każdym pytaniu pokazujemy fragment przykładowego planu, na telefonie bezpośrednio pod pytaniem.
 
 | Pytanie na stronie | Co pokazujemy obok na fikcyjnym przykładzie |
 | --- | --- |
@@ -82,6 +82,30 @@ Pokazujemy pięć przycisków i osobny, stale widoczny link do wsparcia. Klikni�
 
 **Planowana funkcja.** Po zalogowaniu agent wykorzysta dostępne dane sprawy i odpowiedzi z rozmowy do przygotowania szkicu. Dopyta o brakujące informacje i decyzje rodzica. Przy pytaniu o zasady wyszuka odpowiedni fragment materiałów ZUS i wskaże źródło. Rodzic będzie mógł poprawić dane i zatwierdzić szkic. W projekcie rozważane są polskie modele PLLuM lub Bielik oraz wyszukiwanie w materiałach ZUS (RAG). [Rozmowa o agencie](thread://01a1f4d5-2dd5-77f0-b878-7bc6bdec55c6?hostId=local)
 
-**Propozycja na stronę.** Nagłówek **„Agent AI pomoże Ci wypełnić wniosek”**. Pod nim gotowy „Przykład rozmowy” obok fragmentu formularza. Agent pyta „Od kiedy chcesz zacząć urlop ojcowski?”. Rodzic odpowiada „Od 18 czerwca”. W szkicu widać pole „Początek urlopu — 18 czerwca”. Podpis „Przed zatwierdzeniem możesz poprawić każde pole” wyjaśnia, co dalej. Przed logowaniem cały przykład jest ilustracją na fikcyjnych danych.
+**Kierunek.** Pod nagłówkiem **„Agent AI pomoże Ci wypełnić wniosek”** osadzamy krótkie wideo dostępne przed logowaniem. Miniatura pokazuje rozmowę obok szkicu oraz przycisk „Zobacz, jak powstaje wniosek”. Gdy rodzic przewinie do odtwarzacza, Zusik zatrzymuje się przy jego rogu i lekko zachodzi na ramkę. W czasie odtwarzania jego dymki podążają za scenami filmu. Na ekranie przez cały czas widnieje oznaczenie „Przykład na fikcyjnych danych”.
 
-Po przykładzie proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do ekranu demonstracyjnego logowania przez mObywatel.
+### Proponowany scenariusz klipu (30 sekund)
+
+| Czas | Rozmowa i szkic widoczne na ekranie | Dymek Zusika |
+| --- | --- | --- |
+| 0–6 s | Tata wybiera wniosek o urlop ojcowski do pracodawcy. W szkicu widać już imię i nazwisko z profilu demonstracyjnego. Pole „Początek urlopu” jest puste. | „Dane z profilu są już we wniosku.” |
+| 6–15 s | Agent pyta „Od kiedy chcesz zacząć urlop?”. Tata odpowiada „Od 17 czerwca”. Tuż po odpowiedzi w polu „Początek urlopu” pojawia się **17 czerwca**. | „Ty wybierasz datę. Agent wpisuje ją do wniosku.” |
+| 15–22 s | Tata pisze „Jednak od 18 czerwca”. W tym samym polu **17 czerwca** zmienia się na **18 czerwca**. Kamera pozostaje na formularzu, żeby dało się zauważyć zmianę. | „Możesz poprawić odpowiedź w rozmowie.” |
+| 22–30 s | Szkic przechodzi do podsumowania. Widać nową datę, adresata „Pracodawca” i kolejny krok „Złóż do 11 czerwca”. Przy terminie jest link „Skąd ten termin?”. Tata sprawdza szkic. | „Sprawdź treść, termin i do kogo trafi wniosek.” |
+
+Rozmowę i odpowiadające jej pole pokazujemy w tym samym kadrze. Na telefonie wypowiedź znajduje się bezpośrednio nad powiększonym polem. Dymek Zusika zajmuje margines, poza napisami, formularzem i sterowaniem odtwarzacza. Rodzic sam uruchamia film, może go zatrzymać i przeczytać napisy lub transkrypcję. Narracja Zusika, jeśli ją nagramy, korzysta z tego samego tekstu co dymki. [Zasada terminu wykorzystana w przykładzie](https://www.gov.pl/web/rodzina/urlop-ojcowski)
+
+## Pod filmem — urlop rodzicielski w liczbach
+
+**Proponowany nagłówek: „Jak możecie podzielić się opieką?”** W siatce bento największy kafel pokazuje skalę korzystania ze świadczenia w Polsce. Trzy mniejsze tłumaczą decyzje rodziców. Na telefonie kafle zachowują kolejność z tabeli. Pod liczbami umieszczamy linki do źródeł.
+
+| Liczba na kaflu | Podpis dla rodzica |
+| --- | --- |
+| **340,3 tys. osób** | Tyle osób w Polsce pobierało w 2025 r. zasiłek macierzyński za okres urlopu rodzicielskiego. [Dane ZUS za I–XII 2025, tablica 8](https://www.zus.pl/documents/10182/167606/wst%C4%99pna_12_2025.pdf/5fd743fb-5d5a-c6f4-bf7d-468fdac1fca7#page=9) |
+| **Do 41 tygodni** | Tyle urlopu rodzicielskiego mają standardowo do dyspozycji łącznie uprawnieni rodzice po urodzeniu jednego dziecka przy jednym porodzie. [Wymiar urlopu rodzicielskiego](https://www.gov.pl/web/rodzina/urlop-rodzicielski) |
+| **Po 9 tygodni** | Z tej puli każde z uprawnionych rodziców ma własną część. Może ją wykorzystać tylko ten rodzic. [Część nieprzenoszalna](https://www.gov.pl/web/rodzina/urlop-rodzicielski) |
+| **Do 5 części** | Na tyle okresów możecie rozłożyć urlop rodzicielski. W przykładowym planie zobaczycie je na jednej osi czasu. [Zasady podziału urlopu](https://www.gov.pl/web/rodzina/urlop-rodzicielski) |
+
+Pod siatką proponujemy powtórzyć przycisk **„Sprawdź moją sytuację”** prowadzący do ekranu demonstracyjnego logowania przez mObywatel.
+
+**Powiązanie z oceną konkursową.** Związek z wyzwaniem oraz kompletność projektu i doświadczenie użytkownika odpowiadają łącznie za 50% oceny. Klip wskazuje czynność wspieraną przez AI, pokazuje zmianę dokonaną przez rodzica i kończy się konkretnym dokumentem, terminem oraz adresatem. Bento wprowadza do porównywania wariantów opieki. Jury zweryfikuje wyliczenia w działającym demie na przykładowych wnioskach. Krótki klip można wykorzystać jako fragment wymaganego filmu o całym projekcie (maks. 3 minuty). [Opis zadania, s. 13–16](</Users/julian/Downloads/ZUS - Pełna treść zadania konkursowego.pdf>)
