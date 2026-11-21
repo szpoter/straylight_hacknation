@@ -1,5 +1,5 @@
 {
-  "evaluatedAt": "2026-11-21T21:54:12.426Z",
+  "evaluatedAt": "2026-11-21T21:58:21.746Z",
   "collection": "zusik_marta_v1",
   "passed": 11,
   "total": 11,
@@ -46,8 +46,10 @@
         }
       ],
       "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
       "model": "ok",
-      "modelMs": 6531
+      "modelMs": 5379
     },
     {
       "id": "paternity-parts",
@@ -105,8 +107,10 @@
         }
       ],
       "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
       "model": "ok",
-      "modelMs": 10993
+      "modelMs": 11276
     },
     {
       "id": "paternity-attachments",
@@ -191,8 +195,10 @@
         }
       ],
       "message": "Cytuję treść ze wskazanego źródła urzędowego.",
+      "modelProposedStatus": "answered",
+      "quoteReason": "statutory_conditions",
       "model": "ok",
-      "modelMs": 13393
+      "modelMs": 13556
     },
     {
       "id": "sickness-prior",
@@ -255,8 +261,10 @@
         }
       ],
       "message": "Cytuję treść ze wskazanego źródła urzędowego.",
+      "modelProposedStatus": "answered",
+      "quoteReason": "statutory_conditions",
       "model": "ok",
-      "modelMs": 13608
+      "modelMs": 14443
     },
     {
       "id": "sickness-rate",
@@ -347,8 +355,10 @@
         }
       ],
       "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
       "model": "ok",
-      "modelMs": 6534
+      "modelMs": 6595
     },
     {
       "id": "family-school",
@@ -404,15 +414,17 @@
       ],
       "claims": [
         {
-          "text": "Program Aktywny Rodzic oferuje trzy świadczenia: świadczenie aktywni rodzice w pracy, świadczenie aktywnie w żłobku oraz świadczenie aktywnie w domu.",
+          "text": "Z programu Aktywny Rodzic możesz otrzymać następujące świadczenia: świadczenie aktywni rodzice w pracy, świadczenie aktywnie w żłobku, świadczenie aktywnie w domu.",
           "citationIds": [
             "c1"
           ]
         }
       ],
       "message": "",
+      "modelProposedStatus": "answered",
+      "quoteReason": null,
       "model": "ok",
-      "modelMs": 5194
+      "modelMs": 4611
     },
     {
       "id": "outside",
