@@ -78,6 +78,12 @@
 
 **Scena do przeklikania.** Po nieudanej zmianie z 17 na 18 czerwca rodzic sam wpisuje 19 czerwca i wybiera „Ponów zapis” przy starszej wiadomości. Zusik sprawdza, czy pole było edytowane od poprzedniej próby. Zapis może zastosować tylko do tej samej wersji pola. Przy ręcznej poprawce zachowuje wartość rodzica i pokazuje „W szkicu jest już Twoja poprawka. Początek urlopu: 19 czerwca 2027”. Kliknięcie nazwy pola wskazuje tę datę w formularzu po lewej, a na telefonie nad rozmową.
 
+### Powrót do najnowszej wiadomości
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Po przewinięciu rozmowy w górę nad polem „Zapytaj Zusika…” pojawia się przycisk „↓” z dostępną nazwą „Wróć na dół”. Gdy poniżej czytanego fragmentu pojawi się nowa odpowiedź Zusika, ten sam przycisk pokazuje „↓ Nowa odpowiedź”. Tekst pod oczami rodzica zachowuje pozycję. Na komputerze i telefonie kliknięcie lub aktywacja klawiaturą przenosi na dół rozmowy i przycisk znika. Znika również po ręcznym przewinięciu na dół. Przy ograniczonym ruchu przejście jest natychmiastowe. [AI Elements — Conversation](https://elements.ai-sdk.dev/components/conversation) · [assistant-ui — Scroll anchor](https://www.assistant-ui.com/elements/scroll-anchor)
+
+**Scena do przeklikania.** Rodzic czyta rozwinięte źródło „Skąd ten termin?”. Poniżej pojawia się odpowiedź Zusika. Rodzic kończy czytać cytat i wybiera „↓ Nowa odpowiedź”. Najnowsza wiadomość jest widoczna nad polem pisania.
+
 ### Historia rozmów
 
 **Julian · 21 listopada 2026 · Uzgodnione.** „Historia” w nagłówku Zusika otwiera listę w miejscu rozmowy. W widoku dzielonym rodzic nadal widzi formularz po lewej, a na telefonie fragment bieżącej sprawy nad listą. Samo otwarcie historii zachowuje bieżącą sprawę. [Linear Agent — wejście z paska czatu](https://linear.app/docs/linear-agent#chat-history)
