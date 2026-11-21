@@ -85,6 +85,12 @@
 
 **Scena do przeklikania.** Rodzic czyta rozwinięte źródło „Skąd ten termin?”. Poniżej pojawia się odpowiedź Zusika. Rodzic kończy czytać cytat i wybiera „↓ Nowa odpowiedź”. Najnowsza wiadomość jest widoczna nad polem pisania.
 
+### Nagłówek i tryby rozmowy
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Po lewej stronie nagłówka widnieje „Zusik · asystent AI”, a w drugim, mniejszym wierszu bieżąca sprawa, np. „Ola · Wniosek o urlop rodzicielski”. Po prawej kolejno „Historia”, ikona „Nowa rozmowa”, przełącznik „Pełny ekran” / „Podziel ekran” i minus z dostępną nazwą „Zwiń czat”. Na telefonie „Historia” pozostaje widoczna, a „Nowa rozmowa” trafia do menu „Więcej” (…). [Shopify Sidekick — sterowanie panelem](https://help.shopify.com/en/manual/ai-powered-tools/sidekick/set-up#start-a-chat-with-sidekick) · [Linear Agent — historia na pasku](https://linear.app/docs/linear-agent#chat-history)
+
+**Scena do przeklikania.** Rodzic powiększa rozmowę przy wniosku Oli. „Podziel ekran” przywraca formularz obok czatu, a na telefonie jego fragment nad rozmową. Minus zwija czat i przenosi fokus na zielonego bąbelka. Po ponownym otwarciu rodzic wraca do tej samej rozmowy i miejsca czytania. Przy każdej zmianie widoku pozostają wpisany tekst, załączniki, trwająca odpowiedź i miejsce w formularzu.
+
 ### Historia rozmów
 
 **Julian · 21 listopada 2026 · Uzgodnione.** „Historia” w nagłówku Zusika otwiera listę w miejscu rozmowy. W widoku dzielonym rodzic nadal widzi formularz po lewej, a na telefonie fragment bieżącej sprawy nad listą. Samo otwarcie historii zachowuje bieżącą sprawę. [Linear Agent — wejście z paska czatu](https://linear.app/docs/linear-agent#chat-history)
