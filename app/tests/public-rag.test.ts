@@ -110,6 +110,8 @@ describe("public knowledge partitions", () => {
         evidence:[{id:later.logicalId,quote:"po ustaniu tytułu ubezpieczenia chorobowego"}],
       }] } }),
     }, "Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego?");
+    expect(result.trace.proposedStatus).toBe("answered");
+    expect(result.trace.quoteReason).toBe("statutory_conditions");
     expect(result.answer.claims.map(c=>c.text)).toEqual([ordinary.sourceText, later.sourceText]);
     expect(result.answer.message).toContain("Cytuję");
   });

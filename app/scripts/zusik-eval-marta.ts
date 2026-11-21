@@ -136,7 +136,7 @@ async function main() {
     rows.push(
       `| ${c.id}${c.main ? "★" : ""} | ${c.question} | ${c.expected.map((g) => g.join(" / ")).join(" + ")} | ${top.join("<br>")} | ${isHit ? "✓" : "✗"} | ${isComplete ? "✓" : "✗"} | ${retrievalOnly ? "—" : fmtAnswer(answer)} | ${auto} |`,
     );
-    raw.push({ id: c.id, question: c.question, sanitized: trace.sanitized, top: trace.vectorHits, evidence: trace.evidenceIds, answer, report: trace.report, model: trace.model, modelMs: trace.modelMs, finishReason: trace.finishReason });
+    raw.push({ id: c.id, question: c.question, sanitized: trace.sanitized, top: trace.vectorHits, evidence: trace.evidenceIds, answer, report: trace.report, modelProposedStatus: trace.proposedStatus, quoteReason: trace.quoteReason, model: trace.model, modelMs: trace.modelMs, finishReason: trace.finishReason });
     console.log(`${OP}: ${c.id} hit5=${isHit ? 1 : 0} complete=${isComplete ? 1 : 0} ${answer.status} ${auto} · model ${trace.model} ${trace.modelMs ?? "-"} ms ${trace.finishReason ?? ""}`);
   }
 
