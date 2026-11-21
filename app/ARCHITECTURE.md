@@ -2,7 +2,7 @@
 
 **Stan z 21.11.2026.** `app/` jest docelowym miejscem aplikacji Zusika. Wchodzi tu tylko kod produkcyjny: przejrzany, z testami i bez eksperymentów. Prototypy powstają poza nią: maskotka w `maskotka_kod/`, makiety w `Przewodnik-Rodzica.html` i `ui/`. Kod przenosimy do `app/` dopiero po akceptacji.
 
-**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [design/](../design/README.md). Wygląd nie jest jeszcze gotowy, więc większość ekranów w `app/` nie ma stylów i pokazuje samo zachowanie. Wyjątek to panel administracyjny: ma układ z sekcji 14 speca i tokeny z [DESIGN.md](../DESIGN.md) (CSS Modules w `features/admin/admin.module.css`, kroje Literata i Inter przez `next/font/google`). Dane panelu są przykładowe (`features/admin/mock-data.ts`), dopóki nie powstanie `lib/rules`.
+**Źródła prawdy:** treść i zachowanie ekranów opisują [SPEC.md](../SPEC.md), [SPEC-PO-LOGOWANIU.md](../SPEC-PO-LOGOWANIU.md) i [SPEC-PANEL-ADMINISTRACYJNY.md](../SPEC-PANEL-ADMINISTRACYJNY.md). Agent i dane: [TECH-SPEC-AGENT.md](../TECH-SPEC-AGENT.md). Wygląd: [design/](../design/README.md). Wygląd nie jest jeszcze gotowy, więc większość ekranów w `app/` nie ma stylów i pokazuje samo zachowanie. Wyjątek to panel administracyjny: ma układ z sekcji 14 speca i tokeny z [DESIGN.md](../DESIGN.md) (CSS Modules w `features/admin/admin.module.css`, kroje Literata i Inter przez `next/font/google`). Wartości, które aplikacja już stosuje (urlop ojcowski, warunki zasiłku chorobowego, wzór ZAM, źródła wiedzy, sprawy liczone regułą ojcowską), panel czyta z kodu przez `lib/admin/catalog.ts` i oznacza „W aplikacji”. Pozostałe parametry ze specu i historia zmian są przykładowe (`features/admin/mock-data.ts`), oznaczone „Ze specyfikacji”.
 
 ## Stos
 
@@ -42,7 +42,7 @@ app/
 │  │  │  ├─ page.tsx              ✅ logowanie administratora, bez rejestracji (actions.ts: zaloguj, wyloguj)
 │  │  │  └─ (panel)/              widoki za logowaniem, sidebar; każda strona woła requireAdmin()
 │  │  │     ├─ reguly/            ✅ kafle, parametry w grupach, panel boczny parametru
-│  │  │     ├─ tresci/            treści i źródła (miejsce w menu, bez widoku)
+│  │  │     ├─ tresci/            ✅ źródła wiedzy Zusika z manifestów korpusu
 │  │  │     ├─ sprawy-testowe/    ✅ kafle-filtry, lista z wyszukiwaniem, szczegóły
 │  │  │     ├─ zmiany/            ✅ „Przygotuj zmianę”: formularz, wpływ na rodzinę, sprawdzenie
 │  │  │     └─ historia/          ✅ tabela publikacji, panel boczny wpisu
@@ -51,7 +51,7 @@ app/
 │  ├─ features/                   landing · onboarding · family · journey-map · calculator · chat · documents · support · admin
 │  ├─ components/                 ui/ · mascot/
 │  └─ lib/
-│     ├─ admin/                   ✅ logowanie panelu: hash scrypt, podpisana sesja z wygaśnięciem (server.ts: cookies)
+│     ├─ admin/                   ✅ logowanie panelu (auth.ts, server.ts: cookies), katalog wartości z kodu aplikacji (catalog.ts)
 │     ├─ zusik/                   ✅ agent: graf, sesja, Qdrant, Sherlock, magazyn spraw z dzierżawą
 │     ├─ rules/                   reguły świadczeń w TS: daty, kwoty, zaokrąglenia, ID reguły
 │     ├─ rag/                     podział źródeł, import, wyszukiwanie hybrydowe, cytaty po ID

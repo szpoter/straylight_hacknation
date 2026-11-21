@@ -2,31 +2,30 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  HISTORY,
-  PARAMETER_GROUPS,
-  PARAMETERS,
-  TEST_CASES,
-  formatDate,
-  type Parameter,
-  type ParameterGroup,
-} from "./mock-data";
-import { Card, Drawer, PillTabs, StatTile, StateBadge, cx } from "./ui";
+import type { TestCase } from "@/lib/admin/types";
+import { HISTORY, PARAMETER_GROUPS, formatDate, type Parameter, type ParameterGroup } from "./mock-data";
+import { Card, Drawer, OriginBadge, OriginNote, PillTabs, SourceLink, StatTile, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
-export function RulesView() {
+export function RulesView({ parameters, cases }: { parameters: Parameter[]; cases: TestCase[] }) {
   const [group, setGroup] = useState<ParameterGroup>("Stawki");
   const [selected, setSelected] = useState<Parameter | null>(null);
 
-  const active = PARAMETERS.filter((p) => p.state === "Obowiązuje").length;
-  const planned = PARAMETERS.filter((p) => p.planned).sort((a, b) => a.planned!.from.localeCompare(b.planned!.from));
-  const drafts = PARAMETERS.filter((p) => p.state === "Szkic").length;
-  const passing = TEST_CASES.filter((c) => c.status === "zgodna").length;
-  const rows = PARAMETERS.filter((p) => p.group === group);
+  const active = parameters.filter((p) => p.state === "Obowiązuje");
+  const appliedByApp = active.filter((p) => p.origin === "app").length;
+  const planned = parameters.filter((p) => p.planned).sort((a, b) => a.planned!.from.localeCompare(b.planned!.from));
+  const drafts = parameters.filter((p) => p.state === "Szkic").length;
+  const passing = cases.filter((c) => c.status === "zgodna").length;
+  const rows = parameters.filter((p) => p.group === group);
 
   return (
     <div className={s.grid}>
-      <StatTile className={s.span3} label="Obowiązują" value={active} note="parametrów w aktualnej wersji" />
+      <StatTile
+        className={s.span3}
+        label="Obowiązują"
+        value={active.length}
+        note={`w tym ${appliedByApp} stosuje już aplikacja`}
+      />
       <StatTile
         className={s.span3}
         label="Zaplanowane"
@@ -37,7 +36,7 @@ export function RulesView() {
       <StatTile
         className={s.span3}
         label="Sprawy testowe"
-        value={`${passing} / ${TEST_CASES.length}`}
+        value={`${passing} / ${cases.length}`}
         note="zgodnych z oczekiwanym wynikiem"
       />
 
@@ -75,6 +74,9 @@ export function RulesView() {
                     <button type="button" className={s.rowLink} onClick={() => setSelected(p)}>
                       {p.name}
                     </button>
+                    <div className={s.originRow}>
+                      <OriginBadge origin={p.origin} />
+                    </div>
                     {p.planned ? (
                       <div className={cx(s.small, s.muted)}>
                         od {formatDate(p.planned.from)}: {p.planned.value}
@@ -116,6 +118,9 @@ export function RulesView() {
         </Card>
 
         <Card title="Ostatnie publikacje" id="recent" meta={<Link href="/admin/historia">Cała historia</Link>}>
+          <p className={cx(s.small, s.muted)} style={{ margin: "0 0 12px" }}>
+            Dane przykładowe do czasu zapisu wersji reguł.
+          </p>
           <ul className={s.list}>
             {HISTORY.slice(0, 3).map((h) => (
               <li key={h.id} className={s.listItem}>
@@ -157,9 +162,12 @@ function ParameterDetails({ parameter: p }: { parameter: Parameter }) {
         <p className={s.drawerLabel}>Aktualna wartość</p>
         <span className={s.drawerValue}>{p.value}</span>
         <div>
-          <StateBadge state={p.state} /> <span className={cx(s.small, s.muted)}>od {formatDate(p.from)}</span>
+          <StateBadge state={p.state} />{" "}
+          {p.from !== "—" ? <span className={cx(s.small, s.muted)}>od {formatDate(p.from)}</span> : null}
         </div>
       </div>
+
+      <OriginNote origin={p.origin} appSource={p.appSource} />
 
       {p.planned ? (
         <div className={s.planned}>
@@ -171,10 +179,22 @@ function ParameterDetails({ parameter: p }: { parameter: Parameter }) {
         <dt>Zakres spraw</dt>
         <dd>{p.scope ?? "Wszystkie sprawy tego świadczenia"}</dd>
         <dt>Podstawa</dt>
-        <dd>{p.source}</dd>
+        <dd>
+          <SourceLink label={p.source} url={p.sourceUrl} />
+        </dd>
         <dt>Gdzie działa u rodzica</dt>
         <dd>{p.usedIn}</dd>
+        {p.details?.map((d) => (
+          <Detail key={d.label} label={d.label} value={d.value} />
+        ))}
       </dl>
+
+      {p.quote ? (
+        <div className={s.drawerSection}>
+          <p className={s.drawerLabel}>Brzmienie źródła</p>
+          <blockquote className={s.quote}>{p.quote}</blockquote>
+        </div>
+      ) : null}
 
       <div className={s.drawerSection}>
         <p className={s.drawerLabel}>Historia wersji</p>
@@ -185,11 +205,20 @@ function ParameterDetails({ parameter: p }: { parameter: Parameter }) {
                 <span className={s.change}>{v.value}</span>
                 <StateBadge state={v.state} />
               </div>
-              <span className={cx(s.small, s.muted)}>od {formatDate(v.from)}</span>
+              {v.from !== "—" ? <span className={cx(s.small, s.muted)}>od {formatDate(v.from)}</span> : null}
             </li>
           ))}
         </ul>
       </div>
+    </>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd className={s.ddWrap}>{value}</dd>
     </>
   );
 }

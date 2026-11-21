@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
-import type { RuleState } from "./mock-data";
+import type { RuleState, ValueOrigin } from "@/lib/admin/types";
 import s from "./admin.module.css";
 
 export function cx(...names: (string | false | null | undefined)[]): string {
@@ -27,6 +27,37 @@ export function Badge({ children, tone }: { children: ReactNode; tone: "active" 
     historic: s.badgeHistoric,
   }[tone];
   return <span className={cx(s.badge, toneClass)}>{children}</span>;
+}
+
+/** Tells whether the parent application applies the value or it is only written in the specification. */
+export function OriginBadge({ origin }: { origin: ValueOrigin }) {
+  return origin === "app" ? (
+    <span className={cx(s.originBadge, s.originApp)}>W aplikacji</span>
+  ) : (
+    <span className={cx(s.originBadge, s.originSpec)}>Ze specyfikacji</span>
+  );
+}
+
+export function OriginNote({ origin, appSource }: { origin: ValueOrigin; appSource?: string }) {
+  return origin === "app" ? (
+    <p className={cx(s.originNote, s.originNoteApp)}>
+      Wartość pobierana z kodu aplikacji rodzica{appSource ? <> ({appSource})</> : null}. Panel pokazuje to, co
+      aplikacja stosuje teraz.
+    </p>
+  ) : (
+    <p className={s.originNote}>
+      Wartość ze specyfikacji panelu. Aplikacja rodzica jeszcze jej nie liczy.
+    </p>
+  );
+}
+
+export function SourceLink({ label, url }: { label: string; url?: string }) {
+  if (!url) return <>{label}</>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className={s.sourceLink}>
+      {label}
+    </a>
+  );
 }
 
 interface TileProps {

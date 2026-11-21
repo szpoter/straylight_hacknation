@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/zusik/**": ["./corpus/*/manifest.json", "./corpus/*/fragments.jsonl"],
     "/api/zusik/marta/pdf": ["./public/forms/fonts/*.ttf"],
+    // Admin panel pages show the corpus sources and the statute units the rules rely on.
+    "/admin/**": ["./corpus/*/manifest.json", "./corpus/*/fragments.jsonl"],
   },
 };
 

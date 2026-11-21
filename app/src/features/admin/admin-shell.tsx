@@ -10,6 +10,8 @@ const NAV = [
   { href: "/admin/reguly", label: "Reguły świadczeń", icon: "rules" },
   { href: "/admin/sprawy-testowe", label: "Sprawy testowe", icon: "cases" },
   { href: "/admin/historia", label: "Historia zmian", icon: "history" },
+  // Fourth item from SPEC §14 L1 / §13 A: sources the assistant answers from.
+  { href: "/admin/tresci", label: "Treści i źródła", icon: "sources" },
 ] as const;
 
 const TITLES: { prefix: string; title: string }[] = [
@@ -134,11 +136,6 @@ export function AdminShell({ children, adminLogin, signOutAction }: AdminShellPr
                 </Link>
               );
             })}
-            {/* Reserved slot from SPEC §14 L1, pending decision A in §13. */}
-            <span className={cx(s.navLink, s.navLinkMuted)} aria-disabled="true">
-              <NavIcon name="sources" />
-              Treści i źródła
-            </span>
           </div>
         </nav>
 

@@ -1,43 +1,20 @@
-// Placeholder data for the admin panel layout. Values are illustrative only:
-// the real catalogue comes from lib/rules once it exists (SPEC-PANEL-ADMINISTRACYJNY.md §3).
+// Values written down in SPEC-PANEL-ADMINISTRACYJNY.md §3 that the parent application does not compute yet,
+// plus illustrative change history. Values the application already applies come from lib/admin/catalog.ts.
 
-export type RuleState = "Szkic" | "Zaplanowana" | "Obowiązuje" | "Historyczna";
+import type { HistoryEntry, Parameter } from "@/lib/admin/types";
 
-export const PARAMETER_GROUPS = [
-  "Stawki",
-  "Wymiary",
-  "Uzupełniający",
-  "Chorobowy",
-  "Kto wypłaca",
-  "Podstawa",
-  "Terminy",
-  "Formularze",
-] as const;
+export {
+  PARAMETER_GROUPS,
+  type CaseStatus,
+  type HistoryEntry,
+  type Parameter,
+  type ParameterGroup,
+  type ParameterVersion,
+  type RuleState,
+  type TestCase,
+} from "@/lib/admin/types";
 
-export type ParameterGroup = (typeof PARAMETER_GROUPS)[number];
-
-export interface ParameterVersion {
-  value: string;
-  from: string;
-  state: RuleState;
-}
-
-export interface Parameter {
-  id: string;
-  group: ParameterGroup;
-  name: string;
-  value: string;
-  from: string;
-  state: RuleState;
-  source: string;
-  usedIn: string;
-  /** Defaults to all cases of the benefit when omitted. */
-  scope?: string;
-  planned?: { value: string; from: string };
-  history: ParameterVersion[];
-}
-
-export const PARAMETERS: Parameter[] = [
+const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   {
     id: "rate-parental",
     group: "Stawki",
@@ -75,17 +52,6 @@ export const PARAMETERS: Parameter[] = [
     source: "ZUS s. 9, Zał.",
     usedIn: "Kalkulator, wariant wypłaty",
     history: [{ value: "81,5%", from: "2023-04-26", state: "Obowiązuje" }],
-  },
-  {
-    id: "rate-sick-pregnancy",
-    group: "Stawki",
-    name: "Zasiłek chorobowy w ciąży",
-    value: "100%",
-    from: "2016-01-01",
-    state: "Obowiązuje",
-    source: "ZUS s. 4",
-    usedIn: "Świadczenia w ciąży",
-    history: [{ value: "100%", from: "2016-01-01", state: "Obowiązuje" }],
   },
   {
     id: "limit-maternity",
@@ -254,138 +220,9 @@ export const PARAMETERS: Parameter[] = [
   },
 ];
 
-export type CaseStatus = "zgodna" | "niezgodna" | "brak-danych";
+export const SPEC_PARAMETERS: Parameter[] = SPEC_VALUES.map((p) => ({ ...p, origin: "spec" }));
 
-export interface TestCase {
-  id: string;
-  title: string;
-  tag: string;
-  status: CaseStatus;
-  inputs: { label: string; value: string }[];
-  expected: { label: string; value: string }[];
-  result: { label: string; value: string }[];
-  missing?: string;
-}
-
-export const TEST_CASES: TestCase[] = [
-  {
-    id: "S-01",
-    title: "Rodzicielski, jedno dziecko",
-    tag: "Przykład demo",
-    status: "zgodna",
-    inputs: [
-      { label: "Podstawa dzienna", value: "200 zł" },
-      { label: "Okres", value: "28 dni" },
-      { label: "Ubezpieczenie", value: "obowiązkowe" },
-    ],
-    expected: [
-      { label: "Stawka", value: "70%" },
-      { label: "Kwota", value: "3 920 zł" },
-    ],
-    result: [
-      { label: "Stawka", value: "70%" },
-      { label: "Kwota", value: "3 920 zł" },
-    ],
-  },
-  {
-    id: "S-02",
-    title: "Bliźnięta, wspólna pula",
-    tag: "Wymiar",
-    status: "zgodna",
-    inputs: [
-      { label: "Liczba dzieci", value: "2" },
-      { label: "Urlop macierzyński", value: "31 tyg." },
-    ],
-    expected: [{ label: "Pula rodzicielskiego", value: "43 tyg." }],
-    result: [{ label: "Pula rodzicielskiego", value: "43 tyg." }],
-  },
-  {
-    id: "S-03",
-    title: "Skrajny wcześniak",
-    tag: "Uzupełniający",
-    status: "niezgodna",
-    inputs: [
-      { label: "Tydzień ciąży", value: "26" },
-      { label: "Pobyt w szpitalu", value: "9 tyg. 2 dni" },
-    ],
-    expected: [{ label: "Uzupełniający", value: "10 tyg." }],
-    result: [{ label: "Uzupełniający", value: "9 tyg." }],
-  },
-  {
-    id: "S-04",
-    title: "Działalność, zadłużenie składkowe",
-    tag: "Odmowa",
-    status: "brak-danych",
-    inputs: [
-      { label: "Ubezpieczenie", value: "dobrowolne" },
-      { label: "Zadłużenie", value: "—" },
-    ],
-    expected: [{ label: "Wynik", value: "brak prawa" }],
-    result: [],
-    missing: "Brakuje stanu zadłużenia składkowego na dzień powstania prawa.",
-  },
-  {
-    id: "S-05",
-    title: "Łączenie rodzicielskiego z pracą",
-    tag: "Wymiar",
-    status: "zgodna",
-    inputs: [
-      { label: "Wymiar pracy", value: "1/2 etatu" },
-      { label: "Tygodnie łączenia", value: "16" },
-    ],
-    expected: [{ label: "Wydłużenie", value: "8 tyg." }],
-    result: [{ label: "Wydłużenie", value: "8 tyg." }],
-  },
-  {
-    id: "S-06",
-    title: "Adopcja, dziecko 9 lat",
-    tag: "Na warunkach macierzyńskiego",
-    status: "zgodna",
-    inputs: [
-      { label: "Wiek dziecka", value: "9 lat" },
-      { label: "Typ", value: "przysposobienie" },
-    ],
-    expected: [{ label: "Okres", value: "20 tyg." }],
-    result: [{ label: "Okres", value: "20 tyg." }],
-  },
-  {
-    id: "S-07",
-    title: "Szósta część rodzicielskiego",
-    tag: "Odmowa",
-    status: "zgodna",
-    inputs: [{ label: "Wykorzystane części", value: "5" }],
-    expected: [{ label: "Wynik", value: "odmowa, limit 5 części" }],
-    result: [{ label: "Wynik", value: "odmowa, limit 5 części" }],
-  },
-  {
-    id: "S-08",
-    title: "Za życiem, jedno dziecko",
-    tag: "Wymiar",
-    status: "brak-danych",
-    inputs: [{ label: "Zaświadczenie", value: "—" }],
-    expected: [{ label: "Pula rodzicielskiego", value: "65 tyg." }],
-    result: [],
-    missing: "Brakuje zaświadczenia „Za życiem”.",
-  },
-];
-
-export interface HistoryEntry {
-  id: string;
-  parameterId: string;
-  scope: string;
-  publishedAt: string;
-  parameter: string;
-  group: ParameterGroup;
-  oldValue: string;
-  newValue: string;
-  author: string;
-  state: RuleState;
-  from: string;
-  reason: string;
-  source: string;
-  tests: string;
-}
-
+/** Illustrative entries until rule versions are stored (SPEC §8). */
 export const HISTORY: HistoryEntry[] = [
   {
     id: "H-05",

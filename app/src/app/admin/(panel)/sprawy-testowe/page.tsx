@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/admin/server";
 import { CasesView } from "@/features/admin/cases-view";
+import { paternityTestCases } from "@/lib/admin/catalog";
+import { requireAdmin } from "@/lib/admin/server";
 
 export const metadata: Metadata = { title: "Sprawy testowe" };
 
 export default async function Page() {
   await requireAdmin();
-  return <CasesView />;
+  return <CasesView cases={paternityTestCases()} />;
 }
