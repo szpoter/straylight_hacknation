@@ -52,32 +52,40 @@ Układ desktopowy włącza się dopiero od 1080 px, czyli przy co najmniej 46 px
 
 ### 3.1 Hero
 
-**Wariant źródła** (wykryte):
+**Wybrany wariant (uzgodnione 2026-11-21): jak w źródle, bez paska z karuzelą pod spodem.** Animacja Zusika jest po lewej, tekst i przyciski po prawej. Zmierzone na 375, 768, 1080 i 1280 px. Status: wykryte, chyba że opisano inaczej.
 
 | Szerokość | Układ |
 | --- | --- |
-| telefon | kolumna: ilustracja → tytuł `--type-title-hero` wyśrodkowany → stos przycisków `--size-cta-width` (`primary`, pod nim `secondary`); tytuł → przyciski `--space-lg` |
-| tablet | kolumna jak na telefonie; tytuł w `--container-hero-title`; tytuł → przyciski `--space-3xl`; wszystko wyśrodkowane |
-| desktop | dwie kolumny w `--container-content`: ilustracja po lewej, kolumna tekstu `--container-hero-title` przy prawej krawędzi kontenera; tytuł i stos przycisków wyśrodkowane w tej kolumnie |
+| telefon | Kolumna, wszystko wyśrodkowane: animacja `--size-media-hero` (273 px), tytuł, opis, stos przycisków `--size-cta-width`, dopisek. Tytuł → przyciski `--space-lg`. |
+| tablet | Kolumna jak na telefonie; animacja 424 px; tytuł w `--container-hero-title`; tytuł → przyciski `--space-3xl`. |
+| desktop | Rząd w `--container-content`, `justify-content: flex-end`, `align-items: center`, odstęp `--space-hero-gap` (15 px między kwadratem animacji a kolumną tekstu), pionowy wewnętrzny odstęp `--space-4xl`. Po lewej animacja 424 × 424 px, po prawej kolumna tekstu `--container-hero-title` przy prawej krawędzi kontenera. Tytuł i stos przycisków wyśrodkowane w tej kolumnie. Grafika animacji powinna mieć wolne miejsce wewnątrz kwadratu, bo odstęp do tekstu jest mały. |
 
-Hero razem z paskiem pod nim wypełnia pierwszy ekran. Przy oknie 800 px hero ma 720 px, a pasek 80 px. Wywnioskowane: `min-height: 100vh` dla hero razem z paskiem.
+Odstępy i treść:
 
-Na telefonie przyciski stoją przy dolnej krawędzi pierwszego ekranu. Widać to na zrzucie, ale nie zostało zmierzone (do weryfikacji).
+- **Tytuł → opis:** `--space-xl`. Wywnioskowane: tak samo jak nagłówek → akapit; źródło nie ma opisu w hero.
+- **Opis → przyciski:** `--space-3xl` od tabletu, `--space-lg` na telefonie, tak samo jak tytuł → przyciski.
+- **Przyciski:** `primary` „Zaloguj się”, pod nim `secondary` „Zarejestruj się”, odstęp `--space-sm`. Pod przyciskami dopisek o wersji demonstracyjnej (`--type-caption-legal`).
+- **Wysokość:** hero wypełnia pierwszy ekran pod nagłówkiem: `min-height: calc(100svh - var(--size-header-height))`, treść wyśrodkowana w pionie. Status: wywnioskowane; w źródle hero razem z paskiem karuzeli wypełniało ekran.
+- **Karta przykładu „Moja sytuacja / Mój plan”** ze `SPEC.md` nie jest częścią tego wariantu hero. Gdzie trafi, jest do ustalenia (do omówienia).
 
-**Wariant ze specyfikacji projektu** (Hero w `SPEC.md`: tekst, opis i jeden przycisk po lewej, karta podglądu po prawej). Status: wywnioskowane, złożone z wartości wykrytych.
+```css
+.hero { display: flex; align-items: center; min-height: calc(100svh - var(--size-header-height)); padding-block: var(--space-4xl); }
+.hero__row { display: flex; flex-direction: column; align-items: center; gap: var(--space-xl); width: 100%; max-width: var(--container-content); margin: 0 auto; padding: 0 var(--space-gutter); }
+.hero__media { flex: none; width: var(--size-media-hero); aspect-ratio: 1; }
+.hero__text { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: var(--container-hero-title); text-align: center; }
+.hero__text .text-body { margin-top: var(--space-xl); }
+.hero__actions { display: grid; gap: var(--space-sm); width: var(--size-cta-width); max-width: 100%; margin-top: var(--space-lg); }
+.hero__note { margin: var(--space-xl) 0 0; max-width: var(--size-cta-width); font: var(--type-caption-legal); color: var(--color-text-primary); }
+@media (min-width: 768px) { .hero__actions { margin-top: var(--space-3xl); } }
+@media (min-width: 1080px) {
+  .hero__row { flex-direction: row; justify-content: flex-end; gap: var(--space-hero-gap); padding: 0; }
+}
+```
 
-| Szerokość | Układ |
-| --- | --- |
-| telefon i tablet | kolumna: tytuł → opis → przycisk → karta podglądu ([panel](komponenty.md#111-panel-karta-z-treścią-np-podgląd-planu)), wszystko wyśrodkowane |
-| desktop | dwie kolumny w `--container-content`: kolumna tekstu `--container-hero-title` przy **lewej** krawędzi, panel `--container-form` przy **prawej** krawędzi, oba wyśrodkowane w pionie |
+Wartości wywnioskowane w tej recepturze:
 
-Odstępy i typografia:
-
-- tytuł → opis: `--space-xl`, jak nagłówek → akapit;
-- opis → przycisk: `--space-3xl` od tabletu, `--space-lg` na telefonie, jak tytuł → przyciski;
-- opis: `.text-body`.
-
-Wyrównanie tekstu: wyśrodkowany, jak w źródle. Jeśli zespół woli wyrównanie do lewej w kolumnie, to decyzja do weryfikacji.
+- `gap: var(--space-xl)` w kolumnie na telefonie i tablecie (w źródle tytuł ma dodatkowe puste miejsce);
+- odstęp dopisku `--space-xl`.
 
 ### 3.2 Wiersz z ilustracją
 
@@ -111,6 +119,18 @@ Wyrównanie tekstu: wyśrodkowany, jak w źródle. Jeśli zespół woli wyrówna
 
 Na desktopie suma szerokości (503 + 101 + 530 = 1134 px) celowo przekracza kontener 988 px. Wartości są wykryte; zachowanie przycięcia potwierdza `scrollWidth` równy szerokości okna.
 
+#### Wariant z wędrującym Zusikiem (uzgodnione 2026-11-21)
+
+Sekcja korzyści pod hero składa się z 4 wierszy w układzie z tabeli wyżej. W miejscach ilustracji jest **jeden Zusik**, który wędruje między wierszami:
+
+1. W pierwszym wierszu wpływa z prawej strony ekranu (tekst po lewej).
+2. Przy przewijaniu przechodzi na drugą stronę, a po przeciwnej stronie pojawia się tekst następnego wiersza.
+3. W każdym wierszu Zusik zmienia się w inny kształt.
+
+Strony zmieniają się naprzemiennie do końca sekcji. Na telefonie wiersze stoją jeden pod drugim, a Zusik zmienia się w miejscu, bez przechodzenia między stronami (wywnioskowane).
+
+Ruch opisuje [motion.md §5.2](motion.md#52-sloty-znane-ze-specyfikacji-projektu). Do czasu dostarczenia animacji miejsca Zusika i przejść oznaczamy szarymi blokami.
+
 ### 3.3 Duże hasło wyśrodkowane
 
 `.display-xl` w `--container-statement` (od tabletu; na telefonie szerokość akapitu), wyśrodkowane. Pod nim akcje albo rząd odnośników. W jednym z dwóch wystąpień w źródle hasło stoi na tle `--color-surface-info`, w drugim na białym. Status: wykryte.
@@ -119,7 +139,7 @@ Na desktopie suma szerokości (503 + 101 + 530 = 1134 px) celowo przekracza kont
 
 | Tło | Użycie w źródle | Tekst | Status |
 | --- | --- | --- | --- |
-| `--color-surface-info` (klasa `.surface-info`) | sekcja z dużym hasłem; tło pojawia się płynnie przy przewijaniu ([motion.md](motion.md)) | nagłówek `--color-text-display`, tekst `--color-text-primary`, linki `--color-text-link-on-info` | wykryte (tło); kolory tekstu: wywnioskowane AA |
+| `--color-surface-info` (klasa `.surface-info`) | sekcja z dużym hasłem; tło pojawia się płynnie przy przewijaniu ([motion.md](motion.md)) | nagłówek `--color-text-display`, tekst `--color-text-primary`, linki `--color-text-link` | wykryte (tło); kolory tekstu: zespół |
 | `--color-surface-inverse` | jeden pas promocyjny, wysokość około 900 px | `--color-text-on-inverse` | wykryte |
 | `--color-surface-brand` | stopka | `--color-text-on-brand` | wykryte (tło); tekst: wywnioskowane AA |
 

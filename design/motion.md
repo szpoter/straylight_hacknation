@@ -16,14 +16,14 @@ Ten plik ma pięć części:
 
 | Co | Właściwość | Czas | Easing | Wyzwalacz | Status |
 | --- | --- | --- | --- | --- | --- |
-| Przyciski i karty: hover, active | `filter`, `transform`, `box-shadow` | `--motion-state` (0ms) | — | hover, naciśnięcie | wykryte (computed `transition: all 0s`) |
+| Przyciski i karty: hover, active | `filter` (i tło przycisku obrysowanego przy naciśnięciu) | `--motion-state` (0ms) | — | hover, naciśnięcie | wykryte (computed `transition: all 0s`) |
 | Dolna ramka nagłówka strony | `border-color` | `--motion-duration-base` (300ms) | `--motion-easing-standard` | zjechanie z samej góry strony | wykryte |
 | Chowanie nagłówka strony | `transform` | `--motion-duration-slow` (400ms) | `--motion-easing-out` | dalsze przewijanie w dół | wykryte |
 | Lista w pasku z karuzelą | `transform` | `--motion-duration-slower` (500ms) | `--motion-easing-in-out` | klik w strzałkę | wykryte |
 | Panel wysuwany z boku (prawdopodobnie szuflada) | `right` | `--motion-duration-base` | `ease` (domyślny) | otwarcie panelu | wykryte; element: wywnioskowane |
 | Nieustalony element | `filter` | `--motion-duration-fast` (200ms) | `ease` (domyślny) | — | wykryte; element: do weryfikacji |
 
-**Najważniejsza cecha:** reakcja kontrolek na dotyk jest natychmiastowa. „Klawiszowość” daje skok o wysokość krawędzi, a nie płynne przejście. Status: wykryte.
+**Najważniejsza cecha:** reakcja kontrolek na dotyk jest natychmiastowa, bez płynnych przejść. Status: wykryte. Przesunięcia przycisku przy naciśnięciu ze źródła nie przenosimy, bo zrezygnowaliśmy z dolnej krawędzi. Naciśnięcie sygnalizuje zmiana jasności ([komponenty.md §1.3](komponenty.md#13-stany)).
 
 ---
 
@@ -69,7 +69,9 @@ Wszystko w tej sekcji jest wywnioskowane, chyba że zaznaczono inaczej.
    ```
 
    Ruch sterowany skryptem (scroll, sprężyny, efekt gooey) musi sprawdzać `matchMedia('(prefers-reduced-motion: reduce)')` i od razu pokazywać stan końcowy.
-5. **Bez animacji wejścia** dla bloków treści (fade-in czy slide-up przy przewijaniu). Źródło tego nie robi. Wyjątek: tło sekcji z tabeli w sekcji 2, jeśli zespół je zatwierdzi.
+5. **Bez animacji wejścia** dla bloków treści (fade-in czy slide-up przy przewijaniu). Źródło tego nie robi. Wyjątki:
+   - tło sekcji z tabeli w sekcji 2, jeśli zespół je zatwierdzi;
+   - pojawianie się tekstu w sekcji korzyści z wędrującym Zusikiem (uzgodnione 2026-11-21, [layout.md §3.2](layout.md#32-wiersz-z-ilustracją)).
 6. **Gdy brakuje animacji, nie dopisuj jej.** Jeśli element ze slotu w sekcji 5 nie ma jeszcze opisu, zbuduj jego stan końcowy bez ruchu i zostaw znacznik w składni danego języka:
    - JS/TS: `// TODO(motion): <slot>`;
    - CSS: `/* TODO(motion): <slot> */`;
@@ -108,4 +110,6 @@ Te miejsca opisują specyfikacje w repozytorium. Ruch nie jest dla nich ustalony
 | Przełączanie zakładek „Moja sytuacja / Mój plan” (wskaźnik zakładki) | `SPEC.md` → Hero, `inspiracjeelementowistron.md` | do omówienia; kandydat do `effect="move"` z [gooey.md](gooey.md) |
 | Dymki i kolejne pytania w rozmowie z maskotką | `SPEC-PO-LOGOWANIU.md` → „Pierwsze wejście” | do omówienia |
 | Przyciski i grupy z efektem gooey | [gooey.md](gooey.md#4-kandydaci-do-omówienia) | do omówienia |
+| Hero: Zusik w kwadracie 424 px (Animacja 1) | `landing/index.html`, [layout.md §3.1](layout.md#31-hero) | w przygotowaniu (zespół) |
+| Sekcja korzyści: wejście Zusika z prawej, 4 przemiany (po jednej na wiersz), 3 przejścia między stronami przy przewijaniu, pojawianie się tekstu | `landing/index.html`, [layout.md §3.2](layout.md#32-wiersz-z-ilustracją) | warianty do wyboru; animacje tworzy zespół |
 | Tło sekcji pojawiające się przy przewijaniu (wzorzec ze źródła) | sekcja 2 tego pliku | do omówienia: przenosimy czy nie |

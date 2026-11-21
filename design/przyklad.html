@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Przewodnik Rodzica · przykład systemu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<!-- Style systemu skopiowane z bloków CSS w design/tokeny.md, komponenty.md i layout.md (stan na 2026-11-21).
+     Po zmianie tych plików poproś agenta o ponowne wygenerowanie strony. Zusik: statyczny render z maskotka_kod. -->
+<style>
+/* ---- z design/tokeny.md ---- */
+/* Reset: wszystkie wymiary systemu zakładają border-box  [wykryte] */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  /* Powierzchnie */
+  --color-surface-page: #ffffff;                       /* [wykryte] */
+  --color-surface-subtle: #f7f7f7;                     /* [wykryte] */
+  --color-surface-info: #ddf4ff;                       /* [wykryte] */
+  --color-surface-brand: #A3DAB3;                      /* [zespół: maskotka] */
+  --color-surface-inverse: #1E3D5C;                    /* [zespół: maskotka] */
+  --color-surface-overlay: rgba(0, 0, 0, 0.3);         /* [wykryte] */
+  --color-surface-overlay-strong: rgba(0, 0, 0, 0.4);  /* [wykryte] */
+  --color-surface-disabled: #e5e5e5;                   /* [wywnioskowane, do weryfikacji] */
+
+  /* Ramki */
+  --color-border-default: #BEC3CE;                     /* [zespół: paleta ZUS] */
+  --color-border-field: #777777;                       /* [wywnioskowane AA, do weryfikacji] */
+  --color-border-focus: #3F84D2;                       /* [zespół: paleta ZUS] fokus pola, zaznaczenie */
+  --color-border-error: #ea2b2b;                       /* [wywnioskowane, do weryfikacji] */
+
+  /* Tekst */
+  --color-text-strong: #1E3D5C;                        /* [zespół: maskotka] tytuły */
+  --color-text-primary: #4b4b4b;                       /* [wykryte] akapity */
+  --color-text-muted: #777777;                         /* [wykryte] tylko tekst duży */
+  --color-text-disabled: #afafaf;                      /* [wykryte] tylko nieaktywne i dekoracja */
+  --color-text-display: #1E3D5C;                       /* [zespół: maskotka] */
+  --color-text-link: #00416E;                          /* [zespół: paleta ZUS] */
+  --color-text-on-brand: #1E3D5C;                      /* [zespół: maskotka] 7.05:1 na mięcie */
+  --color-text-on-accent: #1E3D5C;                     /* [zespół: maskotka] 6.29:1 na żółtym */
+  --color-text-on-inverse: #ffffff;                    /* [wykryte] */
+
+  /* Akcje */
+  --color-action-primary-fill: #A3DAB3;                /* [zespół: maskotka, ciało] */
+  --color-action-primary-border: #338C5C;              /* [zespół: maskotka, obwódka] */
+  --color-action-primary-text: var(--color-text-on-brand);
+  --color-action-secondary-fill: #ffffff;              /* [wykryte] */
+  --color-action-secondary-border: #BEC3CE;            /* [zespół: paleta ZUS] */
+  --color-action-secondary-text: var(--color-text-link);
+  --color-action-neutral-text: #4b4b4b;                /* [wykryte] */
+
+  /* Statusy  [role: wywnioskowane] */
+  --color-status-success-edge: #338C5C;                /* [zespół: maskotka] */
+  --color-status-success-surface: #d7ffb8;             /* [wykryte (CSS var); do weryfikacji] */
+  --color-status-info-edge: #3F84D2;                   /* [zespół: paleta ZUS] */
+  --color-status-info-surface: #ddf4ff;                /* [wykryte] */
+  --color-status-warning-edge: #cd7900;                /* [wykryte (CSS var)] */
+  --color-status-warning-surface: #fff5d3;             /* [wykryte (CSS var)] */
+  --color-status-error-edge: #ea2b2b;                  /* [wykryte (CSS var)] */
+  --color-status-error-surface: #ffdfe0;               /* [wykryte (CSS var)] */
+
+  /* Akcent i dekoracja  [zespół: paleta ZUS / maskotka] */
+  --color-accent-fill: #FFB34F;                        /* tekst na nim tylko --color-text-on-accent */
+  --color-decorative-green: #00993F;                   /* bez tekstu */
+  --color-decorative-blue: #3F84D2;                    /* bez tekstu */
+  --color-decorative-yellow: #FFB34F;                  /* bez tekstu */
+  --color-decorative-rim: #338C5C;                     /* bez tekstu */
+
+  /* Fokus */
+  --color-focus-ring: #1E3D5C;                         /* [zespół: maskotka] */
+  --color-focus-ring-on-inverse: #ffffff;              /* [wywnioskowane] */
+  --focus-ring-width: 3px;                             /* [wykryte] */
+  --focus-ring-offset: 1px;                            /* [wykryte] */
+
+  /* Kroje */
+  --font-display: "Nunito", sans-serif;                /* [do weryfikacji] zamiennik */
+  --font-ui: "Nunito", sans-serif;                     /* [do weryfikacji] zamiennik */
+  --font-weight-regular: 400;                          /* [wykryte] */
+  --font-weight-bold: 700;                             /* [wykryte] */
+  --font-weight-display: 800;                          /* [do weryfikacji] */
+  --tracking-label: 0.8px;                             /* [wykryte] */
+  --tracking-display-xl: -0.02em;                      /* [wykryte] */
+  --tracking-app-label: 0.04em;                        /* [wykryte (CSS var)] */
+
+  /* Typografia: strony publiczne  [wykryte; interlinie po zmianie kroju: do weryfikacji] */
+  --type-display-xl-size: 36px;                        /* 48px od 768, 64px od 1080 */
+  --type-display-lg-size: 36px;                        /* 48px od 768 */
+  --type-display-xl: var(--font-weight-display) var(--type-display-xl-size)/normal var(--font-display);
+  --type-display-lg: var(--font-weight-display) var(--type-display-lg-size)/normal var(--font-display);
+  --type-title-hero: 700 32px/40px var(--font-ui);
+  --type-title-modal: 700 26px/40px var(--font-ui);
+  --type-title-section: 700 19px/24px var(--font-ui);
+  --type-title-footer: 700 19px/26.6px var(--font-ui);
+  --type-title-card: 700 17px/20.4px var(--font-ui);
+  --type-body: 400 17px/24px var(--font-ui);
+  --type-body-card: 400 17px/19.55px var(--font-ui);
+  --type-input: 400 20px/28px var(--font-ui);
+  --type-label-button: 700 15px/18px var(--font-ui);
+  --type-label-small: 700 15px/20px var(--font-ui);
+  --type-link-footer: 700 15px/22px var(--font-ui);
+  --type-caption-legal: 400 14px/20px var(--font-ui);  /* grubość 400: do weryfikacji */
+
+  /* Typografia: ekrany aplikacji  [wykryte (CSS var); użycie: wywnioskowane] */
+  --type-app-page-title-lg: 700 40px/44px var(--font-ui);
+  --type-app-page-title-sm: 700 32px/36px var(--font-ui);
+  --type-app-heading-lg: 700 28px/32px var(--font-ui);
+  --type-app-heading-md: 700 24px/32px var(--font-ui);
+  --type-app-heading-sm: 700 20px/24px var(--font-ui);
+  --type-app-heading-xs: 700 16px/20px var(--font-ui);
+  --type-app-body: 400 20px/28px var(--font-ui);
+  --type-app-body-spacious: 400 20px/32px var(--font-ui);
+  --type-app-caption: 400 16px/24px var(--font-ui);
+  --type-app-label-lg: 700 24px/24px var(--font-ui);   /* + uppercase, --tracking-app-label */
+  --type-app-label-md: 700 16px/16px var(--font-ui);   /* + uppercase, --tracking-app-label */
+
+  /* Odstępy: skala  [wykryte; skala 4px: wywnioskowane] */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+  --space-4xl: 48px;                                   /* [do weryfikacji] */
+  --space-5xl: 64px;
+  --space-6xl: 96px;
+  /* Odstępy lokalne  [wykryte] tylko w opisanych miejscach */
+  --space-gutter-phone: 15px;
+  --space-gutter: 15px;                                /* 40px od 768 */
+  --space-row-gap: 101px;
+  --space-field-x: 14px;
+  --space-list-footer: 14px;
+  --space-card-media-title: 22px;
+  --space-card-title-meta: 6px;
+  --space-heading-grid: 80px;
+  --space-stack-alt: 15px;                             /* [do weryfikacji] */
+
+  /* Rozmiary  [wykryte, chyba że opisano inaczej] */
+  --size-control-height: 50px;
+  --size-field-height: 48px;
+  --size-field-height-with-action: 60px;
+  --size-cta-width: 330px;
+  --size-header-height: 72px;
+  --size-strip-height: 80px;
+  --size-media-feature: min(345px, calc(100vw - 30px)); /* 452px od 768, 530px od 1080 */
+  --size-card-choice-min: 150px;
+  --size-card-choice: 200px;
+  --size-card-choice-max: 240px;
+  --size-card-choice-height: 217px;
+  --size-card-media-w: 88px;
+  --size-card-media-h: 68px;
+  --size-footer-column: 216px;                         /* 178px od 1080 */
+  --size-icon: 1em;                                    /* [wywnioskowane, do weryfikacji] */
+
+  /* Kontenery  [wykryte] */
+  --container-content: 988px;
+  --container-wide: 1090px;
+  --container-max: 1440px;
+  --container-statement: 583px;
+  --container-heading: 503px;
+  --container-text: 473px;
+  --container-hero-title: 480px;
+  --container-form: 375px;
+  --container-footer: 375px;                           /* 768px od 768, 988px od 1080 */
+
+  /* Zaokrąglenia i ramki  [wykryte] */
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --border-width: 2px;
+
+  /* Ruch  [wykryte; --motion-duration-fast: element do weryfikacji] */
+  --motion-state: 0ms;
+  --motion-duration-fast: 200ms;
+  --motion-duration-base: 300ms;
+  --motion-duration-slow: 400ms;
+  --motion-duration-slower: 500ms;
+  --motion-easing-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-easing-standard: ease;
+  --motion-easing-in-out: ease-in-out;
+}
+
+/* Breakpointy nie działają jako zmienne w @media, dlatego wpisuj je literalnie: 768px (bp.md), 1080px (bp.lg). */
+@media (min-width: 768px) {
+  :root {
+    --type-display-xl-size: 48px;
+    --type-display-lg-size: 48px;
+    --space-gutter: 40px;
+    --size-media-feature: 452px;
+    --container-footer: 768px;
+  }
+}
+@media (min-width: 1080px) {
+  :root {
+    --type-display-xl-size: 64px;
+    --size-media-feature: 530px;
+    --size-footer-column: 178px;
+    --container-footer: 988px;
+  }
+}
+
+/* Baza dokumentu  [wywnioskowane] */
+body {
+  margin: 0;
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
+  font: var(--type-body);
+}
+
+/* ---- z design/komponenty.md ---- */
+.display-xl { margin: 0; font: var(--type-display-xl); letter-spacing: var(--tracking-display-xl); color: var(--color-text-display); }
+.display-lg { margin: 0; font: var(--type-display-lg); color: var(--color-text-display); }
+.title-hero { margin: 0; font: var(--type-title-hero); color: var(--color-text-strong); }
+.text-body  { margin: 0; font: var(--type-body); color: var(--color-text-primary); max-width: var(--container-text); }
+
+/* ---- z design/komponenty.md ---- */
+.btn {
+  --btn-fill: var(--color-action-primary-fill);
+  --btn-border: var(--color-action-primary-border);
+  --btn-text: var(--color-action-primary-text);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: var(--size-control-height);
+  padding: 0 var(--space-md);
+  border: var(--border-width) solid var(--btn-border);
+  border-radius: var(--radius-md);
+  background: var(--btn-fill);
+  color: var(--btn-text);
+  font: var(--type-label-button);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;              /* gdy .btn jest linkiem <a> */
+  cursor: pointer;
+}
+.btn:hover  { filter: brightness(1.1); }
+.btn:active { filter: brightness(0.9); }
+.btn:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* obrysowane: secondary, neutral */
+.btn--secondary, .btn--neutral {
+  --btn-fill: var(--color-action-secondary-fill);
+  --btn-border: var(--color-action-secondary-border);
+}
+.btn--secondary { --btn-text: var(--color-action-secondary-text); }
+.btn--neutral   { --btn-text: var(--color-action-neutral-text); }
+.btn--secondary:hover, .btn--neutral:hover { filter: brightness(0.9); }
+.btn--secondary:active, .btn--neutral:active { --btn-fill: var(--color-surface-subtle); }
+
+.btn--app   { border-radius: var(--radius-lg); }   /* modal, widoki po zalogowaniu */
+.btn--cta   { width: var(--size-cta-width); max-width: 100%; }
+.btn--block { width: 100%; }
+.btn__icon  { width: var(--size-icon); height: var(--size-icon); flex: none; }
+
+/* nieaktywny: wywnioskowane, do weryfikacji */
+.btn:disabled, .btn[aria-disabled="true"] {
+  --btn-fill: var(--color-surface-disabled);
+  --btn-border: var(--color-surface-disabled);
+  --btn-text: var(--color-text-disabled);
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* ---- z design/komponenty.md ---- */
+.link { color: var(--color-text-link); font-weight: var(--font-weight-bold); text-decoration: none; }
+.link:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* ---- z design/komponenty.md ---- */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-card-choice-min), 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-heading-grid);    /* od nagłówka strony; pomiń, jeśli nad siatką jest inny element */
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 700px) { .choice-grid { gap: var(--space-xl); } }
+@media (min-width: 1080px) {
+  .choice-grid { grid-template-columns: repeat(4, var(--size-card-choice)); justify-content: center; }
+}
+
+/* ---- z design/komponenty.md ---- */
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: var(--size-card-choice-max);
+  min-height: var(--size-card-choice-height);
+  justify-self: center;
+  padding: var(--space-sm) var(--space-sm) var(--space-xl);
+  background: var(--color-surface-page);
+  border: var(--border-width) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  font: var(--type-body-card);
+  text-align: center;
+  cursor: pointer;
+}
+.choice-card:hover { filter: brightness(0.9); }
+.choice-card[aria-checked="true"],
+.choice-card[aria-pressed="true"],
+.choice-card[aria-expanded="true"] {
+  border-color: var(--color-border-focus);
+  background: var(--color-surface-info);
+}
+.choice-card:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
+.choice-card__media { width: var(--size-card-media-w); height: var(--size-card-media-h); margin: auto 0 var(--space-card-media-title); object-fit: contain; }
+.choice-card__title { font: var(--type-title-card); color: var(--color-text-strong); }
+.choice-card__meta  { margin-top: var(--space-card-title-meta); font: var(--type-body-card); }
+
+/* ---- z design/komponenty.md ---- */
+.form-stack { display: grid; gap: var(--space-sm); }
+.form-stack__submit { margin-top: calc(var(--space-xl) - var(--space-sm)); }   /* pole → przycisk = 24px */
+
+.field-group { display: grid; gap: var(--space-xs); }
+.field-label { font: var(--type-title-card); color: var(--color-text-strong); }
+.field-hint  { margin: 0; font: var(--type-body); color: var(--color-text-primary); }
+
+.field {
+  display: flex;
+  align-items: center;
+  min-height: var(--size-field-height);
+  background: var(--color-surface-subtle);
+  border: var(--border-width) solid var(--color-border-field);
+  border-radius: var(--radius-md);
+}
+.field:has(.field__input[aria-invalid="true"]) { border-color: var(--color-border-error); }
+.field:focus-within,
+.field:has(.field__input[aria-invalid="true"]):focus-within { border-color: var(--color-border-focus); }
+
+.field__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-xs) var(--space-field-x);
+  border: 0;
+  background: transparent;
+  font: var(--type-input);
+  color: var(--color-text-primary);
+}
+.field__input:focus { outline: none; }   /* fokus pokazuje ramka opakowania */
+
+.field-message { display: flex; gap: var(--space-xs); margin: 0; font: var(--type-body); color: var(--color-text-primary); }
+.field-message__icon { flex: none; width: var(--size-icon); height: var(--size-icon); margin-top: 0.2em; color: var(--color-status-error-edge); }
+
+/* ---- z design/komponenty.md ---- */
+.divider-or { display: flex; align-items: center; margin: var(--space-lg) 0; }
+.divider-or::before, .divider-or::after { content: ""; flex: 1; height: var(--border-width); background: var(--color-border-default); }
+.divider-or__label { padding: 0 var(--space-xs); font: var(--type-label-small); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-primary); }
+/* w .form-stack marginesy dodają się do gap (12px): razem ma wyjść 20px */
+.form-stack > .divider-or { margin: calc(var(--space-lg) - var(--space-sm)) 0; }
+
+/* ---- z design/komponenty.md ---- */
+.notice {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  background: var(--color-status-info-surface);
+  border: var(--border-width) solid var(--color-status-info-edge);
+  border-radius: var(--radius-lg);
+  font: var(--type-body);
+  color: var(--color-text-primary);
+}
+.notice__icon { flex: none; width: var(--size-icon); height: var(--size-icon); margin-top: 0.2em; color: var(--color-status-info-edge); }
+.notice--success { background: var(--color-status-success-surface); border-color: var(--color-status-success-edge); }
+.notice--success .notice__icon { color: var(--color-status-success-edge); }
+.notice--warning { background: var(--color-status-warning-surface); border-color: var(--color-status-warning-edge); }
+.notice--warning .notice__icon { color: var(--color-status-warning-edge); }
+.notice--error   { background: var(--color-status-error-surface);   border-color: var(--color-status-error-edge); }
+.notice--error .notice__icon { color: var(--color-status-error-edge); }
+
+/* ---- z design/komponenty.md ---- */
+.panel {
+  width: 100%;
+  max-width: var(--container-form);
+  padding: var(--space-xl);
+  background: var(--color-surface-page);
+  border: var(--border-width) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+.panel__row + .panel__row { margin-top: var(--space-xl); padding-top: var(--space-xl); border-top: var(--border-width) solid var(--color-border-default); }
+.panel__label { font: var(--type-label-small); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-primary); }
+.panel__title { font: var(--type-title-card); color: var(--color-text-strong); }
+
+/* ---- z design/komponenty.md ---- */
+.tabs { display: flex; gap: var(--space-xs); }
+.tabs .tab { flex: 1 1 auto; }               /* klasy: btn btn--neutral btn--app tab; szerokość wg etykiety, żeby nie łamać jej bez potrzeby */
+.tab[aria-selected="true"] {
+  --btn-fill: var(--color-surface-info);
+  --btn-border: var(--color-border-focus);
+  --btn-text: var(--color-text-strong);
+}
+
+/* ---- z design/komponenty.md ---- */
+.badge {
+  display: inline-block;
+  justify-self: start;               /* w rodzicu grid nie rozciąga się na całą szerokość */
+  width: fit-content;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-fill);
+  font: var(--type-label-small);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-text-on-accent);
+}
+
+/* ---- z design/komponenty.md ---- */
+.media-placeholder {
+  width: var(--size-media-feature);
+  aspect-ratio: 1;
+  background: var(--color-surface-subtle);
+  border: var(--border-width) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+/* ---- z design/layout.md ---- */
+.feature-section { overflow-x: clip; }                 /* przycina wystającą ilustrację */
+.feature-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xl);
+  padding: 0 var(--space-gutter-phone);
+  text-align: center;
+}
+.feature-row__text { width: 100%; max-width: var(--container-heading); }
+.feature-row__text p { max-width: var(--container-text); margin: var(--space-xl) auto 0; }
+.feature-row__media { flex: none; width: var(--size-media-feature); aspect-ratio: 1; }
+@media (min-width: 768px) { .feature-row { padding: 0; } }
+@media (min-width: 1080px) {
+  .feature-row { flex-direction: row; gap: var(--space-row-gap); width: var(--container-content); margin: 0 auto; text-align: start; }
+  .feature-row--reverse { flex-direction: row-reverse; }
+  .feature-row__text { flex: none; width: var(--container-heading); }
+  .feature-row__text p { margin-left: 0; }
+}
+
+
+/* ---- tylko strona przykładowa (układ demo, same tokeny) ---- */
+:root {
+  /* Zusik: tokeny maskotki (maskotka_kod/app/globals.css) = tokeny systemu */
+  --color-babelek-fill: var(--color-surface-brand);
+  --color-babelek-rim: var(--color-action-primary-border);
+  --color-babelek-ink: var(--color-text-strong);
+  --color-babelek-shine: var(--color-surface-page);
+  --color-babelek-shadow: #D1D1D1;   /* [zespół: maskotka] cień pod maskotką */
+  --demo-zusik-tiny: 48px;           /* rozmiary podglądu z dokumentacji maskotki (48 / 96 / 256 px) */
+  --demo-zusik-small: 96px;
+}
+.fill-babelek-fill { fill: var(--color-babelek-fill); }
+.fill-babelek-rim { fill: var(--color-babelek-rim); }
+.fill-babelek-ink { fill: var(--color-babelek-ink); }
+.fill-babelek-shine { fill: var(--color-babelek-shine); }
+.fill-babelek-shadow { fill: var(--color-babelek-shadow); }
+.stroke-babelek-rim { stroke: var(--color-babelek-rim); }
+.stroke-babelek-ink { stroke: var(--color-babelek-ink); }
+.stroke-babelek-shine { stroke: var(--color-babelek-shine); }
+.zusik svg { display: block; width: 100%; height: auto; }
+
+.container { width: 100%; max-width: var(--container-content); margin: 0 auto; padding: 0 var(--space-gutter); }
+@media (min-width: 1080px) { .container { padding: 0; } }
+.section { padding-block: var(--space-6xl); }
+.section__head { display: grid; justify-items: center; gap: var(--space-xl); text-align: center; }
+.section__head .text-body { margin: 0 auto; }
+
+.site-header { position: sticky; top: 0; z-index: 10; height: var(--size-header-height); background: var(--color-surface-page); border-bottom: var(--border-width) solid var(--color-border-default); }
+.site-header__inner { height: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-md); }
+.site-header .badge { display: none; }   /* komponenty §7: akcja w nagłówku tylko na desktopie */
+@media (min-width: 1080px) {
+  .site-header__inner { justify-content: space-between; }
+  .site-header .badge { display: inline-block; }
+}
+.site-name { display: flex; align-items: center; gap: var(--space-xs); font: var(--type-title-section); color: var(--color-text-strong); }
+.site-name .zusik { width: var(--demo-zusik-tiny); }
+
+.hero { display: grid; gap: var(--space-3xl); align-items: center; padding-block: var(--space-5xl) var(--space-6xl); }
+.hero__text { display: grid; justify-items: center; gap: var(--space-xl); text-align: center; }
+.hero__text .text-body { margin: 0 auto; }
+.stack { display: grid; gap: var(--space-sm); width: var(--size-cta-width); max-width: 100%; }
+.legal-note { margin: 0; max-width: var(--size-cta-width); font: var(--type-caption-legal); color: var(--color-text-primary); }
+.hero__preview { position: relative; justify-self: center; width: 100%; max-width: var(--container-form); }
+.hero__preview .panel { display: grid; gap: var(--space-xl); }
+.hero__preview .zusik { position: absolute; width: var(--demo-zusik-small); top: calc(var(--demo-zusik-small) * -0.6);   /* przykład: maskotka zachodzi na róg panelu */ right: 0; }
+@media (min-width: 1080px) {
+  .hero { grid-template-columns: var(--container-hero-title) 1fr; }
+  .hero__preview { justify-self: end; }
+}
+.plan-row { display: grid; gap: var(--space-xs); }
+
+.choice-card__media { display: block; background: var(--color-surface-subtle); border: var(--border-width) solid var(--color-border-default); border-radius: var(--radius-md); }
+.example { margin-top: var(--space-xl); }
+.example .panel { max-width: none; }
+.support { margin-top: var(--space-xl); text-align: center; }
+
+.feature-row__media .zusik { width: 100%; }
+
+.demo-grid { display: grid; gap: var(--space-3xl); }
+@media (min-width: 1080px) { .demo-grid { grid-template-columns: var(--container-form) 1fr; align-items: start; } }
+.notices { display: grid; gap: var(--space-sm); }
+
+.surface-info { background: var(--color-surface-info); }
+.stats { display: grid; gap: var(--space-xl); margin-top: var(--space-3xl); grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--size-footer-column)), 1fr)); }
+.stats .panel { max-width: none; display: grid; gap: var(--space-xs); }
+.statement { display: grid; justify-items: center; gap: var(--space-xl); text-align: center; }
+.statement .display-xl { max-width: var(--container-statement); }
+
+.cta-end { display: grid; justify-items: center; gap: var(--space-xl); text-align: center; }
+.cta-end .zusik { width: var(--demo-zusik-small); }
+
+.site-footer { background: var(--color-surface-brand); color: var(--color-text-on-brand); }
+.site-footer__grid { display: grid; gap: var(--space-lg); grid-template-columns: var(--size-footer-column); max-width: var(--container-footer); margin: 0 auto; padding: var(--space-6xl) var(--space-2xl) var(--space-5xl); }
+.site-footer__title { margin: 0 0 var(--space-list-footer); font: var(--type-title-footer); color: var(--color-text-on-brand); }
+.site-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-list-footer); }
+.site-footer a { font: var(--type-link-footer); color: var(--color-text-link); text-decoration: none; }
+@media (min-width: 768px) { .site-footer__grid { grid-template-columns: repeat(3, var(--size-footer-column)); padding: var(--space-5xl) var(--space-3xl); } }
+@media (min-width: 1080px) { .site-footer__grid { grid-template-columns: repeat(5, var(--size-footer-column)); gap: var(--space-xl); padding: var(--space-6xl) 0 var(--space-5xl); } }
+
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <span class="site-name"><span class="zusik"><svg viewBox="320 294 1408 1408" aria-hidden="true" focusable="false"><ellipse data-part="shadow" cx="1025.4" cy="1641.2" rx="337.7" ry="44" class="fill-babelek-shadow origin-center transform-fill"></ellipse><g data-part="stage"><g data-part="character" class="origin-bottom transform-fill"><path data-part="arm-left" d="M 439.8 990.0 C 446.1 1075.7 341.4 1119.0 341.4 1271.8 C 341.4 1317.4 400.7 1353.6 446.5 1313.8 C 483.8 1281.3 459.4 1245.9 488.1 1204.8 L 562.6 1098.2 Z" class="fill-babelek-rim"></path><path data-part="arm-right" d="M 1607.7 986.0 C 1599.3 1068.7 1706.7 1113.2 1706.7 1268.2 C 1706.7 1317.2 1639.6 1351.5 1596.2 1304.5 C 1564.8 1270.5 1591.3 1246.2 1554.1 1184.2 L 1487.2 1072.8 Z" class="fill-babelek-rim"></path><path data-part="body" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" class="fill-babelek-fill"></path><path data-part="rim" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" fill="none" stroke-width="64.5" class="stroke-babelek-rim"></path><g data-part="highlights"><path data-part="highlight" d="M 667.9 718.2 C 753.7 542.8 902 502.1 973.2 497.7" fill="none" stroke-width="76.8" stroke-linecap="round" class="stroke-babelek-shine"></path><ellipse data-part="dot-left" cx="615.7" cy="853.6" rx="37" ry="42.6" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-upper" cx="1427.6" cy="1105.7" rx="24.3" ry="24.3" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-lower" cx="1298.5" cy="1262.9" rx="32" ry="32" class="fill-babelek-shine"></ellipse></g><g data-part="face" transform="translate(1048 842.7)"><g data-part="eye-left"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="-159.9" cy="1.1" r="135.8" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="-121.1" cy="8.8" rx="76.3" ry="84.1" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="-170.3" cy="-43.6" r="25.8" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M -297.5 37.9 C -215.5 24.6 -133.5 52.8 -51.5 95.7 L -51.5 144.9 L -297.5 144.9 Z" class="fill-babelek-fill"></path></g><g data-part="eye-right"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="159.9" cy="-1.1" r="135.5" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="141.4" cy="5.7" rx="77.5" ry="83.7" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="93" cy="-47.5" r="25.7" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M 50.5 95.1 C 132.8 52.6 215.2 21.3 297.5 34.9 L 297.5 142.4 L 50.5 142.4 Z" class="fill-babelek-fill"></path></g><path data-part="mouth-open" d="M -70 166 C -30 198 30 198 70 166 C 62 300 -62 300 -70 166 Z" opacity="0" class="fill-babelek-ink origin-top transform-fill"></path><path data-part="mouth" d="M -78.6 156.6 C -29 195.5 36.5 194 78.6 156.6" fill="none" stroke-width="27.5" stroke-linecap="round" class="stroke-babelek-ink"></path></g></g></g></svg></span>Przewodnik Rodzica</span>
+    <span class="badge">Wersja demonstracyjna</span>
+  </div>
+</header>
+
+<main>
+  <section class="container hero">
+    <div class="hero__text">
+      <h1 class="title-hero">Co Ci przysługuje i co musisz załatwić?</h1>
+      <p class="text-body">Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać. Dowiesz się, co wypełnić, gdzie złożyć dokumenty i do kiedy.</p>
+      <div class="stack">
+        <a class="btn btn--block" href="#">Zaloguj się</a>
+        <a class="btn btn--secondary btn--block" href="#">Zarejestruj się</a>
+      </div>
+      <p class="legal-note">Wersja demonstracyjna. Logowanie przez mObywatel i pobranie danych z ZUS są symulowane.</p>
+    </div>
+
+    <div class="hero__preview">
+      <div class="zusik"><svg viewBox="320 294 1408 1408" role="img" aria-label="Zusik"><ellipse data-part="shadow" cx="1025.4" cy="1641.2" rx="337.7" ry="44" class="fill-babelek-shadow origin-center transform-fill"></ellipse><g data-part="stage"><g data-part="character" class="origin-bottom transform-fill"><path data-part="arm-left" d="M 439.8 990.0 C 446.1 1075.7 341.4 1119.0 341.4 1271.8 C 341.4 1317.4 400.7 1353.6 446.5 1313.8 C 483.8 1281.3 459.4 1245.9 488.1 1204.8 L 562.6 1098.2 Z" class="fill-babelek-rim"></path><path data-part="arm-right" d="M 1607.7 986.0 C 1599.3 1068.7 1706.7 1113.2 1706.7 1268.2 C 1706.7 1317.2 1639.6 1351.5 1596.2 1304.5 C 1564.8 1270.5 1591.3 1246.2 1554.1 1184.2 L 1487.2 1072.8 Z" class="fill-babelek-rim"></path><path data-part="body" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" class="fill-babelek-fill"></path><path data-part="rim" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" fill="none" stroke-width="64.5" class="stroke-babelek-rim"></path><g data-part="highlights"><path data-part="highlight" d="M 667.9 718.2 C 753.7 542.8 902 502.1 973.2 497.7" fill="none" stroke-width="76.8" stroke-linecap="round" class="stroke-babelek-shine"></path><ellipse data-part="dot-left" cx="615.7" cy="853.6" rx="37" ry="42.6" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-upper" cx="1427.6" cy="1105.7" rx="24.3" ry="24.3" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-lower" cx="1298.5" cy="1262.9" rx="32" ry="32" class="fill-babelek-shine"></ellipse></g><g data-part="face" transform="translate(1048 842.7)"><g data-part="eye-left"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="-159.9" cy="1.1" r="135.8" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="-121.1" cy="8.8" rx="76.3" ry="84.1" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="-170.3" cy="-43.6" r="25.8" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M -297.5 37.9 C -215.5 24.6 -133.5 52.8 -51.5 95.7 L -51.5 144.9 L -297.5 144.9 Z" class="fill-babelek-fill"></path></g><g data-part="eye-right"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="159.9" cy="-1.1" r="135.5" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="141.4" cy="5.7" rx="77.5" ry="83.7" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="93" cy="-47.5" r="25.7" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M 50.5 95.1 C 132.8 52.6 215.2 21.3 297.5 34.9 L 297.5 142.4 L 50.5 142.4 Z" class="fill-babelek-fill"></path></g><path data-part="mouth-open" d="M -70 166 C -30 198 30 198 70 166 C 62 300 -62 300 -70 166 Z" opacity="0" class="fill-babelek-ink origin-top transform-fill"></path><path data-part="mouth" d="M -78.6 156.6 C -29 195.5 36.5 194 78.6 156.6" fill="none" stroke-width="27.5" stroke-linecap="round" class="stroke-babelek-ink"></path></g></g></g></svg></div>
+      <div class="panel">
+        <span class="badge">Przykład</span>
+        <div class="tabs" role="tablist" aria-label="Przykładowy przypadek">
+          <button class="btn btn--neutral btn--app tab" role="tab" id="tab-sytuacja" aria-selected="false" aria-controls="panel-sytuacja" tabindex="-1">Moja sytuacja</button>
+          <button class="btn btn--neutral btn--app tab" role="tab" id="tab-plan" aria-selected="true" aria-controls="panel-plan">Mój plan</button>
+        </div>
+        <div role="tabpanel" id="panel-sytuacja" aria-labelledby="tab-sytuacja" hidden>
+          <p class="text-body">Urodziła nam się córka. Pracuję na etacie i chcę wziąć urlop ojcowski.</p>
+        </div>
+        <div role="tabpanel" id="panel-plan" aria-labelledby="tab-plan">
+          <p class="panel__label">Po narodzinach dziecka</p>
+          <div class="panel__row plan-row">
+            <span class="panel__title">Do załatwienia</span>
+            <span class="text-body">Zgłoś urodzenie córki. Online lub w USC, w ciągu 21 dni od wystawienia karty urodzenia.</span>
+          </div>
+          <div class="panel__row plan-row">
+            <span class="panel__title">Jeśli chcesz wziąć urlop ojcowski</span>
+            <span class="text-body">Złóż wniosek u pracodawcy co najmniej 7 dni przed rozpoczęciem urlopu.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="display-lg">Która sytuacja najlepiej Cię opisuje?</h2>
+        <p class="text-body">Wybierz sytuację, żeby zobaczyć przykładowy plan.</p>
+      </div>
+      <ul class="choice-grid" aria-label="Sytuacje rodzinne">
+      <li style="display:contents"><button class="choice-card" type="button" aria-expanded="true" aria-controls="example" data-example="„Rozważam zmianę pracy. Co warto sprawdzić wcześniej?” Przykładowy plan wskazuje, gdzie sprawdzić ciągłość ubezpieczenia i jakie informacje przygotować do oszacowania zasiłku.">
+        <span class="choice-card__media" aria-hidden="true"></span>
+        <span class="choice-card__title">Planuję rodzicielstwo</span>
+      </button></li>
+      <li style="display:contents"><button class="choice-card" type="button" aria-expanded="false" aria-controls="example" data-example="„Chcę przygotować się do porodu.” Przykładowa lista ma dwie części: przed porodem sprawy do omówienia z pracodawcą, po narodzinach zgłoszenie urodzenia i dokumenty do wybranego urlopu.">
+        <span class="choice-card__media" aria-hidden="true"></span>
+        <span class="choice-card__title">Spodziewam się dziecka</span>
+      </button></li>
+      <li style="display:contents"><button class="choice-card" type="button" aria-expanded="false" aria-controls="example" data-example="„Chcemy podzielić się opieką.” Przykładowa oś czasu pokazuje okresy opieki dwojga rodziców i moment złożenia wniosku u pracodawcy.">
+        <span class="choice-card__media" aria-hidden="true"></span>
+        <span class="choice-card__title">Wychowuję dziecko</span>
+      </button></li>
+      <li style="display:contents"><button class="choice-card" type="button" aria-expanded="false" aria-controls="example" data-example="„Dziecko zamieszka z nami przed zakończeniem sprawy w sądzie.” Przykład pokazuje osobno datę przyjęcia dziecka i etap postępowania.">
+        <span class="choice-card__media" aria-hidden="true"></span>
+        <span class="choice-card__title">Przygotowuję się do adopcji</span>
+      </button></li>
+      <li style="display:contents"><button class="choice-card" type="button" aria-expanded="false" aria-controls="example" data-example="„Przyjmujemy dziecko do niezawodowej rodziny zastępczej.” Przykładowy plan zaczyna się od dokumentu potwierdzającego przyjęcie dziecka na wychowanie.">
+        <span class="choice-card__media" aria-hidden="true"></span>
+        <span class="choice-card__title">Rodzina zastępcza</span>
+      </button></li>
+      </ul>
+      <div class="example" id="example">
+        <div class="panel"><p class="text-body" id="example-text">„Rozważam zmianę pracy. Co warto sprawdzić wcześniej?” Przykładowy plan wskazuje, gdzie sprawdzić ciągłość ubezpieczenia i jakie informacje przygotować do oszacowania zasiłku.</p></div>
+      </div>
+      <p class="support"><a class="link" href="#">Potrzebuję wsparcia w trudnej sytuacji</a></p>
+    </div>
+  </section>
+
+  <section class="feature-section section">
+    <div class="feature-row feature-row--reverse">
+      <div class="feature-row__text">
+        <h2 class="display-lg">Co najtrudniej ustalić samodzielnie?</h2>
+        <p class="text-body">W planie zobaczysz, co trzeba załatwić, a co zależy od tego, czy chcesz skorzystać z urlopu lub zasiłku. <a class="link" href="#">Zobacz, jak agent wypełnia wniosek</a></p>
+      </div>
+      <div class="feature-row__media zusik"><svg viewBox="320 294 1408 1408" aria-hidden="true" focusable="false"><ellipse data-part="shadow" cx="1025.4" cy="1641.2" rx="337.7" ry="44" class="fill-babelek-shadow origin-center transform-fill"></ellipse><g data-part="stage"><g data-part="character" class="origin-bottom transform-fill"><path data-part="arm-left" d="M 439.8 990.0 C 446.1 1075.7 341.4 1119.0 341.4 1271.8 C 341.4 1317.4 400.7 1353.6 446.5 1313.8 C 483.8 1281.3 459.4 1245.9 488.1 1204.8 L 562.6 1098.2 Z" class="fill-babelek-rim"></path><path data-part="arm-right" d="M 1607.7 986.0 C 1599.3 1068.7 1706.7 1113.2 1706.7 1268.2 C 1706.7 1317.2 1639.6 1351.5 1596.2 1304.5 C 1564.8 1270.5 1591.3 1246.2 1554.1 1184.2 L 1487.2 1072.8 Z" class="fill-babelek-rim"></path><path data-part="body" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" class="fill-babelek-fill"></path><path data-part="rim" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" fill="none" stroke-width="64.5" class="stroke-babelek-rim"></path><g data-part="highlights"><path data-part="highlight" d="M 667.9 718.2 C 753.7 542.8 902 502.1 973.2 497.7" fill="none" stroke-width="76.8" stroke-linecap="round" class="stroke-babelek-shine"></path><ellipse data-part="dot-left" cx="615.7" cy="853.6" rx="37" ry="42.6" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-upper" cx="1427.6" cy="1105.7" rx="24.3" ry="24.3" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-lower" cx="1298.5" cy="1262.9" rx="32" ry="32" class="fill-babelek-shine"></ellipse></g><g data-part="face" transform="translate(1048 842.7)"><g data-part="eye-left"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="-159.9" cy="1.1" r="135.8" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="-121.1" cy="8.8" rx="76.3" ry="84.1" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="-170.3" cy="-43.6" r="25.8" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M -297.5 37.9 C -215.5 24.6 -133.5 52.8 -51.5 95.7 L -51.5 144.9 L -297.5 144.9 Z" class="fill-babelek-fill"></path></g><g data-part="eye-right"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="159.9" cy="-1.1" r="135.5" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="141.4" cy="5.7" rx="77.5" ry="83.7" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="93" cy="-47.5" r="25.7" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M 50.5 95.1 C 132.8 52.6 215.2 21.3 297.5 34.9 L 297.5 142.4 L 50.5 142.4 Z" class="fill-babelek-fill"></path></g><path data-part="mouth-open" d="M -70 166 C -30 198 30 198 70 166 C 62 300 -62 300 -70 166 Z" opacity="0" class="fill-babelek-ink origin-top transform-fill"></path><path data-part="mouth" d="M -78.6 156.6 C -29 195.5 36.5 194 78.6 156.6" fill="none" stroke-width="27.5" stroke-linecap="round" class="stroke-babelek-ink"></path></g></g></g></svg></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container demo-grid">
+      <form class="form-stack" onsubmit="return false" aria-labelledby="form-title">
+        <h2 class="title-hero" id="form-title">Przykładowy formularz</h2>
+        <div class="field-group">
+          <label class="field-label" for="imie">Imię dziecka</label>
+          <div class="field"><input class="field__input" id="imie" value="Zosia"></div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="data">Data urodzenia</label>
+          <p class="field-hint" id="data-hint">Na przykład 18.06.2026</p>
+          <div class="field"><input class="field__input" id="data" value="31.02.2026" aria-invalid="true" aria-describedby="data-hint data-error"></div>
+          <p class="field-message" id="data-error"><svg class="field-message__icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 4v5M8 11.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Taka data nie istnieje. Sprawdź dzień i miesiąc.</p>
+        </div>
+        <button class="btn btn--block form-stack__submit" type="submit">Dalej</button>
+        <div class="divider-or"><span class="divider-or__label">lub</span></div>
+        <button class="btn btn--secondary btn--block" type="button">Wpisz dane później</button>
+      </form>
+      <div class="notices">
+        <h2 class="title-hero">Komunikaty</h2>
+        <p class="notice notice--success">Zapisaliśmy datę początku urlopu.</p>
+        <p class="notice">Termin liczymy wstecz od początku urlopu.</p>
+        <p class="notice notice--warning">Do złożenia wniosku zostały 3 dni.</p>
+        <p class="notice notice--error">Nie udało się wczytać danych. Spróbuj ponownie.</p>
+        <p><button class="btn btn--neutral" type="button">Przycisk neutralny</button> <button class="btn" type="button" disabled>Nieaktywny</button></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section surface-info">
+    <div class="container">
+      <div class="statement">
+        <h2 class="display-lg">Jak możecie podzielić się opieką?</h2>
+        <p class="display-xl">340,3 tys. osób</p>
+        <p class="text-body">Tyle osób w Polsce pobierało w 2025 r. zasiłek macierzyński za okres urlopu rodzicielskiego. <a class="link" href="#">Źródło</a></p>
+      </div>
+      <div class="stats">
+        <div class="panel"><span class="panel__title">Do 41 tygodni</span><span class="text-body">Tyle urlopu rodzicielskiego mają standardowo do dyspozycji łącznie uprawnieni rodzice. <a class="link" href="#">Źródło</a></span></div>
+        <div class="panel"><span class="panel__title">Po 9 tygodni</span><span class="text-body">Z tej puli każde z uprawnionych rodziców ma własną część. <a class="link" href="#">Źródło</a></span></div>
+        <div class="panel"><span class="panel__title">Do 5 części</span><span class="text-body">Na tyle okresów możecie rozłożyć urlop rodzicielski. <a class="link" href="#">Źródło</a></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container cta-end">
+      <div class="zusik"><svg viewBox="320 294 1408 1408" aria-hidden="true" focusable="false"><ellipse data-part="shadow" cx="1025.4" cy="1641.2" rx="337.7" ry="44" class="fill-babelek-shadow origin-center transform-fill"></ellipse><g data-part="stage"><g data-part="character" class="origin-bottom transform-fill"><path data-part="arm-left" d="M 439.8 990.0 C 446.1 1075.7 341.4 1119.0 341.4 1271.8 C 341.4 1317.4 400.7 1353.6 446.5 1313.8 C 483.8 1281.3 459.4 1245.9 488.1 1204.8 L 562.6 1098.2 Z" class="fill-babelek-rim"></path><path data-part="arm-right" d="M 1607.7 986.0 C 1599.3 1068.7 1706.7 1113.2 1706.7 1268.2 C 1706.7 1317.2 1639.6 1351.5 1596.2 1304.5 C 1564.8 1270.5 1591.3 1246.2 1554.1 1184.2 L 1487.2 1072.8 Z" class="fill-babelek-rim"></path><path data-part="body" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" class="fill-babelek-fill"></path><path data-part="rim" d="M 1009.4 367.5 C 1261.9 363.2 1475.4 581.7 1544.2 791.9 C 1634.5 1068.0 1515.7 1239.9 1396.1 1342.3 C 1182.8 1524.9 868.2 1548.5 672.8 1412.2 C 480.1 1277.7 427.4 1004.2 507.8 770.0 C 578.4 564.3 764.3 371.6 1009.4 367.5 Z" fill="none" stroke-width="64.5" class="stroke-babelek-rim"></path><g data-part="highlights"><path data-part="highlight" d="M 667.9 718.2 C 753.7 542.8 902 502.1 973.2 497.7" fill="none" stroke-width="76.8" stroke-linecap="round" class="stroke-babelek-shine"></path><ellipse data-part="dot-left" cx="615.7" cy="853.6" rx="37" ry="42.6" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-upper" cx="1427.6" cy="1105.7" rx="24.3" ry="24.3" class="fill-babelek-shine"></ellipse><ellipse data-part="dot-right-lower" cx="1298.5" cy="1262.9" rx="32" ry="32" class="fill-babelek-shine"></ellipse></g><g data-part="face" transform="translate(1048 842.7)"><g data-part="eye-left"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="-159.9" cy="1.1" r="135.8" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="-121.1" cy="8.8" rx="76.3" ry="84.1" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="-170.3" cy="-43.6" r="25.8" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M -297.5 37.9 C -215.5 24.6 -133.5 52.8 -51.5 95.7 L -51.5 144.9 L -297.5 144.9 Z" class="fill-babelek-fill"></path></g><g data-part="eye-right"><g data-part="eyeball" class="origin-[50%_66%] transform-fill"><circle data-part="eye-white" cx="159.9" cy="-1.1" r="135.5" class="fill-babelek-shine"></circle><ellipse data-part="pupil" cx="141.4" cy="5.7" rx="77.5" ry="83.7" class="fill-babelek-ink"></ellipse><circle data-part="catchlight" cx="93" cy="-47.5" r="25.7" class="fill-babelek-shine"></circle></g><path data-part="lid" d="M 50.5 95.1 C 132.8 52.6 215.2 21.3 297.5 34.9 L 297.5 142.4 L 50.5 142.4 Z" class="fill-babelek-fill"></path></g><path data-part="mouth-open" d="M -70 166 C -30 198 30 198 70 166 C 62 300 -62 300 -70 166 Z" opacity="0" class="fill-babelek-ink origin-top transform-fill"></path><path data-part="mouth" d="M -78.6 156.6 C -29 195.5 36.5 194 78.6 156.6" fill="none" stroke-width="27.5" stroke-linecap="round" class="stroke-babelek-ink"></path></g></g></g></svg></div>
+      <h2 class="display-xl">[hasło do ustalenia]</h2>
+      <a class="btn btn--cta" href="#">Sprawdź moją sytuację</a>
+      <p class="legal-note">Wersja demonstracyjna. Logowanie przez mObywatel i pobranie danych z ZUS są symulowane.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__grid">
+    <div><p class="site-footer__title">Przewodnik Rodzica</p></div>
+    <div>
+      <p class="site-footer__title">Oficjalne informacje</p>
+      <ul><li><a href="#">ZUS o zasiłku macierzyńskim</a></li><li><a href="#">Ministerstwo o urlopie rodzicielskim</a></li><li><a href="#">PIP o prawach rodziców</a></li></ul>
+    </div>
+    <div>
+      <p class="site-footer__title">Pomoc w trudnej sytuacji</p>
+      <ul><li><a href="#">Informacje i wsparcie</a></li></ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Zakładki: wzorzec WAI-ARIA Tabs (klik, strzałki, Home, End). Bez animacji.
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const select = (tab) => {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    tab.focus();
+  };
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(tab));
+    tab.addEventListener('keydown', (e) => {
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (next === undefined) return;
+      e.preventDefault();
+      select(tabs[(next + tabs.length) % tabs.length]);
+    });
+  });
+  // Karty sytuacji: rozwijają przykład pod siatką; ponowny klik zwija.
+  const cards = [...document.querySelectorAll('.choice-card')];
+  const example = document.getElementById('example');
+  cards.forEach((card) => card.addEventListener('click', () => {
+    const open = card.getAttribute('aria-expanded') !== 'true';
+    cards.forEach((c) => c.setAttribute('aria-expanded', 'false'));
+    card.setAttribute('aria-expanded', String(open));
+    example.hidden = !open;
+    if (open) document.getElementById('example-text').textContent = card.dataset.example;
+  }));
+</script>
+</body>
+</html>

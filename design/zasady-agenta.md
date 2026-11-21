@@ -16,13 +16,13 @@ Status tego pliku: reguły pracy to `wywnioskowane` (zasady projektu). Każda li
 2. **Brak wartości:** zapytaj zespół. Jeśli nie możesz czekać, użyj najbliższego istniejącego tokenu i oznacz w kodzie `do weryfikacji: brak tokenu dla …`. Ta sama procedura obowiązuje w `tokeny.md` i `CLAUDE.md`.
 3. **WCAG 2.1 AA:**
    - tekst tylko w kolorach z [tokeny.md §1.3](tokeny.md#13-tekst);
-   - nigdy biały na zielonym ani jasnoniebieskim;
+   - żadnego tekstu na zieleni ZUS ani na niebieskim ZUS; biały tekst tylko na granacie;
    - `--color-text-muted` tylko dla tekstu dużego;
    - widoczna etykieta nad każdym polem, bez placeholderów;
    - pierścień fokusu na każdym elemencie interaktywnym.
 4. **Jedna akcja główna na sekcję.** W oknie widać naraz najwyżej jeden przycisk `primary` ([layout.md §4](layout.md#4-gęstość-treści-i-jedna-akcja-główna)).
-5. **Każdy element klikalny ma krawędź** i stany z [komponenty.md](komponenty.md). Stany zmieniają się bez `transition`.
-6. **Głębię daje krawędź.** Bez rozmytych cieni, gradientów i `backdrop-filter`.
+5. **Każdy przycisk, karta, panel i komunikat ma ramkę 2 px na całym obwodzie** i stany z [komponenty.md](komponenty.md). Stany zmieniają się bez `transition`.
+6. **Płasko.** Bez cieni, grubszej dolnej ramki, gradientów i `backdrop-filter`.
 7. **Animacje:** tylko te z [motion.md](motion.md). Brak opisu oznacza stan końcowy bez ruchu plus znacznik TODO w składni danego języka:
    - JS/TS: `// TODO(motion): <slot>`;
    - CSS: `/* TODO(motion): <slot> */`;
@@ -60,13 +60,13 @@ Status tego pliku: reguły pracy to `wywnioskowane` (zasady projektu). Każda li
 - [ ] W kodzie komponentów nie ma żadnego hexa ani rozmiaru spoza zmiennych `--…`, poza wyjątkami z reguły 1.
 - [ ] W arkuszu jest reset `box-sizing: border-box`.
 - [ ] Na sekcję przypada jeden przycisk `primary`.
-- [ ] Tekst na zielonym ma `--color-text-on-brand`, a na niebieskim wypełnieniu `--color-text-on-info-fill`.
+- [ ] Tekst na mięcie ma `--color-text-on-brand`, na żółtym `--color-text-on-accent`; na zieleni i niebieskim ZUS nie ma tekstu.
 - [ ] Akapity mają `--color-text-primary`, nie `#777`.
-- [ ] Linki mają `.link` (700); na tle `surface.info` `--color-text-link-on-info`.
+- [ ] Linki mają `.link` (`--color-text-link`, 700) na każdym tle.
 - [ ] Każde pole ma widoczną etykietę, nie ma placeholderów, błąd ma `aria-invalid` i `aria-describedby`.
 - [ ] Wszystkie elementy interaktywne mają widoczny fokus, także pole z błędem.
 - [ ] Stany hover i active nie mają `transition`.
-- [ ] Brak `box-shadow` z rozmyciem, `linear-gradient` i `backdrop-filter`.
+- [ ] Brak `box-shadow`, grubszej dolnej ramki, `linear-gradient` i `backdrop-filter`.
 - [ ] Działa `prefers-reduced-motion: reduce`.
 - [ ] Ekran sprawdzony na 375, 768, 1079 i 1280 px, bez przewijania w poziomie.
 - [ ] Brak treści, logo i ilustracji ze strony źródłowej.

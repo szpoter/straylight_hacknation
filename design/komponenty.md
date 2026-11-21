@@ -11,10 +11,11 @@ Statusy objaśnia [README](README.md#statusy).
 
 Zasady wspólne:
 
+- **Płasko.** Każdy przycisk, karta, panel, zakładka i komunikat ma ramkę `--border-width` na całym obwodzie. Nie ma cieni ani grubszej dolnej krawędzi (uzgodnione 2026-11-21).
 - **Stany zmieniają się natychmiast** (`--motion-state`, bez `transition`). Status: wykryte.
-- **Fokus z klawiatury:** `outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset);`. Na ciemnym pasie używaj `--color-focus-ring-on-inverse`. Status: szerokość i odsunięcie wykryte; kolor i widoczność wywnioskowane, bo źródło nie pokazuje fokusu.
-- **Komponent spoza tego pliku** składasz z tokenów i istniejących wzorców: ramka 2 px, krawędź, `--radius-lg` dla kontenerów, natychmiastowe stany. W kodzie oznacz go `/* nowy komponent: do weryfikacji */`. Gotowe złożenia dla zakładek, panelu i etykiety są w [§11](#11-komponenty-złożone-wywnioskowane).
-- **Zachowanie (zakładki, modal, rozwijanie) może używać JS.** Stack nie jest wybrany, więc receptury są w czystym CSS i HTML.
+- **Fokus z klawiatury:** `outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset);`. Na ciemnym pasie używaj `--color-focus-ring-on-inverse`. Status: szerokość i odsunięcie wykryte; kolor i widoczność wywnioskowane.
+- **Komponent spoza tego pliku** składasz z tokenów i istniejących wzorców: ramka 2 px, `--radius-lg` dla kontenerów, natychmiastowe stany. W kodzie oznacz go `/* nowy komponent: do weryfikacji */`. Gotowe złożenia są w [§11](#11-komponenty-złożone-wywnioskowane).
+- **Zachowanie (zakładki, modal, rozwijanie) może używać JS.** Receptury są w czystym CSS i HTML.
 
 ---
 
@@ -25,14 +26,14 @@ Zasady wspólne:
 ```css
 .display-xl { margin: 0; font: var(--type-display-xl); letter-spacing: var(--tracking-display-xl); color: var(--color-text-display); }
 .display-lg { margin: 0; font: var(--type-display-lg); color: var(--color-text-display); }
-.title-hero { margin: 0; font: var(--type-title-hero); color: var(--color-text-primary); }
+.title-hero { margin: 0; font: var(--type-title-hero); color: var(--color-text-strong); }
 .text-body  { margin: 0; font: var(--type-body); color: var(--color-text-primary); max-width: var(--container-text); }
 ```
 
 Status:
 
 - rozmiary i kroje: wykryte;
-- kolory: wywnioskowane AA (źródło: nagłówki display zielone, akapity `#777777`);
+- kolory: zespół (granat maskotki) i wykryte (szary akapitu);
 - `max-width` akapitu: wykryte.
 
 ### 0.2 Ikony
@@ -42,56 +43,52 @@ Status:
 | Styl | konturowe, obrys 2 px, zaokrąglone zakończenia | wykryte (tylko 4 ikony, do weryfikacji) |
 | Siatka rysunku | 16 px (`viewBox="0 0 16 16"`) | wykryte (mała próbka) |
 | Kolor | `currentColor` | wykryte |
-| Rozmiar renderowany | `--size-icon` (1em, skaluje się z tekstem) | wywnioskowane, do weryfikacji |
+| Rozmiar renderowany | `--size-icon` (1em) | wywnioskowane, do weryfikacji |
 | Zestaw | nie wykryto biblioteki; wybór zestawu należy do zespołu | — |
 
-Ikona obok tekstu ma `aria-hidden="true"`. Ikona bez tekstu (np. zamknięcie) ma etykietę `aria-label`. Status: wywnioskowane.
+Ikona obok tekstu ma `aria-hidden="true"`. Ikona bez tekstu (np. zamknięcie) ma `aria-label`. Status: wywnioskowane.
 
 ---
 
 ## 1. Przyciski
 
-### 1.1 Anatomia (wykryte)
+### 1.1 Anatomia
 
-Element ma **przezroczystą dolną ramkę 4 px**, która rezerwuje miejsce na krawędź. Kolor i krawędź siedzą na `::before` pod etykietą, więc wciśnięcie przesuwa element w dół bez zmiany układu wokół.
-
-```
-┌──────────────────────────────┐  ← ::before: wypełnienie, radius
-│           ETYKIETA           │     wysokość = 50 − 4 = 46 px
-└──────────────────────────────┘
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ← box-shadow 0 4px 0 <edge> wypełnia dolną ramkę
-```
+Płaski prostokąt z zaokrągleniem: wypełnienie i ramka 2 px na całym obwodzie. Przycisk główny ma budowę Zusika: miętowe wypełnienie w zielonej obwódce i granatową etykietę.
 
 | Cecha | Wartość | Status |
 | --- | --- | --- |
 | Wysokość | `--size-control-height` (50px) | wykryte |
 | Szerokość | `--size-cta-width` w hero i sekcjach; 100% kolumny w formularzu i modalu; dopasowana do treści w nagłówku | wykryte |
 | Wewnętrzny odstęp w poziomie | `--space-md` | wykryte |
+| Ramka | `--border-width` na całym obwodzie | uzgodnione |
 | Etykieta | `--type-label-button`, wersaliki, `--tracking-label` | wykryte |
 | Zaokrąglenie | `--radius-md` na stronach publicznych; `--radius-lg` (`.btn--app`) w modalach i po zalogowaniu | wykryte (użycie); wywnioskowane (zasada) |
 | Odstęp między przyciskami w stosie | `--space-sm` | wykryte |
-| Ikona przed etykietą | `--size-icon`, odstęp `--space-xs` | wykryte (obecność); rozmiar i odstęp: wywnioskowane, do weryfikacji |
+| Ikona przed etykietą | `--size-icon`, odstęp `--space-xs` | wywnioskowane, do weryfikacji |
 
 ### 1.2 Warianty
 
-| Wariant | Wypełnienie | Ramka | Krawędź | Etykieta | Status |
-| --- | --- | --- | --- | --- | --- |
-| `primary` | `--color-action-primary-fill` | — | `0 4px 0` `--color-action-primary-edge` | `--color-action-primary-text` | wykryte; etykieta: wywnioskowane AA |
-| `secondary` | `--color-action-secondary-fill` | 2px `--color-action-secondary-border` | `0 2px 0` `--color-action-secondary-edge` | `--color-action-secondary-text` | wykryte; etykieta: wywnioskowane AA |
-| `neutral` | jak `secondary` | jak `secondary` | jak `secondary` | `--color-action-neutral-text` | wykryte |
-| `info` | `--color-action-info-fill` | — | `0 4px 0` `--color-action-info-edge` | `--color-action-info-text` | wykryte; etykieta: wywnioskowane AA, do weryfikacji |
-| `on-inverse` | biały, na ciemnym pasie | — | — | ciemna | wykryte na zrzucie; wartości do weryfikacji, nie używaj bez weryfikacji |
+| Wariant | Wypełnienie | Ramka | Etykieta | Status |
+| --- | --- | --- | --- | --- |
+| `primary` | `--color-action-primary-fill` (mięta) | `--color-action-primary-border` (obwódka Zusika) | `--color-action-primary-text` (granat, 7.05:1) | zespół |
+| `secondary` | `--color-action-secondary-fill` | `--color-action-secondary-border` | `--color-action-secondary-text` (granat ZUS) | zespół |
+| `neutral` | jak `secondary` | jak `secondary` | `--color-action-neutral-text` | wykryte |
 
-Wariantu destrukcyjnego (czerwonego) nie wykryto. Ani czerwony tekst, ani biały na czerwonym nie spełnia AA. Dla akcji nieodwracalnej użyj `neutral` plus potwierdzenie i zapytaj zespół.
+Usunięte warianty:
+
+- **`info`:** na niebieskim ZUS żaden tekst nie spełnia AA.
+- **`on-inverse`:** do zaprojektowania. Na ciemnym pasie użyj na razie `primary`: mięta na granacie ma 7.05:1.
+- **Destrukcyjny:** nie wykryto. Dla akcji nieodwracalnej użyj `neutral` plus potwierdzenie i zapytaj zespół.
 
 ### 1.3 Stany
 
-| Stan | `primary` / `info` | `secondary` / `neutral` | Status |
+| Stan | `primary` | `secondary` / `neutral` | Status |
 | --- | --- | --- | --- |
 | hover | `filter: brightness(1.1)` | `filter: brightness(0.9)` | wykryte |
-| active | `translateY(4px)`, krawędź `none` | `translateY(2px)`, krawędź `none` | wykryte |
+| active | `filter: brightness(0.9)` | tło `--color-surface-subtle` + `filter: brightness(0.9)` | wywnioskowane, do weryfikacji (źródło przesuwało przycisk, ale zrezygnowaliśmy z krawędzi) |
 | focus-visible | pierścień fokusu | pierścień fokusu | wywnioskowane |
-| disabled | wypełnienie `--color-surface-disabled`, etykieta `--color-text-disabled`, bez krawędzi, bez hover i active | jak obok | wywnioskowane, do weryfikacji |
+| disabled | wypełnienie i ramka `--color-surface-disabled`, etykieta `--color-text-disabled`, bez hover i active | to samo | wywnioskowane, do weryfikacji |
 | loading | nie wykryto, zapytaj zespół | — | — |
 
 ### 1.4 Receptura CSS
@@ -99,22 +96,18 @@ Wariantu destrukcyjnego (czerwonego) nie wykryto. Ani czerwony tekst, ani biały
 ```css
 .btn {
   --btn-fill: var(--color-action-primary-fill);
-  --btn-edge: var(--color-action-primary-edge);
+  --btn-border: var(--color-action-primary-border);
   --btn-text: var(--color-action-primary-text);
-  --btn-press: var(--edge-height);
 
-  position: relative;
-  isolation: isolate;                 /* ::before z z-index:-1 zostaje nad tłem rodzica */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
   height: var(--size-control-height);
   padding: 0 var(--space-md);
-  border: 0 solid transparent;
-  border-bottom-width: var(--edge-height);   /* rezerwa na krawędź */
+  border: var(--border-width) solid var(--btn-border);
   border-radius: var(--radius-md);
-  background: transparent;
+  background: var(--btn-fill);
   color: var(--btn-text);
   font: var(--type-label-button);
   letter-spacing: var(--tracking-label);
@@ -122,41 +115,19 @@ Wariantu destrukcyjnego (czerwonego) nie wykryto. Ani czerwony tekst, ani biały
   text-decoration: none;              /* gdy .btn jest linkiem <a> */
   cursor: pointer;
 }
-.btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--btn-fill);
-  box-shadow: 0 var(--edge-height) 0 var(--btn-edge);
-}
-.btn:hover { filter: brightness(1.1); }
-.btn:active { transform: translateY(var(--btn-press)); }
-.btn:active::before { box-shadow: none; }
+.btn:hover  { filter: brightness(1.1); }
+.btn:active { filter: brightness(0.9); }
 .btn:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
 
 /* obrysowane: secondary, neutral */
 .btn--secondary, .btn--neutral {
   --btn-fill: var(--color-action-secondary-fill);
-  --btn-edge: var(--color-action-secondary-edge);
-  --btn-press: var(--edge-height-outline);
-  border-width: var(--border-width) var(--border-width) var(--edge-height);
+  --btn-border: var(--color-action-secondary-border);
 }
 .btn--secondary { --btn-text: var(--color-action-secondary-text); }
 .btn--neutral   { --btn-text: var(--color-action-neutral-text); }
-.btn--secondary::before, .btn--neutral::before {
-  inset: calc(var(--border-width) * -1);
-  border: var(--border-width) solid var(--color-action-secondary-border);
-  box-shadow: 0 var(--edge-height-outline) 0 var(--btn-edge);
-}
 .btn--secondary:hover, .btn--neutral:hover { filter: brightness(0.9); }
-
-.btn--info {
-  --btn-fill: var(--color-action-info-fill);
-  --btn-edge: var(--color-action-info-edge);
-  --btn-text: var(--color-action-info-text);
-}
+.btn--secondary:active, .btn--neutral:active { --btn-fill: var(--color-surface-subtle); }
 
 .btn--app   { border-radius: var(--radius-lg); }   /* modal, widoki po zalogowaniu */
 .btn--cta   { width: var(--size-cta-width); max-width: 100%; }
@@ -166,20 +137,12 @@ Wariantu destrukcyjnego (czerwonego) nie wykryto. Ani czerwony tekst, ani biały
 /* nieaktywny: wywnioskowane, do weryfikacji */
 .btn:disabled, .btn[aria-disabled="true"] {
   --btn-fill: var(--color-surface-disabled);
+  --btn-border: var(--color-surface-disabled);
   --btn-text: var(--color-text-disabled);
   cursor: not-allowed;
   filter: none;
-  transform: none;
 }
-.btn:disabled::before, .btn[aria-disabled="true"]::before { box-shadow: none; }
 ```
-
-Wymiary pseudo-elementów zgadzają się z pomiarami ze źródła przy `border-box`:
-
-- `primary`: `::before` ma 46 px wysokości, krawędź 4 px.
-- `secondary`: `::before` wystaje 2 px poza ramkę i ma 48 px wysokości, krawędź 2 px.
-
-Na telefonie, w hero źródła, `secondary` wygląda na szaro wypełniony. Widać to na zrzucie, ale wartości nie zmierzyłem (do weryfikacji). Do czasu weryfikacji używaj wariantu jak na desktopie.
 
 ---
 
@@ -187,7 +150,7 @@ Na telefonie, w hero źródła, `secondary` wygląda na szaro wypełniony. Wida�
 
 | Cecha | Wartość | Status |
 | --- | --- | --- |
-| Kolor | `--color-text-link`; na `--color-surface-info` `--color-text-link-on-info` | wywnioskowane AA (źródło `#1cb0f6`) |
+| Kolor | `--color-text-link` na każdym tle systemu (biały, `surface.info`, mięta) | zespół (granat ZUS) |
 | Grubość | 700 | wykryte |
 | Podkreślenie | brak | wykryte |
 | Hover | nie wykryto zmiany | wykryte |
@@ -195,7 +158,6 @@ Na telefonie, w hero źródła, `secondary` wygląda na szaro wypełniony. Wida�
 ```css
 .link { color: var(--color-text-link); font-weight: var(--font-weight-bold); text-decoration: none; }
 .link:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
-.surface-info .link { color: var(--color-text-link-on-info); }
 ```
 
 Grubość 700 to wyróżnik linku poza kolorem (WCAG 1.4.1). Nie zmieniaj jej.
@@ -213,14 +175,14 @@ Karta do wybrania jednej z opcji albo do rozwinięcia przykładu.
 | Element | `<button>` | wykryte |
 | Rozmiar | szerokość z siatki (§3.2), `max-width: --size-card-choice-max`, `min-height: --size-card-choice-height` | wykryte |
 | Tło | `--color-surface-page` | wykryte |
-| Ramka | `--border-width` `--color-border-default`, dolna `--border-width-card-bottom` | wykryte |
+| Ramka | `--border-width` `--color-border-default` na całym obwodzie | uzgodnione (bez grubszej dolnej ramki ze źródła) |
 | Zaokrąglenie | `--radius-lg` | wykryte |
 | Wewnętrzny odstęp | `--space-sm` `--space-sm` `--space-xl` | wykryte |
-| Ikona lub flaga u góry | `--size-card-media-w` × `--size-card-media-h`, wyśrodkowana | wykryte |
+| Ikona lub ilustracja u góry | `--size-card-media-w` × `--size-card-media-h`, wyśrodkowana | wykryte |
 | Ikona → tytuł | `--space-card-media-title` | wykryte |
-| Tytuł | `--type-title-card`, `--color-text-primary`, wyśrodkowany | wykryte |
+| Tytuł | `--type-title-card`, `--color-text-strong`, wyśrodkowany | wykryte (typografia); zespół (kolor) |
 | Tytuł → podpis | `--space-card-title-meta` | wykryte |
-| Podpis | `--type-body-card`, `--color-text-primary` | wywnioskowane AA (źródło `#777777`) |
+| Podpis | `--type-body-card`, `--color-text-primary` | wywnioskowane AA |
 
 ### 3.2 Siatka kart (wykryte)
 
@@ -252,7 +214,7 @@ Status:
 | --- | --- | --- |
 | hover | `filter: brightness(0.9)` | wykryte |
 | active | bez zmiany | wykryte |
-| wybrana / rozwinięta | ramka `--color-border-focus`, tło `--color-surface-info` | wywnioskowane, do weryfikacji |
+| wybrana / rozwinięta | ramka `--color-border-focus`, tło `--color-surface-info` | zespół (niebieski ZUS); wywnioskowane (wzorzec) |
 | focus-visible | pierścień fokusu | wywnioskowane |
 | disabled | nie wykryto, zapytaj zespół | — |
 
@@ -261,7 +223,7 @@ Semantyka zależy od tego, co robi karta. Wygląd stanu „wybrana” jest wspó
 - **Wybór jednej opcji:**
   - grupa `role="radiogroup"` z etykietą, karty `role="radio"` z `aria-checked`;
   - fokus wędruje strzałkami, a w kolejności Tab jest tylko wybrana karta (wzorzec WAI-ARIA Radio Group).
-- **Karta rozwija treść** (np. przykład pod kartą): `<button aria-expanded="true|false" aria-controls="…">`.
+- **Karta rozwija treść:** `<button aria-expanded="true|false" aria-controls="…">`.
 - **Przełącznik niezależny:** `aria-pressed`.
 
 ```css
@@ -276,7 +238,6 @@ Semantyka zależy od tego, co robi karta. Wygląd stanu „wybrana” jest wspó
   padding: var(--space-sm) var(--space-sm) var(--space-xl);
   background: var(--color-surface-page);
   border: var(--border-width) solid var(--color-border-default);
-  border-bottom-width: var(--border-width-card-bottom);
   border-radius: var(--radius-lg);
   color: var(--color-text-primary);
   font: var(--type-body-card);
@@ -292,11 +253,11 @@ Semantyka zależy od tego, co robi karta. Wygląd stanu „wybrana” jest wspó
 }
 .choice-card:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
 .choice-card__media { width: var(--size-card-media-w); height: var(--size-card-media-h); margin: auto 0 var(--space-card-media-title); object-fit: contain; }
-.choice-card__title { font: var(--type-title-card); }
+.choice-card__title { font: var(--type-title-card); color: var(--color-text-strong); }
 .choice-card__meta  { margin-top: var(--space-card-title-meta); font: var(--type-body-card); }
 ```
 
-`margin: auto 0 …` przy ikonie centruje treść karty w pionie, gdy karta jest wyższa niż jej zawartość. Status: wywnioskowane; w źródle ikona zaczyna się 50 px pod górną krawędzią karty o wysokości 217 px.
+`margin: auto 0 …` przy ikonie centruje treść karty w pionie. Status: wywnioskowane.
 
 ---
 
@@ -308,7 +269,7 @@ Grupa pola składa się z etykiety, opakowania z inputem, tekstu pomocniczego i 
 
 | Cecha | Wartość | Status |
 | --- | --- | --- |
-| Etykieta nad polem | `--type-title-card`, `--color-text-primary`, odstęp do pola `--space-xs` | wywnioskowane (WCAG 3.3.2; źródło ma tylko placeholder) |
+| Etykieta nad polem | `--type-title-card`, `--color-text-strong`, odstęp do pola `--space-xs` | wywnioskowane (WCAG 3.3.2) |
 | Tekst pomocniczy (np. przykład formatu) | pod etykietą, `--type-body`, `--color-text-primary` | wywnioskowane (zastępuje placeholder) |
 | Opakowanie: tło | `--color-surface-subtle` | wykryte |
 | Opakowanie: ramka | `--border-width` `--color-border-field` | wykryte (grubość); kolor: wywnioskowane AA, do weryfikacji |
@@ -317,18 +278,16 @@ Grupa pola składa się z etykiety, opakowania z inputem, tekstu pomocniczego i 
 | Input: wewnętrzny odstęp | `--space-xs` `--space-field-x` | wykryte |
 | Input: tekst | `--type-input`, `--color-text-primary` | wykryte |
 | Placeholder | **nie używamy** ([tokeny §1.3](tokeny.md#13-tekst)) | wywnioskowane AA |
-| Akcja w polu (np. link do odzyskania hasła) | po prawej, `--type-label-small`, wersaliki, `--color-text-link` | wykryte (położenie, typografia); kolor: wywnioskowane AA |
+| Akcja w polu (np. link do odzyskania hasła) | po prawej, `--type-label-small`, wersaliki, `--color-text-link` | wykryte (położenie, typografia) |
 | Komunikat błędu | pod polem, ikona `--color-status-error-edge` + tekst `--type-body` `--color-text-primary`, odstęp `--space-xs`, powiązany przez `aria-describedby` | wywnioskowane, do weryfikacji |
 
 ### 4.2 Stany
 
 | Stan | Wygląd | Status |
 | --- | --- | --- |
-| focus | ramka opakowania `--color-border-focus`, także przy błędzie | wykryte (mechanizm); kolor: wywnioskowane AA |
+| focus | ramka opakowania `--color-border-focus`, także przy błędzie | wykryte (mechanizm); kolor: zespół |
 | błąd (`aria-invalid="true"` na inpucie) | ramka `--color-border-error`, komunikat pod polem | wywnioskowane, do weryfikacji |
 | disabled | nie wykryto, zapytaj zespół | — |
-
-Gdy pole z błędem dostaje fokus, ramka zmienia się na kolor fokusu. Błąd nadal komunikuje tekst pod polem, a fokus musi być widoczny (WCAG 2.4.7).
 
 ### 4.3 Receptura CSS i HTML
 
@@ -348,7 +307,7 @@ Gdy pole z błędem dostaje fokus, ramka zmienia się na kolor fokusu. Błąd na
 .form-stack__submit { margin-top: calc(var(--space-xl) - var(--space-sm)); }   /* pole → przycisk = 24px */
 
 .field-group { display: grid; gap: var(--space-xs); }
-.field-label { font: var(--type-title-card); color: var(--color-text-primary); }
+.field-label { font: var(--type-title-card); color: var(--color-text-strong); }
 .field-hint  { margin: 0; font: var(--type-body); color: var(--color-text-primary); }
 
 .field {
@@ -378,15 +337,11 @@ Gdy pole z błędem dostaje fokus, ramka zmienia się na kolor fokusu. Błąd na
 .field-message__icon { flex: none; width: var(--size-icon); height: var(--size-icon); margin-top: 0.2em; color: var(--color-status-error-edge); }
 ```
 
-`margin-top: 0.2em` przy ikonie wyrównuje ją optycznie do pierwszej linii tekstu. Status: wywnioskowane, do weryfikacji.
-
 ---
 
 ## 5. Separator „lub”
 
-Dwie linie 2 px `--color-border-default`, między nimi etykieta `--type-label-small` w wersalikach z odstępem bocznym `--space-xs`. Nad i pod separatorem jest `--space-lg`. Status: wykryte.
-
-Etykieta w źródle ma kolor `#afafaf`. U nas `--color-text-primary` (wywnioskowane AA).
+Dwie linie 2 px `--color-border-default`, między nimi etykieta `--type-label-small` w wersalikach, w kolorze `--color-text-primary`, z odstępem bocznym `--space-xs`. Nad i pod separatorem jest `--space-lg`. Status: wykryte (układ); kolor: wywnioskowane AA.
 
 ```css
 .divider-or { display: flex; align-items: center; margin: var(--space-lg) 0; }
@@ -406,11 +361,11 @@ Etykieta w źródle ma kolor `#afafaf`. U nas `--color-text-primary` (wywnioskow
 | Arkusz | pełny ekran, `--color-surface-page` | wykryte |
 | Kolumna treści | `--container-form`, wyśrodkowana | wykryte |
 | Tytuł | `--type-title-modal`, `--color-text-strong`, wyśrodkowany | wykryte |
-| Zamknięcie | ikona „X” w lewym górnym rogu, szara, `aria-label="Zamknij"` | wykryte na zrzucie (położenie); rozmiar, kolor i odstęp: do weryfikacji |
+| Zamknięcie | ikona „X” w lewym górnym rogu, `aria-label="Zamknij"` | wykryte na zrzucie (położenie); rozmiar i odstęp: do weryfikacji |
 | Akcja poboczna | `.btn--secondary.btn--app` w prawym górnym rogu | wykryte |
 | Przyciski w środku | `.btn--block.btn--app` | wykryte |
 | Odstęp między przyciskami alternatywnymi | `--space-stack-alt` | wykryte, do weryfikacji |
-| Tekst prawny na dole | `--type-caption-legal`, wyśrodkowany, linki 700, `--color-text-primary` | wykryte; kolor: wywnioskowane AA (źródło `#afafaf`) |
+| Tekst prawny na dole | `--type-caption-legal`, wyśrodkowany, linki 700, `--color-text-primary` | wykryte; kolor: wywnioskowane AA |
 
 Kolejność w kolumnie:
 
@@ -434,26 +389,24 @@ Dostępność, wszystko wywnioskowane: `role="dialog"`, `aria-modal="true"`, `ar
 | Pozycja | `fixed`, u góry | to samo | to samo | wykryte |
 | Wysokość | `--size-header-height` | to samo | to samo | wykryte |
 | Tło | `--color-surface-page` | to samo | to samo | wykryte |
-| Układ | logo wyśrodkowane, margines `--space-gutter` | logo wyśrodkowane, margines `--space-gutter` | `--container-content`, logo po lewej, akcja tekstowa po prawej (`justify-content: space-between`) | wykryte |
-| Akcja tekstowa | ukryta | ukryta | `--type-label-small`, wersaliki, `--color-text-primary` | wykryte; kolor: wywnioskowane AA (źródło `#afafaf`) |
+| Układ | logo po lewej, wybór języka po prawej, margines `--space-gutter` | to samo | `--container-content`, logo po lewej, wybór języka po prawej | wykryte (desktop); telefon i tablet: uzgodnione 2026-11-21 (w źródle logo wyśrodkowane, bez wyboru języka) |
+| Wybór języka | wersja krótka: sama nazwa języka | wersja krótka | wersja pełna: „Język strony: polski” | uzgodnione; zob. [§13](#13-wybór-języka) |
 
 Zachowanie przy przewijaniu:
 
-- **Dolna ramka:** `--border-width`, na samej górze strony przezroczysta, po zjechaniu `--color-border-default`. Zmiana w `--motion-duration-base` z `--motion-easing-standard`. Status: wykryte.
-- **Chowanie:** przy dalszym przewijaniu w dół pasek wyjeżdża do góry (`translateY(-72px)`) w `--motion-duration-slow` z `--motion-easing-out`. Status: wykryte; próg i powrót przy przewijaniu w górę: do weryfikacji.
+- **Dolna linia:** `--border-width`, na samej górze strony przezroczysta, po zjechaniu `--color-border-default`. Zmiana w `--motion-duration-base` z `--motion-easing-standard`. Status: wykryte.
+- **Chowanie:** przy dalszym przewijaniu w dół pasek wyjeżdża do góry w `--motion-duration-slow` z `--motion-easing-out`. Status: wykryte; próg i powrót: do weryfikacji.
 
 ---
 
 ## 8. Pasek z karuzelą (opcjonalny)
 
-Pas pełnej szerokości pod hero z poziomą listą pozycji i strzałkami po bokach. Status: wykryte.
+Pas pełnej szerokości z poziomą listą pozycji i strzałkami po bokach. Status: wykryte.
 
-- Wysokość `--size-strip-height`, ramki u góry i u dołu `--border-width` `--color-border-default`, boczny wewnętrzny odstęp `--space-3xl`.
-- Lista w `--container-wide`. Siatka: strzałka 14 px, lista, strzałka 14 px, odstęp 30 px. Wartości 14 i 30 px są zmierzone, ale poza skalą (do weryfikacji).
+- Wysokość `--size-strip-height`, linie u góry i u dołu `--border-width` `--color-border-default`, boczny wewnętrzny odstęp `--space-3xl`.
+- Lista w `--container-wide`. Siatka: strzałka 14 px, lista, strzałka 14 px, odstęp 30 px (zmierzone; poza skalą, do weryfikacji).
 - Przesunięcie listy: `transform` w `--motion-duration-slower` z `--motion-easing-in-out`.
-- Pozycja: ikona i etykieta `--type-label-small` w wersalikach; kolor `--color-text-primary` (wywnioskowane AA, źródło `#777777`).
-
-Użyj tylko, jeśli ekran naprawdę potrzebuje poziomej listy.
+- Pozycja: ikona i etykieta `--type-label-small` w wersalikach; kolor `--color-text-primary`.
 
 ---
 
@@ -461,16 +414,13 @@ Użyj tylko, jeśli ekran naprawdę potrzebuje poziomej listy.
 
 | Cecha | Telefon (< 768) | Tablet (768–1079) | Desktop (≥ 1080) | Status |
 | --- | --- | --- | --- | --- |
-| Tło | `--color-surface-brand` | to samo | to samo | wykryte |
-| Kontener siatki | `--container-footer` (375 px), wyśrodkowany | `--container-footer` (768 px), wyśrodkowany | `--container-footer` (988 px) | wykryte |
+| Tło | `--color-surface-brand` (mięta) | to samo | to samo | zespół |
+| Kontener siatki | `--container-footer` (375 px), wyśrodkowany | `--container-footer` (768 px) | `--container-footer` (988 px) | wykryte |
 | Siatka | 1 kolumna `--size-footer-column`, wyrównana do lewej | 3 kolumny | 5 kolumn | wykryte |
 | Odstęp kolumn | `--space-lg` | `--space-lg` | `--space-xl` | wykryte |
 | Wewnętrzny odstęp | `--space-6xl` `--space-2xl` `--space-5xl` | `--space-5xl` `--space-3xl` | `--space-6xl` 0 `--space-5xl` | wykryte |
-| Tytuł kolumny | `--type-title-footer` | to samo | to samo | wykryte |
-| Linki | `--type-link-footer`, jeden pod drugim co `--space-list-footer` (także tytuł → pierwszy link) | to samo | to samo | wykryte |
-| Kolor tekstu | `--color-text-on-brand` | to samo | to samo | wywnioskowane AA (źródło: tytuły `#d7ffb8`, linki `#a5ed6e`, 1.5–1.9:1) |
-
-Falisty brzeg nad stopką w źródle to prawdopodobnie część ilustracji SVG, nie CSS (wywnioskowane, do weryfikacji). Nie odtwarzaj go bez ilustracji od zespołu.
+| Tytuł kolumny | `--type-title-footer`, `--color-text-on-brand` | to samo | to samo | wykryte; kolor: zespół |
+| Linki | `--type-link-footer`, `--color-text-link`, jeden pod drugim co `--space-list-footer` | to samo | to samo | wykryte; kolor: zespół |
 
 ---
 
@@ -485,18 +435,20 @@ Komponent nie występuje na stronach publicznych źródła. Status: wywnioskowan
   padding: var(--space-md);
   background: var(--color-status-info-surface);
   border: var(--border-width) solid var(--color-status-info-edge);
-  border-bottom-width: var(--border-width-card-bottom);
   border-radius: var(--radius-lg);
   font: var(--type-body);
   color: var(--color-text-primary);
 }
 .notice__icon { flex: none; width: var(--size-icon); height: var(--size-icon); margin-top: 0.2em; color: var(--color-status-info-edge); }
 .notice--success { background: var(--color-status-success-surface); border-color: var(--color-status-success-edge); }
+.notice--success .notice__icon { color: var(--color-status-success-edge); }
 .notice--warning { background: var(--color-status-warning-surface); border-color: var(--color-status-warning-edge); }
+.notice--warning .notice__icon { color: var(--color-status-warning-edge); }
 .notice--error   { background: var(--color-status-error-surface);   border-color: var(--color-status-error-edge); }
+.notice--error .notice__icon { color: var(--color-status-error-edge); }
 ```
 
-Ustaw kolor ikony zgodnie z wariantem. Komunikat zawsze ma tekst.
+Komunikat zawsze ma tekst.
 
 ---
 
@@ -506,8 +458,6 @@ Tych elementów nie ma w źródle. Specyfikacja projektu ich wymaga, więc skła
 
 ### 11.1 Panel (karta z treścią, np. podgląd planu)
 
-Kontener jak karta wyboru, ale nieklikalny.
-
 ```css
 .panel {
   width: 100%;
@@ -515,16 +465,16 @@ Kontener jak karta wyboru, ale nieklikalny.
   padding: var(--space-xl);
   background: var(--color-surface-page);
   border: var(--border-width) solid var(--color-border-default);
-  border-bottom-width: var(--border-width-card-bottom);
   border-radius: var(--radius-lg);
 }
 .panel__row + .panel__row { margin-top: var(--space-xl); padding-top: var(--space-xl); border-top: var(--border-width) solid var(--color-border-default); }
 .panel__label { font: var(--type-label-small); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-primary); }
+.panel__title { font: var(--type-title-card); color: var(--color-text-strong); }
 ```
 
 ### 11.2 Zakładki
 
-Zakładki składamy z przycisków `neutral`. Wybrana zakładka ma ten sam wygląd co wybrana karta.
+Zakładki składamy z przycisków `neutral`. Wybrana zakładka wygląda jak wybrana karta.
 
 - **Struktura:** wzorzec WAI-ARIA Tabs. `role="tablist"` z etykietą, zakładki `role="tab"` z `aria-selected` i `aria-controls`, panele `role="tabpanel"` z `aria-labelledby`.
 - **Kolejność Tab:** w kolejności Tab jest tylko wybrana zakładka (`tabindex="0"`), pozostałe mają `tabindex="-1"`.
@@ -532,35 +482,32 @@ Zakładki składamy z przycisków `neutral`. Wybrana zakładka ma ten sam wyglą
 
 ```css
 .tabs { display: flex; gap: var(--space-xs); }
-.tabs .tab { flex: 1; }                       /* klasy: btn btn--neutral btn--app tab */
-.tab[aria-selected="true"]::before {
-  border-color: var(--color-border-focus);
-  background: var(--color-surface-info);
-  box-shadow: 0 var(--edge-height-outline) 0 var(--color-border-focus);
+.tabs .tab { flex: 1 1 auto; }               /* klasy: btn btn--neutral btn--app tab; szerokość wg etykiety, żeby nie łamać jej bez potrzeby */
+.tab[aria-selected="true"] {
+  --btn-fill: var(--color-surface-info);
+  --btn-border: var(--color-border-focus);
+  --btn-text: var(--color-text-strong);
 }
-.tab[aria-selected="true"]:active { transform: none; }
 ```
-
-Wskaźnik wybranej zakładki jest kandydatem do efektu `move` z [gooey.md](gooey.md). Ruch jest do omówienia.
 
 ### 11.3 Etykieta (np. „Przykład”)
 
 ```css
 .badge {
   display: inline-block;
+  justify-self: start;               /* w rodzicu grid nie rozciąga się na całą szerokość */
+  width: fit-content;
   padding: 0 var(--space-xs);
   border-radius: var(--radius-md);
-  background: var(--color-status-info-surface);
+  background: var(--color-accent-fill);
   font: var(--type-label-small);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--color-text-primary);
+  color: var(--color-text-on-accent);
 }
 ```
 
 ### 11.4 Zaślepka ilustracji
-
-Do czasu dostarczenia grafik:
 
 ```css
 .media-placeholder {
@@ -577,3 +524,82 @@ Do czasu dostarczenia grafik:
 ## 12. Wariant płynny (gooey)
 
 Przyciski i grupy z efektem łączenia kształtów opisuje [gooey.md](gooey.md). Używaj go tylko w miejscach zatwierdzonych przez zespół.
+
+---
+
+## 13. Wybór języka
+
+Przycisk tekstowy w prawym górnym rogu nagłówka, który rozwija listę języków. Wzór: selektor języka w nagłówku strony źródłowej (wykryte: `--type-label-small`, wersaliki, strzałka w dół). Lista, języki i zachowanie: uzgodnione 2026-11-21.
+
+| Cecha | Wartość | Status |
+| --- | --- | --- |
+| Przycisk | bez ramki i tła; `--type-label-small`, wersaliki, `--tracking-label`, `--color-text-primary`; strzałka w dół (`--size-icon`) obraca się o 180° po otwarciu | wykryte (typografia); kolor: wywnioskowane AA (źródło `#afafaf`) |
+| Etykieta | desktop: „Język strony: polski”, w wybranym języku (np. „Site language: English”); telefon i tablet: sama nazwa języka, pełna etykieta jako `aria-label` | uzgodnione |
+| Języki | Polski (domyślnie), Українська, English: każdy w swoim języku i z atrybutem `lang` | uzgodnione |
+| Lista | panel pod przyciskiem, wyrównany do prawej; tło `--color-surface-page`, ramka `--border-width` `--color-border-default`, `--radius-lg`, wewnętrzny odstęp `--space-xs` | wywnioskowane |
+| Pozycja listy | `--type-body`, `--color-text-primary`, odstęp `--space-sm` `--space-md`, `--radius-md`; hover: tło `--color-surface-subtle` | wywnioskowane |
+| Wybrana pozycja | tło `--color-surface-info`, `--color-text-strong`, grubość 700, znak ✓ po prawej | wywnioskowane |
+
+Semantyka i klawiatura, wszystko wywnioskowane:
+
+- przycisk ma `aria-haspopup="listbox"` i `aria-expanded`;
+- lista ma `role="listbox"` z etykietą, pozycje `role="option"` z `aria-selected`;
+- strzałka w dół otwiera listę i ustawia fokus na wybranej pozycji;
+- strzałki góra/dół, Home i End przesuwają fokus;
+- Enter lub spacja wybiera i zamyka;
+- Esc zamyka i zwraca fokus na przycisk;
+- klik poza listą ją zamyka.
+
+Zmiana języka w prototypie zmienia tylko etykietę. Tłumaczenia treści są do zrobienia.
+
+```css
+.lang { position: relative; }
+.lang__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0;
+  border: 0;
+  background: none;
+  font: var(--type-label-small);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.lang__button:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
+.lang__chevron { width: var(--size-icon); height: var(--size-icon); }
+.lang__button[aria-expanded="true"] .lang__chevron { transform: rotate(180deg); }
+.lang__list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-xs);
+  min-width: max-content;
+  margin: var(--space-xs) 0 0;
+  padding: var(--space-xs);
+  list-style: none;
+  background: var(--color-surface-page);
+  border: var(--border-width) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+.lang__list[hidden] { display: none; }
+.lang__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font: var(--type-body);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.lang__option:hover { background: var(--color-surface-subtle); }
+.lang__option:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: calc(var(--focus-ring-width) * -1); }
+.lang__option[aria-selected="true"] { background: var(--color-surface-info); color: var(--color-text-strong); font-weight: var(--font-weight-bold); }
+.lang__check { visibility: hidden; width: var(--size-icon); height: var(--size-icon); }
+.lang__option[aria-selected="true"] .lang__check { visibility: visible; }
+```

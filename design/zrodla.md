@@ -49,7 +49,27 @@ Przeczytałem README, `index.d.ts` i `dist/index.js` z paczki npm. Z kodu pochod
 - parser `shadow`;
 - owijka `display: contents`.
 
-### 1.4 Kontrast
+### 1.4 Paleta zespołu (od 2026-11-21)
+
+Kolory systemu pochodzą z materiałów zespołu, nie ze strony źródłowej:
+
+- **Tokeny maskotki** (`maskotka_kod/app/globals.css`, zmierzone z obrazu referencyjnego Zusika): wypełnienie `#A3DAB3`, obwódka `#338C5C`, granat `#1E3D5C`, biel `#FFFFFF`, cień `#D1D1D1`.
+- **Paleta ZUS** (`maskotka_kod/docs/mascot/01-design-spec.md`): zieleń `#00993F`, granat `#00416E`, niebieski `#3F84D2`, żółty `#FFB34F`, szary `#BEC3CE`.
+
+Ze strony źródłowej zostały neutralne szarości tekstu, tła pól i sekcji oraz tła statusów.
+
+Kontrasty kluczowych par:
+
+| Para | Kontrast | Wniosek |
+| --- | --- | --- |
+| granat `#1E3D5C` na mięcie `#A3DAB3` | 7.05 | przycisk główny |
+| biały na zieleni ZUS | 3.73 | odpada dla tekstu |
+| biały na niebieskim ZUS | 3.86 | odpada dla tekstu |
+| granat na zieleni ZUS | 3.00 | odpada dla tekstu |
+| granat na niebieskim ZUS | 2.90 | odpada dla tekstu |
+| biały na obwódce `#338C5C` | 4.16 | odpada dla tekstu |
+
+### 1.5 Kontrast
 
 Liczony wzorem WCAG 2.1 (luminancja względna) dla każdej pary podanej w [tokeny.md](tokeny.md).
 
@@ -89,15 +109,15 @@ Sprawdź ręcznie i zaktualizuj status w odpowiednim pliku.
 | --- | --- | --- | --- |
 | 1 | Nunito jako zamiennik obu krojów; grubość 800 dla nagłówków display; interlinie `normal` po zmianie kroju | tokeny §2.1–2.2 | Zrzut nagłówka i przycisku obok źródła w tej samej skali |
 | 2 | Ramka pola `#777777` (AA) zamiast `#e5e5e5`: czy nie jest zbyt ciężka | tokeny §1.2, komponenty §4 | Makieta formularza, decyzja zespołu |
-| 3 | Etykieta `#042c60` na niebieskim przycisku `info` | tokeny §1.4, komponenty §1.2 | Makieta, ewentualnie rezygnacja z wariantu `info` |
-| 4 | Stan wybranej lub rozwiniętej karty i wybranej zakładki (ramka `#2b70c9`, tło `#ddf4ff`) | komponenty §3.3, §11.2 | Kliknij kartę w aplikacji źródła albo zatwierdź propozycję |
+| 3 | Paleta Zusika w praktyce: czy miętowy przycisk główny wyróżnia się dość mocno; jasne tło `success` (`#d7ffb8`) spoza palety; ramki `#BEC3CE` | tokeny §1, komponenty §1, §10 | Przykład `przyklad.html`, decyzja zespołu |
+| 4 | Stan wybranej lub rozwiniętej karty i wybranej zakładki (ramka `#3F84D2`, tło `#ddf4ff`) | komponenty §3.3, §11.2 | Kliknij kartę w aplikacji źródła albo zatwierdź propozycję |
 | 5 | Stany disabled, błąd pola, loading (w źródle niewidoczne) | komponenty §1.3, §4.2 | Aplikacja źródła po zalogowaniu albo decyzja zespołu |
 | 6 | Kolory statusów jako role success / info / warning / error | tokeny §1.5 | Ekrany lekcji i błędów w aplikacji źródła |
 | 7 | Komponenty złożone (panel, zakładki, etykieta, zaślepka ilustracji, komunikat statusu) i hero w wariancie ze specyfikacji | komponenty §10–11, layout §3.1 | Makieta, decyzja zespołu |
 | 8 | Hero na telefonie: przyciski przy dolnej krawędzi ekranu; szare wypełnienie przycisku `secondary` | layout §3.1, komponenty §1.4 | Telefon albo emulacja 375 px, inspekcja `::before` |
 | 9 | Zamknięcie modala: rozmiar, kolor i odstęp ikony „X” | komponenty §6 | DevTools na otwartym modalu |
 | 10 | Ikony: zestaw, rozmiar renderowany (`1em`), odstęp ikona–etykieta; styl wykryty tylko na 4 ikonach | komponenty §0.2, §1.1 | DevTools na przyciskach logowania zewnętrznego; wybór zestawu przez zespół |
-| 11 | Odstępy lokalne: 15 px (przyciski w modalu, możliwe 16), 14 i 30 px (karuzela), `space.4xl` 48 px (użycie nieznane), 80/86 px (nagłówek → siatka kart) | tokeny §3, komponenty §6, §8 | DevTools: czy to celowe wartości |
+| 11 | Odstępy lokalne: 15 px (przyciski w modalu, możliwe 16), 14 i 30 px (karuzela), 80/86 px (nagłówek → siatka kart) | tokeny §3, komponenty §6, §8 | DevTools: czy to celowe wartości |
 | 12 | Element z `transition: filter 0.2s` | motion §1 | DevTools: wyszukaj w Elements |
 | 13 | Chowanie i powrót nagłówka przy przewijaniu (próg, powrót w górę) | motion §2, komponenty §7 | Ręczny test przewijania |
 | 14 | Krzywa pojawiania się tła sekcji przy przewijaniu | motion §2 | Wolne przewijanie z obserwacją `opacity` |
@@ -106,13 +126,15 @@ Sprawdź ręcznie i zaktualizuj status w odpowiednim pliku.
 | 17 | Grubość zwykłego tekstu prawnego (400?) | tokeny §2.2 | DevTools na tekście pod formularzem |
 | 18 | Falisty brzeg nad stopką: ilustracja czy CSS | komponenty §9 | DevTools na elemencie nad stopką |
 | 19 | `liquid-gooey`: twardy `shadow` jako krawędź, `inset` jako ramka, `var()` w `shadow`, zachowanie `move` i `bend` przy ograniczeniu ruchu | gooey §2–3 | Prototyp w React |
-| 20 | Tryb ciemny (cała tabela) | tokeny §8 | Tylko jeśli zespół zdecyduje się na tryb ciemny |
-| 21 | Przycisk na ciemnym pasie (`on-inverse`) | komponenty §1.2 | DevTools na pasie `#100f3e` |
+| 20 | Tryb ciemny: do zaprojektowania od zera | tokeny §8 | Tylko jeśli zespół zdecyduje się na tryb ciemny |
+| 21 | Stan naciśnięcia bez przesunięcia (zmiana jasności, tło przycisku obrysowanego) i wariant przycisku na ciemnym pasie | komponenty §1.2–1.3 | Makieta, decyzja zespołu |
 
 ---
 
 ## 4. Czego świadomie nie przeniesiono
 
+- Paleta strony źródłowej. Od 2026-11-21 kolory pochodzą z maskotki i palety ZUS (§1.4).
+- Dolna krawędź przycisków i kart oraz przesunięcie przy naciśnięciu. Decyzja zespołu z 2026-11-21: za mocny charakter źródła.
 - Logo, maskotka, ilustracje, odznaki sklepów z aplikacjami i wszystkie teksty strony (branding).
 - Nazwy zmiennych źródła (nazwy zwierząt): zastąpione nazwami semantycznymi.
 - Rozmyty cień `0 0 5px` szary, warstwy `z-index` i animacja `onetrust-fade-in`, bo pochodziły z banera cookies.
