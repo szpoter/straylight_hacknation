@@ -11,7 +11,12 @@ The ZUS hackathon app (HackNation, React/Next.js + Tailwind CSS) has a mascot: *
 The mascot must exist **entirely as code in this repo**: a React component rendering hand-built, geometric SVG.
 Nobody on the team draws or animates by hand. No external animation editors, no image files at runtime.
 
-## Current scope: PHASE 1 only
+## Status (2026-11-21)
+
+- Phase 1 (the base pose below) is done: see `design/mascot/REPORT.md`.
+- Phase 2 has started: the idle life (`<Babelek animated />`: float, a fluid body with random waves running along the whole outline, blinking, glancing) is done. States (hello, success, sorry, …) and switching between them are next; agree on the list of states with the team before building them.
+
+## Phase 1 scope
 
 **Goal: reproduce the base pose (`design/mascot/base.jpg`) as faithfully as possible.**
 

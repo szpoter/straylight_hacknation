@@ -12,7 +12,10 @@ export type BabelekProps = {
   className?: string;
   /** Accessible name. Without it the mascot is treated as decorative (aria-hidden). */
   title?: string;
-  /** Subtle idle float. Off by default; never runs when the user prefers reduced motion. */
-  float?: boolean;
+  /**
+   * Idle life: floating, a fluid swaying body, blinking and glancing around. Off by default.
+   * Runs in a small client component; with reduced motion the mascot keeps its calm base pose.
+   */
+  animated?: boolean;
   frame?: BabelekFrame;
 };

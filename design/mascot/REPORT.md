@@ -43,7 +43,7 @@ Edges were measured in the reference with sub-pixel precision, separately for ea
 
 ## Decisions made during phase 1 (please confirm)
 
-- **Idle float uses CSS `@keyframes`, not Motion.** `02-tech-stack.md` planned Motion for it. Motion's own best practices recommend CSS for simple infinite loops that are never interrupted, and this keeps `<Babelek />` a plain server component with no client JavaScript. It is a Tailwind token (`animate-babelek-float`) behind `motion-safe:`, so it never runs with reduced motion (verified). Motion stays for phase 2, where animations will be interrupted by state changes.
+- **Idle float** was first done in CSS `@keyframes`. Superseded in phase 2: the `float` prop became `animated`, and the float now runs in Motion together with the rest of the idle life (`components/mascot/AnimatedSvg.tsx`), so it can blend into future states.
 - **`data-part` instead of `id`** on the named parts: the preview page renders several mascots, and ids must be unique per page.
 - **Extra prop `frame`** (`"tight"` default, `"reference"`): the tight square crop is for use in the app; the reference frame keeps the full 2048 × 2048 canvas for the side-by-side and the diff.
 - **Eye cut as a body-colored "lid" shape** instead of a `clipPath`: no ids needed, and in phase 2 the lids can rise for blinking or a happy squint.
@@ -55,7 +55,7 @@ Edges were measured in the reference with sub-pixel precision, separately for ea
 
 ## Ready for phase 2
 
-- Every part is its own element with a `data-part` name: `shadow`, `arm-left`, `arm-right`, `body`, `rim`, `highlight`, `dot-*`, `eye-left`, `eye-right` (each with `eye-white`, `pupil`, `catchlight`, `lid`), `mouth`.
+- Every part is its own element with a `data-part` name: `shadow`, `arm-left`, `arm-right`, `body`, `rim`, `highlight`, `dot-*`, `eye-left`, `eye-right` (each with an `eyeball` group of `eye-white`, `pupil`, `catchlight`, plus the `lid`), `mouth`.
 - The body is one path with 5 anchors (shared by fill and rim), ready for morphing between body shapes.
 - Eyes and mouth are positioned relative to `FACE_ORIGIN`, which is placed relative to `BODY_CENTER`.
 - Natural pivots: arms at their start on the body edge (≈ (440, 990) and (1608, 986)), eyes at their eye-white centres.

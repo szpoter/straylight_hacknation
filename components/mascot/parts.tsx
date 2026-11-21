@@ -6,8 +6,9 @@
 import { ARM_LEFT, ARM_RIGHT, BODY, CRESCENT, DOTS, EYES, FACE_ORIGIN, MOUTH, SHADOW, type EyeSide } from "./geometry";
 
 /** Flat grey ellipse on the ground; the gap above it makes the bubble levitate. */
-export function Shadow({ className = "" }: { className?: string }) {
-  return <ellipse data-part="shadow" {...SHADOW} className={`fill-babelek-shadow ${className}`} />;
+export function Shadow() {
+  // transform origin at its own centre, so the float animation shrinks it in place
+  return <ellipse data-part="shadow" {...SHADOW} className="fill-babelek-shadow origin-center transform-fill" />;
 }
 
 /** Two rim-coloured drops; drawn behind the body so their base disappears into the rim. */
@@ -49,14 +50,20 @@ export function Highlights() {
   );
 }
 
-/** Eye white, pupil and catchlight, cut at the bottom by a body-coloured lower lid. */
+/**
+ * Eyeball (white, pupil, catchlight), cut at the bottom by a body-coloured lower lid.
+ * The eyeball is its own group so a blink can squash it while the lid stays in place. Its transform
+ * origin sits at the lid line (66 % down the eye white), so a blink closes the eye onto the lid.
+ */
 function Eye({ side }: { side: EyeSide }) {
   const { white, pupil, catchlight, lid } = EYES[side];
   return (
     <g data-part={`eye-${side}`}>
-      <circle data-part="eye-white" {...white} className="fill-babelek-shine" />
-      <ellipse data-part="pupil" {...pupil} className="fill-babelek-ink" />
-      <circle data-part="catchlight" {...catchlight} className="fill-babelek-shine" />
+      <g data-part="eyeball" className="origin-[50%_66%] transform-fill">
+        <circle data-part="eye-white" {...white} className="fill-babelek-shine" />
+        <ellipse data-part="pupil" {...pupil} className="fill-babelek-ink" />
+        <circle data-part="catchlight" {...catchlight} className="fill-babelek-shine" />
+      </g>
       <path data-part="lid" d={lid} className="fill-babelek-fill" />
     </g>
   );

@@ -85,10 +85,11 @@ Keep all magic numbers in `geometry.ts`, grouped by part, each with a short comm
 
 ```tsx
 type BabelekProps = {
-  size?: number | string;     // width; height follows the viewBox ratio
+  size?: number | string;          // width; height follows the viewBox ratio
   className?: string;
-  title?: string;             // accessible name; if omitted, render aria-hidden
-  float?: boolean;            // subtle idle float, default false
+  title?: string;                  // accessible name; if omitted, render aria-hidden
+  animated?: boolean;              // idle life (float, fluid body, blink, glance), default false
+  frame?: "tight" | "reference";   // square crop around the character (default) or the full 2048 canvas
 };
 ```
 
@@ -96,9 +97,13 @@ type BabelekProps = {
 - No external image, no `<foreignObject>`, no filters.
 - Server rendering must work: if Motion is used, isolate it in a client component.
 
+### Idle life (implemented)
+
+The static `<Babelek />` is plain server-rendered SVG. With `animated`, the same markup is handed to `components/mascot/AnimatedSvg.tsx`, a client component that uses Motion's `useAnimate` to animate parts by their `data-part` names: the character floats and its shadow shrinks, the eyeballs squash to blink, and the pupils glance around while the catchlights barely move. The body is fluid: every frame (Motion's `useAnimationFrame`), the body, rim and arms are rebuilt from a warp of the drawing plane defined in `components/mascot/fluid.ts`. It combines a gentle squash and stretch, an irregular sideways lean, and random waves that start every 1–2 s and travel along the whole outline (from the top down both sides, from the bottom up, or once around; sometimes as a dent). Arms are warped with the same field, so they ride on the body and stay attached; curves are split into shorter pieces before warping so body and arms bend exactly alike. The highlights move with the surface. Flubber is not needed, because the paths are computed directly. With reduced motion the mascot keeps its base pose. Timings and distances are constants at the top of `AnimatedSvg.tsx` and `fluid.ts`.
+
 ## Prepare for phase 2 (do not implement yet)
 
 Structure the code so states can be added later without a rewrite:
-- Each animatable part is its own `<g>` with a stable `id` and a transform origin that makes sense (e.g. arm pivot at its base, eye center for blinking).
-- Body outline stored as one path string in `geometry.ts`, so later states can provide alternative body paths to morph between (Motion + flubber).
+- Each animatable part is its own element with a stable `data-part` name (not `id`: several mascots can share a page) and a transform origin that makes sense (e.g. arm pivot at its base, the lid line for blinking).
+- Body outline built from points in `geometry.ts` (`bodyPath()`), so later states can provide alternative body paths to morph between (Motion natively for same-structure paths, flubber for very different ones).
 - Face parts positioned relative to the body center, not absolute, where practical.

@@ -56,10 +56,22 @@ export default function MascotPreviewPage() {
                 <figcaption className="text-sm text-slate-600">{size} px</figcaption>
               </figure>
             ))}
-            <figure className="flex flex-col items-center gap-2">
-              <Babelek size={256} title="Bąbelek" float />
-              <figcaption className="text-sm text-slate-600">256 px, float</figcaption>
-            </figure>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Animacja w spoczynku</h2>
+          <p className="text-slate-600">
+            Unoszenie, płynne kołysanie ciała, mruganie i rozglądanie się (prop <code>animated</code>).
+          </p>
+          <div className="flex flex-wrap items-end gap-8">
+            <Babelek size={480} title="Bąbelek" animated />
+            {SIZES.map((size) => (
+              <figure key={size} className="flex flex-col items-center gap-2">
+                <Babelek size={size} title="Bąbelek" animated />
+                <figcaption className="text-sm text-slate-600">{size} px</figcaption>
+              </figure>
+            ))}
           </div>
         </section>
       </div>
