@@ -818,9 +818,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .zp { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--color-surface-page); }
 @container (min-width: 768px) {
   .zp { left: auto; width: calc(var(--container-form) + var(--space-3xl)); border-left: var(--border-width) solid var(--color-border-default); }
-  .zp.is-split { width: 50%; }
+  .zp.is-split { width: var(--zp-w, 50%); }
   .zp.is-full { width: 100%; }
-  .app.has-split .main { padding-right: 50%; }
+  .app.has-split .main { padding-right: var(--zp-w, 50%); }
   .app.has-panel .main { padding-right: calc(var(--container-form) + var(--space-3xl)); }
   .app.has-split .wrap, .app.has-panel .wrap { width: 100%; margin-inline: 0; padding-inline: var(--space-xl); }
 }
@@ -885,13 +885,22 @@ details > summary:focus-visible { outline: var(--focus-ring-width) solid var(--c
 /* Obszar treści jest osobnym kontenerem: przy otwartym panelu Zusika układ liczy się od jego szerokości */
 .main { container-type: inline-size; }
 
+/* nowy komponent: do weryfikacji — separator szerokości panelu (mysz i klawiatura) */
+.zp__sep { display: none; }
+@container (min-width: 768px) {
+  .zp.is-split .zp__sep { display: block; position: absolute; top: 0; bottom: 0; left: calc(var(--space-sm) * -0.5); width: var(--space-sm); z-index: 2; cursor: col-resize; background: var(--color-surface-page); border-left: var(--border-width) solid var(--color-border-default); border-right: var(--border-width) solid var(--color-border-default); touch-action: none; }
+  .zp.is-split .zp__sep:hover { background: var(--color-surface-subtle); }
+  .zp.is-split .zp__sep:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-offset); }
+}
+.save-err { display: grid; gap: var(--space-xs); padding: var(--space-sm); border: var(--border-width) solid var(--color-status-error-edge); border-radius: var(--radius-md); background: var(--color-status-error-surface); }
+
 body{margin:0}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <template id="tpl">
-<div class="{{appCls}}" style="font-family: var(--font-ui); color: var(--color-text-strong)">
+<div class="{{appCls}}" style="{{appStyle}}">
 <p class="sr" role="status" aria-live="polite">{{live}}</p>
 
 <!-- ======================= ONBOARDING (S1–S4) ======================= -->
@@ -936,6 +945,7 @@ body{margin:0}
 
 <sc-if value="{{obQ}}" hint-placeholder-val="{{false}}">
 <div class="ob__col">
+<sc-if value="{{resumed}}" hint-placeholder-val="{{false}}"><div class="notice" role="status"><svg class="notice__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3"/><path d="M8 7v4M8 4.8v.1"/></svg><div class="stack-sm"><span>Wznowiliśmy od ostatniego pytania. Odpowiedzi zapisujemy tylko w tej przeglądarce (demo).</span><button type="button" class="link-btn" onClick="{{resetOb}}">Zacznij od nowa</button></div></div></sc-if>
 <div class="ob__nav">
 <button type="button" class="link-btn back" onClick="{{obBack}}"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>Wstecz</button>
 <div class="progress" aria-hidden="true"><div class="progress__bar" style="{{obProgress}}"></div></div>
@@ -1232,9 +1242,10 @@ body{margin:0}
 <h2 class="t-h2" id="calc-title" tabindex="-1">Ile czasu i jaki zasiłek?</h2>
 <p class="t-body">{{calcScope}}</p>
 </div>
+<div class="notice notice--warning" role="note" style="order: 1"><svg class="notice__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l6.5 12h-13z"/><path d="M8 6.5v3"/><path d="M8 12v.1"/></svg><div class="stack-sm"><strong>Demonstracja kalkulatora</strong><span>Stawki 140 zł i 105 zł brutto dziennie to przykład ze specyfikacji, nie wyliczenie z Twoich danych. Liczymy tylko: dni × stawka dla dwóch odcinków urlopu rodzicielskiego oraz pulę tygodni.</span><span>Nie liczymy: sposobu wypłaty 81,5% lub 100%/70%, pracy na część etatu, urlopu uzupełniającego, kwoty minimalnej ani kwoty za urlop macierzyński i ojcowski.</span></div></div>
 <div class="kpis" style="order: 1">
 <div class="kpi"><span class="t-label">Czas opieki w kalendarzu</span><span class="kpi__v">{{kDays}}</span></div>
-<div class="kpi"><span class="t-label">Szacowany zasiłek łącznie · brutto</span><span class="kpi__v">{{kTotal}}</span></div>
+<div class="kpi"><span class="t-label">Szacowany zasiłek łącznie · brutto</span><span class="kpi__v">{{kTotal}}</span><span class="src" style="justify-self: start">Założenie do symulacji</span></div>
 </div>
 <sc-if value="{{hasB}}" hint-placeholder-val="{{false}}">
 <div class="diff" role="status" style="order: 2"><p class="diff__head">{{diffHead}}</p><p class="t-body">{{diffSentence}}</p></div>
@@ -1285,15 +1296,13 @@ body{margin:0}
 <div class="stack" id="assume-body" style="padding-bottom: var(--space-sm)">
 <div class="seg-ctrl" role="group" aria-label="Liczba dzieci"><sc-for list="{{kidsOpts}}" as="o" hint-placeholder-count="2"><button type="button" class="btn btn--neutral btn--app tab btn--sm" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
 <div class="seg-ctrl" role="group" aria-label="Za życiem"><sc-for list="{{zzOpts}}" as="o" hint-placeholder-count="2"><button type="button" class="btn btn--neutral btn--app tab btn--sm" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
-<div class="seg-ctrl" role="group" aria-label="Hospitalizacja"><sc-for list="{{hospOpts}}" as="o" hint-placeholder-count="2"><button type="button" class="btn btn--neutral btn--app tab btn--sm" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
-<sc-if value="{{hospNote}}" hint-placeholder-val="{{false}}"><p class="t-body">[DO USTALENIA: pytania o tydzień ciąży, masę urodzeniową i pobyt w szpitalu do urlopu uzupełniającego]</p></sc-if>
+<p class="t-body">Hospitalizacja i wcześniactwo: w tym demo nie liczymy urlopu uzupełniającego.</p>
 </div>
 </sc-if>
 </div>
 <div class="stack-sm" style="order: 9">
-<span class="t-label" id="pay-l">Sposób wypłaty</span>
-<div class="seg-ctrl" role="group" aria-labelledby="pay-l"><sc-for list="{{payOpts}}" as="o" hint-placeholder-count="2"><button type="button" class="btn btn--neutral btn--app tab btn--sm" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
-<p class="t-body">Wniosek o 81,5% składa się do 21 dni po porodzie, a przy 100%, potem 70%, możliwe jest wyrównanie. W tym przykładzie stawki dzienne są już ustalone: 140 zł i 105 zł brutto.</p>
+<span class="t-label">Sposób wypłaty</span>
+<p class="t-body">81,5% przez cały okres albo 100%, potem 70%. Wniosek o 81,5% składa się do 21 dni po porodzie. <strong>W tym demo nie przeliczamy kwot według sposobu wypłaty</strong>, bo przykładowe stawki dzienne są stałe.</p>
 </div>
 <div class="stack" style="order: 10">
 <div class="btn-row">
@@ -1455,6 +1464,36 @@ body{margin:0}
 </section>
 </sc-if>
 
+<sc-if value="{{cs.isUsc}}" hint-placeholder-val="{{false}}">
+<section class="card stack" aria-labelledby="usc-h">
+<h2 class="t-h3" id="usc-h">Zgłoszenie urodzenia</h2>
+<dl class="sum">
+<div class="sum__row" id="k-row" tabindex="-1"><dt class="sum__label">Data wystawienia karty urodzenia</dt><dd class="sum__value">{{cs.kValue}}</dd><dd class="sum__src"><span class="src">{{cs.kSrc}}</span></dd><dd class="sum__act"><button type="button" class="link-btn" onClick="{{cs.kOpen}}">{{cs.kBtn}}<span class="sr">: data wystawienia karty urodzenia</span></button></dd></div>
+<div class="sum__row"><dt class="sum__label">Termin zgłoszenia</dt><dd class="sum__value">{{cs.kTerm}}</dd><dd class="sum__src"><span class="src">{{cs.kTermSrc}}</span></dd><dd class="sum__act"></dd></div>
+<div class="sum__row"><dt class="sum__label">Imię i nazwisko dziecka</dt><dd class="sum__value">{{cs.childFull}}</dd><dd class="sum__src"><span class="src">Dane fikcyjne</span></dd><dd class="sum__act"></dd></div>
+<div class="sum__row"><dt class="sum__label">Miejsce urodzenia</dt><dd class="sum__value">Warszawa</dd><dd class="sum__src"><span class="src">Dane fikcyjne</span></dd><dd class="sum__act"></dd></div>
+<div class="sum__row"><dt class="sum__label">Dane rodziców do formularza</dt><dd class="sum__value">{{cs.parentName}}</dd><dd class="sum__src"><span class="src">Dane fikcyjne</span></dd><dd class="sum__act"></dd></div>
+<div class="sum__row"><dt class="sum__label">Identyfikator dziecka</dt><dd class="sum__value">Brak danych</dd><dd class="sum__src"><span class="src">Uzupełniane w odpowiednim momencie</span></dd><dd class="sum__act"></dd></div>
+<div class="sum__row"><dt class="sum__label">Sposób przekazania i potwierdzenie</dt><dd class="sum__value">[DO USTALENIA: według aktualnej strony gov.pl]</dd><dd class="sum__src"><span class="src">Do sprawdzenia</span></dd><dd class="sum__act"></dd></div>
+<div class="sum__row"><dt class="sum__label">Potwierdzenie rejestracji w USC</dt><dd class="sum__value">{{cs.uscConfirm}}</dd><dd class="sum__src"><span class="src">Podane przez Ciebie</span></dd><dd class="sum__act"></dd></div>
+</dl>
+<sc-if value="{{cs.kEdit}}" hint-placeholder-val="{{false}}">
+<div class="inline-edit">
+<fieldset class="date" aria-describedby="k-ed-err">
+<legend class="date__legend">Data wystawienia karty urodzenia</legend>
+<div class="date__parts">
+<div class="date__part"><label class="field-label" for="k-ed-d">Dzień</label><div class="field"><input class="field__input" id="k-ed-d" type="text" inputMode="numeric" maxLength="2" value="{{cs.kv.day}}" onChange="{{cs.onKD}}" aria-invalid="{{cs.kInv}}"></div></div>
+<div class="date__part"><label class="field-label" for="k-ed-m">Miesiąc</label><div class="field"><input class="field__input" id="k-ed-m" type="text" inputMode="numeric" maxLength="2" value="{{cs.kv.month}}" onChange="{{cs.onKM}}" aria-invalid="{{cs.kInv}}"></div></div>
+<div class="date__part date__part--year"><label class="field-label" for="k-ed-y">Rok</label><div class="field"><input class="field__input" id="k-ed-y" type="text" inputMode="numeric" maxLength="4" value="{{cs.kv.year}}" onChange="{{cs.onKY}}" aria-invalid="{{cs.kInv}}"></div></div>
+</div>
+<sc-if value="{{cs.kErr}}" hint-placeholder-val="{{false}}"><p class="field-message field-message--todo" id="k-ed-err"><svg class="field-message__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3"/><path d="M8 5v3.5M8 11v.1"/></svg><span>{{cs.kErrText}}</span></p></sc-if>
+</fieldset>
+<div class="btn-row"><button type="button" class="btn btn--secondary btn--app" onClick="{{cs.kSave}}">Zapisz</button><button type="button" class="link-btn" onClick="{{cs.kCancel}}">Anuluj</button></div>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
 <sc-if value="{{cs.hasHow}}" hint-placeholder-val="{{false}}">
 <section class="stack-sm" aria-labelledby="how-h"><h2 class="t-h3" id="how-h">Jak złożyć</h2>
 <dl class="howto"><sc-for list="{{cs.how}}" as="h" hint-placeholder-count="4"><div class="howto__row"><dt>{{h.k}}</dt><dd>{{h.val}}</dd></div></sc-for></dl></section>
@@ -1607,6 +1646,7 @@ body{margin:0}
 <!-- ======================= ZUSIK (S13) ======================= -->
 <sc-if value="{{zpOpen}}" hint-placeholder-val="{{false}}">
 <section class="{{zpCls}}" role="dialog" aria-labelledby="zp-title" onKeyDown="{{zpKey}}">
+<sc-if value="{{isSplit}}" hint-placeholder-val="{{false}}"><div class="zp__sep" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Szerokość panelu Zusika (strzałki w lewo i w prawo)" aria-valuemin="30" aria-valuemax="70" aria-valuenow="{{zpW}}" aria-valuetext="Panel zajmuje {{zpW}}% szerokości" onKeyDown="{{sepKey}}" onPointerDown="{{sepDown}}" onPointerMove="{{sepMove}}" onPointerUp="{{sepUp}}"></div></sc-if>
 <div class="zp__head">
 <div class="row-between">
 <div class="row"><span class="blob blob--sm" aria-hidden="true"></span><h2 class="zp__title" id="zp-title" tabindex="-1">Zusik · asystent AI</h2><span class="badge badge--ai">AI</span></div>
@@ -1617,6 +1657,7 @@ body{margin:0}
 <button type="button" class="btn btn--neutral btn--app tab" aria-pressed="{{histOpen}}" onClick="{{toggleHist}}">Historia</button>
 <button type="button" class="btn btn--neutral btn--app" onClick="{{newConv}}">Nowa rozmowa</button>
 <button type="button" class="btn btn--neutral btn--app" onClick="{{toggleFull}}">{{zpFullLabel}}</button>
+<sc-if value="{{isOjcKey}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn--neutral btn--app tab" aria-pressed="{{failNext}}" onClick="{{toggleFail}}">Demo: błąd zapisu</button></sc-if>
 </div>
 </div>
 <sc-if value="{{fragOjc}}" hint-placeholder-val="{{false}}"><div class="zp__frag"><dl class="sum"><div class="{{fragCls}}"><dt class="sum__label">Początek urlopu</dt><dd class="sum__value">{{fragStart}}</dd><dd class="sum__src"><sc-if value="{{fragHl}}" hint-placeholder-val="{{false}}"><span class="changed-note"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>Zaktualizowano</span></sc-if></dd></div></dl></div></sc-if>
@@ -1637,6 +1678,7 @@ body{margin:0}
 <sc-if value="{{m.hasOk}}" hint-placeholder-val="{{false}}"><span class="msg__ok msg__text"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>{{m.ok}}</span></sc-if>
 <sc-if value="{{m.hasAnnot}}" hint-placeholder-val="{{false}}"><div class="annot"><button type="button" class="link-btn" onClick="{{m.goField}}">{{m.annot.field}} ↗</button><span class="t-body">{{m.annotLine}}</span><span class="t-body">{{m.annot.where}}</span></div></sc-if>
 <sc-if value="{{m.hasText}}" hint-placeholder-val="{{true}}"><p class="msg__text">{{m.text}}</p></sc-if>
+<sc-if value="{{m.hasSaveErr}}" hint-placeholder-val="{{false}}"><div class="save-err" role="alert"><p class="field-message"><svg class="field-message__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3"/><path d="M8 5v3.5M8 11v.1"/></svg>Zapis się nie powiódł.</p><span class="t-body">{{m.curVal}}</span><div><button type="button" class="btn btn--secondary btn--app btn--sm" disabled="{{m.retryBusy}}" onClick="{{m.retry}}">{{m.retryLabel}}</button></div></div></sc-if>
 <sc-if value="{{m.hasErr}}" hint-placeholder-val="{{false}}"><p class="field-message"><svg class="field-message__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3"/><path d="M8 5v3.5M8 11v.1"/></svg>{{m.err}}</p></sc-if>
 <sc-if value="{{m.hasCite}}" hint-placeholder-val="{{false}}"><div class="cite"><button type="button" class="link-btn" aria-expanded="{{m.citeExp}}" onClick="{{m.toggleCite}}">{{m.cite.label}}</button><sc-if value="{{m.citeOpen}}" hint-placeholder-val="{{false}}"><blockquote class="cite__q">„{{m.cite.quote}}”<br><span class="t-body">{{m.cite.srcName}}</span></blockquote></sc-if></div></sc-if>
 <sc-if value="{{m.hasFlag}}" hint-placeholder-val="{{false}}"><div class="flag-line"><strong>⚑ {{m.flag.act}}</strong><span class="t-body">{{m.flag.base}}</span><button type="button" class="link-btn" aria-expanded="{{m.flagExp}}" onClick="{{m.toggleFlag}}">Skąd ten termin?</button><sc-if value="{{m.flagOpen}}" hint-placeholder-val="{{false}}"><p class="cite__q">{{m.flag.why}}</p></sc-if></div></sc-if>
@@ -1824,26 +1866,26 @@ class Component extends DCLogic {
       plan: 'ola', example: false, regNote: null,
       view: 'plan', caseId: null, from: null,
       list: false, selStop: null, sheet: false, selOpen: false, showNow: false, bannerStage: null,
-      uscDone: false, ticks: {}, zdrDone: false,
-      ojc: { start: null, prev: null, status: 'szkic', hl: false, edit: false, ed: { day: '', month: '', year: '' }, edTried: false },
-      mac: { attached: false, sent: false, pick: false, upp: false, orig: false },
-      calc: { A: { mode: 'seq', d1: 28, d2: 28 }, B: null, sel: 'A', edit: false, whyOpen: false, assumeOpen: false, pay: '815', kids: 1, zz: false, hosp: false, applied: null, poolOpen: false, err: null, saved: null },
+      store: {}, resumed: false,
       docs: { tab: 'cases', filter: null },
-      zp: { open: false, key: 'plan', full: false, hist: false, gen: false, model: 'PLLuM', modelOpen: false, cal: false, calY: 2027, calM: 5, stopNote: null },
-      convs: {}, drafts: {}, atts: {},
+      zp: { open: false, key: 'plan', full: false, hist: false, gen: false, model: 'PLLuM', modelOpen: false, cal: false, calY: 2027, calM: 5, stopNote: null, w: 50, failNext: false },
       prof: { fetched: '21 listopada 2026, 9:00', refreshing: false, ask: '', askErr: false, asked: [] },
       test: { step: 1, file: null, loading: false, confirm: false, fields: { podstawa: '6812,40', tytul: 'Umowa o pracę', porod: '' }, edit: null, edVal: '', opened: false, maxStep: 1 },
       live: ''
     };
+    Object.assign(this.state, Component.defaults('ola'));
     this.onWin = this.onWin.bind(this);
     this.timer = null;
   }
 
-  componentDidMount() { var self = this; this.onResize = function () { clearTimeout(self.rt); self.rt = setTimeout(function () { self.centerPion(false); self.onWin(); }, 120); }; try { window.addEventListener('scroll', this.onWin, { passive: true }); window.addEventListener('resize', this.onResize); } catch (e) {} }
+  componentDidMount() { var self = this;
+    try { var raw = window.localStorage.getItem(Component.OBKEY()); if (raw) { var sv = JSON.parse(raw); if (sv && sv.ob && sv.ob.step && sv.ob.step !== 'start') this.setState({ ob: Object.assign({}, this.state.ob, sv.ob, { whyOpen: false }), resumed: true, live: 'Wznowiono od ostatniego pytania' }); } } catch (e) {}
+    this.onResize = function () { clearTimeout(self.rt); self.rt = setTimeout(function () { self.centerPion(false); self.onWin(); }, 120); }; try { window.addEventListener('scroll', this.onWin, { passive: true }); window.addEventListener('resize', this.onResize); } catch (e) {} }
   componentWillUnmount() { try { window.removeEventListener('scroll', this.onWin); window.removeEventListener('resize', this.onResize); } catch (e) {} if (this.timer) clearTimeout(this.timer); }
 
   componentDidUpdate(pp, ps) {
     var st = this.state;
+    if (ps.ob !== st.ob || ps.entered !== st.entered) this.saveOb();
     var moved = ps.view !== st.view || ps.caseId !== st.caseId || ps.entered !== st.entered || ps.ob.step !== st.ob.step || ps.plan !== st.plan || ps.test.step !== st.test.step;
     if (moved) {
       try { window.scrollTo(0, 0); } catch (e) {}
@@ -1858,6 +1900,48 @@ class Component extends DCLogic {
       if (o && document.body.contains(o)) o.focus(); else { var f = document.querySelector('.fab, .pion'); if (f) f.focus(); }
     }
     if (this.focusSel) { var el = document.querySelector(this.focusSel); this.focusSel = null; if (el) { el.focus(); try { el.scrollIntoView({ block: 'center' }); } catch (e) {} } }
+  }
+
+  /* ---------- dane planu: każdy plan ma własny magazyn (plan przykładowy nie zmienia planu Oli) ---------- */
+  static dataKeys() { return ['uscDone', 'ticks', 'zdrDone', 'ojc', 'mac', 'calc', 'karta', 'kartaEd', 'convs', 'drafts', 'atts', 'citeOpen', 'flagOpen']; }
+  static defaults(p) {
+    return {
+      uscDone: false, ticks: {}, zdrDone: false,
+      ojc: { start: null, prev: null, status: 'szkic', hl: false, edit: false, ed: { day: '', month: '', year: '' }, edTried: false, ver: 0 },
+      mac: { attached: false, sent: false, pick: false, upp: false, orig: false },
+      calc: { A: { mode: 'seq', d1: 28, d2: 28 }, B: null, sel: 'A', edit: false, whyOpen: false, assumeOpen: false, kids: 1, zz: false, applied: null, poolOpen: false, err: null, saved: null },
+      karta: p === 'ola' ? new Date(2026, 10, 10) : null,
+      kartaEd: { open: false, v: { day: '', month: '', year: '' }, tried: false },
+      convs: {}, drafts: {}, atts: {}, citeOpen: {}, flagOpen: {}
+    };
+  }
+  switchPlan(p, extra) {
+    this.setState(function (prev) {
+      var o = Object.assign({}, extra || {});
+      if (prev.plan !== p) {
+        var store = Object.assign({}, prev.store), cur = {};
+        Component.dataKeys().forEach(function (k) { cur[k] = prev[k]; });
+        store[prev.plan] = cur;
+        Object.assign(o, store[p] || Component.defaults(p), { store: store, plan: p, selStop: null, zp: Object.assign({}, prev.zp, { open: false, hist: false, cal: false }) });
+        if (prev.view === 'case' && !('view' in o)) { o.view = 'plan'; o.caseId = null; o.from = null; }
+      }
+      return o;
+    });
+  }
+
+  /* ---------- pamięć demonstracji: wznowienie przerwanego onboardingu ---------- */
+  static OBKEY() { return 'przewodnik-rodzica-demo-onboarding-v1'; }
+  saveOb() {
+    try {
+      var st = this.state;
+      if (st.entered || st.ob.step === 'start') window.localStorage.removeItem(Component.OBKEY());
+      else window.localStorage.setItem(Component.OBKEY(), JSON.stringify({ ob: st.ob, at: Date.now() }));
+    } catch (e) {}
+  }
+  resetOb() {
+    try { window.localStorage.removeItem(Component.OBKEY()); } catch (e) {}
+    this.setState({ resumed: false, live: 'Zaczynamy od nowa' });
+    this.set('ob', { step: 'start', who: null, child: null, role: null, d: { day: '', month: '', year: '' }, dTried: false, dLater: false, count: null, name: '', job: null, ret: null, nameSaved: false, whyOpen: false });
   }
 
   /* ---------- pomocnicze ---------- */
@@ -1967,7 +2051,7 @@ class Component extends DCLogic {
       var p = Component.parseD(ob.d);
       if (p.date && Component.days(new Date(2026, 10, 10), p.date) !== 0) regNote = 'Zaktualizowano z rejestru: ' + Component.fmt(p.date) + ' → 10 listopada 2026';
     }
-    this.setState({ entered: true, plan: plan, example: example, regNote: regNote, view: 'plan', caseId: null, selStop: null, list: false, live: 'Otwarto Mój plan' });
+    this.switchPlan(plan, { entered: true, example: example, regNote: regNote, view: 'plan', caseId: null, selStop: null, list: false, resumed: false, live: 'Otwarto Mój plan' });
   }
 
   /* ---------- dane planów ---------- */
@@ -1986,7 +2070,13 @@ class Component extends DCLogic {
       def({ id: 'ub', type: 'info', name: 'Sprawdź swoje ubezpieczenie chorobowe', stage: 0, status: 'Załatwione', ticked: true, why: 'Ubezpieczenie chorobowe decyduje o prawie do zasiłku.', src: ['zus.pl · zasiłek macierzyński', 'https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty'] });
       def({ id: 'zch', type: 'wniosek', name: 'Zasiłek chorobowy w ciąży', stage: 1, status: 'Załatwione', goal: 'Świadczenia i zasiłki', to: 'ZUS', end: 'Oznaczone przez Ciebie jako załatwione', why: 'Zwolnienie w ciąży z kodem B daje zasiłek chorobowy 100%.' });
       def({ id: 'plan81', type: 'wniosek', name: 'Zaplanuj urlopy i sposób wypłaty', stage: 1, status: 'Załatwione', goal: 'Urlopy', to: 'Pracodawca', end: 'Oznaczone przez Ciebie jako załatwione', why: 'Wniosek o 81,5% składa się do 21 dni po porodzie.', action: ['Otwórz kalkulator', 'calc'] });
-      def({ id: 'usc', type: 'obowiazek', name: st.plan === 'example' ? 'Zgłoś urodzenie dziecka' : 'Zgłoś urodzenie Oli', stage: 2, status: st.uscDone ? 'Załatwione' : 'Do zrobienia', goal: 'Rejestracja i ubezpieczenie', to: 'Urząd stanu cywilnego', term: 'do 1 grudnia 2026', termShort: 'do 1 grudnia', due: new Date(2026, 11, 1), base: '21 dni od urodzenia (10 listopada 2026)', why: 'Urodzenie każdego dziecka trzeba zgłosić w urzędzie stanu cywilnego.', prep: ['Dowód osobisty osoby zgłaszającej', '[DO USTALENIA: pełna lista według aktualnej strony gov.pl]'], how: ['Zgłoszenie urodzenia dziecka', 'Urząd stanu cywilnego · tam rejestruje się urodzenie', '1 grudnia 2026 · 21 dni od urodzenia', '[DO USTALENIA: według gov.pl]'], src: ['gov.pl · Zgłoś urodzenie dziecka', 'https://www.gov.pl/web/gov/zglos-urodzenie-dziecka'], action: ['Zobacz, jak zgłosić', 'case'], end: 'Oznaczone przez Ciebie jako załatwione' });
+      var K = st.karta, KD = K ? C.add(K, 21) : null, childFull = st.plan === 'example' ? 'Dziecko Kowalskich' : 'Ola Przykładowa';
+      def({ id: 'usc', type: 'obowiazek', name: st.plan === 'example' ? 'Zgłoś urodzenie dziecka' : 'Zgłoś urodzenie Oli', stage: 2, status: st.uscDone ? 'Załatwione' : 'Do zrobienia', goal: 'Rejestracja i ubezpieczenie', to: 'Urząd stanu cywilnego',
+        term: KD ? 'do ' + C.fmt(KD) : 'Uzupełnij datę', termShort: KD ? 'do ' + C.fmt(KD, true) : 'uzupełnij datę', due: KD, needDate: !K,
+        base: K ? '21 dni od wystawienia karty urodzenia (' + C.fmt(K) + ')' : 'Termin liczymy od wystawienia karty urodzenia. Uzupełnij datę, a policzymy termin.',
+        why: 'Zgłoszenie urodzenia to obowiązek. Robisz je w urzędzie stanu cywilnego.',
+        how: ['Zgłoszenie urodzenia dziecka', 'Urząd stanu cywilnego', KD ? C.fmt(KD) + ' · 21 dni od wystawienia karty urodzenia (' + C.fmt(K) + ')' : 'Uzupełnij datę wystawienia karty urodzenia', '[DO USTALENIA: według aktualnej strony gov.pl]'],
+        src: ['gov.pl · Zgłoś urodzenie dziecka', 'https://www.gov.pl/web/gov/zglos-urodzenie-dziecka'], action: [K ? 'Zobacz, jak zgłosić' : 'Uzupełnij datę', K ? 'case' : 'karta'], end: 'Oznaczone przez Ciebie jako załatwione', childFull: childFull });
       def({ id: 'mac', type: 'wniosek', name: 'Wniosek o urlop i zasiłek macierzyński', stage: 2, status: st.mac.sent ? 'Wysłane' : 'Wymaga uwagi', wez: !st.mac.sent, goal: 'Świadczenia i zasiłki', to: 'Pracodawca i ZUS', term: st.mac.sent ? 'wysłano uzupełnienie 21 listopada 2026' : 'do 5 grudnia 2026 · wezwanie', termShort: 'do 5 grudnia', due: new Date(2026, 11, 5), base: 'termin z wezwania ZUS z 20 listopada 2026', why: 'ZUS prosi o uzupełnienie wniosku o zasiłek macierzyński.', prep: ['Zaświadczenie ze szpitala wskazane w piśmie'], how: ['Uzupełnienie wniosku o zasiłek macierzyński (ZAM)', 'ZUS · wezwanie przyszło z ZUS', '5 grudnia 2026 · termin z wezwania', 'Zaświadczenie ze szpitala wskazane w piśmie'], src: ['zus.pl · niezbędne dokumenty', 'https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty'], action: [st.mac.sent ? 'Zobacz przebieg sprawy' : 'Otwórz wezwanie', 'case'] });
       def({ id: 'z3', type: 'samo', name: 'Pracodawca przekaże Z-3 do ZUS', stage: 2, status: 'Załatwione', why: 'Nic nie musisz robić. Pracodawca przekaże zaświadczenie Z-3 do ZUS.', who: 'Pracodawca' });
       def({ id: 'bad', type: 'zdrowie', name: 'Badania przesiewowe noworodka', stage: 2, status: st.ticks.bad ? 'Załatwione' : 'Do zrobienia', ticked: !!st.ticks.bad, tickable: true, why: 'Program zdrowotny dla noworodków. Omów szczegóły z lekarzem lub położną.', src: ['pacjent.gov.pl [DO USTALENIA: dokładny adres]', ''] });
@@ -2041,6 +2131,11 @@ class Component extends DCLogic {
     return { S: S, stages: olaStages, child: child };
   }
 
+  openKarta() {
+    var K = this.state.karta;
+    this.setState({ kartaEd: { open: true, tried: false, v: K ? { day: String(K.getDate()), month: String(K.getMonth() + 1), year: String(K.getFullYear()) } : { day: '', month: '', year: '' } } });
+    this.focusSel = '#k-ed-d';
+  }
   isDone(s) { return s.status === 'Załatwione' || s.status === 'Wysłane'; }
 
   /* ---------- akcje nawigacji ---------- */
@@ -2099,8 +2194,8 @@ class Component extends DCLogic {
       if (t.indexOf('etat') >= 0) return { who: 'z', text: 'Przy pracy do połowy etatu urlop rodzicielski wydłuża się proporcjonalnie, a zasiłek maleje proporcjonalnie do wymiaru pracy (art. 31 ust. 4a).', q: 'Ten wariant kalkulator policzy w kolejnej wersji demo.', sugs: ['Skąd ta kwota?', 'Czym różnią się moje warianty?'] };
     }
     if (t.indexOf('teraz') >= 0 || t.indexOf('załatwić') >= 0) { var n = this.nextCase(); return { who: 'z', text: n ? 'Najbliższa sprawa: ' + n.name + (n.term ? ' · ' + n.term : '') + '.' : 'Na dziś masz wszystko załatwione.', sugs: ['Od czego liczy się ten termin?', 'Jakie dokumenty przygotować?'] }; }
-    if (t.indexOf('termin') >= 0 || t.indexOf('liczy') >= 0) return { who: 'z', text: 'Zgłoszenie urodzenia liczymy od dnia urodzenia.', flag: { act: 'Zgłoś urodzenie Oli do 1 grudnia', base: 'Urodzenie Oli · 10 listopada', why: 'Urodzenie zgłasza się w ciągu 21 dni (gov.pl · Zgłoś urodzenie dziecka). [DO USTALENIA: cytat ze źródła RAG]' }, sugs: ['Jakie dokumenty przygotować?', 'Co mam teraz załatwić?'] };
-    if (t.indexOf('dokument') >= 0) return { who: 'z', text: 'Do zgłoszenia urodzenia przygotuj dowód osobisty osoby zgłaszającej.', q: '[DO USTALENIA: pełna lista według gov.pl]', sugs: ['Od czego liczy się ten termin?', 'Co mam teraz załatwić?'] };
+    if (t.indexOf('termin') >= 0 || t.indexOf('liczy') >= 0) { if (!st.karta) return { who: 'z', text: 'Termin zgłoszenia urodzenia liczymy od wystawienia karty urodzenia.', q: 'Kiedy wystawiono kartę urodzenia? Uzupełnij datę w sprawie, a policzę termin.', sugs: ['Jakie dokumenty przygotować?', 'Co mam teraz załatwić?'] }; return { who: 'z', text: 'Termin zgłoszenia urodzenia liczymy od wystawienia karty urodzenia: 21 dni.', flag: { act: 'Zgłoś urodzenie do ' + C.fmt(C.add(st.karta, 21), true), base: 'Wystawienie karty urodzenia · ' + C.fmt(st.karta, true), why: '21 dni od wystawienia karty urodzenia (gov.pl · Zgłoś urodzenie dziecka). [DO USTALENIA: cytat ze źródła RAG]' }, sugs: ['Jakie dokumenty przygotować?', 'Co mam teraz załatwić?'] }; }
+    if (t.indexOf('dokument') >= 0) return { who: 'z', text: 'W sprawie zgłoszenia urodzenia potrzebna jest data wystawienia karty urodzenia.', q: '[DO USTALENIA: lista dokumentów według aktualnej strony gov.pl]', sugs: ['Od czego liczy się ten termin?', 'Co mam teraz załatwić?'] };
     if (t.indexOf('rejestr') >= 0) return { who: 'z', text: 'Dane z rejestru są zablokowane. Poprawia je właściwy urząd.', sugs: ['Czym jest sprawa testowa?', 'Co zawiera konto w ZUS?'] };
     if (t.indexOf('testow') >= 0) return { who: 'z', text: 'Sprawa testowa to osobny plan z plakietką Test. Wgrywasz PDF, sprawdzasz odczytane dane i widzisz wynik.', sugs: ['Co zawiera konto w ZUS?', 'Jak poprawić dane z rejestru?'] };
     return { who: 'z', text: 'Nie udało mi się tego ustalić w materiałach demo.', q: '[DO USTALENIA: odpowiedź modelu z RAG]', sugs: this.starters(key).slice(0, 2) };
@@ -2134,9 +2229,32 @@ class Component extends DCLogic {
   finish() {
     var p = this.pending; this.pending = null; this.timer = null;
     if (!p) return;
+    if (p.r.save && this.state.zp.failNext) {
+      var cur = this.state.ojc.start;
+      this.pushMsgs('ojc', [{ who: 'z', saveErr: true, text: 'Nie udało się zapisać daty ' + Component.fmt(p.r.save) + '.', curVal: 'Początek urlopu: ' + (cur ? Component.fmt(cur) : 'puste'), retry: { date: p.r.save.getTime(), ver: this.state.ojc.ver || 0 } }]);
+      this.set('zp', { gen: false, failNext: false });
+      this.say('Nie udało się zapisać daty');
+      return;
+    }
     if (p.r.save) { this.saveOjc(p.r.save, true); }
     else this.pushMsgs(p.key, [p.r]);
     this.set('zp', { gen: false });
+  }
+  updMsg(key, idx, patch) { this.setState(function (prev) { var c = Object.assign({}, prev.convs); var arr = (c[key] || []).slice(); arr[idx] = Object.assign({}, arr[idx], patch); c[key] = arr; return { convs: c }; }); }
+  retrySave(idx) {
+    var self = this, C = Component, m = (this.state.convs.ojc || [])[idx];
+    if (!m || !m.retry) return;
+    this.updMsg('ojc', idx, { retrying: true });
+    setTimeout(function () {
+      var o = self.state.ojc, date = new Date(m.retry.date);
+      if ((o.ver || 0) !== m.retry.ver) {
+        self.updMsg('ojc', idx, { saveErr: false, retrying: false, retry: null, text: 'W szkicu jest już Twoja poprawka. Początek urlopu: ' + (o.start ? C.fmt(o.start) : 'puste') + '.', annot: { field: 'Początek urlopu', from: C.fmt(date, true) + ' (nie zapisano)', to: o.start ? C.fmt(o.start, true) : 'puste', where: 'Zachowano Twoją poprawkę' } });
+        self.say('Zachowano Twoją poprawkę');
+        return;
+      }
+      var prev = o.start;
+      if (self.saveOjc(date, false)) self.updMsg('ojc', idx, { saveErr: false, retrying: false, retry: null, text: '', ok: 'Zapisałem datę w szkicu.', annot: { field: 'Początek urlopu', from: prev ? C.fmt(prev, true) : 'puste', to: C.fmt(date, true), where: 'Zapisane w szkicu Oli' } });
+    }, 700);
   }
   stop() {
     var p = this.pending; if (!p) return;
@@ -2153,7 +2271,7 @@ class Component extends DCLogic {
       return false;
     }
     var status = o.status === 'wyslany' ? 'wyslany' : 'wypelniony';
-    this.set('ojc', { start: date, prev: prev, hl: true, status: status, edit: false });
+    this.set('ojc', { start: date, prev: prev, hl: true, status: status, edit: false, ver: (o.ver || 0) + 1 });
     if (fromChat) this.pushMsgs('ojc', [{ who: 'z', ok: 'Zapisałem datę w szkicu.', annot: { field: 'Początek urlopu', from: prev ? C.fmt(prev, true) : 'puste', to: C.fmt(date, true), where: 'Zapisane w szkicu Oli' }, q: 'Sprawdź wniosek. Czy coś jeszcze zmienić?', sugs: ['Jak wybrać datę końca?', 'Czego jeszcze brakuje?'] }]);
     this.say('Zaktualizowano pole Początek urlopu: ' + C.fmt(date));
     return true;
@@ -2213,6 +2331,7 @@ class Component extends DCLogic {
 
     /* ---------- ONBOARDING ---------- */
     v.isOb = !st.entered; v.isApp = st.entered;
+    v.resumed = !st.entered && st.resumed && st.ob.step !== 'start'; v.resetOb = function () { self.resetOb(); };
     if (!st.entered) {
       var steps = this.obSteps(ob), idx = steps.indexOf(ob.step);
       var WHO = [['plan', 'Planuję rodzicielstwo'], ['expect', 'Spodziewamy się dziecka'], ['born', 'Dziecko jest już z nami'], ['adopt', 'Adopcja'], ['foster', 'Rodzina zastępcza']];
@@ -2288,8 +2407,8 @@ class Component extends DCLogic {
       v.startToggle = function () { self.set('ob', { startOpen: !self.state.ob.startOpen }); };
       v.startOpen = ob.startOpen; v.startExp = ob.startOpen ? 'true' : 'false';
       v.goStart = function () { self.set('ob', { step: 'who' }); };
-      v.lookAround = function () { self.setState({ entered: true, plan: 'example', example: true, view: 'plan', live: 'Otwarto plan przykładowy' }); };
-      v.goSupportOb = function () { self.setState({ entered: true, view: 'support', from: { view: 'ob' }, plan: 'example', example: true }); };
+      v.lookAround = function () { self.switchPlan('example', { entered: true, example: true, view: 'plan', live: 'Otwarto plan przykładowy' }); };
+      v.goSupportOb = function () { self.switchPlan('example', { entered: true, view: 'support', from: { view: 'ob' }, example: true }); };
       /* dane startowe */
       var lockSr = 'Dane z ZUS, nie do edycji';
       var who = WHO.filter(function (w) { return w[0] === ob.who; })[0];
@@ -2332,7 +2451,7 @@ class Component extends DCLogic {
       v.selName = planMeta[0]; v.selSub = planMeta[1];
       v.selOpen = st.selOpen; v.selExp = st.selOpen ? 'true' : 'false';
       v.toggleSel = function () { self.setState({ selOpen: !self.state.selOpen }); };
-      var pickPlan = function (p, ex) { return function () { self.setState({ plan: p, example: !!ex, selOpen: false, selStop: null, regNote: null, live: 'Przełączono plan' }); }; };
+      var pickPlan = function (p, ex) { return function () { self.switchPlan(p, { example: !!ex, selOpen: false, selStop: null, regNote: null, live: 'Przełączono plan' }); }; };
       var items = [
         { label: 'Ola · 11 dni', meta: 'dane z rejestru', lock: true, badge: '', hasBadge: false, cur: st.plan === 'ola' ? 'true' : 'false', pick: pickPlan('ola') },
         { label: 'Oczekiwane dziecko · maj 2027', meta: 'planowane', lock: false, badge: '', hasBadge: false, cur: st.plan === 'expected' ? 'true' : 'false', pick: pickPlan('expected') }
@@ -2468,7 +2587,7 @@ class Component extends DCLogic {
       if (shown) {
         var left = shown.due ? C.days(DEMO, shown.due) : null;
         var nx = {
-          title: shown.name + (shown.term && shown.due ? ' · ' + shown.term.split(' · ')[0] : ''), left: left != null ? 'zostało ' + left + ' ' + C.plural(left, 'dzień', 'dni', 'dni') : '', hasLeft: left != null,
+          title: shown.name + (shown.due ? ' · ' + shown.term.split(' · ')[0] : ''), needDate: !!shown.needDate, left: left != null ? 'zostało ' + left + ' ' + C.plural(left, 'dzień', 'dni', 'dni') : '', hasLeft: left != null,
           to: shown.to || shown.who || '', hasTo: !!(shown.to || shown.who), why: shown.why || '', status: shown.status, forWho: P.child === 'Oli' ? 'Dla Oli' : 'Dla dziecka z planu',
           base: shown.base ? 'Liczymy od: ' + shown.base : (shown.cond ? 'Kiedy: ' + shown.cond : ''), hasBase: !!(shown.base || shown.cond),
           prep: (shown.prep || []).map(function (p) { return { t: p }; }), hasPrep: !!(shown.prep && shown.prep.length),
@@ -2485,6 +2604,7 @@ class Component extends DCLogic {
         nx.act = function (e) {
           if (!act) return;
           if (act[1] === 'tick') { var tk = Object.assign({}, self.state.ticks); tk[shown.id] = !tk[shown.id]; self.setState({ ticks: tk, live: tk[shown.id] ? 'Odhaczono: ' + shown.name : 'Cofnięto odhaczenie' }); return; }
+          if (act[1] === 'karta') { self.openCase('usc', { view: 'plan', focus: '.next__title' }); self.openKarta(); return; }
           if (act[1] === 'calc') { self.setState({ sheet: false }); self.focusSel = '#calc-title'; self.forceUpdate(); return; }
           if (act[1] === 'zusik') { self.openCase(shown.id, { view: 'plan', focus: '.next__title' }); var op = e.currentTarget; setTimeout(function () { self.openZp(shown.id === 'mac' ? 'mac' : 'ojc', op); }, 0); return; }
           self.openCase(shown.id, { view: 'plan', focus: '.next__title' });
@@ -2521,34 +2641,31 @@ class Component extends DCLogic {
       var vA = mkVar(R.A), vB = mkVar(R.B);
       v.variants = vB ? [vA, vB] : [vA];
       v.variantsCls = 'variants' + (vB ? ' variants--2' : '');
-      var act = R[c.sel] || R.A;
-      v.kDays = act.days + ' dni'; v.kTotal = C.money(act.total);
+      var actV = R[c.sel] || R.A;
+      v.kDays = actV.days + ' dni'; v.kTotal = C.money(actV.total);
       v.hasB = !!R.B; v.diffHead = R.head || ''; v.diffSentence = cm.diffSentence;
       v.abSwitch = ['A', 'B'].map(function (k) { return { label: 'Wariant ' + k, pressed: c.sel === k ? 'true' : 'false', pick: function () { self.set('calc', { sel: k }); } }; });
-      var over = act.over, leftW = Math.round(act.left * 10) / 10;
+      var over = actV.over, leftW = Math.round(actV.left * 10) / 10;
       v.pool = {
-        cls: 'card pool ' + (act.err1 || act.err2 ? 'pool--over' : (leftW === 0 ? 'pool--full' : 'pool--left')),
-        title: (act.err1 || act.err2) ? (over ? String(Math.round(over * 10) / 10).replace('.', ',') : '1') + ' tyg. za dużo' : (leftW === 0 ? 'Wszystkie tygodnie w planie' : 'Zostało ' + String(leftW).replace('.', ',') + ' tyg. do zaplanowania'),
-        isOver: !!(act.err1 || act.err2), isFull: !(act.err1 || act.err2) && leftW === 0, isLeft: !(act.err1 || act.err2) && leftW !== 0,
+        cls: 'card pool ' + (actV.err1 || actV.err2 ? 'pool--over' : (leftW === 0 ? 'pool--full' : 'pool--left')),
+        title: (actV.err1 || actV.err2) ? (over ? String(Math.round(over * 10) / 10).replace('.', ',') : '1') + ' tyg. za dużo' : (leftW === 0 ? 'Wszystkie tygodnie w planie' : 'Zostało ' + String(leftW).replace('.', ',') + ' tyg. do zaplanowania'),
+        isOver: !!(actV.err1 || actV.err2), isFull: !(actV.err1 || actV.err2) && leftW === 0, isLeft: !(actV.err1 || actV.err2) && leftW !== 0,
         rows: [
-          { label: 'Zarezerwowane dla pierwszej osoby', val: Math.min(9, act.w1).toString().replace('.', ',') + ' z 9 tyg.', w: 'width: ' + Math.min(100, act.w1 / 9 * 100).toFixed(0) + '%', cls: 'meter__fill' },
-          { label: 'Zarezerwowane dla drugiej osoby', val: Math.min(9, act.w2).toString().replace('.', ',') + ' z 9 tyg.', w: 'width: ' + Math.min(100, act.w2 / 9 * 100).toFixed(0) + '%', cls: 'meter__fill' },
-          { label: 'Część wspólna', val: (Math.max(0, act.w1 - 9) + Math.max(0, act.w2 - 9)).toString().replace('.', ',') + ' z ' + (cm.total - 18) + ' tyg.', w: 'width: ' + Math.min(100, (Math.max(0, act.w1 - 9) + Math.max(0, act.w2 - 9)) / (cm.total - 18) * 100).toFixed(0) + '%', cls: 'meter__fill' + ((act.err1 || act.err2) ? ' meter__fill--err' : '') }
+          { label: 'Zarezerwowane dla pierwszej osoby', val: Math.min(9, actV.w1).toString().replace('.', ',') + ' z 9 tyg.', w: 'width: ' + Math.min(100, actV.w1 / 9 * 100).toFixed(0) + '%', cls: 'meter__fill' },
+          { label: 'Zarezerwowane dla drugiej osoby', val: Math.min(9, actV.w2).toString().replace('.', ',') + ' z 9 tyg.', w: 'width: ' + Math.min(100, actV.w2 / 9 * 100).toFixed(0) + '%', cls: 'meter__fill' },
+          { label: 'Część wspólna', val: (Math.max(0, actV.w1 - 9) + Math.max(0, actV.w2 - 9)).toString().replace('.', ',') + ' z ' + (cm.total - 18) + ' tyg.', w: 'width: ' + Math.min(100, (Math.max(0, actV.w1 - 9) + Math.max(0, actV.w2 - 9)) / (cm.total - 18) * 100).toFixed(0) + '%', cls: 'meter__fill' + ((actV.err1 || actV.err2) ? ' meter__fill--err' : '') }
         ],
         total: 'Pula urlopu rodzicielskiego: ' + cm.total + ' tyg. Ojcowski jest osobno i nie zużywa puli.'
       };
       v.poolOpen = c.poolOpen; v.poolExp = c.poolOpen ? 'true' : 'false';
       v.togglePool = function () { self.set('calc', { poolOpen: !self.state.calc.poolOpen }); };
-      var errSel = '#seg-' + act.key + '-' + (act.err1 ? 1 : 2);
+      var errSel = '#seg-' + actV.key + '-' + (actV.err1 ? 1 : 2);
       v.goPoolErr = function () { self.focusSel = errSel; self.set('calc', { edit: true }); };
-      v.assumeText = 'Założenia: ' + (c.kids > 1 ? 'więcej niż 1 dziecko' : '1 dziecko') + ' · ' + (c.zz ? 'z „Za życiem”' : 'bez „Za życiem”') + ' · ' + (c.hosp ? 'z hospitalizacją' : 'bez hospitalizacji');
+      v.assumeText = 'Założenia: ' + (c.kids > 1 ? 'więcej niż 1 dziecko' : '1 dziecko') + ' · ' + (c.zz ? 'z „Za życiem”' : 'bez „Za życiem”') + ' · bez hospitalizacji';
       v.assumeOpen = c.assumeOpen; v.assumeExp = c.assumeOpen ? 'true' : 'false';
       v.toggleAssume = function () { self.set('calc', { assumeOpen: !self.state.calc.assumeOpen }); };
       v.kidsOpts = [[1, '1 dziecko'], [2, 'Więcej dzieci']].map(function (o) { return { label: o[1], pressed: c.kids === o[0] ? 'true' : 'false', pick: function () { self.set('calc', { kids: o[0] }); } }; });
       v.zzOpts = [[false, 'Bez „Za życiem”'], [true, 'Z „Za życiem”']].map(function (o) { return { label: o[1], pressed: c.zz === o[0] ? 'true' : 'false', pick: function () { self.set('calc', { zz: o[0] }); } }; });
-      v.hospOpts = [[false, 'Bez hospitalizacji'], [true, 'Hospitalizacja lub wcześniactwo']].map(function (o) { return { label: o[1], pressed: c.hosp === o[0] ? 'true' : 'false', pick: function () { self.set('calc', { hosp: o[0] }); } }; });
-      v.hospNote = c.hosp;
-      v.payOpts = [['815', '81,5% przez cały okres'], ['100', '100%, potem 70%']].map(function (o) { return { label: o[1], pressed: c.pay === o[0] ? 'true' : 'false', pick: function () { self.set('calc', { pay: o[0] }); } }; });
       v.calcEdit = c.edit; v.calcEditExp = c.edit ? 'true' : 'false';
       v.toggleEdit = function () { self.set('calc', { edit: !self.state.calc.edit }); };
       var ek = c.B && c.sel === 'B' ? 'B' : 'A', ev = c[ek];
@@ -2566,8 +2683,8 @@ class Component extends DCLogic {
       v.whyOpen = c.whyOpen; v.whyExp = c.whyOpen ? 'true' : 'false';
       v.toggleWhy = function () { self.set('calc', { whyOpen: !self.state.calc.whyOpen }); };
       v.whyRows = [
-        { who: 'Pierwsza osoba', src: 'Założenie do symulacji', rate: '140 zł brutto dziennie', days: String(act.d1), sum: C.money(act.a1) },
-        { who: 'Druga osoba', src: 'Założenie do symulacji', rate: '105 zł brutto dziennie', days: String(act.d2), sum: C.money(act.a2) }
+        { who: 'Pierwsza osoba', src: 'Założenie do symulacji', rate: '140 zł brutto dziennie', days: String(actV.d1), sum: C.money(actV.a1) },
+        { who: 'Druga osoba', src: 'Założenie do symulacji', rate: '105 zł brutto dziennie', days: String(actV.d2), sum: C.money(actV.a2) }
       ];
       v.calcErr = c.err; v.hasCalcErr = !!c.err;
       v.calcSaved = c.saved; v.hasCalcSaved = !!c.saved;
@@ -2632,7 +2749,8 @@ class Component extends DCLogic {
         var ans = '', aLabel = '', aFn = null, aPrimary = true;
         if (cs.id === 'usc') {
           if (st.uscDone) { ans = 'Nie. Oznaczono jako załatwione.'; aLabel = 'Cofnij oznaczenie'; aPrimary = false; aFn = function () { self.setState({ uscDone: false, live: 'Cofnięto oznaczenie' }); }; }
-          else { ans = 'Tak. Zgłoś urodzenie w urzędzie stanu cywilnego do 1 grudnia 2026 (zostało 10 dni).'; aLabel = 'Oznacz jako załatwione'; aFn = function () { self.setState({ uscDone: true, live: 'Oznaczono jako załatwione: Zgłoś urodzenie' }); }; }
+          else if (!st.karta) { ans = 'Tak. Uzupełnij datę wystawienia karty urodzenia, a policzymy termin zgłoszenia.'; aLabel = 'Uzupełnij datę'; aFn = function () { self.openKarta(); }; }
+          else { var leftU = C.days(DEMO, C.add(st.karta, 21)); ans = 'Tak. Zgłoś urodzenie w urzędzie stanu cywilnego do ' + C.fmt(C.add(st.karta, 21)) + ' (zostało ' + leftU + ' ' + C.plural(leftU, 'dzień', 'dni', 'dni') + ').'; aLabel = 'Oznacz jako załatwione'; aFn = function () { self.setState({ uscDone: true, live: 'Oznaczono jako załatwione: Zgłoś urodzenie' }); }; }
         } else if (cs.id === 'mac') {
           if (m.sent) { ans = 'Nie. Wysłano uzupełnienie w symulacji. Oczekujemy na potwierdzenie wpływu.'; aLabel = m.upp ? 'Ukryj potwierdzenie' : 'Zobacz potwierdzenie'; aPrimary = false; aFn = function () { self.set('mac', { upp: !self.state.mac.upp }); }; }
           else if (m.attached) { ans = 'Tak. Zaświadczenie jest w szkicu. Wyślij uzupełnienie do ZUS.'; aLabel = 'Wyślij uzupełnienie w symulacji'; aFn = function () { self.set('mac', { sent: true }); self.say('Wysłano uzupełnienie w symulacji'); }; }
@@ -2649,6 +2767,18 @@ class Component extends DCLogic {
         else { ans = 'Tak. ' + (cs.why || ''); aLabel = 'Oznacz jako załatwione'; aFn = function () { if (cs.id === 'zdr') self.setState({ zdrDone: true, live: 'Oznaczono jako załatwione' }); else if (cs.tickable) { var tk2 = Object.assign({}, self.state.ticks); tk2[cs.id] = true; self.setState({ ticks: tk2 }); } else self.say('[DO USTALENIA: przebieg tej sprawy w demo]'); }; }
         cv.answer = ans; cv.hasAct = !!aLabel; cv.actLabel = aLabel; cv.act = aFn || function () {}; cv.actCls = aPrimary ? 'btn btn--app' : 'btn btn--secondary btn--app';
         cv.isSim = true;
+        var K2 = st.karta, ke = st.kartaEd, pk = C.parseD(ke.v);
+        cv.kValue = K2 ? C.fmt(K2) : 'Brakuje'; cv.kSrc = K2 ? (st.plan === 'ola' && !ke.changed ? 'Scenariusz demo · dane fikcyjne' : 'Podane przez Ciebie') : 'Brak danych';
+        cv.kBtn = K2 ? 'Zmień' : 'Uzupełnij datę'; cv.kOpen = function () { self.openKarta(); };
+        cv.kTerm = K2 ? C.fmt(C.add(K2, 21)) : 'Uzupełnij datę'; cv.kTermSrc = K2 ? '21 dni od wystawienia karty' : 'Brak daty bazowej';
+        cv.kEdit = ke.open; cv.kv = ke.v; cv.kErr = ke.tried && !pk.date; cv.kInv = cv.kErr ? 'true' : 'false';
+        cv.kErrText = pk.invalid ? '[DO USTALENIA: komunikat dla nieistniejącej daty]' : 'Uzupełnij dzień, miesiąc i rok.';
+        var setK = function (part) { return function (e) { var vv = Object.assign({}, self.state.kartaEd.v); vv[part] = e.target.value.replace(/\D/g, ''); self.setState({ kartaEd: Object.assign({}, self.state.kartaEd, { v: vv }) }); }; };
+        cv.onKD = setK('day'); cv.onKM = setK('month'); cv.onKY = setK('year');
+        cv.kSave = function () { var p3 = C.parseD(self.state.kartaEd.v); if (!p3.date) { self.setState({ kartaEd: Object.assign({}, self.state.kartaEd, { tried: true }) }); return; } self.setState({ karta: p3.date, kartaEd: { open: false, tried: false, v: self.state.kartaEd.v, changed: true }, live: 'Zapisano datę wystawienia karty urodzenia. Termin zgłoszenia: ' + C.fmt(C.add(p3.date, 21)) }); };
+        cv.kCancel = function () { self.setState({ kartaEd: Object.assign({}, self.state.kartaEd, { open: false }) }); };
+        cv.childFull = cs.childFull || ''; cv.parentName = 'Joanna Przykładowa';
+        cv.uscConfirm = st.uscDone ? 'Oznaczone przez Ciebie jako załatwione' : 'Brak';
         /* szkic urlopu ojcowskiego */
         var endD = o.start ? C.add(o.start, 13) : null;
         cv.ojStart = o.start ? C.fmt(o.start) : 'Brakuje'; cv.ojEnd = endD ? C.fmt(endD) : 'Policzymy po podaniu początku'; cv.ojMissing = !o.start;
@@ -2757,7 +2887,7 @@ class Component extends DCLogic {
       v.tIns = tf.tytul + ' · ubezpieczenie chorobowe obowiązkowe';
       v.tRight = 'Przysługuje zasiłek macierzyński';
       v.tAmount = '20 tygodni (140 dni) · 100% · ' + C.money(daily) + ' dziennie · ' + C.money(totalT) + ' brutto';
-      v.tOpenPlan = function () { self.setState({ plan: 'test', example: false, view: 'plan', live: 'Dodano do selektora: Sprawa testowa · Alicja T.' }); self.set('test', { opened: true }); };
+      v.tOpenPlan = function () { self.switchPlan('test', { example: false, view: 'plan', live: 'Dodano do selektora: Sprawa testowa · Alicja T.' }); self.set('test', { opened: true }); };
       v.tAnother = function () { self.set('test', { step: 1, file: null, maxStep: 1, fields: { podstawa: '6812,40', tytul: 'Umowa o pracę', porod: '' }, edit: null }); };
 
       /* ---------- Zusik ---------- */
@@ -2766,6 +2896,14 @@ class Component extends DCLogic {
       var split = zp.open && (key === 'ojc' || key === 'mac') && st.view === 'case';
       v.appCls = 'app' + (split && !zp.full ? ' has-split' : (zp.open && !zp.full ? ' has-panel' : ''));
       v.zpCls = 'zp' + (split ? ' is-split' : '') + (zp.full ? ' is-full' : '');
+      v.isSplit = split && !zp.full; v.zpW = String(zp.w); v.appStyle = 'font-family: var(--font-ui); color: var(--color-text-strong); --zp-w: ' + zp.w + '%';
+      var setW = function (w) { self.set('zp', { w: Math.max(30, Math.min(70, Math.round(w))) }); };
+      v.sepKey = function (e) { var w = self.state.zp.w; if (e.key === 'ArrowLeft') { e.preventDefault(); setW(w + 5); } else if (e.key === 'ArrowRight') { e.preventDefault(); setW(w - 5); } else if (e.key === 'Home') { e.preventDefault(); setW(70); } else if (e.key === 'End') { e.preventDefault(); setW(30); } };
+      v.sepDown = function (e) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} self.dragging = true; };
+      v.sepMove = function (e) { if (!self.dragging) return; var vw = window.innerWidth || 1280; setW((vw - e.clientX) / vw * 100); };
+      v.sepUp = function () { self.dragging = false; };
+      v.failNext = zp.failNext ? 'true' : 'false'; v.isOjcKey = key === 'ojc';
+      v.toggleFail = function () { self.set('zp', { failNext: !self.state.zp.failNext }); };
       var ctxName = { plan: 'Mój plan' + (nextStop ? ' · ' + nextStop.name : ''), calc: 'Kalkulator' + (R.B ? ' · Wariant ' + c.sel : ''), ojc: 'Wniosek o urlop ojcowski · Pracodawca', mac: 'Uzupełnienie po wezwaniu · ZUS', docs: 'Dokumenty i wnioski', profile: 'Profil rodziny' }[key] || '';
       v.zpCtx = (P.child === 'Oli' ? 'Ola' : planMeta[0]) + ' · ' + ctxName;
       v.zpFullLabel = zp.full ? 'Podziel ekran' : 'Pełny ekran';
@@ -2794,7 +2932,7 @@ class Component extends DCLogic {
           hasFlag: !!mm5.flag, flag: mm5.flag || {}, flagOpen: !!(st.flagOpen && st.flagOpen[key + i5]), flagExp: st.flagOpen && st.flagOpen[key + i5] ? 'true' : 'false',
           toggleFlag: function () { var fo = Object.assign({}, self.state.flagOpen || {}); fo[key + i5] = !fo[key + i5]; self.setState({ flagOpen: fo }); },
           hasTable: !!mm5.table, thead: mm5.table ? mm5.table[0].map(function (h) { return { h: h }; }) : [], tbody: mm5.table ? mm5.table.slice(1).map(function (r) { return { cells: r.map(function (cc2) { return { c: cc2 }; }) }; }) : [],
-          hasErr: !!mm5.err, err: mm5.err || '', stopped: mm5.stopped || '', hasStopped: !!mm5.stopped,
+          hasErr: !!mm5.err, err: mm5.err || '', hasSaveErr: !!mm5.saveErr, curVal: mm5.curVal || '', retryLabel: mm5.retrying ? 'Zapisywanie…' : 'Ponów zapis', retryBusy: !!mm5.retrying, retry: function () { self.retrySave(i5); }, stopped: mm5.stopped || '', hasStopped: !!mm5.stopped,
           datePick: !!mm5.datePick && i5 === lastZ && key === 'ojc', openCal: function () { self.set('zp', { cal: !self.state.zp.cal }); },
           calExp: zp.cal ? 'true' : 'false',
           atts: (mm5.atts || []).map(function (a) { return { n: a }; }), hasAtts: !!(mm5.atts && mm5.atts.length),
@@ -2841,11 +2979,12 @@ class Component extends DCLogic {
       v.openInvite = function (e) { self.openZp(st.caseId === 'mac' ? 'mac' : 'ojc', e.currentTarget); };
 
       /* wsparcie */
-      v.supportBack = function () { var f2 = self.state.from; if (f2 && f2.view === 'ob') { self.setState({ entered: false, view: 'plan', from: null, plan: 'ola', example: false }); return; } self.goTab('plan'); };
+      v.supportBack = function () { var f2 = self.state.from; if (f2 && f2.view === 'ob') { self.switchPlan('ola', { entered: false, view: 'plan', from: null, example: false }); return; } self.goTab('plan'); };
       v.supportBackLabel = st.from && st.from.view === 'ob' ? '← Wróć do pytań' : '← Wróć do planu';
       v.openSupport = function () { self.setState({ view: 'support', from: { view: 'plan' } }); };
     }
     if (!v.appCls) v.appCls = 'app';
+    if (!v.appStyle) v.appStyle = 'font-family: var(--font-ui); color: var(--color-text-strong)';
     if (!v.nx) v.nx = { prep: [], how: [] };
     return v;
   }
