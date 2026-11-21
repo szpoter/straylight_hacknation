@@ -450,6 +450,9 @@ button.tileActive:hover {
   all: unset;
   cursor: pointer;
   font-weight: 500;
+  /* WCAG 2.2 2.5.8: at least 24 px tall. */
+  display: inline-block;
+  padding: 2px 0;
 }
 
 .rowLink:focus-visible {

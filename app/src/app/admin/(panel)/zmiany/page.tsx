@@ -10,6 +10,7 @@ import { addDays } from "@/lib/rules/dates";
 import { RULE_PARAMETERS, valueOn } from "@/lib/rules/parameters";
 import { TOTAL_DAYS } from "@/lib/rules/paternity";
 import { checkLimitChange, discardLimitDraft, publishLimit, saveLimitDraft } from "./actions";
+import { startDraftPreview } from "./preview-actions";
 
 export const metadata: Metadata = { title: "Przygotuj zmianę" };
 
@@ -40,7 +41,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
             ? { id: draft.id, weeks: draft.value / 7, validFrom: draft.validFrom, reason: draft.reason, source: draft.source }
             : null
         }
-        actions={{ save: saveLimitDraft, check: checkLimitChange, publish: publishLimit, discard: discardLimitDraft }}
+        actions={{
+          save: saveLimitDraft,
+          check: checkLimitChange,
+          publish: publishLimit,
+          discard: discardLimitDraft,
+          preview: startDraftPreview,
+        }}
       />
     );
   }

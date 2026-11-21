@@ -12,7 +12,7 @@ import {
   scheduleOf,
   withdrawScheduled,
 } from "@/lib/admin/rule-versions";
-import { clearRuleState, readRuleState, writeRuleState } from "@/lib/admin/rule-store";
+import { clearDraftPreview, clearRuleState, readRuleState, writeRuleState } from "@/lib/admin/rule-store";
 import { requireAdmin } from "@/lib/admin/server";
 import { TOTAL_DAYS } from "@/lib/rules/paternity";
 
@@ -77,6 +77,7 @@ export async function publishLimit(request: { draftId: string; expectedRevision:
   );
   if (!outcome.ok) return { ok: false, error: outcome.error, revision: state.revision, checks };
   await writeRuleState(outcome.state);
+  await clearDraftPreview();
   return { ok: true, revision: outcome.state.revision, draftId: null, checks, summary: checksSummary(checks), passed: true };
 }
 
@@ -86,6 +87,7 @@ export async function discardLimitDraft(): Promise<LimitActionResult> {
   if (!draftFor(state, PARAM)) return { ok: true, revision: state.revision, draftId: null };
   const next = discardDraft(state, PARAM);
   await writeRuleState(next);
+  await clearDraftPreview();
   return { ok: true, revision: next.revision, draftId: null };
 }
 

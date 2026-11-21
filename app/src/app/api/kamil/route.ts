@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { requestSchema } from "@/lib/kamil/contract";
 import { newCase, toView } from "@/lib/kamil/case";
-import { publishedSchedule } from "@/lib/admin/rule-store";
+import { effectiveSchedule } from "@/lib/admin/rule-store";
 import { kamilService } from "@/lib/kamil/server";
 import { NO_STORE, currentSessionId, errorResponse } from "@/lib/zusik/server";
 import { isSameOrigin } from "@/lib/zusik/session";
@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const sessionId = await currentSessionId();
     // Rule values the administrator published in this demo session (admin panel, SPEC-PANEL §9).
-    const schedule = await publishedSchedule();
+    const { schedule } = await effectiveSchedule();
     if (!sessionId) {
       return Response.json({ view: toView(newCase(), new Date().toISOString().slice(0, 10), schedule) }, { headers: NO_STORE });
     }
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const sessionId = await currentSessionId();
     if (!sessionId) return Response.json({ error: "no_session" }, { status: 401, headers: NO_STORE });
     const { expectedVersion, command } = parsed.data;
-    const result = await kamilService().apply(sessionId, expectedVersion, command, await publishedSchedule());
+    const result = await kamilService().apply(sessionId, expectedVersion, command, (await effectiveSchedule()).schedule);
     // Logs: ids, status and timing only, never case content.
     console.log(
       JSON.stringify({
