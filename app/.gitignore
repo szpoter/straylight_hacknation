@@ -42,3 +42,8 @@ next-env.d.ts
 
 # playwright MCP screenshots and logs
 /.playwright-mcp/
+
+# OCR engine and PDF.js worker, copied from node_modules by scripts/copy-ocr-assets.mjs
+/public/ocr/worker.min.js
+/public/ocr/core/
+/public/pdfjs/
