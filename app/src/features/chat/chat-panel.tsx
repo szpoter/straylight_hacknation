@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { CASE_LABEL, STARTERS } from "./case-data";
 import { CaseSteps, type CaseStepsProps } from "./case-steps";
 import { TurnView } from "./turn-view";
@@ -119,6 +119,7 @@ function History({ onBack }: { onBack: () => void }) {
 function Thread(props: Props) {
   const { conversation, steps, mascot, caseError, notice } = props;
   const list = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const signature = `${steps.view?.state}:${steps.pendingChoice}:${steps.preview}:${conversation
     .map((item) => `${item.requestId}:${item.state}`)
@@ -138,6 +139,18 @@ function Thread(props: Props) {
     const el = list.current;
     if (el && atBottom.current) el.scrollTop = el.scrollHeight;
   }, [signature]);
+
+  // content can also grow without a new message (a source opens, fonts load): stay pinned at the bottom
+  useEffect(() => {
+    const el = list.current;
+    const inner = content.current;
+    if (!el || !inner) return;
+    const observer = new ResizeObserver(() => {
+      if (atBottom.current) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, []);
 
   const onScroll = () => {
     const el = list.current;
@@ -167,27 +180,29 @@ function Thread(props: Props) {
     <>
       <div ref={list} className={s.thread} onScroll={onScroll}>
         <div className={s.threadSpacer} />
-        <div className={s.threadInner} aria-live="polite" aria-relevant="additions">
+        <div className={s.threadInner}>
           <div className={s.marginMascot} aria-hidden="true">
             {mascot}
           </div>
-          <CaseSteps {...steps} />
-          {conversation.map((item) => (
-            <TurnView key={item.requestId} item={item} onRetry={props.onRetryAsk} />
-          ))}
-          {notice && (
-            <p className={s.notice} role="status">
-              {notice}
-            </p>
-          )}
-          {caseError && (
-            <div className={s.inlineError} role="alert">
-              <span>{caseError}</span>
-              <button type="button" className={s.secondaryButton} onClick={props.onRetryCase}>
-                Spróbuj ponownie
-              </button>
-            </div>
-          )}
+          <div ref={content} className={s.messages} aria-live="polite" aria-relevant="additions">
+            <CaseSteps {...steps} />
+            {conversation.map((item) => (
+              <TurnView key={item.requestId} item={item} onRetry={props.onRetryAsk} />
+            ))}
+            {notice && (
+              <p className={s.notice} role="status">
+                {notice}
+              </p>
+            )}
+            {caseError && (
+              <div className={s.inlineError} role="alert">
+                <span>{caseError}</span>
+                <button type="button" className={s.secondaryButton} onClick={props.onRetryCase}>
+                  Spróbuj ponownie
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className={s.chatBottom}>

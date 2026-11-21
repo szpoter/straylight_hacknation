@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { flushSync } from "react-dom";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 import type { ZusikState } from "@/components/mascot/types";
@@ -324,13 +325,11 @@ export function ZusikWorkspace() {
               onRetryAsk={(requestId) => void zusik.retryAsk(requestId)}
               onRetryCase={() => void zusik.restore()}
               onStarter={(starter) => {
-                setText(starter);
-                requestAnimationFrame(() => {
-                  const area = textarea.current;
-                  if (!area) return;
-                  area.focus();
-                  area.setSelectionRange(starter.length, starter.length);
-                });
+                // commit the text first, so the caret lands after it before the parent types on
+                flushSync(() => setText(starter));
+                const area = textarea.current;
+                area?.focus();
+                area?.setSelectionRange(starter.length, starter.length);
               }}
               onHistory={setShowHistory}
               onNewChat={() =>
