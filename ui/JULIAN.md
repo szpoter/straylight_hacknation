@@ -43,6 +43,13 @@
 
 **Przykład do odbioru.** Rodzic pyta „Czy mogę podzielić urlop ojcowski?”. Po rozwinięciu źródła widzi tytuł poradnika, wydawcę, rok i drukowaną stronę 33 oraz cytat „Tata może go wykorzystać jednorazowo lub w dwóch 7-dniowych częściach.” Osobny link „Otwórz stronę w PDF” prowadzi do 34. strony tego wydania pliku. Ponowne wybranie oznaczenia zwija cytat. Gdy materiały nie potwierdzają danej informacji, Zusik wskazuje, czego nie udało się ustalić. [Poradnik ZUS 2026](../Materiały%20hackathonowe/Materiały%20dla%20uczestników/Poradnik%20dla%20rodziców%2C%20ZUS%202026.pdf#page=34)
 
+### Artefakty w rozmowie
+
+**Julian · 21 listopada 2026 · Uzgodnione.** Zusik może osadzić mini plan albo tabelę bezpośrednio w wiadomości. Dalsze referencje wizualne dobieramy z aplikacji produktowych i galerii UI. Materiały urzędowe służą do sprawdzania przepisów, terminów i procedur.
+
+- **Mini plan sprawy.** Każdy krok ma nazwę i kółko, które wypełnia się po wykonaniu zadania. Ten sam plan aktualizuje się w rozmowie w miarę postępu sprawy. Przy zmianie stosujemy ustalony ruch czatu, a przy ograniczonym ruchu pokazujemy od razu stan końcowy. Plan opisuje czynności rodzica w sprawie. Rozwijany „Przebieg” nad wiadomością nadal opisuje pracę Zusika przy danej odpowiedzi.
+- **Porównanie kwot.** Zusik osadza tabelę z wynikami kalkulatora. Warianty można porównać według wspólnych kryteriów, z okresem, jednostką i założeniami przy kwotach. [Przykład dwóch wariantów do makiety](../SPEC-PO-LOGOWANIU.md#przykład-do-makiety-i-odbioru)
+
 ### Kolor i ruch w rozmowie
 
 Wartości do pierwszej próby w makiecie. [Wspólna paleta i fokus klawiatury](../DESIGN.md)
