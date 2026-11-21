@@ -40,6 +40,20 @@
 
 **Scena do przeklikania.** Rodzic otwiera wniosek Oli i klika zaproszenie. Zusik pyta o początek urlopu. Po odpowiedzi „17 czerwca” ta data pojawia się w polu „Początek urlopu”. Rodzic wybiera przy nim „Zmień” i wpisuje 18 czerwca. Przy kolejnym pytaniu o początek urlopu odpowiedź Zusika ma być zgodna z wartością 18 czerwca. Maciej wykorzystuje tę scenę przy szkicu, a Nikodem może pokazać w jednym kadrze rozmowę i efekt poprawki.
 
+### Jak animacje Zusika prowadzą przez rozmowę
+
+**Julian · 21 listopada 2026.** Przypisanie gotowych animacji do planu czatu po przejściu [makiety stanów Zusika](../maskotka_kod/app/mascot/zusik/ZusikMockup.tsx). Na zamkniętym czacie postać ma miejsce w prawym dolnym rogu. W otwartym panelu jej miejscem spoczynku jest margines bieżącej wypowiedzi. Używamy jednej postaci także wtedy, gdy na chwilę przenosi się do pola formularza. [Stany i wyzwalacze komponentu](../maskotka_kod/docs/mascot/02-tech-stack.md#assistant-states-implemented)
+
+| Moment w naszej rozmowie | Gotowa animacja i widoczny rezultat |
+| --- | --- |
+| Wejście i zaproszenie | `entrance` wprowadza Zusika od dołu jako kroplę. Przy pojawieniu się zaproszenia `available` z `inviting` kieruje wzrok ku dymkowi, uruchamia podskok i machnięcie. Po przyjęciu zaproszenia otwiera się panel przy szkicu. Książka pojawia się, gdy Zusik rzeczywiście zaczyna czytać szkic. |
+| Praca nad odpowiedzią | Forma postaci przy zwiniętym przebiegu odpowiada jego podpisowi. `reading` to książka przewracająca kartki przy czytaniu szkicu, `searching` to teczka z wysuwającymi się zakładkami podczas szukania w RAG, a `calculating` to kalkulator przy wyliczeniu. Źródło lub tabela pojawiają się w treści po otrzymaniu wyniku. |
+| Pytanie i pisanie | Przy pytaniu o brakującą datę `waiting` na chwilę zmienia Zusika w „?”, potem postać pochyla się ku polu odpowiedzi. `typingTick` porusza obrys przy wpisywaniu znaków. Po wysłaniu daty `checking` towarzyszy „Sprawdzam datę…”. Przy zwykłej wypowiedzi `answering` trwa tyle, ile pojawianie się tekstu. „Zatrzymaj odpowiedź” kończy ten ruch i pozostawia fragment wiadomości. |
+| Zmiana pola i potwierdzenie | W stanie `writing` Zusik przyjmuje kształt ołówka. Przy widocznym polu ustawia przy nim końcówkę. Gdy pole jest poza ekranem, kreśli w miejscu, a tekst wskazuje cel. Na telefonie stosujemy tę samą zasadę do fragmentu formularza nad czatem. Dopiero potwierdzony zapis uruchamia `confirming` z krótkim ✓ i skinieniem, ustalone wyróżnienie pola oraz adnotację z datą. |
+| Błąd zapisu | Przy potwierdzonym błędzie `attention` pokazuje na chwilę „!”, po czym Zusik wskazuje „Ponów zapis” przy właściwej wiadomości. Wynik wciąż sprawdzany po zatrzymaniu ma podpis „Sprawdzam zapis daty…”. Przy ograniczonym ruchu wystarczą statyczna postać, podpis czynności i wynik przy wiadomości. |
+
+**Przebieg sprawdzony w demo.** „Zaproszenie” pokazało pytanie z akcjami „Tak, pomóż” i „Nie teraz”. „Tak, pomóż” uruchomiło czytanie szkicu. W scenie „Zadaj pytanie” wpisanie i wysłanie „18.06.2027” wywołało „Sprawdzam datę…”, po czym data pojawiła się w polu „Koniec urlopu”. Makieta pozwala osobno wywołać „Błąd zapisu”. W docelowym czacie te przejścia zależą od wyniku operacji na szkicu.
+
 ### Trzy pytania na start nowej rozmowy
 
 **Julian · 21 listopada 2026 · Uzgodnione.** W pustym czacie tuż nad polem „Zapytaj Zusika…” są trzy klikalne wiersze w stylu kart Arc UI. Każdy pokazuje pełne pytanie dopasowane do otwartej sprawy. Przy szkicu Oli są to „Czego brakuje we wniosku?”, „Jak poprawić datę?” i „Do kogo mam go złożyć?”. Na komputerze mieszczą się w panelu rozmowy, na telefonie są ułożone jeden pod drugim. [Arc UI — Starter Prompts](https://uiarc.dev/components/starter-prompts)
