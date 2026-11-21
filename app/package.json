@@ -13,7 +13,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "zusik:migrate": "tsx scripts/zusik-migrate.ts",
-    "zusik:seed-probe": "tsx scripts/zusik-seed-probe.ts"
+    "zusik:seed-probe": "tsx scripts/zusik-seed-probe.ts",
+    "kamil:docs": "tsx scripts/kamil-demo-docs.ts",
+    "prebuild": "node scripts/copy-ocr-assets.mjs",
+    "predev": "node scripts/copy-ocr-assets.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.94",
@@ -35,6 +38,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "^0.1.65",
     "@types/flubber": "^0.4.0",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
