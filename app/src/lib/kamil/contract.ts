@@ -160,13 +160,19 @@ export interface PriorPart {
 
 /** Persisted case. Lives in the LangGraph checkpoint of the session's thread. */
 export interface KamilCase {
+  /** Bumped by every applied command; the browser sends it back as expectedVersion. */
   version: number;
+  /** Bumped only when facts, the request or earlier parts change. A draft older than this needs review. */
+  dataVersion: number;
+  /** What Zusik asked last, so a bare "tak"/"nie" can be attributed. */
+  asked: AskedKey | null;
   candidates: Candidate[];
   facts: Partial<Record<FieldKey, Fact>>;
   priorParts: PriorPart[];
   request: LeaveRequest | null;
   conflict: Conflict | null;
-  draft: { id: string; createdAt: string; version: number; factsVersion: number } | null;
+  /** One draft per case. `reviewedDataVersion` = dataVersion when Kamil last approved the preview. */
+  draft: { id: string; createdAt: string; version: number; reviewedDataVersion: number } | null;
   reminder: Reminder | null;
   submission: Submission | null;
   chat: ChatTurn[];
@@ -178,6 +184,7 @@ export interface KamilCase {
 
 export type RuleStatus = "eligible" | "needs_info" | "not_eligible";
 export type MissingKey = FieldKey | "request_start" | "request_days";
+export type AskedKey = MissingKey | "document";
 
 export interface RuleReason {
   ruleId: string;
@@ -233,6 +240,10 @@ export interface KamilView {
   conflict: Conflict | null;
   result: PaternityResult;
   draft: (NonNullable<KamilCase["draft"]> & { stale: boolean }) | null;
+  /** Facts still needed for ZAM, in ZAM order. */
+  zamMissing: FieldKey[];
+  /** Eligible period + every ZAM fact confirmed. */
+  readyForDraft: boolean;
   reminder: Reminder | null;
   submission: Submission | null;
   chat: ChatTurn[];
