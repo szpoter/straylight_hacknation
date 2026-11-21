@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePlan } from "@/features/family/PlanProvider";
-import { Button, ButtonLink, TextButton } from "@/components/ui/Button";
+import { Button, ButtonLink, TextButton } from "@/components/ui/AppButton";
 import { cn } from "@/components/ui/cn";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { AlertIcon, ArrowLeftIcon } from "@/components/ui/icons";

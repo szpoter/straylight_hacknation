@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { usePlan } from "@/features/family/PlanProvider";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/AppButton";
 import { cn } from "@/components/ui/cn";
 import { ChevronDownIcon, ListIcon, MapIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";

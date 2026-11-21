@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { SpeechBubble } from "@/components/mascot/Zusik";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/AppButton";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { formatLong } from "@/lib/demo/dates";
 import type { StageId, Stop } from "@/lib/demo/types";

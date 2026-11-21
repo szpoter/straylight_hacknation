@@ -1,5 +1,5 @@
 export * from "./BottomSheet";
-export * from "./Button";
+export * from "./AppButton";
 export * from "./ChoiceGroup";
 export * from "./cn";
 export * from "./Disclosure";

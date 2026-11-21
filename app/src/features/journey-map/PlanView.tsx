@@ -2,7 +2,7 @@
 
 import { usePlan } from "@/features/family/PlanProvider";
 import { Calculator } from "@/features/calculator/Calculator";
-import { ButtonLink } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/AppButton";
 import { Page, PageTitle } from "@/components/ui/Page";
 import { Tag } from "@/components/ui/Tag";
 import { JourneyMap } from "./JourneyMap";
