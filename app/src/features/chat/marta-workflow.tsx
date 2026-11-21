@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { MartaPdfPreview } from "./marta-pdf-preview";
 import { AttachmentLinks, SavedAttachment, checkedCopy, storeCopy } from "./marta-attachment";
 import type { MartaView } from "@/lib/marta/types";
 import type { useCaseResource } from "./use-case-resource";
@@ -123,17 +124,13 @@ function Comparison({ view }: { view: MartaView }) {
       <p className={s.comparisonNote}>
         Przy urlopach jeden po drugim opieka trwa o {sequential.calendarDays - together.calendarDays} dni dłużej.
       </p>
-      <details>
-        <summary>Skąd te kwoty?</summary>
-        <p>
-          {view.firstName} · {view.inputs.days} dni × {money(view.inputs.firstDaily)} · {money(together.first.amount)}{" "}
-          brutto
-        </p>
-        <p>
-          {view.secondName} · {view.inputs.days} dni × {money(view.inputs.secondDaily)} ·{" "}
-          {money(together.second.amount)} brutto
-        </p>
-      </details>
+      <p className={s.comparisonNote}>
+        {view.firstName} · {view.inputs.firstDaily === null ? "Brak stawki" :
+          `${view.inputs.days} dni × ${money(view.inputs.firstDaily)} = ${money(together.first.amount)} brutto`}
+        <br />
+        {view.secondName} · {view.inputs.secondDaily === null ? "Brak stawki" :
+          `${view.inputs.days} dni × ${money(view.inputs.secondDaily)} = ${money(together.second.amount)} brutto`}
+      </p>
     </div>
   );
 }
@@ -236,13 +233,13 @@ function Declarations({
   );
 }
 
-export function MartaInterview({ state, attachment, onAttach, scope }: { state: Case } & AttachmentProps) {
+export function MartaInterview({ state, attachment, onAttach, scope, fullscreen }: { state: Case; fullscreen: boolean } & AttachmentProps) {
   const { view, busy, loaded, error, reload, send } = state;
   const [edit, setEdit] = useState(false);
   const [amend, setAmend] = useState(false);
   return (
     <section className={s.interview} aria-label="Przygotowanie wniosku">
-      <p>Od którego dnia chcecie zacząć urlop? Porównam wspólny start i urlopy jeden po drugim.</p>
+      {(!view || edit) && <p>Od którego dnia chcecie zacząć urlop? Porównam wspólny start i urlopy jeden po drugim.</p>}
       {!loaded && !error && <p role="status">Wczytuję dane sprawy…</p>}
       {error && (
         <p role="alert" className={s.error}>
@@ -260,7 +257,7 @@ export function MartaInterview({ state, attachment, onAttach, scope }: { state: 
           <p className={s.chosen}>
             Początek urlopu · <strong>{date(view.inputs.firstStart)}</strong>
           </p>
-          <Comparison view={view} />
+          {!edit && <Comparison view={view} />}
           {!view.submitted && !edit && (
             <button type="button" className={s.secondary} disabled={busy} onClick={() => setEdit(true)}>
               Popraw dane porównania
@@ -291,7 +288,7 @@ export function MartaInterview({ state, attachment, onAttach, scope }: { state: 
               <p className={s.chosen}>
                 Wybrany wariant · <strong>{labels[view.selected]}</strong>
               </p>
-              {!view.submitted && !amend && (
+              {!view.submitted && !amend && !edit && (
                 <button className={s.secondary} disabled={busy} onClick={() => setAmend(true)}>
                   Zmień wariant
                 </button>
@@ -306,14 +303,16 @@ export function MartaInterview({ state, attachment, onAttach, scope }: { state: 
                   onSaved={() => setAmend(false)}
                 />
               )}
-              {view.confirmed && (
+              {view.confirmed && !edit && !amend && (
                 <>
                   <p>
                     <strong>Wniosek zatwierdzony.</strong> Pobierz dokument i sprawdź dane.
                   </p>
-                  <a className={s.download} href="/api/zusik/marta/pdf" target="_blank" rel="noreferrer">
-                    Pobierz wniosek PDF
-                  </a>
+                  {fullscreen && (
+                    <a className={s.download} href="/api/zusik/marta/pdf" download="wniosek-rodzicielski.pdf">
+                      Pobierz wniosek PDF
+                    </a>
+                  )}
                   {view.attachmentName && (
                     <SavedAttachment
                       key={[scope, view.attachmentName, view.version - (view.submitted ? 1 : 0)].join(":")}
@@ -345,10 +344,12 @@ export type DeadlineSource = { label: string; text: string; url: string };
 export function MartaDraft({
   view,
   phone,
+  loaded,
   source,
 }: {
   view: MartaView | null;
   phone: boolean;
+  loaded: boolean;
   source?: DeadlineSource;
 }) {
   const selected = view?.selected ? view.variants[view.selected] : null;
@@ -365,13 +366,14 @@ export function MartaDraft({
           <p>
             Złóż wniosek do <strong>{date(selected.first.deadline)}</strong>
           </p>
+          <p>{view?.secondName} składa osobny wniosek u swojego pracodawcy do {date(selected.second.deadline)}.</p>
           {source && (
             <details>
-              <summary>Skąd ten termin?</summary>
+              <summary>{source.label}</summary>
               <p>Początek urlopu · {date(selected.first.from)}</p>
               <blockquote>{source.text}</blockquote>
               <a href={source.url} target="_blank" rel="noreferrer">
-                {source.label}
+                Otwórz przepis
               </a>
             </details>
           )}
@@ -382,40 +384,14 @@ export function MartaDraft({
           Przekazano do Studia Lipa w symulacji · <strong>{date(view.submittedAt.slice(0, 10))}</strong>
         </p>
       )}
-      {!phone && (
-        <dl className={s.summary}>
-          {[
-            ["Wnioskodawca", view?.firstName ?? "Marta Lis"],
-            ["Dziecko", view?.childName ?? "Ola Lis"],
-            ["Sposób korzystania", view?.selected ? labels[view.selected] : "Do wyboru w rozmowie"],
-            ["Okres urlopu", selected ? period(selected.first) : "Do ustalenia"],
-            ["Drugi rodzic", view?.secondName ?? "Paweł Lis"],
-            ["Okres drugiego rodzica", selected ? period(selected.second) : "Do ustalenia"],
-            [
-              "Wniosek drugiego rodzica",
-              selected ? `Osobno u pracodawcy do ${date(selected.second.deadline)}` : "Po wyborze wariantu",
-            ],
-            [
-              "Odpis aktu urodzenia",
-              view?.employerHasCopy == null
-                ? "Do potwierdzenia"
-                : view.employerHasCopy
-                  ? "W aktach pracodawcy"
-                  : view.attachmentName,
-            ],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {view?.confirmed && (
-        <a className={s.download} href="/api/zusik/marta/pdf" target="_blank" rel="noreferrer">
-          Pobierz zatwierdzony PDF
-        </a>
-      )}
+      {loaded && (phone ? (
+        <details className={s.preview}>
+          <summary>Podgląd wniosku PDF</summary>
+          <MartaPdfPreview view={view} />
+        </details>
+      ) : (
+        <div className={s.preview}><MartaPdfPreview view={view} /></div>
+      ))}
     </article>
   );
 }

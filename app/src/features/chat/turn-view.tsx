@@ -7,21 +7,29 @@ import s from "./zusik.module.css";
 
 type Props = {
   item: ConversationItem;
+  activity: string | null;
+  partialText: string;
+  asking: boolean;
   onRetry: (requestId: string) => void;
 };
 
 /** One question from the parent and Zusik's answer to it. */
-export function TurnView({ item, onRetry }: Props) {
+export function TurnView({ item, activity, partialText, asking, onRetry }: Props) {
   return (
     <>
       <div className={s.userRow}>
         <p className={s.userBubble}>{item.question}</p>
       </div>
-      {item.state === "sending" && <Progress label="Szukam w materiałach ZUS…" />}
+      {item.state === "sending" && (
+        <>
+          {activity && <Progress label={activity} />}
+          {partialText && <p className={s.partialAnswer} aria-live="off">{partialText}</p>}
+        </>
+      )}
       {item.state === "lost" && (
         <div className={s.inlineError} role="alert">
           <span>Utracono połączenie. Pytanie jest zapisane w tej karcie.</span>
-          <button type="button" className={s.secondaryButton} onClick={() => onRetry(item.requestId)}>
+          <button type="button" className={s.secondaryButton} disabled={asking} onClick={() => onRetry(item.requestId)}>
             Ponów odpowiedź
           </button>
         </div>

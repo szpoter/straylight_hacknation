@@ -64,6 +64,18 @@ export function SicknessWorkspace() {
                       ))}
                     </ul>
                   )}
+                  {assessment.law.length > 0 && (
+                    <details>
+                      <summary>Podstawa prawna oceny</summary>
+                      <ul>
+                        {assessment.law.map((law) => (
+                          <li key={law.id}>
+                            <a href={law.url} target="_blank" rel="noreferrer">{law.title}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                   {view.otherCoverage && (
                     <p className={s.user}>{answers.find((answer) => answer.value === view.otherCoverage)?.text}</p>
                   )}
@@ -141,20 +153,6 @@ export function SicknessWorkspace() {
               </button>
             )}
             <SicknessImport version={view.version} onSaved={setView} />
-            {view.assessment.law.length > 0 && (
-              <>
-                <h3>Podstawa prawna</h3>
-                <ul>
-                  {view.assessment.law.map((law) => (
-                    <li key={law.id}>
-                      <a href={law.url} target="_blank" rel="noreferrer">
-                        {law.title}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
           </aside>
         )}
       </div>

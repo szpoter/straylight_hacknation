@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { answerFromAskBody, groundedClaims, pdfPage, turnsFromView, type Answer } from "@/features/chat/contract";
-import { AnswerView } from "@/features/chat/turn-view";
+import { AnswerView, TurnView } from "@/features/chat/turn-view";
 import { mergeConversation } from "@/features/chat/use-zusik-case";
 
 // Sample answers shaped like the proposed /ask contract (PLAN-ETAP-1-KROK-2.md, section 4).
@@ -92,6 +92,28 @@ describe("mergeConversation", () => {
       { requestId: "r2", question: "Q2", state: "lost" },
     ]);
     expect(merged.map((m) => `${m.requestId}:${m.state}`)).toEqual(["r1:done", "r2:lost"]);
+  });
+});
+
+describe("TurnView", () => {
+  it("replaces verified streaming text and activity with the final cited answer", () => {
+    const render = (state: "sending" | "done" | "lost", partialText: string) =>
+      renderToStaticMarkup(createElement(TurnView, {
+        item: { state, requestId: "r1", question: "Odpis?", answer: odpis },
+        asking: state === "sending", activity: "Sprawdzam źródła", partialText, onRetry: () => {},
+      }));
+    for (const part of ["Pierwszy fragment", "Pierwszy fragment i kolejny"]) {
+      const html = render("sending", part);
+      expect(html).toContain(part);
+      expect(html).toContain("Sprawdzam źródła");
+      expect(html).not.toContain("Źródło 1");
+    }
+    for (const state of ["lost", "done"] as const) {
+      const html = render(state, "Tymczasowy tekst");
+      expect(html).not.toContain("Tymczasowy tekst");
+      expect(html).not.toContain("Sprawdzam źródła");
+    }
+    expect(render("done", "")).toContain("Źródło 1");
   });
 });
 

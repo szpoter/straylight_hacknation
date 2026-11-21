@@ -66,9 +66,6 @@ export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAt
             <button type="button" className={s.iconButton} aria-label="Wybierz kopię aktu urodzenia" onClick={()=>fileInput.current?.click()}><PaperclipIcon /></button>
             {attachment && <button type="button" className={s.secondaryButton} title={attachment.name} onClick={()=>onAttach(null)}>Usuń odpis</button>}
           </>}
-          <span className={s.composerHint} aria-hidden="true">
-            {busy ? "Zusik pracuje…" : "Enter wysyła · Shift+Enter nowa linia"}
-          </span>
           <button type="button" className={s.send} aria-label="Wyślij" disabled={!canSend} onClick={onSend}>
             <ArrowUpIcon />
           </button>

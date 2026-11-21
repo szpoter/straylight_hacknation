@@ -34,22 +34,12 @@
   background: #fff1dc;
   border-radius: 8px;
 }
-.sheet .summary {
-  margin-top: 24px;
+.preview {
+  margin-top: 12px;
 }
-.summary > div {
-  padding: 12px 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: 14px;
-  border-bottom: 1px solid #d4d7dd;
-}
-.summary dt {
-  font-size: 14px;
-  color: #5e697f;
-}
-.summary dd {
-  overflow-wrap: anywhere;
+.preview summary {
+  color: #1e5479;
+  cursor: pointer;
 }
 .interview {
   display: grid;
@@ -77,9 +67,6 @@
   background: #176343;
   color: white;
   cursor: pointer;
-}
-.sheet .download {
-  margin-top: 16px;
 }
 .interview button.secondary {
   background: White;
@@ -163,10 +150,6 @@
 }
 .comparison thead {
   background: #e6f3e9;
-}
-.comparison details {
-  margin-top: 10px;
-  font-size: 14px;
 }
 .interview summary {
   color: #176343;

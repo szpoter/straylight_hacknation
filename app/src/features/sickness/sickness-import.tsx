@@ -106,23 +106,23 @@ export function SicknessImport({ version, onSaved }: { version: number; onSaved:
   return (
     <section aria-label="Import pakietu demonstracyjnego">
       <h3>Sprawdź inny pakiet dokumentów</h3>
-      <p>
-        Wczytaj fikcyjny dokument lub pobierz przykład. Oryginał jest odczytywany na tym urządzeniu. Do sprawy
-        zapiszą się wybrane przez Ciebie ustalenia.
-      </p>
-      <p>
-        <a download href="/demo/sickness/akta-demonstracyjne.pdf">
-          Dokumenty PDF do odczytu ręcznego
-        </a>
-        {" · "}
-        <a download href="/demo/sickness/pakiet-A.txt">
-          Pełny pakiet TXT
-        </a>
-        {" · "}
-        <a download href="/demo/sickness/pakiet-B.txt">
-          Pakiet bez ustalenia TXT
-        </a>
-      </p>
+      <p>Plik odczytamy na tym urządzeniu. W sprawie zapiszemy ustalenia, które potwierdzisz.</p>
+      <details>
+        <summary>Przykładowe pliki do pobrania</summary>
+        <p>
+          <a download href="/demo/sickness/akta-demonstracyjne.pdf">
+            Dokumenty PDF do odczytu ręcznego
+          </a>
+          {" · "}
+          <a download href="/demo/sickness/pakiet-A.txt">
+            Pełny pakiet TXT
+          </a>
+          {" · "}
+          <a download href="/demo/sickness/pakiet-B.txt">
+            Pakiet bez ustalenia TXT
+          </a>
+        </p>
+      </details>
       <label>
         Wybierz plik demonstracyjny{" "}
         <input

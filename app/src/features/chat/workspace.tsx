@@ -1,13 +1,11 @@
 "use client";
 
 import { ScenarioNav } from "./scenario-nav";
-import { useRouter } from "next/navigation";
 import { useCaseResource } from "./use-case-resource";
 import { MartaDraft, MartaInterview, type DeadlineSource } from "./marta-workflow";
 import { checkedCopy } from "./marta-attachment";
 import { martaInput } from "./marta-input";
 import type { MartaView } from "@/lib/marta/types";
-import { flushSync } from "react-dom";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 import type { ZusikState } from "@/components/mascot/types";
@@ -101,7 +99,6 @@ function caseErrorText(error: CaseError | null): string | null {
 
 export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { initialChatOpen?: boolean; deadlineSource?:DeadlineSource }) {
   const zusik = useZusikCase();
-  const router = useRouter();
   const marta = useCaseResource<MartaView>("/api/zusik/marta", initialChatOpen && zusik.view !== null, false);
   const phone = usePhone();
   const viewport = useVisualViewport();
@@ -110,12 +107,10 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
   const [chatOpen, setChatOpen] = useState(initialChatOpen);
   const [inviteAccepted, setInviteAccepted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [chatShare, setChatShare] = useState(50);
   const [text, setText] = useState("");
   const [attachment,setAttachment] = useState<File|null>(null);
   const [composerNotice, setComposerNotice] = useState<string | null>(null);
-  const [panelNotice, setPanelNotice] = useState<string | null>(null);
   const [preview, setPreview] = useState<Choice | null>(null);
   const [typingTick, setTypingTick] = useState(0);
   const [expiredSave, setExpiredSave] = useState<number | null>(null);
@@ -158,14 +153,12 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
 
   const collapse = () => {
     focusBubble.current = true;
-    setShowHistory(false);
     setChatOpen(false);
   };
 
   /** Points at the saved field: on a computer in the draft on the left, on a phone above the chat. */
   const showField = () => {
     setFullscreen(false);
-    setShowHistory(false);
     requestAnimationFrame(() => {
       const el = field.current;
       if (!el) return;
@@ -180,7 +173,6 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
     if (!question || busy) return;
     setText("");
     setComposerNotice(null);
-    setPanelNotice(null);
     if (initialChatOpen) {
       const intent = martaInput(question, marta.view, new Date().toLocaleDateString("sv-SE", {timeZone:"Europe/Warsaw"}));
       if (intent) {
@@ -269,7 +261,7 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
             role="region"
             aria-label="Szkic wniosku"
           >
-            {initialChatOpen ? <MartaDraft source={deadlineSource} view={marta.view} phone={formMode === "fragment"} /> : <DraftForm
+            {initialChatOpen ? <MartaDraft loaded={marta.loaded} source={deadlineSource} view={marta.view} phone={formMode === "fragment"} /> : <DraftForm
               savedChoice={view?.state === "completed" ? view.choice : null}
               pendingChoice={zusik.pendingChoice}
               preview={activePreview}
@@ -301,9 +293,7 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
         {chatOpen && (
           <div className={s.chatPane} style={split ? { flexBasis: `${chatShare}%` } : undefined}>
             <ChatPanel
-              phone={phone}
               fullscreen={fullscreen}
-              showHistory={showHistory}
               mascot={<Babelek animated state={mascotState} toward={phone ? 300 : 200} typingTick={typingTick} />}
               steps={{
                 view,
@@ -315,13 +305,13 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
                 onStart: () => void zusik.start(),
                 onShowField: showField,
               }}
-              workflow={initialChatOpen ? <MartaInterview scope={zusik.documentCache} state={marta} attachment={attachment} onAttach={setAttachment} /> : undefined}
+              workflow={initialChatOpen ? <MartaInterview fullscreen={fullscreen} scope={zusik.documentCache} state={marta} attachment={attachment} onAttach={setAttachment} /> : undefined}
               workflowVersion={marta.view?.version}
-              starters={initialChatOpen && !marta.view ? ["Od 11 stycznia 2027", "Czy możemy razem?", "Do kiedy złożyć wniosek?"] :
-                initialChatOpen && !marta.view?.selected ? [] : undefined}
+              activity={zusik.activity}
+              partialText={zusik.partialText}
               conversation={zusik.conversation}
               caseError={caseErrorText(zusik.error)}
-              notice={panelNotice ?? zusik.notice}
+              notice={zusik.notice}
               readScroll={() => scrollMemory.current}
               onScrollSave={(top) => {
                 scrollMemory.current = top;
@@ -333,7 +323,7 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
                   notice={composerNotice}
                   textareaRef={textarea}
                   attachment={attachment}
-                  onAttach={initialChatOpen && !marta.view?.confirmed ? async (file)=>{
+                  onAttach={initialChatOpen && !marta.view?.selected ? async (file)=>{
                     try { setAttachment(file ? await checkedCopy(file) : null); }
                     catch { setComposerNotice("Wybierz niepusty PDF, PNG lub JPEG do 25 MB.");return; }
                     setComposerNotice(file ? `Wybrano odpis: ${file.name}. Przy zatwierdzaniu wskaż, czy dołączyć go do wniosku.` : "Usunięto wybrany odpis.");
@@ -347,15 +337,6 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
               }
               onRetryAsk={(requestId) => void zusik.retryAsk(requestId)}
               onRetryCase={() => void zusik.restore()}
-              onStarter={(starter) => {
-                // commit the text first, so the caret lands after it before the parent types on
-                flushSync(() => setText(starter));
-                const area = textarea.current;
-                area?.focus();
-                area?.setSelectionRange(starter.length, starter.length);
-              }}
-              onHistory={setShowHistory}
-              onNewChat={() => router.push("/app/sprawy")}
               onFullscreen={() => setFullscreen((value) => !value)}
               onCollapse={collapse}
             />
