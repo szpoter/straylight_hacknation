@@ -2,7 +2,7 @@
 
 Ten plik rozwijamy dla części produktu po uwierzytelnieniu. Punktem wejścia jest koniec symulowanego pobierania danych z ZUS opisanego w [specyfikacji strony publicznej](SPEC.md). Aktualny kierunek pierwszego wejścia to onboarding, a następnie pełny widok produktu.
 
-**Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Podział pozostałej części nawigacji pozostaje otwarty. Pod mapą są kolejno „Najbliższa sprawa” i kalkulator. Szczegóły interakcji oraz dalsze moduły to propozycje do omówienia.
+**Uzgodniony kierunek.** Zusik pomaga odpowiedzieć wyłącznie na brakujące pytania. Po onboardingu rodzic widzi pływający górny pasek z wyborem dziecka i mapę jego spraw w czterech etapach. Na komputerze mapa przewija się poziomo, na telefonie pionowo. Osobna karta paska to „Dokumenty i wnioski”. Podział pozostałej części nawigacji pozostaje otwarty. Pod mapą są kolejno „Najbliższa sprawa” i kalkulator. Szczegóły interakcji oraz dalsze moduły to propozycje do omówienia.
 
 ## Pierwsze wejście — krótka rozmowa z Zusikiem
 
@@ -56,7 +56,6 @@ Na głównej linii są czynności wymagające działania w danej sytuacji. Obok 
 
 1. **Najbliższa sprawa.** Jedna rozwinięta karta wybrana według obowiązku i terminu. Przykład: „Zgłoś urodzenie Oli”, „Urząd stanu cywilnego”, termin wraz z podstawą i przycisk „Zobacz, jak zgłosić”. To domyślnie wybrany przystanek. Po wskazaniu innego kroku karta przyjmuje jego nazwę i treść. Przycisk „Wróć do najbliższej sprawy” przywraca priorytet. Gdy brakuje danych dla pilnej sprawy, tu pojawia się konkretne pytanie. Gdy wszystkie obowiązki są załatwione, karta informuje o tym i wskazuje najbliższą opcjonalną możliwość.
 2. **Ile czasu i jaki zasiłek?** Porównanie dwóch wariantów opieki dla tej rodziny na jednej osi: okres każdego rodzica, przewidywana kwota i założenia kalkulatora. Rodzic może symulować opiekę kolejno, równocześnie i pracę na część etatu. Przy braku podstawy wymiaru pokazujemy, jakiej wartości potrzeba. Liczy kalkulator według reguł, a agent wyjaśnia wynik ze źródłem. [ZUS o wysokości zasiłku](https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-macierzynski/wysokosc)
-3. **Propozycja dalszego modułu: wnioski i dokumenty dziecka.** W jednym miejscu szkice, wymagane załączniki, odbiorca i status. Akcja „Dokończ z Zusikiem” wraca do konkretnego szkicu. Agent wykorzystuje znane pola, pyta o braki, wskazuje podstawę odpowiedzi i pokazuje zmiany do zatwierdzenia. W demo wysłanie jest symulowane. W trudnej sytuacji obok dokumentów pojawia się bezpośrednie wejście do bezpłatnego wsparcia.
 
 ## Kalkulator „Ile czasu i jaki zasiłek?”
 
@@ -102,7 +101,7 @@ Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodni
 
 **Uzgodnione.** W prawym dolnym rogu każdego ekranu jest mały bąbelek Zusika z etykietą „Otwórz czat z Zusikiem”. Pozostaje w zasięgu podczas przewijania. Otwiera po prawej panel agenta z historią rozmów, polem wiadomości i trzema propozycjami rozpoczęcia rozmowy dopasowanymi do sytuacji na stronie. „Pełny ekran” rozszerza tę samą rozmowę. „Podziel ekran” przywraca obok niej bieżący widok aplikacji. Akcja „Dokończ z Zusikiem” otwiera ten panel przy odpowiednim szkicu wniosku.
 
-**Proponowany układ panelu i sterowanie**
+**Uzgodniony układ panelu i sterowanie**
 
 - **Nagłówek.** „Zusik · asystent AI” oraz kontekst, np. „Ola · Kalkulator · Wariant B”. Pod ręką są „Historia”, „Nowa rozmowa”, przełącznik pełnego lub dzielonego widoku i „Zwiń czat”. Historia pokazuje rozmowy zalogowanego rodzica z tytułem, dzieckiem lub planem oraz datą ostatniej wiadomości. Wybranie pozycji wznawia rozmowę w jej pierwotnym kontekście.
 - **Rozmowa.** Gdy rodzic zaczyna nowy czat, widzi dokładnie trzy krótkie pytania. Wybranie pytania przenosi je do pola wiadomości, gdzie można je zmienić i wysłać. W toku rozmowy w tym miejscu pojawiają się wiadomości, źródła odpowiedzi oraz podgląd proponowanych zmian w konkretnym szkicu.
@@ -116,7 +115,37 @@ Zdanie pod wynikiem: **„Przy wspólnym rozpoczęciu spędzicie razem 4 tygodni
 
 Pytania odpowiadają rzeczywistemu stanowi ekranu. Przykładowo przy jednym wariancie drugie pytanie w kalkulatorze brzmi „Jak dodać drugi wariant?”, a przy brakującej podstawie pierwsze brzmi „Jakich danych brakuje do wyliczenia?”. Przed wyborem dziecka podpowiedzi dotyczą aktualnego kroku onboardingu. Po zmianie dziecka panel przywołuje rozmowę dla nowego planu albo oferuje rozpoczęcie nowej. Poprzedni czat zachowuje swoją historię, niewysłany tekst i załączniki przy właściwym dziecku.
 
-**Przejścia między widokami.** Na komputerze panel zwęża obszar roboczy tak, aby rodzic widział obok np. zmieniane pole formularza. Na wąskim telefonie proponujemy podział pionowy: fragment bieżącej sprawy u góry, rozmowa i pole wiadomości niżej. „Pełny ekran” oddaje całą dostępną przestrzeń rozmowie, a „Podziel ekran” odtwarza podział. Zwijanie przywraca bąbelek. Każde przejście zachowuje aktywną rozmowę, niewysłaną wiadomość, załączniki, generowaną odpowiedź oraz miejsce rodzica na stronie. Pole pozostaje dostępne po otwarciu klawiatury ekranowej. Wszystkie kontrolki mają nazwy dla czytnika ekranu, a zwinięcie zwraca fokus na przycisk otwierający.
+**Przejścia między widokami.** Na komputerze panel zwęża obszar roboczy tak, aby rodzic widział obok np. zmieniane pole formularza. Na wąskim telefonie stosujemy podział pionowy: fragment bieżącej sprawy u góry, rozmowa i pole wiadomości niżej. „Pełny ekran” oddaje całą dostępną przestrzeń rozmowie, a „Podziel ekran” odtwarza podział. Zwijanie przywraca bąbelek. Każde przejście zachowuje aktywną rozmowę, niewysłaną wiadomość, załączniki, generowaną odpowiedź oraz miejsce rodzica na stronie. Pole pozostaje dostępne po otwarciu klawiatury ekranowej. Wszystkie kontrolki mają nazwy dla czytnika ekranu, a zwinięcie zwraca fokus na przycisk otwierający.
+
+## Karta nawigacji „Dokumenty i wnioski”
+
+**Uzgodnione miejsce.** To osobna karta w górnej nawigacji. Działa dla dziecka lub planu wybranego w głównym selektorze. Wejście z mapy, historii rozmowy lub „Najbliższej sprawy” prowadzi do tej samej sprawy i jej istniejącego szkicu. Sprawy wspólne dla rodzeństwa mają podpis „Dotyczy także…” i jeden zestaw dokumentów.
+
+### Co wynika z procesu eZUS
+
+Zapisany formularz pozostaje w dokumentach roboczych aż do wysłania. Po autoryzacji i wysłaniu do ZUS trafia do dokumentów wysłanych. Elektroniczne urzędowe poświadczenie przedłożenia (UPP) potwierdza wpływ dokumentu. Pisma od ZUS trafiają do skrzynki odbiorczej, a szczegóły obsługi zależą od świadczenia. Przykładowo przy 800+ rodzic może dostać wezwanie z terminem na uzupełnienie. Informacja o przyznaniu i decyzja odmowna są różnymi rodzajami odpowiedzi. [Wysyłanie i odbieranie pism w eZUS](https://bip.zus.pl/web/guest/baza-wiedzy/o-portalu-pue-/w-jaki-sposob-wysylac-do-zus-i-odbierac-pisma-) · [Obsługa wniosków 800+](https://www.zus.pl/portal/pomoc/kub0030.html) · [Zasady 800+](https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/swiadczenie-wychowawcze-800-plus)
+
+### Lista dla rodzica — proponowany układ
+
+Na górze nazwa dziecka oraz dwa widoki: **„Sprawy”** (domyślny) i **„Pliki dziecka”**. W „Sprawach” jeden wiersz odpowiada jednej sprawie. Pod nim w szczegółach znajdują się formularz, załączniki, potwierdzenie i korespondencja. Nazwy grup poniżej to etykiety przewodnika. Każda sprawa jest w jednej grupie, zgodnie z ostatnim zdarzeniem i tym, kto ma wykonać kolejny krok.
+
+| Grupa | Co widzi rodzic | Główne działanie |
+| --- | --- | --- |
+| **Do załatwienia** | Najpierw wezwania z terminem, potem aktualne sprawy według terminu. Etykiety: „Do rozpoczęcia”, „Szkic”, „Wypełniony · do sprawdzenia”, „Zatwierdzony · do przekazania”, „Do uzupełnienia po wezwaniu”. Obok jedno zdanie, np. „Brakuje daty rozpoczęcia urlopu”. Sprawa dobrowolna ma oznaczenie „Jeśli chcesz skorzystać”. | „Rozpocznij”, „Dokończ z Zusikiem”, „Sprawdź i zatwierdź”, „Przekaż” albo „Otwórz wezwanie”. |
+| **Wysłane i w toku** | Data wysłania, odbiorca i ostatnie potwierdzone zdarzenie. W demo „Wysłano w symulacji”. Przy wysyłce do ZUS można otworzyć przykładowe UPP. „W trakcie rozpatrywania” pojawia się dopiero, gdy dane danej sprawy zawierają taki stan. | „Zobacz przebieg sprawy”. Gdy przychodzi wezwanie, sprawa przechodzi do „Do załatwienia” z zachowaniem historii wysyłki. |
+| **Na później** | Sprawy pasujące do planu, które staną się aktualne po konkretnym zdarzeniu. Zamiast pustego formularza pokazujemy warunek, np. „Po narodzinach dziecka” przy zgłoszeniu urodzenia. Gdy data jest nieznana, podajemy samo zdarzenie. | „Zobacz, co przygotować”. Po potwierdzeniu zdarzenia sprawa przechodzi do „Do załatwienia”. Dopiero wybranie „Rozpocznij” tworzy szkic. |
+| **Zakończone** | Ostatni wynik i data, np. „Świadczenie przyznane”, „Odmowa” albo „Oznaczone przez Ciebie jako załatwione”. Po odebraniu pisma widać jego treść i wynik oraz kolejne możliwości zgodne z pouczeniem. | „Zobacz wynik” lub „Zobacz dokument”. |
+
+Na komputerze wiersz ma tytuł sprawy językiem rodzica, status, odbiorcę, termin lub ostatnie zdarzenie i jedno działanie. Na telefonie te same informacje układają się w kartę. Przykład: **„Urlop ojcowski”** · „Szkic” · „Do pracodawcy” · „Brakuje daty rozpoczęcia” · **„Dokończ z Zusikiem”**. Kolor uzupełnia tekst statusu. Przy pustej grupie „Do załatwienia” rodzic widzi „Na dziś masz wszystko załatwione”, o ile stan spraw jest znany. Jeśli brakuje danych do ustalenia następnego kroku, wskazujemy brakujące informacje.
+
+**„Pliki dziecka”** pokazują dokumenty źródłowe i załączniki (np. zaświadczenie ze szpitala), kopie wniosków, potwierdzenia oraz pisma przychodzące. Wiersz podaje nazwę, rodzaj, datę i powiązaną sprawę. Otwarcie pokazuje podgląd i link do sprawy. Szkic można edytować. Wysłaną wersję zachowujemy do odczytu. Uzupełnienie po wezwaniu tworzy kolejne pismo lub załącznik powiązany z tą samą sprawą. Dla pisma do pracodawcy lub USC pokazujemy sposób przekazania i dostępne potwierdzenie właściwe dla odbiorcy. UPP z eZUS jest przypisane do przesyłki złożonej do ZUS.
+
+### Po kliknięciu „Dokończ z Zusikiem”
+
+1. **Powrót do miejsca przerwania.** Otwiera się widok dzielony. Po lewej widoczny jest zapisany formularz z pierwszym brakującym polem, po prawej rozmowa dotycząca tego szkicu. Nagłówek identyfikuje dziecko, dokument i odbiorcę, np. „Ola · Wniosek o urlop ojcowski · Pracodawca”. Na telefonie nad czatem widać edytowane pole. Przy pierwszej rozmowie działają trzy ustalone propozycje startu, przy wznowieniu widać dotychczasowe wiadomości.
+2. **Jedno konkretne pytanie.** Zusik mówi np. „Masz już wpisane dane pracodawcy. Od którego dnia chcesz zacząć urlop?”. Rodzic może odpowiedzieć w rozmowie albo użyć selektora daty. Odpowiedź aktualizuje to samo pole, pokazuje zmienioną wartość i zapisuje postęp. Brakujący załącznik ma nazwę oraz akcję „Dodaj dokument”. Zamknięcie panelu pozwala później wznowić ten sam szkic.
+3. **Sprawdzenie.** Po uzupełnieniu wymaganych pól i załączników sprawa otrzymuje status „Wypełniony · do sprawdzenia”. Rodzic widzi podsumowanie, może poprawić dowolne pole i wybiera „Zatwierdź”. Jeśli dokument obsługuje demonstracyjną wysyłkę, osobna akcja „Wyślij w symulacji” pokazuje odbiorcę. Status „Wysłano w symulacji” pojawia się po potwierdzeniu powodzenia. Przy błędzie zatwierdzony dokument pozostaje dostępny do ponowienia.
+4. **Odpowiedź odbiorcy.** W szczegółach jest historia z datami, np. „Wysłano”, „Potwierdzono wpływ”, „Otrzymano wezwanie”. Po wezwaniu Zusik otwiera pismo i pomaga przygotować wyłącznie wskazane uzupełnienie. Status i termin odczytujemy ze zdarzeń scenariusza demo, a po ręcznym oznaczeniu wyraźnie wskazujemy „Podane przez Ciebie”.
 
 ## Zakres konkursowy do dalszego rozpisania
 
