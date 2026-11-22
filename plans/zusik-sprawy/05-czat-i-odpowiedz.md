@@ -9,6 +9,10 @@ Rodzic otwiera ZUSika na stronie lub z planu rodziny. Przeciąga PDF albo wybier
 - [Endpoint pytań](../../app/src/app/api/zusik/ask/route.ts) obsługuje priorytet sesji z podpisanego cookie, kontrolę pochodzenia, `requestId`, strumień i skutki ponawiania. [Magazyn tur](../../app/src/lib/zusik/turn-store.ts) zapisuje także treść pytania i odpowiedzi. [AskService](../../app/src/lib/zusik/ask-service.ts) obsługuje wyszukiwanie publiczne, cytaty, historię, podpowiadanie tematu i szczególny przypadek Marty dla pytań o pochodzenie danych. [Kontrakt UI](../../app/src/features/chat/contract.ts) filtruje twierdzenia odnoszące się do nieistniejących źródeł prawnych.
 - [Obsługa sesji](../../app/src/lib/zusik/session.ts) oraz [przepływ klienta](../../app/src/features/chat/use-zusik-case.ts) stanowią punkt wyjścia dla izolacji i wznowienia. Backend aplikacji używa Node na Vercelu oraz Postgresa. Do tego planu wystarcza obecny stos i lokalny OCR z [etapu dokumentów](02-dokumenty-i-ocr.md).
 
+## Granica pomiędzy rozmową a zapisem stanu
+
+Przed zapisem tekstu tury wybrać profil, sprawę, osobę, datę i intencję. Zwykła rozmowa i rodzinny panel mają używać tej samej operacji REST do aktualizacji faktu i odczytu jego rewizji. Dla przepisu kierować do RAG temat i datę, dla zmiany profilu zapisać deklarację lub propozycję, dla rachunku wywołać regułę na określonych wersjach. Czat wyświetla źródło każdego składnika. Próby obejmują korektę po F5, pytanie o stan sprzed korekty oraz hipotetyczny wariant. [Pamięć rodziny](10-pamiec-uzytkownika-i-kontekst.md) · [API i migracja obecnego strumienia](11-rest-api.md)
+
 ## Kolejność pracy
 
 ### 1. Jedno wejście z obydwu odmian czatu

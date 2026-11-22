@@ -15,6 +15,15 @@
 
 **Punkt odniesienia po integracji 2d0b137.** W pełnym lokalnym buildzie trzy pierwsze wiadomości przeszły zwykłym API i zwróciły odpowiedź w tej samej rozmowie. W świeżej sesji bez logowania działają /app/rozmowa oraz pusty /app/kalkulator. Chrome odczytał kwotę 9352,48 zł ze sztucznego tekstowego PDF i 2847,91 zł z syntetycznego skanu. W obu przypadkach wskazana była właściwa strona, a plik i pytanie o jego zawartość pozostały lokalne. Przeszło 419 testów repozytorium, lint oraz build. Te dwie kwoty pochodziły z tekstu dokumentów. Niezależne obliczenie kwoty z akt pozostaje osobną próbą odbiorową.
 
+## Dodatkowe warunki wydania czatu i REST
+
+| Pomiar | Warunek zaliczenia |
+|---|---|
+| Zgodność korpusu | Z kluczem runtime Preview zgodne ID, wersja i hash dla każdego z 897 oczekiwanych fragmentów dzisiejszego manifestu, zero nadmiarowych aktywnych wpisów. Następne wydanie stosuje własny wersjonowany manifest. Przy wyłączonym dostępie WWW prawidłowy fragment o żłobku trafia do dowodu. |
+| Wiedza publiczna | Osobny przebieg G7 dla dokładnego buildu, modelu i kolekcji. Raportuje top 5, poprawną odpowiedź z podstawą, kontekst w wielu turach i izolację. Zachować progi oraz osobne kategorie błędów opisane w [audycie RAG](09-rag-kolekcje-i-modele.md). |
+| Pamięć | Każdy krok [syntetycznej sprawy o korekcie wynagrodzenia](10-pamiec-uzytkownika-i-kontekst.md) przez UI i rzeczywisty Postgres. Zero zapisów hipotezy jako faktu, duplikatów po retry i odczytów z drugiej sesji. |
+| REST | Każda z 20 operacji przechodzi próbę przez HTTP według [OpenAPI](api-v1.openapi.yaml). Osobno sprawdzić stare ścieżki, 412/428, ponowienie po utracie odpowiedzi, dostęp do cudzego zasobu i wygaśnięcie sesji; nowe wdrożenie daje się cofnąć z zachowaniem danych. |
+
 ## Warstwy testu i kolejność wykonania
 
 | Kolejność i właściciel | Próba | Co zapisać przy rozbieżności |

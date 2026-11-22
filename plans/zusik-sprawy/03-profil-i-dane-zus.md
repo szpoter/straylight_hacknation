@@ -42,7 +42,7 @@ Ręczna symulacja dostępna z czatu otwiera się pod adresem `/app/kalkulator` z
 
 ## 2. Zapisać jeden kontrakt danych
 
-Poniższy zapis opisuje proponowane informacje przenoszone przez istniejące API. Szczegóły nazewnictwa pól należy uzgodnić na jednym wspólnym schemacie Zod dla dokumentów, symulatora i reguł.
+Poniższy zapis opisuje pełny model domenowy. Pierwszy podzbiór wdrażany przez HTTP i kolejne rozszerzenia opisują [kontrakt REST](11-rest-api.md) oraz [wersjonowanie pamięci](10-pamiec-uzytkownika-i-kontekst.md). Szczegóły nazewnictwa pól należy uzgodnić na jednym wspólnym schemacie Zod dla dokumentów, symulatora i reguł.
 
 | Obiekt | Klucze i znaczenie |
 |---|---|
