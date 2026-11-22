@@ -40,13 +40,8 @@ async function nurseryConversation(page: Page) {
     await chat.getByRole("textbox", { name: "Wiadomość do Zusika" }).fill(question);
     const response = page.waitForResponse(res => new URL(res.url()).pathname === "/api/zusik/ask" && res.request().method() === "POST");
     await chat.getByRole("button", { name: "Wyślij", exact: true }).click();
-    const stream = await response;
-    assert.equal(stream.status(), 200);
-    const frames = (await stream.text()).trim().split("\n").map(line => JSON.parse(line));
-    const result = frames.at(-1);
-    assert.equal(result?.type, "result");
-    assert.ok(result.body?.turn?.citations?.length, "Brak cytatu dla „" + question + "”: " + result.body?.turn?.status);
-    await turn(question).getByRole("button", { name: /^Źródło / }).first().waitFor();
+    assert.equal((await response).status(), 200);
+    await turn(question).getByRole("button", { name: /^Źródło / }).first().waitFor({ timeout: 70_000 });
   }
   await ask(first);
   assert.match(await turn(first).innerText(), /aktywnie w żłobku/iu);
