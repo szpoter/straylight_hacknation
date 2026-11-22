@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="app/public/logo/przewodnik-rodzica-biale.svg">
+  <img src="app/public/logo/przewodnik-rodzica.svg" alt="Przewodnik Rodzica" height="72">
+</picture>
+
 # Zusik · Przewodnik Rodzica
 
 Aplikacja webowa, w której rodzic sprawdza, jakie świadczenia rodzicielskie mu przysługują, liczy zasiłek dla obojga rodziców i przygotowuje wnioski do pracodawcy lub ZUS. Odpowiada na zadanie konkursowe ZUS na HackNation 2026.
@@ -11,17 +16,20 @@ Aplikacja webowa, w której rodzic sprawdza, jakie świadczenia rodzicielskie mu
 
 Logowanie mObywatelem, pobranie danych rodziny z ZUS i przekazanie wniosku są symulacjami. Wyliczenia kwot, okresów i uprawnień robi prawdziwy kod reguł z testami.
 
+Prezentacja i film pokazują główną ścieżkę rodzica. Czego w nich nie ma, opisujemy w sekcjach [Poza prezentacją i filmem](#poza-prezentacją-i-filmem), [Gotowość do wdrożenia](#gotowość-do-wdrożenia) i [Czego się nauczyliśmy](#czego-się-nauczyliśmy).
+
 ## Problem
 
 Przyszły rodzic musi sam złożyć informacje z ustawy zasiłkowej, Kodeksu pracy, poradnika ZUS i stron gov.pl. Nie wie, czy ma ubezpieczenie chorobowe, ile dostanie przy wariancie 100% lub 81,5%, jak podzielić urlop z drugim rodzicem ani który wniosek składa się u pracodawcy, a który w ZUS. Błąd, np. przerwa w ubezpieczeniu w dniu porodu, wychodzi dopiero w decyzji odmownej.
 
 ## Co zbudowaliśmy
 
-- **Plan rodziny.** Ścieżka od ciąży przez narodziny do kolejnych terminów. Przy każdej sprawie: co przygotować, komu złożyć, do kiedy.
+- **Plan rodziny.** Ścieżka od planowania dziecka przez ciążę i narodziny do kolejnych terminów. Przy każdej sprawie: co przygotować, komu złożyć, do kiedy.
 - **Jeden kalkulator dla obojga rodziców.** Macierzyński, rodzicielski, ojcowski, wariant 100% lub 81,5%, liczba dzieci, adopcja i rodzina zastępcza, łączenie urlopu z pracą, wskazanie, kto wypłaca zasiłek.
 - **Sprawdzenie ubezpieczenia na sprawach z zestawu ZUS.** Ekran `/sprawdz` rozstrzyga prawo do zasiłku regułami i pokazuje przepis, na którym oparto wynik. Można wybrać sprawę z zestawu albo wgrać PDF, który aplikacja odczytuje OCR w przeglądarce.
 - **Wnioski.** 11 wzorów, w tym oficjalny ZAM, SR-2 i deklaracja POZ. Dla 9 z nich aplikacja generuje wypełniony PDF.
 - **Zusik.** Asystent odpowiada na pytania z przypisami do przepisów i poradnika ZUS.
+- **Wsparcie w trudnych sytuacjach.** Kontakty do fundacji pomagających po stracie dziecka, przy wcześniaku i ciężkiej chorobie dziecka.
 - **Panel administratora.** Zmiana parametrów (stawki, wymiary urlopów, progi) ze sprawdzeniem na sprawach testowych i publikacją od wskazanej daty.
 
 ## Jak sprawdzić projekt
@@ -32,6 +40,45 @@ Przyszły rodzic musi sam złożyć informacje z ustawy zasiłkowej, Kodeksu pra
 4. **Symulacje eZUS.** W **Profil → Konto eZUS** są podgląd e-ZLA, przykładowe zaświadczenie o zadłużeniu składkowym (0 zł lub 200 zł) oraz **Zwolnienia e-ZLA → Sprawdź ubezpieczenie na przykładzie** z [fikcyjnym pakietem dokumentów](app/public/demo/sickness/akta-demonstracyjne.pdf).
 5. **Zusik.** W profilu wybierz **Otwórz rozmowę z Zusikiem**, zadaj pytanie o urlop lub dołącz fikcyjny PDF i porównaj przypisy ze źródłem.
 6. **Panel administratora.** Wejdź na [`/admin`](https://straylight-hacknation.vercel.app/admin) (na czas konkursu logowanie jednym kliknięciem). W **Sprawy testowe** porównaj K-06 (odmowa, brak ubezpieczenia) i K-08 (brak informacji). Instrukcja zmiany parametru: [ZGLOSZENIE-PANEL-ADMINISTRACYJNY.md](ZGLOSZENIE-PANEL-ADMINISTRACYJNY.md).
+
+## Poza prezentacją i filmem
+
+### Plan zaczyna się przed ciążą
+
+W pierwszych pytaniach rodzic może wybrać **Planujemy dziecko**. Ścieżka dostaje wtedy etap **Planowanie**: sprawdzenie ubezpieczenia chorobowego i tego, od czego zależy wysokość zasiłku. Zasiłek macierzyński przysługuje tylko wtedy, gdy w dniu porodu rodzic ma ubezpieczenie chorobowe. Przerwę w ubezpieczeniu łatwiej naprawić przed ciążą niż po decyzji odmownej.
+
+Inspiracją były usługi publiczne Estonii i Australii, ułożone według zdarzeń życiowych. W Estonii usługa „narodziny dziecka” łączy sprawy od zgłoszenia ciąży po świadczenia rodzinne, a świadczenia rodzinne urząd proponuje rodzicom sam, bez wniosku ([OECD OPSI: usługa „narodziny dziecka”](https://oecd-opsi.org/innovations/child-life-event/), [OECD OPSI: świadczenia bez wniosku](https://oecd-opsi.org/innovations/proactive-family-benefits/)). Rządowe serwisy w Australii prowadzą rodzica już od etapu przed ciążą ([NSW Government: Before you are pregnant](https://www.nsw.gov.au/family-and-relationships/having-children/having-a-baby/before-you-are-pregnant), [myGov: Before your baby arrives](https://my.gov.au/en/services/raising-kids/having-a-baby/before-your-baby-arrives)).
+
+![Etap Planowanie na liście spraw w planie rodziny](zgloszenie/planowanie.jpg)
+
+W demo: **Mój plan → Lista**, sekcja **Planowanie**. Kod: `app/src/features/onboarding/flow.ts` (wybór „Planujemy dziecko”), `app/src/lib/plan/build.ts` (etap startowy planu), `app/src/lib/demo/fixtures.ts` (przystanki etapu).
+
+### Wsparcie w trudnych sytuacjach
+
+Zakładka **Wsparcie** (`/wsparcie`) jest dla rodziców po stracie dziecka lub poronieniu, z wcześniakiem, z ciężko chorym dzieckiem („Za życiem”) albo w trudnej sytuacji własnej. Najpierw pokazuje fundacje, które pomagają w danej sytuacji: czym się zajmują, co jest bezpłatne, telefon i stronę. Dopiero pod nimi są sprawy formalne ze źródłem w przepisach, np. uzupełniający urlop macierzyński przy wcześniaku albo dłuższy urlop rodzicielski z zaświadczeniem „Za życiem”. Strona jest celowo spokojna, bez animacji.
+
+- Wpisy pochodzą wyłącznie ze stron samych organizacji i mają datę sprawdzenia. Wśród nich są m.in. Fundacja Ernesta, Fundacja Wcześniak Rodzice-Rodzicom, Fundacja Gajusz i Fundacja Nagle Sami.
+- Administrator edytuje wpisy w panelu, a panel oznacza te sprawdzone ponad 183 dni temu.
+- Do wsparcia prowadzą linki z planu, kart spraw, kalkulatora i pierwszych pytań. Stopka strony głównej wskazuje pomoc także bez logowania.
+
+![Zakładka Wsparcie z fundacjami dla rodziców po stracie dziecka](zgloszenie/wsparcie.jpg)
+
+Kod: `app/src/features/support/`, `app/src/lib/support/organizations.ts`, `app/src/features/admin/support-editor.tsx`.
+
+### PDF tylko tam, gdzie ma sens
+
+Nie każdy wniosek da się pobrać jako PDF i to jest celowe. Tam, gdzie urząd przyjmuje wyłącznie formularz elektroniczny albo sam spisuje zgłoszenie, plik PDF tylko by mylił.
+
+| Rodzaj | Wnioski | Co dostaje rodzic |
+|---|---|---|
+| Urzędowy druk | ZAM (zasiłek macierzyński), SR-2 (becikowe), deklaracja wyboru POZ | Wypełniony oryginalny druk. Pobranie działa dopiero po uzupełnieniu wymaganych pól |
+| Pismo | Urlop macierzyński przed porodem, urlop ojcowski, urlop rodzicielski, łączenie urlopu z pracą, zgłoszenie dziecka do ubezpieczenia u pracodawcy, odpis aktu urodzenia | PDF pisma. Niepełne pismo ma znak „SZKIC” |
+| Bez PDF | 800+ (SW-R) | Wniosek składa się tylko elektronicznie: eZUS, mZUS, bankowość elektroniczna albo Emp@tia. Aplikacja zbiera dane i wskazuje kanał |
+| Bez PDF | Zgłoszenie urodzenia | Online przez gov.pl lub mObywatel albo w USC, gdzie kierownik urzędu przygotowuje protokół, a rodzic go podpisuje |
+
+PDF powstaje w przeglądarce (pdf-lib). Rodzaj PDF dla każdego wniosku to pole `pdf` w `app/src/lib/demo/forms-*.ts`, a generowanie jest w `app/src/features/documents/pdf.ts` i `app/src/lib/forms/`.
+
+![Wniosek o zasiłek macierzyński ZAM wypełniany w aplikacji](zgloszenie/wniosek-zam.jpg)
 
 ## Stan funkcji
 
@@ -47,6 +94,28 @@ Przyszły rodzic musi sam złożyć informacje z ustawy zasiłkowej, Kodeksu pra
 | Logowanie mObywatel, import danych, e-ZLA, zaświadczenie o zadłużeniu, przekazanie wniosku | Symulacja | Wygląd i przebieg bez połączenia z systemami państwowymi |
 | Panel administratora | Działa w sesji | Zmiany obowiązują w sesji przeglądarki (podpisane ciasteczko). Wdrożenie wymaga trwałej bazy |
 | Zusik | Działa, jakość zmienna | Odpowiedzi zależą od modelu i trafienia w korpus. Kwot model nie liczy |
+
+## Gotowość do wdrożenia
+
+Aplikacja działa produkcyjnie jako serwis demonstracyjny z automatyczną kontrolą jakości. Do wdrożenia w ZUS brakuje integracji z systemami państwowymi i trwałej bazy dla panelu administratora.
+
+**Co już jest gotowe**
+
+- **Produkcja z bramką jakości.** Każdy push przechodzi przez GitHub Actions: typy, lint i 705 testów. Jeśli któryś krok nie przejdzie, wdrożenie się nie zaczyna. Po wdrożeniu na produkcję workflow sprawdza asystenta na syntetycznych sprawach i kontroluje cytaty w odpowiedziach ([`.github/workflows/vercel-deploy.yml`](.github/workflows/vercel-deploy.yml)).
+- **Obliczenia niezależne od AI.** Kalkulator, plan, `/sprawdz`, wnioski i OCR działają bez kluczy i bez modelu. Awaria usługi AI nie wyłącza obliczeń.
+- **Zmiana przepisów bez nowej wersji.** Parametry mają datę obowiązywania i zmienia się je w panelu administratora.
+- **Konfiguracja i sekrety.** Wszystko przez zmienne środowiskowe po stronie serwera. Brak zmiennej daje jawny błąd `config_missing`, a nie cichą awarię. Hasło administratora jest przechowywane jako skrót scrypt ([app/README.md](app/README.md)).
+- **Dokumenty rodzica zostają u niego.** OCR działa w przeglądarce, a sprawy w aplikacji nie zawierają danych osobowych.
+- **Wymagania techniczne zadania.** Next.js i React, REST API (11 tras w `app/src/app/api/`), widoki na komputer i telefon.
+
+**Czego brakuje do wdrożenia w ZUS**
+
+| Element | Dziś | Potrzebne |
+|---|---|---|
+| Logowanie, dane rodziny, e-ZLA, zaświadczenia | Symulacja | Integracja z login.gov.pl, mObywatelem i eZUS (PUE) |
+| Przekazanie wniosku | Symulacja | Wysyłka do pracodawcy, ZUS i USC kanałami tych instytucji |
+| Panel administratora | Zmiany w sesji przeglądarki | Trwała baza z historią wersji reguł i rolą zatwierdzającego |
+| Ostrzeżenia o ryzyku utraty świadczeń | Ogólny przystanek z ryzykami | Ostrzeżenia dopasowane do sytuacji konkretnej rodziny |
 
 ## Wymagania zadania
 
@@ -106,7 +175,7 @@ Aplikacja działa pod http://localhost:3000. Kalkulator, plan, `/sprawdz`, wnios
 npm test
 ```
 
-Oczekiwany wynik: `Test Files 79 passed | 1 skipped`, `Tests 696 passed | 9 skipped`.
+Oczekiwany wynik: `Test Files 80 passed | 1 skipped`, `Tests 705 passed | 9 skipped`.
 
 ## Architektura
 
@@ -131,15 +200,13 @@ Ruch idzie w jedną stronę: trasa, funkcja, biblioteka domenowa, usługa zewnę
 - **Parametry z datą obowiązywania.** Reguły pobierają stawki i wymiary z harmonogramu na dzień zdarzenia (`app/src/lib/rules/parameters.ts`), więc zmiana przepisów to wpis w panelu, a nie nowy kod. W demo harmonogram żyje w sesji przeglądarki, żeby zmiany jednego jurora nie wpływały na innych.
 - **OCR w przeglądarce.** Wgrane dokumenty nie opuszczają urządzenia rodzica. Kosztem jest czas odczytu (ok. 25 s dla kilkunastu stron) i niższa jakość na piśmie odręcznym, dlatego każdy fakt rodzic potwierdza ręcznie.
 
+## Czego się nauczyliśmy
+
+**Nasza wpadka: za bardzo dziecięcy design.** Na początku poszliśmy w infantylny wygląd. Projektowaliśmy z myślą o dziecku, a użytkownikiem jest rodzic, który załatwia formalności i pilnuje terminów. Straciliśmy na tym trochę czasu, zanim zmieniliśmy kierunek.
+
+Znaleźliśmy równowagę. Interfejs jest spokojny i rzeczowy: jasne tło, szeryfowe nagłówki, pastelowa zieleń z kolorów ZUS ([DESIGN.md](DESIGN.md)). Ciepło wnosi jedna postać, Zusik, czyli bąbelek. Rodzice, którzy będą mieć dzieci w najbliższych latach, to głównie pokolenie wychowane w internecie. Znają aplikacje z maskotką, takie jak Duolingo, więc postać prowadząca przez sprawy jest dla nich naturalna, a nie dziecinna. Zusik nie jest ozdobą: stoi przy najbliższej sprawie na planie i zmienia stan, gdy czyta, szuka, liczy albo pisze.
+
 ## Co dalej
 
 Trwała baza dla panelu administratora i historii zmian, plan dla dowolnej rodziny z onboardingu wraz z ostrzeżeniami dopasowanymi do sytuacji, lepsze rozpoznawanie podstawy wymiaru na skanach, prawdziwe integracje z PUE/eZUS i mObywatelem.
 
-## Zespół Straylight
-
-| Osoba | Zakres |
-|---|---|
-| Julian | Agent Zusik, backend, reguły i sprawdzanie spraw |
-| Maciej | Widoki rodzica, kalkulator, prezentacja |
-| Bartosz | Strona główna, responsywność |
-| Nikodem | Panel administratora |
