@@ -374,7 +374,8 @@ export function planReadyText(name: string): string {
 }
 
 export function warningCount(answers: Answers): number {
-  return (answers.jobChange === "tak" ? 1 : 0) + (answers.employment === "nie-pracuje" ? 1 : 0);
+  const employment = answers.employment;
+  return (answers.jobChange === "tak" ? 1 : 0) + (employment === "nie-pracuje" || employment === "dzialalnosc" || employment === "inne" ? 1 : 0);
 }
 
 const MONTHS = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień"];
