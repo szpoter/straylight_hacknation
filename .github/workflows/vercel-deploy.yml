@@ -57,6 +57,7 @@ jobs:
         run: rm -rf .git
 
       - name: Deploy
+        id: publish
         # shell: bash włącza pipefail, więc błąd vercel deploy przed | tee przerywa krok.
         shell: bash
         env:
@@ -89,6 +90,6 @@ jobs:
         run: npm run zusik:acceptance -- https://straylight-hacknation.vercel.app
 
       - name: Check cross-corpus answers and citations on production
-        if: github.ref == 'refs/heads/main'
+        if: ${{ !cancelled() && github.ref == 'refs/heads/main' && steps.publish.outcome == 'success' }}
         working-directory: app
         run: node --import tsx scripts/zusik-eval-conversations.ts https://straylight-hacknation.vercel.app
