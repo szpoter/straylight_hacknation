@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_PLAN_ID, getPlan } from "@/lib/demo/fixtures";
 import { applyCalculatorToPlan, type CalcForm } from "@/lib/plan/benefit-form";
+import { refreshSavedLeavePlan } from "@/lib/plan/build";
 import { addDays, daysBetween, formatLong } from "@/lib/demo/dates";
 import type { Plan, Stop } from "@/lib/demo/types";
 
@@ -132,6 +133,10 @@ export function calculatorKey(plan: Pick<Plan, "id" | "family">): string {
 }
 
 function applyStopPatch(stop: Stop, patch: StopPatch): Stop {
+  // Dawny wniosek po porodzie mógł mieć zapisany stan wysyłki; dziś to informacja.
+  if (stop.id.replace(/^e-/, "") === "urlop-macierzynski" && stop.kind === "informacja") {
+    return { ...stop, checked: patch.checked ?? stop.checked };
+  }
   const { doc, ...rest } = patch;
   return { ...stop, ...rest, ...(doc && stop.doc ? { doc: { ...stop.doc, ...doc } } : {}) };
 }
@@ -160,7 +165,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     } catch {
       saved = {};
     }
-    const createdPlans = Array.isArray(saved.created) ? saved.created : [];
+    const createdPlans = Array.isArray(saved.created) ? saved.created.map(refreshSavedLeavePlan) : [];
     /* eslint-disable react-hooks/set-state-in-effect -- odczyt po hydratacji */
     setPatches(saved.patches ?? {});
     setEdits(saved.edits ?? {});
