@@ -6,9 +6,6 @@ import { DEMO_PROFILE, endDemoSession, useDemoSession } from "./demo-session";
 import { AUTH_PATHS } from "./flow";
 import styles from "./auth.module.css";
 
-// Ekran zastępczy po zalogowaniu. Docelowo tu zaczyna się onboarding z SPEC-PO-LOGOWANIU.md
-// (zakres Macieja). Pokazuje, że logowanie demo się udało i jakie dane „wczytaliśmy”.
-
 const NBSP = " ";
 
 export function StartHeaderAside() {
@@ -73,11 +70,14 @@ export function StartPlaceholder() {
         Zalogowano przez mObywatel
         <span className={styles.serviceDemo}>· symulacja</span>
       </p>
-      <h1 className={styles.startTitle}>Zaraz będzie reszta.</h1>
+      <h1 className={styles.startTitle}>W czym może pomóc Ci Zusik?</h1>
       <p className={styles.startLead}>
-        Logowanie się udało. Jesteś w{NBSP}przewodniku jako {DEMO_PROFILE.firstName} {DEMO_PROFILE.lastName},
-        fikcyjny profil demonstracyjny. Kolejne ekrany, od pierwszego pytania po plan dziecka, właśnie powstają.
+        Zapytaj o świadczenie lub wybierz przykładową sprawę, żeby przejść z Zusikiem przez dokumenty.
       </p>
+      <div className={styles.actions}>
+        <ButtonLink href="/app/rozmowa">Otwórz czat z Zusikiem</ButtonLink>
+        <ButtonLink href="/app/sprawy" variant="secondary">Wybierz przykładową sprawę</ButtonLink>
+      </div>
 
       <section className={styles.dataCard} aria-labelledby="dane-zus">
         <div className={styles.dataHead}>
@@ -88,7 +88,7 @@ export function StartPlaceholder() {
         </div>
         {session.data === "manual" ? (
           <p className={styles.dataEmpty}>
-            Wybrano „Wpisz dane samodzielnie”. Formularz do uzupełnienia danych pojawi się w{NBSP}tym miejscu.
+            Wybrano samodzielne podanie danych. Potrzebne informacje możesz uzupełnić w wybranej sprawie.
           </p>
         ) : session.data === "pending" ? (
           <p className={styles.dataEmpty}>Danych jeszcze nie wczytano.</p>
@@ -107,11 +107,6 @@ export function StartPlaceholder() {
         )}
       </section>
 
-      <div className={styles.actions}>
-        <ButtonLink href="/" variant="secondary">
-          Wróć na stronę główną
-        </ButtonLink>
-      </div>
     </div>
   );
 }

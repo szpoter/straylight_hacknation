@@ -2,6 +2,7 @@ import Link from "next/link";
 import s from "./scenario-nav.module.css";
 
 const scenarios = [
+  { id: "ogolna", href: "/app/rozmowa", label: "Rozmowa ogólna", detail: "Pytania o świadczenia i dokumenty" },
   { id: "marta", href: "/app", label: "Marta i Paweł", detail: "Urlop rodzicielski" },
   { id: "kamil", href: "/app/kamil", label: "Kamil", detail: "Zasiłek za okres ojcowski" },
   { id: "chorobowe", href: "/app/chorobowe", label: "Chorobowe w ciąży", detail: "Ocena prawa do zasiłku" },

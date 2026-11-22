@@ -129,7 +129,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
     setPhase("restoring");
     setError(null);
     try {
-      if (scenario === "marta") {
+      if (scenario === "marta" || scenario === "ogolna") {
         const session = await post("/api/zusik/session");
         if (session.status >= 400) return fail(errorFrom(session.status, session.body));
         setDocumentCache(session.body.documentCache ?? "");

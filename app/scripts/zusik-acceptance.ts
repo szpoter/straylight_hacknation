@@ -307,6 +307,30 @@ async function testFollowUps(page: Page) {
   assert.equal(result.turn.citations.length, 0);
   assert.equal(result.retrieval, null);
 }
+async function testLoginToChat(page: Page) {
+  await page.goto(origin);
+  await page.locator("header").getByRole("link", {name: "Zaloguj się", exact: true}).click();
+  await page.getByRole("link", {name: /^login\.gov\.pl/i}).click();
+  await page.getByRole("link", {name: /^Aplikacja mObywatel/i}).click();
+  await page.getByRole("button", {name: "Symuluj zeskanowanie kodu"}).click();
+  await page.waitForURL("**/start");
+  await page.getByRole("link", {name: "Otwórz czat z Zusikiem"}).click();
+  await page.waitForURL("**/app/rozmowa");
+  const chat = page.getByRole("region", {name: "Czat z Zusikiem"});
+  const question = "Czy wniosek o Dobry Start mogę wysłać przez mZUS?";
+  const {turn, retrieval} = await askInChat(page, question);
+  assert.ok(turn.citations.some(c => c.fragmentId === "dobry-start-kanaly"));
+  assert.ok(retrieval.evidence.includes("dobry-start-kanaly"));
+  await page.reload();
+  await chat.getByText(question, {exact: true}).waitFor();
+  const general = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=ogolna");
+  assert.ok(general.turns.some(saved => saved.requestId === turn.requestId));
+  await chat.getByText("Zmień sprawę", {exact: true}).click();
+  await chat.getByRole("link", {name: /Marta i Paweł/}).click();
+  await page.waitForURL("**/app");
+  const view = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=marta");
+  assert.ok(!view.turns.some(turn => turn.question === question), "General conversation stays outside Marta's case");
+}
 async function testGreetings(page: Page) {
   // Reproduce a cold session while the parent is already typing the first message.
   let releaseSession!: () => void;
@@ -347,7 +371,7 @@ async function testGreetings(page: Page) {
 }
 async function run() {
   const browser=await chromium.launch({channel:"chrome", headless:true});
-  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false],["KONTEKST",testFollowUps,false]] as const;
+  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false],["KONTEKST",testFollowUps,false],["START",testLoginToChat,false]] as const;
   let failures=0;
   try {
     for (const [id,test,variation] of cases) {
