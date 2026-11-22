@@ -30,7 +30,7 @@ const money = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN
 
 export function caseSources(view: MartaView | null, corpus: Corpus): AskAnswer {
   let message: string;
-  if (view) {
+  if (view && view.firstName === DEMO_INPUTS.firstName && view.secondName === DEMO_INPUTS.secondName && view.childName === DEMO_INPUTS.childName) {
     const { inputs, firstName, secondName, childName } = view;
     const { first, second, total } = view.variants[view.selected ?? "together"];
     const amount = (name: string, daily: number | null, result: number | null) => daily === null || result === null
@@ -43,7 +43,7 @@ export function caseSources(view: MartaView | null, corpus: Corpus): AskAnswer {
     ].join(" ");
   } else {
     const demo = DEMO_INPUTS;
-    message = `Formularz zawiera przykładowe dane rodziny (${demo.firstName}, ${demo.secondName}, ${demo.childName}). Początkowo proponuje po ${demo.days} dni oraz stawki ${money.format(demo.firstDaily)} i ${money.format(demo.secondDaily)} brutto za dzień. Możesz je zmienić. Po zapisaniu porównania kalkulator pomnoży liczbę dni każdego rodzica przez jego stawkę i doda obie kwoty.`;
+    message = `Formularz korzysta z profilu rodziny Oli (${demo.firstName}, ${demo.secondName}, ${demo.childName}). Początkowo proponuje po ${demo.days} dni oraz stawki ${money.format(demo.firstDaily)} i ${money.format(demo.secondDaily)} brutto za dzień. Możesz je zmienić. Po zapisaniu porównania kalkulator pomnoży liczbę dni każdego rodzica przez jego stawkę i doda obie kwoty.`;
   }
   const fragment = corpus.fragments.get("kp-art182-1d-par1");
   const { answer } = validateAnswer(corpus, fragment ? [fragment] : [], {

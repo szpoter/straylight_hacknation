@@ -2,7 +2,6 @@
 
 import { conversationInput } from "@/lib/zusik/conversation";
 import { usePhone, useVisualViewport } from "./use-chat-viewport";
-import { ScenarioNav } from "./scenario-nav";
 import { useCaseResource } from "./use-case-resource";
 import { MartaDraft, MartaInterview, type DeadlineSource } from "./marta-workflow";
 import { checkedCopy } from "./marta-attachment";
@@ -219,8 +218,6 @@ export function ZusikWorkspace({ initialChatOpen = false, deadlineSource }: { in
       data-zusik-workspace
       style={phone && chatOpen && viewport ? { height: viewport.height, top: viewport.top } : undefined}
     >
-      <ScenarioNav current="marta" />
-
       <div ref={workArea} className={`${s.work} ${phone ? s.workColumn : ""}`}>
         {showForm && (
           <div

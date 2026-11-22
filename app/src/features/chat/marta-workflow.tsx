@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { todayInPoland } from "@/lib/demo/dates";
+import { OLA } from "@/lib/family/ola";
 import { MartaPdfPreview } from "./marta-pdf-preview";
 import { AttachmentLinks, SavedAttachment, checkedCopy, storeCopy } from "./marta-attachment";
 import type { MartaView } from "@/lib/marta/types";
@@ -29,9 +31,6 @@ function ComparisonInputs({ state, onSaved }: { state: Case; onSaved: () => void
         days: Number(data.get("days")),
         firstDaily: rate("first"),
         secondDaily: rate("second"),
-        firstName: data.get("firstName"),
-        secondName: data.get("secondName"),
-        childName: data.get("childName"),
       })
     )
       onSaved();
@@ -49,18 +48,8 @@ function ComparisonInputs({ state, onSaved }: { state: Case; onSaved: () => void
       <details>
         <summary>Dane rodziny i stawki</summary>
         <div className={s.fields}>
-          <label>
-            Pierwszy rodzic
-            <input name="firstName" required maxLength={90} defaultValue={view?.firstName ?? "Marta Lis"} />
-          </label>
-          <label>
-            Drugi rodzic
-            <input name="secondName" required maxLength={90} defaultValue={view?.secondName ?? "Paweł Lis"} />
-          </label>
-          <label>
-            Dziecko
-            <input name="childName" required maxLength={90} defaultValue={view?.childName ?? "Ola Lis"} />
-          </label>
+          <p>Rodzice: {OLA.mother} i {OLA.father}.</p>
+          <p>Dziecko: {OLA.child}, data urodzenia: {date(OLA.birthDate)}.</p>
           <label>
             Stawka pierwszego rodzica (zł brutto/dzień)
             <input
@@ -306,7 +295,7 @@ export function MartaInterview({ state, attachment, onAttach, scope, fullscreen 
               {view.confirmed && !edit && !amend && (
                 <>
                   <p>
-                    <strong>Wniosek zatwierdzony.</strong> Pobierz dokument i sprawdź dane.
+                    <strong>Wniosek zatwierdzony.</strong> Pobierz i podpisz dokument, a następnie przekaż go pracodawcy.
                   </p>
                   {fullscreen && (
                     <a className={s.download} href="/api/zusik/marta/pdf" download="wniosek-rodzicielski.pdf">
@@ -315,19 +304,19 @@ export function MartaInterview({ state, attachment, onAttach, scope, fullscreen 
                   )}
                   {view.attachmentName && (
                     <SavedAttachment
-                      key={[scope, view.attachmentName, view.version - (view.submitted ? 1 : 0)].join(":")}
+                      key={[scope, view.attachmentName, view.attachmentVersion ?? view.version - (view.submitted ? 1 : 0)].join(":")}
                       view={view}
                       scope={scope}
                     />
                   )}
-                  {view.submitted ? (
+                  {view.handoffRecordedByParent ? (
                     <p role="status">
-                      Przekazano do Studia Lipa w symulacji
-                      {view.submittedAt && ` · ${date(view.submittedAt.slice(0, 10))}`}.
+                      Oznaczono przekazanie pracodawcy {OLA.employer}
+                      {view.submittedAt && ` · ${date(todayInPoland(new Date(view.submittedAt)))}`}.
                     </p>
                   ) : (
-                    <button disabled={busy} onClick={() => void send({ type: "submit", version: view.version })}>
-                      Przekaż pracodawcy w symulacji
+                    <button disabled={busy} onClick={() => void send({ type: "record_handoff", version: view.version })}>
+                      Potwierdzam samodzielne przekazanie pracodawcy
                     </button>
                   )}
                 </>
@@ -353,13 +342,14 @@ export function MartaDraft({
   source?: DeadlineSource;
 }) {
   const selected = view?.selected ? view.variants[view.selected] : null;
-  const status = view?.submitted ? "Przekazano w symulacji" : view?.confirmed ? "Zatwierdzony" : "Szkic";
+  const previousEntry = view?.previousPlanEntryAt ?? (!view?.handoffRecordedByParent ? view?.submittedAt : undefined);
+  const status = view?.handoffRecordedByParent ? "Przekazanie oznaczone przez rodzica" : view?.confirmed ? "Zatwierdzony" : "Szkic";
   return (
     <article className={s.sheet}>
-      <p className={s.eyebrow}>Dokumenty i wnioski · Dane demonstracyjne</p>
+      <p className={s.eyebrow}>Dokumenty i wnioski</p>
       <h1>Wniosek o urlop rodzicielski</h1>
       <p>
-        Do pracodawcy · Studio Lipa <span className={s.badge}>{status}</span>
+        Do pracodawcy · {OLA.employer} <span className={s.badge}>{status}</span>
       </p>
       {selected && !view?.submitted && (
         <div className={s.deadline}>
@@ -379,9 +369,10 @@ export function MartaDraft({
           )}
         </div>
       )}
-      {view?.submittedAt && (
+      {previousEntry && <p className={s.deadline}>Wcześniejszy wpis planu · {date(todayInPoland(new Date(previousEntry)))}</p>}
+      {view?.handoffRecordedByParent && view.submittedAt && (
         <p className={s.deadline}>
-          Przekazano do Studia Lipa w symulacji · <strong>{date(view.submittedAt.slice(0, 10))}</strong>
+          Oznaczono przekazanie pracodawcy {OLA.employer} · <strong>{date(todayInPoland(new Date(view.submittedAt)))}</strong>
         </p>
       )}
       {loaded && (phone ? (

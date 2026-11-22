@@ -26,6 +26,7 @@ const bodySchema = z.object({
  * 409 the requestId was used with different text, 503 {turn.status:"unavailable"} nothing saved.
  */
 export async function POST(request: Request) {
+  const started = Date.now();
   const opId = randomUUID().slice(0, 8);
   if (!isSameOrigin(request.headers)) {
     return Response.json({ error: "forbidden_origin" }, { status: 403, headers: NO_STORE });
@@ -34,11 +35,11 @@ export async function POST(request: Request) {
   if (!parsed.success || (parsed.data.family && parsed.data.scenario !== "ogolna")) {
     return Response.json({ error: "invalid_request" }, { status: 400, headers: NO_STORE });
   }
-  const started = Date.now();
   try {
     const sessionId = await currentSessionId();
     if (!sessionId) return Response.json({ error: "no_session" }, { status: 401, headers: NO_STORE });
-    const service = askService();
+    // Keep five seconds of the function budget for committing the turn and returning the stream.
+    const service = askService(started + (maxDuration - 5) * 1000);
     const { question, requestId } = parsed.data;
     const run = async (progress?: (value: string) => void, verified?: (turn: AskTurn) => void) => {
       const result = await service.ask(sessionId, question, requestId, progress, verified, parsed.data.scenario, parsed.data.family);
@@ -59,6 +60,8 @@ export async function POST(request: Request) {
           citations: result.turn?.citations.map((c) => c.fragmentId),
           quoteReason: trace?.quoteReason,
           calls: trace?.calls ?? { qdrant: 0, sherlock: 0 },
+          advisory: trace?.advisory,
+          officialFetches: trace?.officialFetches ?? 0,
           ms: Date.now() - started,
         }),
       );
@@ -69,10 +72,14 @@ export async function POST(request: Request) {
         return Response.json({ pending: true, retry: true }, { status: 202, headers: NO_STORE });
       }
       // Only public source IDs and provider metadata belong in the browser's retrieval receipt.
-      const retrieval = trace?.search === "ok" ? {
+      const retrieval = trace && (trace.search === "ok" || trace.officialFetches ||
+        result.turn?.citations.some(c => c.origin === "official_live")) ? {
         query: trace.sanitized,
         contextRequestId: trace.contextRequestId,
+        officialFetches: trace.officialFetches ?? 0,
         top: trace.vectorIds,
+        rankings: trace.rankings,
+        advisory: trace.advisory,
         evidence: trace.evidenceIds,
         backend: trace.backend ?? null,
         model: trace.modelId ?? null,

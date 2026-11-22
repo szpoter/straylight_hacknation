@@ -42,9 +42,9 @@ describe("employee application PDF", () => {
 
   it("prints the confirmed dates, history, evidence and declaration for each variant", async () => {
     const sequential = await textOf(await martaPdf(ready));
-    for (const text of ["Marta Lis", "Ola Lis", "18.01.2027 do 14.02.2027", "Paweł Lis", "15.02.2027 do 14.03.2027",
+    for (const text of ["Marta Lis", "Ola Lis", "10.11.2026", "18.01.2027 do 14.02.2027", "Paweł Lis", "15.02.2027 do 14.03.2027",
       "7 dni", "wniosków o zasiłek: 1", "nie zamierza", "aktach osobowych"]) expect(sequential).toContain(text);
-    expect(sequential).not.toContain("SZKIC");
+    expect(sequential).not.toMatch(/SZKIC|DEMONSTRACYJNE|symulacj/i);
     const together = await textOf(await martaPdf({ ...ready, selected: "together", employerHasCopy: false, attachmentName: "odpis.pdf" }));
     expect(together).toContain("równocześnie ze mną");
     expect(together).toContain("odpis.pdf");

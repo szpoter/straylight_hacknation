@@ -1,23 +1,30 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
+import { SpeechBubble, Zusik } from "@/components/mascot/Zusik";
+import type { ZusikState } from "@/components/mascot/babelek/types";
 import { AlertIcon, Button, CheckIcon, cn } from "@/components/ui";
 import { daysLeftLabel, formatLong } from "@/lib/demo/dates";
 import type { Plan } from "@/lib/demo/types";
 import { planHighlights } from "@/lib/plan/build";
 import type { Answers } from "./flow";
 
-/** Kroki „układam plan”. */
-function buildingSteps(answers: Answers): Array<{ text: string }> {
+/** Kroki „układam plan” i stan Zusika przy każdym z nich (kształty maskotki z babelek/types.ts). */
+function buildingSteps(answers: Answers): Array<{ text: string; state: ZusikState }> {
   const from = answers.situation === "ciaza" ? "od terminu porodu" : answers.situation === "planuje" ? "na najbliższe miesiące" : "od daty urodzenia";
-  return [{ text: `Sprawdzam terminy ${from}…` }, { text: "Dobieram świadczenia i urlopy…" }, { text: "Liczę, co już za Tobą…" }];
+  return [
+    { text: `Sprawdzam terminy ${from}…`, state: "calculating" },
+    { text: "Dobieram świadczenia i urlopy…", state: "searching" },
+    { text: "Liczę, co już za Tobą…", state: "checking" },
+  ];
 }
 
 const STEP_MS = 850;
 
 /**
- * Chwila „układam plan”: linie pojawiają się po kolei (bez maskotki). Około 2,5 s;
- * przy ograniczonym ruchu od razu przechodzi dalej. Tempo do weryfikacji z zespołem.
+ * Chwila „układam plan”: linie pojawiają się po kolei, Zusik zmienia kształt (kalkulator,
+ * teczka, sprawdzanie). Około 2,5 s; przy ograniczonym ruchu od razu przechodzi dalej.
+ * Tempo do weryfikacji z zespołem.
  */
 export function BuildingPlan({ answers, onDone }: { answers: Answers; onDone: () => void }) {
   const steps = buildingSteps(answers);
@@ -35,8 +42,10 @@ export function BuildingPlan({ answers, onDone }: { answers: Answers; onDone: ()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const state = done >= steps.length ? "confirming" : steps[done].state;
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-stack py-10 text-center" aria-live="polite">
+      <Zusik size={144} animated state={state} toward={90} />
       <h1 className="font-serif text-title">Układam Twój plan</h1>
       <ul className="flex w-full max-w-sm flex-col gap-3 text-left">
         {steps.map((s, i) => (
@@ -65,12 +74,14 @@ export function BuildingPlan({ answers, onDone }: { answers: Answers; onDone: ()
  */
 export function PlanReady({
   plans,
+  line,
   estimatedDate,
   headingRef,
   onFinish,
   review,
 }: {
   plans: Plan[];
+  line: string;
   estimatedDate: boolean;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onFinish: () => void;
@@ -101,6 +112,10 @@ export function PlanReady({
   return (
     <div className="flex flex-1 flex-col gap-stack pt-6 md:pt-10">
       <div className="flex flex-col items-center gap-4 text-center transition-[opacity,translate] duration-500 starting:translate-y-3 starting:opacity-0 motion-reduce:transition-none">
+        <Zusik size={120} animated state="confirming" toward={90} />
+        <SpeechBubble tail="bottom" className="px-4 py-2.5">
+          {line}
+        </SpeechBubble>
         <h1 ref={headingRef} tabIndex={-1} className="font-serif text-headline-mobile focus:outline-none md:text-headline">
           {many ? "Wasze plany są gotowe" : "Twój plan jest gotowy"}
         </h1>

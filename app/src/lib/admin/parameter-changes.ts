@@ -2,9 +2,9 @@ import { addDays, formatShort } from "../rules/dates";
 import { assessArrears } from "../rules/arrears";
 import { RULE_PARAMETERS, formatValue, parameterOn, weeksLabel, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
 import { benefitPayer } from "../rules/payer";
-import { RATE_LABEL, benefitForPeriod, dailyBenefitGrosze, formatGrosze, parentalMinimumTopUp, type RateKind } from "../rules/rates";
+import { RATE_LABEL, benefitForPeriod, dailyBenefitGrosze, formatGrosze, type RateKind } from "../rules/rates";
 import { checkPaternityLimit, limitImpact, type CheckRow, type ImpactRow } from "./change-checks";
-import { RATE_SCENARIOS, TOPUP_SCENARIOS, rateScenarioOutcome, topUpScenarioOutcome } from "./scenarios";
+import { RATE_SCENARIOS, rateScenarioOutcome } from "./scenarios";
 
 /**
  * Every parameter the admin panel can change for real (ZUS task p. 14), with how it is typed in,
@@ -30,8 +30,6 @@ export interface ChangeSpec {
   scope: string;
   /** Parent view that applies published values, for "Pokaż oczami rodzica"; null = none yet. */
   parentView: string | null;
-  /** Replaces the generic note when there is no parent view yet. */
-  parentNote?: string;
   impactNote: string;
   toValue(text: string): number | null;
   toText(value: number): string;
@@ -181,258 +179,6 @@ function rateSpec(kind: RateKind): ChangeSpec {
     },
   };
 }
-
-/* ---------- parental benefit amount (podwyższenie, art. 31 ust. 3a) ---------- */
-
-const DEMO_NET_GROSZE = 82000; // benefit after the tax advance in the impact example
-
-const MINIMUM: ChangeSpec = {
-  parameter: "benefit.parentalMinimum",
-  catalogId: "app-parental-minimum",
-  group: "Stawki",
-  input: "integer",
-  suffix: "zł",
-  hint: "Miesięczna kwota w pełnych złotych (dziś 1000 zł, art. 17c ust. 5 ustawy o świadczeniach rodzinnych).",
-  scope: "Miesiące zasiłku od tej daty. Za część miesiąca podwyższenie liczy się proporcjonalnie, 1/30 kwoty za dzień.",
-  parentView: null,
-  impactNote: `Rodzic z zasiłkiem ${formatGrosze(DEMO_NET_GROSZE)} miesięcznie po zaliczce na podatek, cały miesiąc od dnia zmiany.`,
-  toValue: integer,
-  toText: (value) => String(value),
-  impact: (published, draft) => {
-    const next = withDraftFor(published, "benefit.parentalMinimum", draft);
-    const month = (s: RuleSchedule) => parentalMinimumTopUp({ netGrosze: DEMO_NET_GROSZE, firstDay: draft.validFrom, days: "whole", schedule: s });
-    const before = month(published);
-    const after = month(next);
-    const diff = after.paidGrosze - before.paidGrosze;
-    return [
-      { label: "Kwota świadczenia rodzicielskiego", before: formatGrosze(before.minimumGrosze), after: formatGrosze(after.minimumGrosze) },
-      { label: "Podwyższenie", before: formatGrosze(before.topUpGrosze), after: formatGrosze(after.topUpGrosze) },
-      { label: "Wypłata za miesiąc", before: formatGrosze(before.paidGrosze), after: formatGrosze(after.paidGrosze) },
-      { label: "Różnica", before: "—", after: `${diff >= 0 ? "+" : "−"}${formatGrosze(Math.abs(diff))}` },
-    ];
-  },
-  checks: (published, draft) => {
-    const next = withDraftFor(published, "benefit.parentalMinimum", draft);
-    const dayBefore = addDays(draft.validFrom, -1);
-    const monthly = draft.value * 100;
-    const old = parameterOn(published, "benefit.parentalMinimum", dayBefore).value * 100;
-    const topUp = (net: number, firstDay: string, days: number | "whole" = "whole") =>
-      formatGrosze(parentalMinimumTopUp({ netGrosze: net, firstDay, days, schedule: next }).topUpGrosze);
-    const rows: CheckRow[] = [
-      row(`Zasiłek równy nowej kwocie (${formatGrosze(monthly)}), miesiąc od ${formatShort(draft.validFrom)}`, formatGrosze(0), topUp(monthly, draft.validFrom)),
-      row(`Zasiłek o 1 zł niższy (${formatGrosze(monthly - 100)})`, formatGrosze(100), topUp(monthly - 100, draft.validFrom)),
-      row(
-        `Ten sam zasiłek w miesiącu od ${formatShort(dayBefore)}: obowiązuje ${formatGrosze(old)}`,
-        formatGrosze(Math.max(0, old - (monthly - 100))),
-        topUp(monthly - 100, dayBefore),
-      ),
-      row(
-        `Część miesiąca: 15 dni od ${formatShort(draft.validFrom)}, zasiłek ${formatGrosze(0)}`,
-        formatGrosze(Math.round((monthly * 15) / 30)),
-        topUp(0, draft.validFrom, 15),
-      ),
-    ];
-    for (const s of TOPUP_SCENARIOS) {
-      const before = topUpScenarioOutcome(s, published);
-      const after = topUpScenarioOutcome(s, next);
-      if (before !== after) rows.push({ name: `${s.id}: ${s.title}`, expected: before, result: after, status: "informacja" });
-    }
-    rows.push(sourceRow(draft.source));
-    return rows;
-  },
-};
-
-/* ---------- calculator leave lengths, terms and the contribution deduction ---------- */
-
-type LeaveId =
-  | "maternity.weeks1"
-  | "maternity.weeks2"
-  | "maternity.weeks3"
-  | "maternity.weeks4"
-  | "maternity.weeks5"
-  | "parental.weeksOne"
-  | "parental.weeksMany"
-  | "parental.weeksOneZaZyciem"
-  | "parental.weeksManyZaZyciem"
-  | "parental.exclusiveWeeks";
-
-const MATERNITY_BY_CHILDREN = ["maternity.weeks1", "maternity.weeks2", "maternity.weeks3", "maternity.weeks4", "maternity.weeks5"] as const;
-const CHILDREN_LABEL = ["jedno dziecko", "dwoje dzieci", "troje dzieci", "czworo dzieci", "pięcioro dzieci"];
-
-/** The parent calculator does not read the panel's schedule yet. */
-const CALCULATOR_NOTE =
-  "Kalkulator rodzica (lib/rules/maternity.ts) stosuje na razie wartość z kodu. Po podpięciu harmonogramu " +
-  "(lib/rules/maternity-schedule.ts) weźmie wartość z panelu. Wpływ powyżej to rachunek na wymiarach z panelu.";
-
-const holds = (name: string, ok: boolean) => row(name, "tak", ok ? "tak" : "nie");
-
-function datedRows(id: RuleParameterId, published: RuleSchedule, next: RuleSchedule, draft: DraftValue): CheckRow[] {
-  const dayBefore = addDays(draft.validFrom, -1);
-  const fmt = (v: number) => formatValue(id, v);
-  return [
-    row(`Od dnia zmiany (${formatShort(draft.validFrom)})`, fmt(draft.value), fmt(parameterOn(next, id, draft.validFrom).value)),
-    row(
-      `Dzień wcześniej (${formatShort(dayBefore)}) bez zmian`,
-      fmt(parameterOn(published, id, dayBefore).value),
-      fmt(parameterOn(next, id, dayBefore).value),
-    ),
-  ];
-}
-
-function leaveSpec(id: LeaveId): ChangeSpec {
-  const weeks = (s: RuleSchedule, p: RuleParameterId, day: string) => parameterOn(s, p, day).value;
-  const tyg = (n: number) => `${n} tyg.`;
-  const n = (MATERNITY_BY_CHILDREN as readonly string[]).indexOf(id);
-  const parentalFor = (children: number) => (children === 1 ? "parental.weeksOne" : "parental.weeksMany");
-  const scope =
-    id === "parental.exclusiveWeeks"
-      ? "Dzieci urodzone lub przyjęte od tej daty. Część wyłączna pomniejsza pulę, którą rodzice mogą przekazać sobie nawzajem."
-      : "Dzieci urodzone lub przyjęte od tej daty. O wartości decyduje dzień porodu albo przyjęcia dziecka.";
-  return {
-    parameter: id,
-    catalogId: `app-${id.replace(".", "-")}`,
-    group: "Wymiary",
-    input: "integer",
-    suffix: "tyg.",
-    hint: "Liczba pełnych tygodni.",
-    scope,
-    parentView: null,
-    parentNote: CALCULATOR_NOTE,
-    impactNote:
-      n >= 0
-        ? `Rodzina, w której przy jednym porodzie rodzi się ${CHILDREN_LABEL[n]}, poród w dniu zmiany.`
-        : id === "parental.exclusiveWeeks"
-          ? "Oboje rodzice pracują, poród w dniu zmiany: ile tygodni mogą swobodnie podzielić."
-          : "Rodzina z dzieckiem urodzonym w dniu zmiany: łączny okres zasiłku za urlopy.",
-    toValue: integer,
-    toText: (value) => String(value),
-    impact: (published, draft) => {
-      const next = withDraftFor(published, id, draft);
-      const day = draft.validFrom;
-      const rows: ImpactRow[] = [{ label: "Wymiar", before: tyg(weeks(published, id, day)), after: tyg(draft.value) }];
-      if (n >= 0) {
-        const total = (s: RuleSchedule) => weeks(s, id, day) + weeks(s, parentalFor(n + 1), day);
-        rows.push({ label: "Razem z urlopem rodzicielskim", before: tyg(total(published)), after: tyg(total(next)) });
-      } else if (id === "parental.exclusiveWeeks") {
-        const free = (s: RuleSchedule, p: RuleParameterId) => weeks(s, p, day) - 2 * weeks(s, id, day);
-        rows.push({ label: "Do podziału, jedno dziecko", before: tyg(free(published, "parental.weeksOne")), after: tyg(free(next, "parental.weeksOne")) });
-        rows.push({
-          label: "Do podziału, „Za życiem”",
-          before: tyg(free(published, "parental.weeksOneZaZyciem")),
-          after: tyg(free(next, "parental.weeksOneZaZyciem")),
-        });
-      } else {
-        const maternity = id.includes("One") ? "maternity.weeks1" : "maternity.weeks2";
-        const total = (s: RuleSchedule) => weeks(s, maternity, day) + weeks(s, id, day);
-        rows.push({
-          label: id.includes("One") ? "Razem z macierzyńskim, jedno dziecko" : "Razem z macierzyńskim, dwoje dzieci",
-          before: tyg(total(published)),
-          after: tyg(total(next)),
-        });
-      }
-      return rows;
-    },
-    checks: (published, draft) => {
-      const next = withDraftFor(published, id, draft);
-      const day = draft.validFrom;
-      const w = (p: RuleParameterId) => weeks(next, p, day);
-      const rows = datedRows(id, published, next, draft);
-      if (n >= 0) {
-        if (n > 0) {
-          const fewer = w(MATERNITY_BY_CHILDREN[n - 1]);
-          rows.push(holds(`Nie krótszy niż dla mniejszej liczby dzieci (${tyg(fewer)})`, draft.value >= fewer));
-        }
-        if (n < 4) {
-          const more = w(MATERNITY_BY_CHILDREN[n + 1]);
-          rows.push(holds(`Nie dłuższy niż dla większej liczby dzieci (${tyg(more)})`, draft.value <= more));
-        }
-      } else if (id === "parental.exclusiveWeeks") {
-        const one = w("parental.weeksOne");
-        rows.push(holds(`Dwie części wyłączne mieszczą się w urlopie dla jednego dziecka (${tyg(one)})`, 2 * draft.value <= one));
-      } else {
-        const exclusive = w("parental.exclusiveWeeks");
-        rows.push(holds(`Mieści dwie części wyłączne rodziców (2 × ${tyg(exclusive)})`, draft.value >= 2 * exclusive));
-        rows.push(holds("Jedno dziecko: nie dłużej niż przy więcej dzieciach", w("parental.weeksOne") <= w("parental.weeksMany")));
-        rows.push(
-          holds(
-            "Z zaświadczeniem „Za życiem” nie krócej niż bez niego",
-            w("parental.weeksOneZaZyciem") >= w("parental.weeksOne") && w("parental.weeksManyZaZyciem") >= w("parental.weeksMany"),
-          ),
-        );
-      }
-      rows.push(sourceRow(draft.source));
-      return rows;
-    },
-  };
-}
-
-const AVERAGED_REQUEST: ChangeSpec = {
-  parameter: "averaged.requestDays",
-  catalogId: "app-averaged-requestDays",
-  group: "Terminy",
-  input: "integer",
-  suffix: "dni",
-  hint: "Liczba dni po porodzie lub przyjęciu dziecka (dziś 21, art. 30a ustawy zasiłkowej).",
-  scope: "Porody i przyjęcia dziecka od tej daty.",
-  parentView: null,
-  parentNote: CALCULATOR_NOTE,
-  impactNote: "Matka rodzi w dniu zmiany i chce stawki uśrednionej 81,5% za cały okres.",
-  toValue: integer,
-  toText: (value) => String(value),
-  impact: (published, draft) => {
-    const old = parameterOn(published, "averaged.requestDays", draft.validFrom).value;
-    return [
-      { label: "Termin", before: formatValue("averaged.requestDays", old), after: formatValue("averaged.requestDays", draft.value) },
-      {
-        label: `Poród ${formatShort(draft.validFrom)}: wniosek najpóźniej`,
-        before: formatShort(addDays(draft.validFrom, old)),
-        after: formatShort(addDays(draft.validFrom, draft.value)),
-      },
-    ];
-  },
-  checks: (published, draft) => {
-    const next = withDraftFor(published, "averaged.requestDays", draft);
-    return [...datedRows("averaged.requestDays", published, next, draft), sourceRow(draft.source)];
-  },
-};
-
-const DEMO_GROSS_GROSZE = 600000; // 6 000 zł a month
-
-const CONTRIBUTIONS: ChangeSpec = {
-  parameter: "contributions.employeePct",
-  catalogId: "app-contributions-employeePct",
-  group: "Podstawa",
-  input: "percent",
-  suffix: "%",
-  hint: "Od 0 do 50, z dokładnością do 0,01 (dziś 13,71: emerytalna 9,76, rentowa 1,5, chorobowa 2,45).",
-  scope: "Przychód za miesiące od tej daty wliczany do podstawy wymiaru zasiłku.",
-  parentView: null,
-  parentNote: CALCULATOR_NOTE,
-  impactNote: `Pracownik z przychodem ${formatGrosze(DEMO_GROSS_GROSZE)} miesięcznie.`,
-  toValue: (text) => {
-    const t = text.replace(/\s/g, "").replace(",", ".").replace(/%$/, "");
-    if (!/^\d{1,2}(\.\d{1,2})?$/.test(t)) return null;
-    return Math.round(Number(t) * 100);
-  },
-  toText: (value) => String(value / 100).replace(".", ","),
-  impact: (published, draft) => {
-    const old = parameterOn(published, "contributions.employeePct", draft.validFrom).value;
-    const base = (pct100: number) => Math.round((DEMO_GROSS_GROSZE * (10000 - pct100)) / 10000);
-    return [
-      {
-        label: "Pomniejszenie",
-        before: formatValue("contributions.employeePct", old),
-        after: formatValue("contributions.employeePct", draft.value),
-      },
-      { label: "Podstawa miesięczna", before: formatGrosze(base(old)), after: formatGrosze(base(draft.value)) },
-      { label: "Zasiłek 100% za dzień (1/30)", before: formatGrosze(Math.round(base(old) / 30)), after: formatGrosze(Math.round(base(draft.value) / 30)) },
-    ];
-  },
-  checks: (published, draft) => {
-    const next = withDraftFor(published, "contributions.employeePct", draft);
-    return [...datedRows("contributions.employeePct", published, next, draft), sourceRow(draft.source)];
-  },
-};
 
 /* ---------- payer threshold (próg płatnika) ---------- */
 
@@ -600,15 +346,6 @@ export const CHANGE_SPECS: ChangeSpec[] = [
   rateSpec("maternity"),
   rateSpec("parental"),
   rateSpec("averaged"),
-  MINIMUM,
-  ...MATERNITY_BY_CHILDREN.map(leaveSpec),
-  leaveSpec("parental.weeksOne"),
-  leaveSpec("parental.weeksMany"),
-  leaveSpec("parental.weeksOneZaZyciem"),
-  leaveSpec("parental.weeksManyZaZyciem"),
-  leaveSpec("parental.exclusiveWeeks"),
-  AVERAGED_REQUEST,
-  CONTRIBUTIONS,
   PAYER,
   WAGE,
   ...FORM_IDS.map(formSpec),

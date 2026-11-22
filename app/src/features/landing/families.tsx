@@ -12,7 +12,7 @@ const CARDS: { kind: IllustrationKind; title: string; text: string }[] = [
   {
     kind: "folder",
     title: "Sprawdź, co Ci przysługuje",
-    text: `Po zalogowaniu wczytujemy dane z${NBSP}ZUS i${NBSP}pokazujemy zasiłki oraz urlopy, z${NBSP}których możesz skorzystać.`,
+    text: `Sprawdź zasiłki i${NBSP}urlopy uwzględnione w${NBSP}planie rodziny Oli.`,
   },
   {
     kind: "balance",

@@ -24,7 +24,6 @@ export function RulesView({
   const planned = parameters.filter((p) => p.planned).sort((a, b) => a.planned!.from.localeCompare(b.planned!.from));
   const drafts = parameters.filter((p) => p.state === "Szkic" || p.draft).length;
   const passing = cases.filter((c) => c.status === "zgodna").length;
-  const outdated = cases.filter((c) => c.status === "do-aktualizacji").length;
   const rows = parameters.filter((p) => p.group === group);
 
   return (
@@ -46,7 +45,7 @@ export function RulesView({
         className={s.span3}
         label="Sprawy testowe"
         value={`${passing} / ${cases.length}`}
-        note={outdated ? `zgodnych, ${outdated} do aktualizacji po zmianie` : "zgodnych z oczekiwanym wynikiem"}
+        note="zgodnych z oczekiwanym wynikiem"
       />
 
       <Card className={s.span8} title="Parametry" id="params" meta="Kliknij wiersz, aby zobaczyć szczegóły">

@@ -4,11 +4,46 @@
 
 Vercel wysyła publiczne zadanie RAG do prywatnego schematu `zusik_model`. LaunchAgent użytkownika na Macu utrzymuje wychodzące połączenie TLS z Neonem i przekazuje zadanie do Ollamy na `127.0.0.1:11434`. Komputer musi być aktywny, użytkownik zalogowany, a Ollama uruchomiona. Stałe połączenie i odczyty mogą utrzymywać aktywny compute Neon.
 
-Domyślny model to lokalny Bielik. Serwerowa zmienna `ZUSIK_RAG_MODEL=pllum` wybiera PLLuM dla całego wdrożenia, a `hosted` wybiera skonfigurowany model Sherlock. Po zmianie zmiennej w Vercelu wykonaj ponowny deploy. Aktualne poświadczenia Sherlock i rola `zusik_runtime` nadal obsługują aplikację.
+Domyślny model to lokalny Bielik. Serwerowa zmienna `ZUSIK_RAG_MODEL=pllum` wybiera PLLuM dla odpowiedzi na podstawie dowodów, a `hosted` wybiera skonfigurowany model Sherlock. Po zmianie zmiennej w Vercelu wykonaj ponowny deploy. Aktualne poświadczenia Sherlock i rola `zusik_runtime` nadal obsługują aplikację.
 
 Kolejka przyjmuje pytanie, które dokładnie odpowiada wynikowi ponownej projekcji na publiczny wzorzec, oraz fragmenty wczytane z tego samego zatwierdzonego korpusu. Projekcje, które przy drugim przebiegu zmieniają treść, obsługuje dotychczasowa ścieżka hostowana z pierwszą publiczną projekcją. Do tabeli trafiają tylko losowy UUID, wybrany model, publiczny prompt oraz tymczasowe pola wyniku i dzierżawy. Akta, oryginalne pytanie, identyfikatory sesji i rozmowy pozostają poza kolejką.
 
 Worker pobiera zadanie atomowo, odnawia 9-sekundową dzierżawę i może ponowić pracę najwyżej raz. Po 42 sekundach wynik wygasa. Odczytany wynik aplikacja usuwa od razu. Osierocone wpisy usuwa kolejny odbiór lub zapis. Oczekiwanie na wolnego workera trwa około 3,5 sekundy, a cała próba lokalna ma limit 38 sekund. Wczesna awaria pozostawia czas na hostowanego Bielika. Po późnej awarii aplikacja używa dotychczasowej ścieżki cytatu źródłowego lub informuje o niedostępności. Model lokalny i hostowany dzielą budżet 45 sekund i przechodzą ten sam walidator cytatów.
+
+### Zadania planera i weryfikatora
+
+Każdy nowy worker akceptuje trzy rodzaje zadań. Wcześniejsze rekordy kolejki mają rodzaj `answer_evidence`. Serwer rozwiązuje identyfikatory wcześniejszego fragmentu i kandydatów w aktywnych publicznych pakietach. Do planera przekazuje publiczny aspekt, listę brakujących pól oraz tekst wybranych jednostek. Weryfikator w tym wydaniu porównuje wskazaną publiczną jednostkę z innymi jednostkami korpusu. Odpowiedź każdego modelu musi przejść walidację schematu, a wskazane dowody muszą należeć do przekazanej listy.
+
+Po zastosowaniu addytywnej migracji `workers/queue.sql` uruchom nowego workera na stagingu. Stary proces odczytuje tylko zadania odpowiedzi. Ustawienie `ZUSIK_PLANNER_MODEL` lub `ZUSIK_VERIFIER_MODEL` na `bielik` albo `pllum` włącza wybraną rolę. Brak wartości lub `off` pozostawia decyzję grafowi. Każda operacja dodatkowa wymaga co najmniej 9 sekund do końca budżetu. Po wyczerpaniu limitu aplikacja zachowuje decyzję deterministyczną. Ślad `rag_model_attempt` zawiera rodzaj, identyfikator próby, rzeczywisty backend i czas.
+
+W odizolowanej bazie z nowym workerem wykonaj `node --env-file=.env.local --import tsx scripts/zusik-smoke-queue.mts --roles` po ustawieniu obu ról. Polecenie sprawdza zwrócone narzędzie i werdykt. Do pomiaru samych modeli uruchom na porcie 11439 dodatkową Ollamę z jedną rezydentną instancją i kontekstem 4096. Następnie wykonaj:
+
+```sh
+OLLAMA_HOST=127.0.0.1:11439 OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 OLLAMA_CONTEXT_LENGTH=4096 ollama serve
+# W osobnym terminalu w app/
+node --import tsx scripts/zusik-eval-local-models.ts --roles
+```
+
+Raport `corpus/local-model-roles.json` zachowuje opóźnienia, raportowaną pamięć procesu modelu oraz wynik schematu i sprawdzeń merytorycznych. Pomiar zimny obejmuje ponowne załadowanie modelu po potwierdzeniu zwolnienia przez Ollamę. Cache dyskowy systemu może być ciepły. Przy trzech obserwacjach p95 jest największym czasem w grupie.
+
+### Wyniki na Macu 22 listopada 2026
+
+Oba modele otrzymały po trzy zimne i trzy ciepłe próby każdego zadania na publicznych fragmentach. Przypadek generatora obejmował regułę dołączenia odpisu oraz wyjątek dla dokumentu w aktach. Planner miał otworzyć źródło wcześniejszej odpowiedzi, a weryfikator wykryć brak podstawy w dokumencie o innej przesłance. Pierwsze 36 prób zapisano w `corpus/local-model-roles.json`. Po doprecyzowaniu instrukcji i ograniczeniu identyfikatorów do przekazanych dowodów powtórzono 24 próby ról pomocniczych. Ich wyniki zapisano w `corpus/local-model-routing.json`. Powtórzenie drugiej serii wymaga dodatkowej flagi `--supplementary` obok `--roles`.
+
+| Zadanie i model | Poprawna treść | Zimny p50 / p95 | Ciepły p50 / p95 |
+|---|---:|---:|---:|
+| Odpowiedź z wyjątkiem, Bielik | 6/6 | 56,38 / 66,55 s | 34,95 / 39,10 s |
+| Odpowiedź z wyjątkiem, PLLuM | 0/6 | 14,05 / 18,14 s | 6,88 / 7,48 s |
+| Planner, Bielik | 0/6 | 3,07 / 3,22 s | 1,81 / 1,92 s |
+| Planner, PLLuM | 6/6 | 4,31 / 5,29 s | 1,84 / 1,94 s |
+| Weryfikator, Bielik | 0/6 | 3,08 / 3,17 s | 1,13 / 1,19 s |
+| Weryfikator, PLLuM | 6/6 | 3,40 / 3,42 s | 0,65 / 0,66 s |
+
+Wszystkie odpowiedzi bezpośrednie spełniły schemat JSON. W każdej roli powtarzano jeden przypadek. Wnioski uzasadniają Bielika do generowania odpowiedzi z wyjątkami oraz PLLuM do dalszych prób planowania i kontroli dowodów. Bielik ukończył trzy z sześciu odpowiedzi w budżecie 38 sekund. W tych warunkach obie dodatkowe role pozostają domyślnie wyłączone.
+
+Mac miał 48 GiB pamięci. Ollama z kontekstem 4096 raportowała około 7,26 GiB dla Bielika i 7,53 GiB dla PLLuM. W próbce wspólnej rezydencji Bielik miał kontekst 32768 i zajmował około 12,56 GiB, a PLLuM 7,53 GiB. W chwili próbki system raportował 1,39 GiB wolnej pamięci.
+
+Osobny worker używał prywatnego gniazda testowej bazy PostgreSQL. PLLuM prawidłowo wybrał wcześniejszy cytat w 4,84 s, lecz dwie następne próby planowania przekroczyły budżet 9 s. Weryfikacja przeszła w 4,83 i 4,43 s. Po zatrzymaniu workera aplikacja zakończyła oczekiwanie po 3,71 s i uzyskała zwalidowaną odpowiedź hostowaną z cytatem `kp-art182-1d-par1` po 9,76 s od startu. Przebiegi oraz stan pamięci są w `tests/fixtures/zusik-acceptance/results/model-worker.json`. W pierwszej próbie Bielik z gramatyką odpowiedzi zwrócił HTTP 400 przy inicjalizacji samplera. Po przywróceniu dotychczasowego sposobu generowania z walidacją JSON oba modele odpowiedziały przez testowy worker i podały prawidłowy cytat. Bielik potrzebował 20,91 s, a PLLuM 20,47 s. Powtarzalny odbiór całej pary ról przez Preview pozostaje otwarty.
 
 ### Instalacja i odbiór
 

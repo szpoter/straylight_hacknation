@@ -1,0 +1,789 @@
+{
+  "asOf": "2026-11-22",
+  "frozenCode": "c230d946e4278ff394f5a13ff8c41b5a8f11374c",
+  "calibration": "corpus/marta/calibration.json",
+  "calibrationSha256": "838e7909033072a9f184818e41c55e57fa67dab443c511066b9a38eab2332927",
+  "caseCount": 8,
+  "protocol": {
+    "population": "All eight positive calibration questions k01–k08 fixed before this experiment. kn1 was a negative for the old Marta-only scope but the integrated corpus covers sickness benefits. No answer generation or reranker. Each query was run once for each encoder input and once against staging. G7 and the WZON extension trial were excluded.",
+    "documentText": "Frozen embeddingText: shortTitle, locator, context, sourceText joined by newlines. All 897 embeddings produced before the validity mask. 895 document candidates eligible on the selected date. Each query saw all three packages.",
+    "lex": "BM25 over the shared document text. Documents and raw queries tokenized with Unicode alphanumeric runs excluding underscore, lowercased, common stopwords removed, and mapped through frozen corpus-lexicon.json.gz forms if present. Unique query terms. k1=1.2, b=0.75, idf=ln(1+(N-df+0.5)/(df+0.5)). Stable ties follow package/manifest order.",
+    "stopwords": "a aby albo ale ani bo by czy dla do i ich ile jak jest już kiedy lub ma mi mój na nie o od oraz po pod przy się ta tak ten to u w we z za ze że",
+    "dense": "Local INT8 ONNX on CPU, two intra-op threads and one inter-op thread. Prefix passage: for documents and query: for questions including Polish. Masked mean pooling and L2 normalization for both, exact float32 inner-product scan in stable manifest order. Batches of eight sorted by tokenized length. Limit 512 tokens.",
+    "projected": "publicQuestion from frozen code. All eight had a public canonical projection. Raw calibration questions were processed locally. Only the public canonical text and 20 deterministic point IDs per question reached the staging reader.",
+    "hybrid": "20 BM25 and 20 dense candidates, stable reciprocal rank fusion with weight 1/(zeroBasedRank+2), lexical list first on ties, top five. Identical BM25 list in each local and cloud hybrid. Local dense and hybrid use raw questions unless labeled Projected.",
+    "cloud": "Actual qdrantKnowledgeSearch on the v4 staging collection using the frozen hybrid branch. 8 dense queries and 8 point-read requests. Both channels checked point UUID, corpus version, fragment SHA-256 and validity at read time. Supplied BM25 candidates isolate backend differences from runtime routing.",
+    "runtimeCrossPackLexical": "Separate comparator: searchCorpus(rawQuestion) without a static route. Its confidence threshold can return an empty ranking. The actual answer service can also use curated routes, so this column does not estimate end-to-end answer quality.",
+    "scoring": "Exact IDs and equivalent alternatives listed in existing qrels only. At least one alternative per required group; allGroupsAt5 requires all groups for the case. anyAt1/5 counts cases containing any accepted ID. mrrAt5 uses first accepted rank and zero for misses."
+  },
+  "local": {
+    "model": "intfloat/multilingual-e5-small",
+    "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "license": "MIT",
+    "source": "https://huggingface.co/intfloat/multilingual-e5-small/tree/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx",
+    "modelFile": "onnx/model_qint8_avx512_vnni.onnx",
+    "modelSha256": "dd476dd0c2514e9b9be83aeb3853fac0763e0bdf4a71645407587d77c48a2d88",
+    "modelBytes": 118346824,
+    "tokenizerFile": "onnx/tokenizer.json",
+    "tokenizerSha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39",
+    "tokenizerBytes": 17082730,
+    "downloadVerified": "Lengths and official pinned Git/LFS object identifiers matched.",
+    "runtime": "onnxruntime 1.23.2 / CPUExecutionProvider / macOS arm64",
+    "shape": [
+      897,
+      384
+    ],
+    "unitNormRange": [
+      0.9999999403953552,
+      1.0
+    ],
+    "indexFloat32Bytes": 1377792,
+    "npyFileBytes": 1377920,
+    "indexFileSha256": "426d83ecafa983071ce8ade9fc835c35eb1ec4a2e5cf2d4b140de80ed401cba4",
+    "over512Tokens": {
+      "of-praca-6-1": 536,
+      "of-macierzynski-dokumenty-13-3": 757,
+      "of-macierzynski-dokumenty-14-5": 665,
+      "of-macierzynski-dokumenty-15-1": 589
+    },
+    "indexWallMs": 21305.591,
+    "indexCpuMs": 40673.006,
+    "coldEncoderLoadMs": 403.045,
+    "peakProcessRssBytes": 1329790976,
+    "bm25BuildMs": 17.863
+  },
+  "packages": {
+    "marta": 23,
+    "publiczne": 487,
+    "oferta": 387
+  },
+  "excludedByDate": [
+    "of-rko-1-1",
+    "of-rko-1-2"
+  ],
+  "cloud": {
+    "collection": "zusik_test_family_20261122_v4",
+    "modelId": "intfloat/multilingual-e5-small",
+    "modelRevision": null,
+    "note": "Provider did not expose a weight revision. No local vectors were compared directly to cloud vectors or persisted in Qdrant."
+  },
+  "cost": "Zero hosted LLM calls, zero Ollama jobs, 8 Cloud Inference questions and 8 point reads. CPU and memory measured locally. Monetary Qdrant charges and electrical energy were not reported.",
+  "latencyMs": {
+    "bm25": {
+      "n": 8,
+      "median": 0.625,
+      "p95NearestRank": 0.731
+    },
+    "localEncodeRaw": {
+      "n": 8,
+      "median": 4.042,
+      "p95NearestRank": 4.669
+    },
+    "localScanRaw": {
+      "n": 8,
+      "median": 0.112,
+      "p95NearestRank": 0.959
+    },
+    "localEncodeProjection": {
+      "n": 8,
+      "median": 4.338,
+      "p95NearestRank": 5.777
+    },
+    "localScanProjection": {
+      "n": 8,
+      "median": 0.112,
+      "p95NearestRank": 0.14
+    },
+    "cloudBothRequests": {
+      "n": 8,
+      "median": 46.5,
+      "p95NearestRank": 196
+    }
+  },
+  "scores": {
+    "lex": {
+      "anyAt1": 1,
+      "anyAt5": 4,
+      "allGroupsAt5": 3,
+      "groupsRetrievedAt5": 4,
+      "possibleGroups": 9,
+      "mrrAt5": 0.223
+    },
+    "dense": {
+      "anyAt1": 0,
+      "anyAt5": 2,
+      "allGroupsAt5": 2,
+      "groupsRetrievedAt5": 2,
+      "possibleGroups": 9,
+      "mrrAt5": 0.062
+    },
+    "denseProjected": {
+      "anyAt1": 5,
+      "anyAt5": 7,
+      "allGroupsAt5": 7,
+      "groupsRetrievedAt5": 7,
+      "possibleGroups": 9,
+      "mrrAt5": 0.692
+    },
+    "hybrid": {
+      "anyAt1": 1,
+      "anyAt5": 3,
+      "allGroupsAt5": 3,
+      "groupsRetrievedAt5": 3,
+      "possibleGroups": 9,
+      "mrrAt5": 0.188
+    },
+    "hybridProjected": {
+      "anyAt1": 2,
+      "anyAt5": 6,
+      "allGroupsAt5": 6,
+      "groupsRetrievedAt5": 6,
+      "possibleGroups": 9,
+      "mrrAt5": 0.463
+    },
+    "cloudDense": {
+      "anyAt1": 5,
+      "anyAt5": 6,
+      "allGroupsAt5": 6,
+      "groupsRetrievedAt5": 6,
+      "possibleGroups": 9,
+      "mrrAt5": 0.65
+    },
+    "cloudHybrid": {
+      "anyAt1": 2,
+      "anyAt5": 5,
+      "allGroupsAt5": 5,
+      "groupsRetrievedAt5": 5,
+      "possibleGroups": 9,
+      "mrrAt5": 0.438
+    },
+    "runtimeCrossPackLexical": {
+      "anyAt1": 0,
+      "anyAt5": 0,
+      "allGroupsAt5": 0,
+      "groupsRetrievedAt5": 0,
+      "possibleGroups": 9,
+      "mrrAt5": 0
+    }
+  },
+  "limits": [
+    "Calibration set is small and concentrated on parental leave. Existing qrels may omit equivalent units in adjacent packages.",
+    "Benchmark measures retrieval only on the same labels and all three packages. It does not resolve the separate failed WZON extension test.",
+    "Only local document and query encoders have proven revision parity. The remote encodings, public projection and cloud inference cost are distinct from a fully local raw-query index.",
+    "Single run on a shared machine. The nearest-rank p95 is the maximum of eight observations."
+  ],
+  "rows": [
+    {
+      "id": "k01",
+      "publicProjection": "Czy oboje rodzice mogą być jednocześnie na urlopie rodzicielskim w tych samych tygodniach?",
+      "expectedGroups": [
+        [
+          "kp-art182-1a-par6",
+          "mrpips-dzielenie-jednoczesnie"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "kp-art182-1a-par6",
+          "zus-czas-trwania-9-tygodni",
+          "of-aktywny-5-2",
+          "zus-przyklad-podzialu",
+          "of-rodzicielski-4-5"
+        ],
+        "dense": [
+          "of-rodzicielski-4-1",
+          "of-rodzicielski-4-2",
+          "poradnik-33-1",
+          "zam-6-2",
+          "of-rodzicielski-4-4"
+        ],
+        "denseProjected": [
+          "kp-art182-1a-par6",
+          "mrpips-dzielenie-zasilek",
+          "mrpips-nieprzenoszalna",
+          "mrpips-dzielenie-jednoczesnie",
+          "kp-1821a-3"
+        ],
+        "hybrid": [
+          "kp-art182-1a-par6",
+          "of-rodzicielski-4-1",
+          "zus-czas-trwania-9-tygodni",
+          "zus-przyklad-podzialu",
+          "of-rodzicielski-4-2"
+        ],
+        "hybridProjected": [
+          "kp-art182-1a-par6",
+          "zus-czas-trwania-9-tygodni",
+          "mrpips-dzielenie-zasilek",
+          "zus-przyklad-podzialu",
+          "of-aktywny-5-2"
+        ],
+        "cloudDense": [
+          "kp-art182-1a-par6",
+          "mrpips-dzielenie-zasilek",
+          "mrpips-dzielenie-jednoczesnie",
+          "mrpips-nieprzenoszalna",
+          "kp-1821a-3"
+        ],
+        "cloudHybrid": [
+          "kp-art182-1a-par6",
+          "zus-czas-trwania-9-tygodni",
+          "mrpips-dzielenie-zasilek",
+          "zus-przyklad-podzialu",
+          "of-aktywny-5-2"
+        ],
+        "runtimeCrossPackLexical": []
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.731,
+        "localEncodeRaw": 4.466,
+        "localScanRaw": 0.959,
+        "localEncodeProjection": 4.845,
+        "localScanProjection": 0.132,
+        "cloudBothRequests": 158
+      }
+    },
+    {
+      "id": "k02",
+      "publicProjection": "Ile wcześniej i do kogo trzeba złożyć wniosek o urlop rodzicielski?",
+      "expectedGroups": [
+        [
+          "kp-art182-1d-par1",
+          "mrpips-korzystanie-wniosek"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "poradnik-28-2",
+          "kp-177-2",
+          "of-macierzynski-kwota-1-4",
+          "mrpips-korzystanie-wniosek",
+          "of-szpital-1-1"
+        ],
+        "dense": [
+          "kp-1831-1",
+          "kp-1823-2",
+          "kp-177-2",
+          "kp-art182-1d-par1",
+          "kp-183-9"
+        ],
+        "denseProjected": [
+          "kp-art182-1d-par1",
+          "mrpips-korzystanie-wniosek",
+          "zam-6-2",
+          "of-macierzynski-dokumenty-14-5",
+          "kp-1821d-1"
+        ],
+        "hybrid": [
+          "kp-177-2",
+          "poradnik-28-2",
+          "kp-1831-1",
+          "mrpips-korzystanie-wniosek",
+          "kp-1823-2"
+        ],
+        "hybridProjected": [
+          "kp-art182-1d-par1",
+          "poradnik-28-2",
+          "mrpips-korzystanie-wniosek",
+          "kp-177-2",
+          "of-macierzynski-kwota-1-4"
+        ],
+        "cloudDense": [
+          "mrpips-korzystanie-wniosek",
+          "kp-art182-1d-par1",
+          "kp-1821d-1",
+          "zam-6-2",
+          "rw-15-3"
+        ],
+        "cloudHybrid": [
+          "mrpips-korzystanie-wniosek",
+          "poradnik-28-2",
+          "kp-art182-1d-par1",
+          "kp-177-2",
+          "of-rodzicielski-6-1"
+        ],
+        "runtimeCrossPackLexical": []
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.677,
+        "localEncodeRaw": 4.203,
+        "localScanRaw": 0.194,
+        "localEncodeProjection": 4.312,
+        "localScanProjection": 0.14,
+        "cloudBothRequests": 47
+      }
+    },
+    {
+      "id": "k03",
+      "publicProjection": "Kadry mają już odpis aktu urodzenia dziecka w aktach. Czy trzeba dołączyć kolejny odpis?",
+      "expectedGroups": [
+        [
+          "rozp-2025-322-par15-ust2-pkt1"
+        ],
+        [
+          "rozp-2025-322-par22"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "of-praca-11-3",
+          "poradnik-36-1",
+          "of-macierzynski-dokumenty-2-1",
+          "poradnik-34-2",
+          "rozp-2025-322-par15-ust2-pkt1"
+        ],
+        "dense": [
+          "rw-15-4",
+          "rw-13-3",
+          "rw-9-3",
+          "rw-6-3",
+          "rw-10-3"
+        ],
+        "denseProjected": [
+          "rw-9-2",
+          "rw-11-2",
+          "rw-8-2",
+          "rw-10-2",
+          "rw-12-2"
+        ],
+        "hybrid": [
+          "of-praca-11-3",
+          "rw-15-4",
+          "poradnik-36-1",
+          "rw-13-3",
+          "of-macierzynski-dokumenty-2-1"
+        ],
+        "hybridProjected": [
+          "rw-9-2",
+          "of-praca-11-3",
+          "rw-11-2",
+          "poradnik-36-1",
+          "rw-8-2"
+        ],
+        "cloudDense": [
+          "rw-11-2",
+          "rw-8-2",
+          "rw-9-2",
+          "rw-10-2",
+          "rw-12-2"
+        ],
+        "cloudHybrid": [
+          "rw-11-2",
+          "of-praca-11-3",
+          "rw-8-2",
+          "poradnik-36-1",
+          "rw-9-2"
+        ],
+        "runtimeCrossPackLexical": [
+          "of-praca-11-3",
+          "poradnik-38-1",
+          "of-opieka-1-1"
+        ]
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.574,
+        "localEncodeRaw": 4.1,
+        "localScanRaw": 0.106,
+        "localEncodeProjection": 4.831,
+        "localScanProjection": 0.098,
+        "cloudBothRequests": 48
+      }
+    },
+    {
+      "id": "k04",
+      "publicProjection": "Co wpisać o drugim rodzicu, skoro też bierze urlop rodzicielski?",
+      "expectedGroups": [
+        [
+          "rozp-2025-322-par15-ust2-pkt2"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "of-faq-10-1",
+          "of-faq-10-2",
+          "poradnik-16-2",
+          "zam-wersja",
+          "z15-wersja"
+        ],
+        "dense": [
+          "rw-13-3",
+          "rw-7-4",
+          "rw-6-3",
+          "rw-14-2",
+          "of-macierzynski-dokumenty-14-5"
+        ],
+        "denseProjected": [
+          "rw-15-3",
+          "rw-19-2",
+          "mrpips-dzielenie-zasilek",
+          "rz-30-1",
+          "rozp-2025-322-par15-ust2-pkt2"
+        ],
+        "hybrid": [
+          "of-faq-10-1",
+          "rw-13-3",
+          "of-faq-10-2",
+          "rw-7-4",
+          "poradnik-16-2"
+        ],
+        "hybridProjected": [
+          "of-faq-10-1",
+          "rw-15-3",
+          "of-faq-10-2",
+          "rw-19-2",
+          "poradnik-16-2"
+        ],
+        "cloudDense": [
+          "rw-15-3",
+          "mrpips-dzielenie-zasilek",
+          "rw-19-2",
+          "kp-art182-1a-par6",
+          "rozp-2025-322-par15-ust2-pkt2"
+        ],
+        "cloudHybrid": [
+          "of-faq-10-1",
+          "rw-15-3",
+          "of-faq-10-2",
+          "mrpips-dzielenie-zasilek",
+          "poradnik-16-2"
+        ],
+        "runtimeCrossPackLexical": []
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.704,
+        "localEncodeRaw": 3.727,
+        "localScanRaw": 0.107,
+        "localEncodeProjection": 4.035,
+        "localScanProjection": 0.105,
+        "cloudBothRequests": 46
+      }
+    },
+    {
+      "id": "k05",
+      "publicProjection": "Czy 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica można przekazać drugiemu?",
+      "expectedGroups": [
+        [
+          "kp-art182-1a-par4",
+          "mrpips-nieprzenoszalna",
+          "zus-czas-trwania-9-tygodni"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "zus-przyklad-podzialu",
+          "of-rodzicielski-4-5",
+          "zus-czas-trwania-9-tygodni",
+          "kp-181-1",
+          "kp-180-2"
+        ],
+        "dense": [
+          "of-rodzicielski-4-5",
+          "zus-przyklad-podzialu",
+          "zam-6-2",
+          "kp-1821f-2",
+          "of-rodzicielski-4-2"
+        ],
+        "denseProjected": [
+          "mrpips-nieprzenoszalna",
+          "kp-1821a-2",
+          "zus-czas-trwania-9-tygodni",
+          "kp-art182-1a-par4",
+          "zam-6-3"
+        ],
+        "hybrid": [
+          "zus-przyklad-podzialu",
+          "of-rodzicielski-4-5",
+          "zam-6-2",
+          "zus-czas-trwania-9-tygodni",
+          "rw-5-1"
+        ],
+        "hybridProjected": [
+          "zus-przyklad-podzialu",
+          "mrpips-nieprzenoszalna",
+          "zus-czas-trwania-9-tygodni",
+          "of-rodzicielski-4-5",
+          "kp-1821a-2"
+        ],
+        "cloudDense": [
+          "mrpips-nieprzenoszalna",
+          "kp-1821a-2",
+          "kp-art182-1a-par4",
+          "zus-czas-trwania-9-tygodni",
+          "of-rodzicielski-4-3"
+        ],
+        "cloudHybrid": [
+          "zus-przyklad-podzialu",
+          "mrpips-nieprzenoszalna",
+          "zus-czas-trwania-9-tygodni",
+          "of-rodzicielski-4-5",
+          "kp-1821a-2"
+        ],
+        "runtimeCrossPackLexical": [
+          "kp-1891-1",
+          "rw-19-3"
+        ]
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.5,
+        "localEncodeRaw": 3.587,
+        "localScanRaw": 0.118,
+        "localEncodeProjection": 5.777,
+        "localScanProjection": 0.119,
+        "cloudBothRequests": 196
+      }
+    },
+    {
+      "id": "k06",
+      "publicProjection": "Na ile części można podzielić urlop rodzicielski?",
+      "expectedGroups": [
+        [
+          "kp-art182-1c",
+          "mrpips-korzystanie-czesci"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "kp-art182-1a-par6",
+          "of-aktywny-8-2",
+          "uz-29-8",
+          "of-aktywny-8-4",
+          "uz-29-7"
+        ],
+        "dense": [
+          "of-praca-6-1",
+          "of-praca-11-2",
+          "mrpips-nieprzenoszalna",
+          "mrpips-korzystanie-czesci",
+          "poradnik-33-1"
+        ],
+        "denseProjected": [
+          "mrpips-korzystanie-czesci",
+          "kp-art182-1c",
+          "kp-1821c-1",
+          "kp-art182-1d-par2",
+          "poradnik-33-1"
+        ],
+        "hybrid": [
+          "kp-art182-1a-par6",
+          "of-praca-6-1",
+          "of-aktywny-8-2",
+          "of-praca-11-2",
+          "uz-29-8"
+        ],
+        "hybridProjected": [
+          "kp-art182-1a-par6",
+          "mrpips-korzystanie-czesci",
+          "of-aktywny-8-2",
+          "kp-art182-1c",
+          "uz-29-8"
+        ],
+        "cloudDense": [
+          "mrpips-korzystanie-czesci",
+          "kp-art182-1c",
+          "kp-1821c-1",
+          "kp-art182-1d-par2",
+          "kp-1821d-1"
+        ],
+        "cloudHybrid": [
+          "kp-art182-1a-par6",
+          "mrpips-korzystanie-czesci",
+          "of-aktywny-8-2",
+          "kp-art182-1c",
+          "uz-29-8"
+        ],
+        "runtimeCrossPackLexical": []
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.485,
+        "localEncodeRaw": 4.669,
+        "localScanRaw": 0.125,
+        "localEncodeProjection": 3.145,
+        "localScanProjection": 0.098,
+        "cloudBothRequests": 37
+      }
+    },
+    {
+      "id": "k07",
+      "publicProjection": "Czy wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie?",
+      "expectedGroups": [
+        [
+          "kp-art182-1d-par1",
+          "mrpips-korzystanie-wniosek"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "of-zerowka-1-1",
+          "of-dobry-5-1",
+          "of-zerowka-1-5",
+          "of-zerowka-1-6",
+          "of-zerowka-1-3"
+        ],
+        "dense": [
+          "rz-zal2-2",
+          "rz-zal3-2",
+          "rz-zal5-2",
+          "rw-8-3",
+          "rw-9-3"
+        ],
+        "denseProjected": [
+          "kp-art182-1d-par1",
+          "mrpips-korzystanie-wniosek",
+          "kp-1821e-1",
+          "kp-art182-1e-par2",
+          "kp-1823-2"
+        ],
+        "hybrid": [
+          "of-zerowka-1-1",
+          "rz-zal2-2",
+          "of-dobry-5-1",
+          "rz-zal3-2",
+          "of-zerowka-1-5"
+        ],
+        "hybridProjected": [
+          "of-zerowka-1-1",
+          "kp-art182-1d-par1",
+          "of-dobry-5-1",
+          "mrpips-korzystanie-wniosek",
+          "of-zerowka-1-5"
+        ],
+        "cloudDense": [
+          "kp-art182-1d-par1",
+          "mrpips-korzystanie-wniosek",
+          "kp-1821e-1",
+          "kp-art182-1e-par2",
+          "kp-1821d-1"
+        ],
+        "cloudHybrid": [
+          "of-zerowka-1-1",
+          "kp-art182-1d-par1",
+          "of-dobry-5-1",
+          "mrpips-korzystanie-wniosek",
+          "of-zerowka-1-5"
+        ],
+        "runtimeCrossPackLexical": [
+          "of-dobry-5-1",
+          "poradnik-27-2",
+          "of-macierzynski-dokumenty-13-5",
+          "rw-19-2",
+          "poradnik-39-2"
+        ]
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.52,
+        "localEncodeRaw": 3.474,
+        "localScanRaw": 0.095,
+        "localEncodeProjection": 4.365,
+        "localScanProjection": 0.111,
+        "cloudBothRequests": 45
+      }
+    },
+    {
+      "id": "k08",
+      "publicProjection": "Jak połączyć pracę na pół etatu z urlopem rodzicielskim i kiedy złożyć wniosek?",
+      "expectedGroups": [
+        [
+          "kp-art182-1e-par2"
+        ]
+      ],
+      "top5": {
+        "lex": [
+          "of-rodzicielski-7-1",
+          "of-praca-10-3",
+          "of-praca-10-11",
+          "of-aktywny-4-2",
+          "of-dobry-6-4"
+        ],
+        "dense": [
+          "of-macierzynski-dokumenty-14-5",
+          "rw-13-3",
+          "rw-15-4",
+          "of-macierzynski-dokumenty-11-2",
+          "rw-12-3"
+        ],
+        "denseProjected": [
+          "of-rodzicielski-7-1",
+          "of-macierzynski-dokumenty-14-5",
+          "kp-art182-1e-par2",
+          "zam-6-2",
+          "rw-6-3"
+        ],
+        "hybrid": [
+          "of-rodzicielski-7-1",
+          "of-macierzynski-dokumenty-14-5",
+          "of-praca-10-3",
+          "rw-13-3",
+          "of-praca-10-11"
+        ],
+        "hybridProjected": [
+          "of-rodzicielski-7-1",
+          "of-praca-10-3",
+          "of-macierzynski-dokumenty-14-5",
+          "of-praca-10-11",
+          "kp-art182-1e-par2"
+        ],
+        "cloudDense": [
+          "of-rodzicielski-7-1",
+          "zam-6-2",
+          "mrpips-korzystanie-wniosek",
+          "rw-6-3",
+          "kp-art182-1d-par1"
+        ],
+        "cloudHybrid": [
+          "of-rodzicielski-7-1",
+          "of-praca-10-3",
+          "zam-6-2",
+          "of-praca-10-11",
+          "mrpips-korzystanie-wniosek"
+        ],
+        "runtimeCrossPackLexical": [
+          "of-praca-10-3",
+          "of-praca-10-11",
+          "of-aktywny-3-2",
+          "of-dobry-6-4",
+          "of-dobry-6-6"
+        ]
+      },
+      "verifiedCloudCounts": {
+        "dense": 20,
+        "lexical": 20
+      },
+      "ms": {
+        "bm25": 0.718,
+        "localEncodeRaw": 3.985,
+        "localScanRaw": 0.099,
+        "localEncodeProjection": 4.214,
+        "localScanProjection": 0.112,
+        "cloudBothRequests": 43
+      }
+    }
+  ]
+}

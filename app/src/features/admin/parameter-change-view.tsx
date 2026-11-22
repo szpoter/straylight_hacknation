@@ -305,8 +305,7 @@ export function ParameterChangeView(props: Props) {
           </>
         ) : (
           <p className={cx(s.small, s.muted)} style={{ margin: "16px 0 0" }}>
-            {spec.parentNote ??
-              "Widok rodzica dla tego parametru powstaje. Wpływ powyżej liczy ta sama reguła, z której skorzysta aplikacja."}
+            Widok rodzica dla tego parametru powstaje. Wpływ powyżej liczy ta sama reguła, z której skorzysta aplikacja.
           </p>
         )}
       </Card>

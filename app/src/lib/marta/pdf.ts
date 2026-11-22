@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb } from "pdf-lib";
+import { OLA } from "../family/ola";
 import { formatShort } from "../rules/dates";
 import type { MartaView } from "./types";
 
@@ -40,20 +41,21 @@ export async function martaPdf(view: MartaView | null) {
 
   const plan = view?.selected ? view.variants[view.selected] : null;
   const period = (p: { from: string; to: string }) => `od ${formatShort(p.from)} do ${formatShort(p.to)}`;
-  paragraph(view?.confirmed ? "DANE DEMONSTRACYJNE" : "SZKIC  /  DANE DEMONSTRACYJNE", 9);
+  if (!view?.confirmed) paragraph("SZKIC", 9);
   rule(y + 8);
   y -= 25;
   paragraph("Wniosek o udzielenie urlopu rodzicielskiego", 19);
-  paragraph("Pracodawca: Studio Lipa");
-  paragraph("Pracownik: " + (view?.firstName ?? "________________________"));
-  paragraph("Dziecko: " + (view?.childName ?? "________________________"));
+  paragraph("Pracodawca: " + OLA.employer);
+  paragraph("Pracownik: " + OLA.mother);
+  paragraph("Dziecko: " + OLA.child);
+  paragraph("Data urodzenia dziecka: " + formatShort(OLA.birthDate));
   y -= 8;
   paragraph("Proszę o udzielenie mi urlopu rodzicielskiego " + (plan ? period(plan.first) : "od __________ do __________") + " włącznie.");
   paragraph(`Dotychczas wykorzystany urlop rodzicielski lub zasiłek za odpowiadający mu okres: ${view?.previousDays ?? "____"} dni. Liczba wykorzystanych części urlopu lub wniosków o zasiłek: ${view?.previousParts ?? "____"}.`);
   y -= 8;
   paragraph("Oświadczenie dotyczące drugiego rodzica", 14);
   if (!view || !plan) {
-    paragraph("Do uzupełnienia po ustaleniu okresów obojga rodziców.");
+    paragraph(`Drugi rodzic: ${OLA.father}. Do uzupełnienia po ustaleniu okresów obojga rodziców.`);
   } else {
     const other = view.secondName;
     const statement = view.selected === "together"

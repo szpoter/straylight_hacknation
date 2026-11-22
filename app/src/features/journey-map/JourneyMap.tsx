@@ -167,7 +167,7 @@ function NearestPanel({ stop, upcoming, onOpen }: { stop?: Stop; upcoming?: Stop
           {upcoming.condition ? ` — ${upcoming.condition.charAt(0).toLowerCase()}${upcoming.condition.slice(1)}.` : "."}
         </p>
         <Button variant="secondary" className="mt-5" onClick={() => onOpen(upcoming)}>
-          Zobacz szczegóły
+          Zobacz, co przygotować
         </Button>
       </Panel>
     );

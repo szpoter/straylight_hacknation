@@ -7,6 +7,7 @@ import { buildCorpus, type Corpus } from "./corpus";
  * outputFileTracingIncludes in next.config.ts; cwd is app/ locally and on Vercel.
  */
 const cache = new Map<string, Corpus>();
+export const corpusNames = ["marta", "publiczne", "oferta"] as const;
 
 export function corpusDir(name: string, root = process.cwd()): string {
   return path.join(root, "corpus", name);

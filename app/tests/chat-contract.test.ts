@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { answerFromAskBody, groundedClaims, pdfPage, turnsFromView, type Answer } from "@/features/chat/contract";
 import { AnswerView, TurnView } from "@/features/chat/turn-view";
 import { mergeConversation } from "@/features/chat/use-zusik-case";
+import { chatStarters, conversationInput } from "@/lib/zusik/conversation";
+import { ChatStarters } from "@/features/chat/scenario-nav";
 
 // Sample answers shaped like the proposed /ask contract (PLAN-ETAP-1-KROK-2.md, section 4).
 // Component tests only: the real answers come from the backend.
@@ -77,6 +79,13 @@ describe("answerFromAskBody", () => {
 });
 
 describe("turnsFromView", () => {
+  it("restores the origin and timestamp of the exact quotation shown before reload", () => {
+    const citation = { ...odpis.citations[0], origin: "official_live", retrievedAt: "2026-11-22T14:50:00Z" };
+    const turn = { ...odpis, requestId: "r1", question: "Źródło?", citations: [citation] };
+    expect(answerFromAskBody({ turn }, "r1")?.citations[0]).toEqual(citation);
+    expect(turnsFromView({ turns: [turn] })[0].citations[0]).toEqual(citation);
+  });
+
   it("returns an empty list for the step-1 view and skips invalid turns", () => {
     expect(turnsFromView({ state: "completed" })).toEqual([]);
     const turns = turnsFromView({ turns: [{ ...odpis, requestId: "r1", question: "Q" }, { bad: true }] });
@@ -117,6 +126,20 @@ describe("TurnView", () => {
   });
 });
 
+it("shows three starter questions as actions in the current conversation", () => {
+  const html = renderToStaticMarkup(createElement(ChatStarters, { onSelect: () => undefined, disabled: false }));
+  expect(html).toContain("Sprawdź ubezpieczenie");
+  expect(html).toContain("Oblicz wysokość zasiłku");
+  expect(html).toContain("Sprawdź dokumenty i terminy");
+  expect(html.match(/<button /g)).toHaveLength(3);
+  expect(html).not.toContain("href=");
+});
+
+it.each(chatStarters)("starts $label with a relevant request for the user’s own data", starter => {
+  expect(conversationInput(starter.prompt, "ogolna").reply).toBe(starter.reply);
+  expect(conversationInput(starter.prompt + " Mam jeszcze jeden dokument.", "ogolna").reply).toBeNull();
+});
+
 describe("AnswerView", () => {
   it("shows each claim with its own footnote, sources collapsed", () => {
     const html = renderToStaticMarkup(createElement(AnswerView, { answer: odpis }));
@@ -145,6 +168,15 @@ describe("AnswerView", () => {
       }),
     );
     expect(html).toContain("Pytasz o wniosek do pracodawcy czy o wypłatę zasiłku?");
+  });
+
+  it("keeps supported claims visible when one personal fact is still needed", () => {
+    const html = renderToStaticMarkup(createElement(AnswerView, {
+      answer: { ...odpis, status: "needs_clarification", message: "Czy dokument jest już w aktach?" },
+    }));
+    expect(html).toContain(odpis.claims[0].text);
+    expect(html).toContain("Źródło 1");
+    expect(html).toContain("Czy dokument jest już w aktach?");
   });
 });
 

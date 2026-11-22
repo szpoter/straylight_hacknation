@@ -1,6 +1,10 @@
 /** Run in app/: node --import tsx scripts/zusik-eval-local-models.ts. Only local Ollama and public fragments. */
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
+import { totalmem } from "node:os";
+import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { taskGrammar, taskSpecs, taskInstructions, localModelIds, checkedTaskOutput, type PublicTaskInput, type ModelTaskKind } from "../src/lib/rag/model-tasks";
 import {
   ASK_MAX_OUTPUT_TOKENS,
   ASK_MODEL_BUDGET_MS,
@@ -10,13 +14,11 @@ import {
   SYSTEM_PROMPT,
   validateAnswer,
 } from "../src/lib/rag/answer";
+import { requireEnv } from "../src/lib/zusik/config";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 
 const endpoint = "http://127.0.0.1:11434/v1";
-const models = [
-  "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
-  "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
-];
+const models = Object.values(localModelIds);
 const attach = "rozp-2025-322-par15-ust2-pkt1",
   exception = "rozp-2025-322-par22",
   deadline = "kp-art182-1d-par1";
@@ -51,7 +53,8 @@ const examples = [
   },
 ];
 
-async function runExample(model: string, e: (typeof examples)[number], corpus: ReturnType<typeof loadCorpus>) {
+async function runExample(model: string, e: (typeof examples)[number], corpus: ReturnType<typeof loadCorpus>,
+  provider = { baseURL: endpoint, apiKey: "ollama" }) {
   const evidence = e.evidence.map((id) => {
     const fragment = corpus.fragments.get(id);
     if (!fragment) throw new Error("Nieznany fragment " + id);
@@ -62,7 +65,7 @@ async function runExample(model: string, e: (typeof examples)[number], corpus: R
     .digest("hex")
     .slice(0, 12);
   const generation = await generateAnswer(
-    { baseURL: endpoint, apiKey: "ollama", model },
+    { ...provider, model },
     corpus,
     e.question,
     evidence,
@@ -100,6 +103,221 @@ async function runExample(model: string, e: (typeof examples)[number], corpus: R
     correct,
     text,
   };
+}
+
+async function compareRoles() {
+  // Dedicated loopback daemon. Unloading a model here never evicts the serving worker's model.
+  const base = "http://127.0.0.1:11439/api";
+  const call = async (path: string, body?: object) => {
+    const response = await fetch(base + path, {
+      method: body ? "POST" : "GET",
+      redirect: "error",
+      signal: AbortSignal.timeout(120000),
+      headers: { "content-type": "application/json" },
+      body: body && JSON.stringify(body),
+    });
+    if (!response.ok) throw Error(path + " HTTP " + response.status);
+    return response.json();
+  };
+  const inventory = await call("/tags");
+  const runnerSha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const corpus = loadCorpus("marta");
+  const units = examples[0].evidence.map((id) => {
+    const f = corpus.fragments.get(id);
+    if (!f) throw Error("Missing public evidence " + id);
+    return f;
+  });
+  const attachments = units.map((f) => ({ id: f.logicalId, text: f.sourceText }));
+  const plan: PublicTaskInput = {
+    kind: "plan_public",
+    aspect: "evidence",
+    previousUnit: exception,
+    candidates: [exception],
+    missing: [],
+  };
+  const verify: PublicTaskInput = {
+    kind: "verify_claim",
+    aspect: "eligibility",
+    claimUnit: deadline,
+    candidates: [exception],
+  };
+  const tasks: { kind: ModelTaskKind; prompt: string; system: string; correct: (s: string) => boolean }[] = [
+    {
+      kind: "answer_evidence",
+      system: SYSTEM_PROMPT,
+      prompt: buildPrompt(corpus, examples[0].question, units),
+      correct(raw) {
+        const proposed = taskSpecs.answer_evidence.output.parse(JSON.parse(raw));
+        const checked = validateAnswer(corpus, units, proposed);
+        return (
+          checked.answer.status === "answered" &&
+          [attach, exception].every((id) => checked.answer.citations.some((c) => c.fragmentId === id)) &&
+          examples[0].meaning(checked.answer.claims.map((c) => c.text).join(" "))
+        );
+      },
+    },
+    {
+      kind: "plan_public",
+      system: taskInstructions.plan_public,
+      prompt: JSON.stringify({ ...plan, candidates: [attachments[1]] }),
+      correct(raw) {
+        const v = checkedTaskOutput(plan, raw);
+        return (
+          !!v && "nextTool" in v && v.nextTool === "readPreviousEvidence" && v.intent === "cite_previous"
+        );
+      },
+    },
+    {
+      kind: "verify_claim",
+      system: taskInstructions.verify_claim,
+      prompt: JSON.stringify({
+        aspect: verify.aspect,
+        claim: corpus.fragments.get(deadline)?.sourceText,
+        candidates: [attachments[1]],
+      }),
+      correct(raw) {
+        const v = checkedTaskOutput(verify, raw);
+        return !!v && "verdict" in v && v.verdict === "missing";
+      },
+    },
+  ];
+  const supplementary = process.argv.includes("--supplementary");
+  const selectedTasks = supplementary ? tasks.filter(t => t.kind !== "answer_evidence") : tasks;
+  const reportFile = supplementary ? "corpus/local-model-routing.json" : "corpus/local-model-roles.json";
+  const results = [];
+  for (const model of models) {
+    for (const t of selectedTasks) {
+      for (let run = 0; run < 6; run++) {
+        const cold = run % 2 === 0;
+        if (cold) {
+          await call("/generate", { model, keep_alive: 0 });
+          const limit = Date.now() + 20000;
+          while (
+            (await call("/ps")).models.some((m: { model: string }) => m.model === model) &&
+            Date.now() < limit
+          )
+            await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        const already = (await call("/ps")).models.some((m: { model: string }) => m.model === model);
+        if (already === cold) throw Error("Unexpected model residency");
+        const spec = taskSpecs[t.kind],
+          id = randomUUID(),
+          start = performance.now();
+        const res = await call("/chat", {
+          model,
+          stream: false,
+          format: taskGrammar(t.kind,t.kind === "answer_evidence" ? undefined : JSON.parse(t.prompt)),
+          options: { temperature: 0.1, num_predict: spec.tokens },
+          messages: [
+            { role: "system", content: t.system },
+            { role: "user", content: t.prompt },
+          ],
+        });
+        const ms = Math.round(performance.now() - start);
+        const loaded = (await call("/ps")).models.find((m: { model: string }) => m.model === model);
+        let json = false,
+          correct = false;
+        try {
+          json = spec.output.safeParse(JSON.parse(res.message.content)).success;
+          correct = t.correct(res.message.content);
+        } catch {
+          /* Invalid generation counts as a miss. */
+        }
+        const modelOutput = json ? JSON.parse(res.message.content) : null;
+        const detail =
+          t.kind === "answer_evidence" && modelOutput
+            ? {
+                selectedIds: modelOutput.claims.flatMap((c: { evidence: { id: string }[] }) =>
+                  c.evidence.map((e) => e.id),
+                ),
+                exception: examples[0].meaning(
+                  modelOutput.claims.map((c: { text: string }) => c.text).join(" "),
+                ),
+              }
+            : modelOutput;
+        const row = {
+          model,
+          task: t.kind,
+          cold,
+          attemptId: id,
+          ms,
+          detail,
+          loadMs: Math.round(res.load_duration / 1e6),
+          residentBytes: loaded?.size,
+          vramBytes: loaded?.size_vram,
+          json,
+          correct,
+          withinBudget: ms <= spec.timeout,
+          stop: res.done_reason,
+        };
+        results.push(row);
+        console.log(JSON.stringify(row));
+        writeFileSync(
+          reportFile,
+          JSON.stringify(
+            {
+              runnerSha,
+              models: inventory.models.filter((m: { model: string }) => models.some((id) => id === m.model)),
+              hostBytes: totalmem(),
+              measuredAt: new Date().toISOString(),
+              results,
+            },
+            null,
+            2,
+          ) + "\n",
+        );
+      }
+    }
+  }
+  const groups = [];
+  for (const model of models)
+    for (const { kind } of selectedTasks)
+      for (const cold of [true, false]) {
+        const sample = results.filter((r) => r.model === model && r.task === kind && r.cold === cold);
+        const lat = sample.map((r) => r.ms).sort((a, b) => a - b);
+        groups.push({
+          model,
+          kind,
+          cold,
+          n: sample.length,
+          p50: lat[Math.ceil(lat.length * 0.5) - 1],
+          p95: lat[Math.ceil(lat.length * 0.95) - 1],
+          schema: sample.filter((r) => r.json).length,
+          correct: sample.filter((r) => r.correct).length,
+          inBudget: sample.filter((r) => r.withinBudget).length,
+        });
+      }
+  writeFileSync(
+    reportFile,
+    JSON.stringify(
+      {
+        runnerSha,
+        models: inventory.models.filter((m: { model: string }) => models.some((id) => id === m.model)),
+        hostBytes: totalmem(),
+        measuredAt: new Date().toISOString(),
+        groups,
+        results,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+}
+
+/** The same fixed public evidence and validator for local and configured hosted models. */
+async function comparePublic() {
+  const corpus = loadCorpus("marta");
+  const providers = [
+    ...models.map(model => ({ model, baseURL: endpoint, apiKey: "ollama" })),
+    { model: requireEnv("SHERLOCK_MODEL"), baseURL: requireEnv("SHERLOCK_BASE_URL"), apiKey: requireEnv("SHERLOCK_API_KEY") },
+  ];
+  for (const provider of providers) {
+    for (const example of examples) {
+      const { model, promptHash, correct, status, ms, cited, missing } = await runExample(provider.model, example, corpus, provider);
+      console.log(JSON.stringify({ model, task: example.id, promptHash, correct, status, ms, cited, missing }));
+      if (!correct) process.exitCode = 1;
+    }
+  }
 }
 
 async function main() {
@@ -212,7 +430,7 @@ async function main() {
   ];
   writeFileSync("corpus/local-models.md", report.join("\n"));
 }
-main().catch((e: Error) => {
+(process.argv.includes("--compare-public") ? comparePublic() : process.argv.includes("--roles") ? compareRoles() : main()).catch((e: Error) => {
   console.error(e.message);
   process.exitCode = 1;
 });

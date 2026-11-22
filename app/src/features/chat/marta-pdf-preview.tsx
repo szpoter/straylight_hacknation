@@ -1,5 +1,6 @@
 "use client";
 
+import { OLA } from "@/lib/family/ola";
 import { PdfPreview } from "@/components/pdf-preview";
 import type { MartaView } from "@/lib/marta/types";
 
@@ -11,7 +12,7 @@ export function MartaPdfPreview({ view }: { view: MartaView | null }) {
     return response.blob();
   }
   return (
-    <PdfPreview key={version} load={load} title="Wniosek o urlop rodzicielski do pracodawcy Studio Lipa"
+    <PdfPreview key={version} load={load} title={`Wniosek o urlop rodzicielski do pracodawcy ${OLA.employer}`}
       filename="wniosek-rodzicielski.pdf" label={view?.confirmed ? "Pobierz wniosek PDF" : "Pobierz szkic PDF"} />
   );
 }

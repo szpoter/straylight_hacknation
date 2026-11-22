@@ -1,4 +1,5 @@
 import { explicitLocatorKeys } from "./query";
+import type { CorpusCandidate } from "./retrieve";
 
 // Only these prewritten public questions can reach hosted inference. Uploaded
 // documents, identities and free-form explanations stay outside the search prompt.
@@ -7,6 +8,7 @@ export interface PublicQuestion {
   question: string;
   locators?: string[];
   fragmentId?: string;
+  lexical?: CorpusCandidate[];
   /** This catch-all identifies a broad subject and can miss a more specific provision. */
   broad?: boolean;
   /** Source words for vector search, without the generation instruction. */
@@ -147,10 +149,10 @@ export function publicQuestion(input: string): PublicQuestion | null {
   const topic = routeTopic(input);
   const limited = (clarify: string): PublicQuestion => ({ corpus: topic?.corpus ?? "publiczne", question: "", clarify });
   if (/(?:\d{1,2}[./-]){2}\d{2,4}|20\d{2}-\d{2}-\d{2}|\b(?:19|20)\d{2}\b|(?:w|od|do|za)\s+(?:stycz|lut|marc|kwiet|maj|czerwc|lipc|sierp|wrześ|paździer|listop|grud)/iu.test(input)) {
-    return limited("Czy chodzi Ci o ocenę konkretnego okresu? Wybierz sprawę w panelu, aby sprawdzić daty i dokumenty.");
+    return limited("Czy chodzi Ci o ocenę konkretnego okresu? Podaj rodzaj świadczenia i okres, który chcesz sprawdzić.");
   }
   if (/(?:moje dziecko|mój syn|moja córka|dziecko ma).{0,32}\d+\s*(?:miesię|lat|rok)/iu.test(input) && topic) {
-    return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Wybierz sprawę i potwierdź datę urodzenia.");
+    return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Podaj datę urodzenia oraz okres, którego dotyczy pytanie.");
   }
   if (asksAboutOwnEligibility(input) &&
       !/800|300|aktywny rodzic/u.test(input) && topic?.corpus === "publiczne") {

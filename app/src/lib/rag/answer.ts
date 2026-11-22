@@ -2,7 +2,6 @@ import type { Pool } from "pg";
 import { localCompletion, publicQueueEvidence } from "./local-queue";
 import { chatModel, localRagModel } from "../zusik/model-provider";
 import { generateText, type LanguageModel } from "ai";
-import { z } from "zod";
 import { classifySherlockError } from "../zusik/sherlock";
 import type { AskAnswer, AskCitation, AskClaim } from "../zusik/types";
 import { citationUrl, normalizeSpaces, type Corpus, type Fragment } from "./corpus";
@@ -14,21 +13,8 @@ export const ASK_MAX_OUTPUT_TOKENS = 700;
 export const NO_BASIS_MESSAGE =
   "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.";
 
-/** What Bielik must return. Ids and quotes are checked against the corpus afterwards. */
-export const modelAnswerSchema = z.object({
-  status: z.enum(["answered", "needs_clarification", "insufficient_evidence"]),
-  message: z.string().max(400).default(""),
-  claims: z
-    .array(
-      z.object({
-        text: z.string().trim().min(1).max(400),
-        evidence: z.array(z.object({ id: z.string().min(1), quote: z.string().min(1).max(600) })).min(1).max(3),
-      }),
-    )
-    .max(3)
-    .default([]),
-});
-export type ModelAnswer = z.infer<typeof modelAnswerSchema>;
+export { balanceJsonBrackets, modelAnswerSchema, parseModelAnswer, type ModelAnswer } from "./model-tasks";
+import { parseModelAnswer, type ModelAnswer } from "./model-tasks";
 
 export const SYSTEM_PROMPT = [
   "Jesteś Zusikiem, asystentem rodzica w Polsce.",
@@ -56,52 +42,6 @@ export function buildPrompt(corpus: Corpus, question: string, evidence: Fragment
     return `[ID: ${f.logicalId}] ${doc?.shortTitle ?? ""}, ${f.locator} · temat: ${f.context}\n"""${f.sourceText}"""`;
   });
   return `Pytanie rodzica:\n"""${question}"""\n\nFragmenty źródłowe:\n${blocks.join("\n\n")}\n\n${ANSWER_INSTRUCTION}`;
-}
-
-/**
- * Bielik sometimes emits unbalanced brackets in compact JSON (e.g. `]}}]}}`).
- * Outside string literals: drop closers that do not match the open bracket, append missing closers.
- * Content is never invented; Zod and the citation validator still check everything.
- */
-export function balanceJsonBrackets(json: string): string {
-  const stack: string[] = [];
-  let out = "";
-  let inString = false;
-  let escaped = false;
-  for (const ch of json) {
-    if (inString) {
-      out += ch;
-      if (escaped) escaped = false;
-      else if (ch === "\\") escaped = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-    if (ch === '"') inString = true;
-    else if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
-    else if (ch === "}" || ch === "]") {
-      if (stack[stack.length - 1] !== ch) continue;
-      stack.pop();
-    }
-    out += ch;
-  }
-  return inString ? out : out + stack.reverse().join("");
-}
-
-/** Bielik may wrap JSON in prose or code fences; take the outermost object. */
-export function parseModelAnswer(raw: string): ModelAnswer | null {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) return null;
-  const candidate = raw.slice(start, end + 1);
-  for (const text of [candidate, balanceJsonBrackets(candidate)]) {
-    try {
-      const parsed = modelAnswerSchema.safeParse(JSON.parse(text));
-      if (parsed.success) return parsed.data;
-    } catch {
-      // try the repaired variant
-    }
-  }
-  return null;
 }
 
 /** Typographic quote marks are equivalent for matching („Za życiem” vs "Za życiem"). */
@@ -285,6 +225,7 @@ export interface AnswerModelSettings {
   model: string;
   languageModel?: LanguageModel;
   queue?: Pool;
+  deadlineMs?: number;
 }
 
 /** Total model budget per question; leaves room for Qdrant and Neon inside maxDuration 60 s. */
@@ -303,17 +244,20 @@ export async function generateAnswer(
   evidence: Fragment[],
 ): Promise<GenerationResult> {
   const started = Date.now();
+  const deadline = Math.min(started + ASK_MODEL_BUDGET_MS, settings.deadlineMs ?? Infinity);
+  if (!Number.isFinite(deadline) || deadline <= started)
+    return { status: "timeout", output: null, model: settings.model, ms: 0 };
   const local = settings.queue && localRagModel();
   const prompt = buildPrompt(corpus, question, evidence);
   let attemptId: string | undefined;
   if (local && settings.queue && publicQueueEvidence(corpus, question, evidence)) {
-    const result = await localCompletion(settings.queue, local, prompt);
+    const result = await localCompletion(settings.queue, local, prompt, undefined, "answer_evidence", deadline - Date.now());
     attemptId = result.id;
-    const output = result.text ? parseModelAnswer(result.text) : null;
+    const output = result.status === "ok" ? parseModelAnswer(result.text) : null;
     const status = result.status === "ok" && !output ? "invalid_json" : result.status;
     const backend = "local-" + local;
     const ms = Date.now() - started;
-    const fallback = output ? undefined : ms + MIN_RETRY_WINDOW_MS < ASK_MODEL_BUDGET_MS ? "hosted" : "source_only";
+    const fallback = output ? undefined : Date.now() + MIN_RETRY_WINDOW_MS < deadline ? "hosted" : "source_only";
     console.info(JSON.stringify({ event: "rag_model_attempt", attemptId, backend, status, fallback, ms }));
     if (output) return { status: "ok", output, model: local, backend, attemptId, ms };
     if (fallback === "source_only") return { status: "error", output: null, model: local, backend, attemptId, ms };
@@ -324,7 +268,8 @@ export async function generateAnswer(
   const model = settings.languageModel ?? chatModel(settings.baseURL, settings.apiKey, settings.model);
   let last: GenerationResult = { status: "error", output: null, model: settings.model, backend, attemptId, ms: 0 };
   for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const remaining = ASK_MODEL_BUDGET_MS - (Date.now() - started);
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return { ...last, status: "timeout", ms: Date.now() - started };
     if (attempt > 1 && remaining < MIN_RETRY_WINDOW_MS) break;
     try {
       const { text, finishReason } = await generateText({

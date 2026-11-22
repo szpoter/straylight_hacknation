@@ -7,6 +7,7 @@
  * mapą pól ma zespół Kamila w `lib/forms/zam-map.ts`; tu go nie powielamy.
  * TODO(backend): definicje formularzy i zapis wartości w sprawie.
  */
+import { OLA } from "../family/ola";
 import type { Plan } from "./types";
 
 export type FieldType = "text" | "date" | "select" | "radio" | "textarea" | "pesel" | "account";
@@ -39,16 +40,17 @@ export type FormDef = {
 export type Channel = "pue" | "pracodawca" | "email" | "urzad";
 
 export const CHANNEL_LABEL: Record<Channel, { label: string; hint: string }> = {
-  pue: { label: "Przez PUE/eZUS", hint: "Wniosek trafia do ZUS elektronicznie, potwierdzenie (UPP) przychodzi od razu." },
-  pracodawca: { label: "Do pracodawcy", hint: "Pracodawca dostaje wniosek i przekazuje dane do ZUS." },
-  email: { label: "E-mailem jako PDF", hint: "Wyślesz plik sam(a), np. do kadr. Potwierdzenie wpiszesz po odpowiedzi." },
-  urzad: { label: "Do urzędu przez ePUAP", hint: "Pismo trafia do skrzynki urzędu, potwierdzenie (UPO) przychodzi automatycznie." },
+  pue: { label: "Przez PUE/eZUS", hint: "Po złożeniu wniosku sprawdź skrzynkę na swoim koncie eZUS." },
+  pracodawca: { label: "Do pracodawcy", hint: "Przekaż wniosek do kadr w sposób przyjęty u pracodawcy." },
+  email: { label: "E-mailem jako PDF", hint: "Wyślij podpisany dokument na uzgodniony adres odbiorcy." },
+  urzad: { label: "Do urzędu przez ePUAP", hint: "Sprawdź właściwą skrzynkę odbiorcy i zachowaj otrzymane potwierdzenie." },
 };
 
 export type PrefillContext = {
   parentName: string;
   employer: string;
   childName?: string;
+  secondParentName?: string;
   /** Data urodzenia (ISO), gdy dziecko jest na świecie. */
   birthDate?: string;
   /** Planowany termin porodu (ISO) dla planu oczekiwanego dziecka. */
@@ -56,10 +58,17 @@ export type PrefillContext = {
 };
 
 /** Dane do podstawienia z planu i profilu demonstracyjnego (Profil → Moje dane). */
-export function prefillContext(plan: Pick<Plan, "name" | "kind" | "keyDate">, profile: { parentName: string; employer: string }): PrefillContext {
+export function prefillContext(plan: Pick<Plan, "name" | "kind" | "keyDate"> & Partial<Pick<Plan, "id">>, profile: Pick<PrefillContext, "parentName" | "employer" | "secondParentName" | "childName" | "birthDate">): PrefillContext {
   const born = plan.kind !== "planowane";
   const childName = born ? plan.name.replace(/^Sprawa testowa · /, "").replace(/^Przykład · .*/, "") || undefined : undefined;
-  return { ...profile, childName, birthDate: born ? plan.keyDate : undefined, dueDate: born ? undefined : plan.keyDate };
+  const familyPlan = plan.id === "ola";
+  return {
+    ...profile,
+    secondParentName: familyPlan ? profile.secondParentName ?? OLA.father : undefined,
+    childName: familyPlan && (childName === "Ola" || childName === OLA.child) ? profile.childName ?? OLA.child : childName,
+    birthDate: born ? (familyPlan ? profile.birthDate ?? plan.keyDate : plan.keyDate) : undefined,
+    dueDate: born ? undefined : plan.keyDate,
+  };
 }
 
 const YES_NO = ["Tak", "Nie"];
@@ -130,9 +139,8 @@ export const FORMS: Record<string, FormDef> = {
       {
         id: "ty",
         title: "Drugi rodzic",
-        // Urlop ojcowski bierze drugi rodzic — jego danych nie ma w profilu, więc bez podstawiania.
         fields: [
-          { id: "rodzic", label: "Imię i nazwisko drugiego rodzica", type: "text", required: true },
+          { id: "rodzic", label: "Imię i nazwisko drugiego rodzica", type: "text", required: true, prefill: c => c.secondParentName },
           { id: "pracodawca", label: "Pracodawca drugiego rodzica", type: "text", required: true },
         ],
       },

@@ -25,6 +25,8 @@ export const citationSchema = z.object({
   /** HTML sources: the heading path the parent looks for on the page. */
   headingPath: z.array(z.string()).optional(),
   corpusVersion: z.string().optional(),
+  origin: z.enum(["corpus", "official_live"]).optional(),
+  retrievedAt: z.string().optional(),
 });
 export type Citation = z.infer<typeof citationSchema>;
 

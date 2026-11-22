@@ -52,7 +52,10 @@ describe("contribution arrears (art. 2a)", () => {
   });
 
   it("paying within 6 months keeps the right; later it expires", () => {
-    expect(assessArrears({ ...base, arrears: 300, paidOn: "2027-03-01" }).status).toBe("paid");
+    expect(assessArrears({ ...base, arrears: 300, paidOn: "2027-06-08", today: "2027-06-08" }).status).toBe("paid");
+    for (const paidOn of ["2027-03-01", "2027-06-09"]) {
+      expect(assessArrears({ ...base, arrears: 300, paidOn }).status).toBe("withheld_until_paid");
+    }
     expect(assessArrears({ ...base, arrears: 300, today: "2027-06-09" }).status).toBe("expired");
     expect(assessArrears({ ...base, arrears: 300, paidOn: "2027-07-01", today: "2027-07-01" }).status).toBe("expired");
   });

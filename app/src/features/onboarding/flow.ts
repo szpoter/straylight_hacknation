@@ -297,7 +297,7 @@ export function joinNames(names: string[]): string {
 }
 
 /**
- * Krótka reakcja nad pytaniem (bez maskotki) — nawiązuje do poprzedniej odpowiedzi, jak w aplikacjach
+ * Krótka reakcja Zusika nad pytaniem — nawiązuje do poprzedniej odpowiedzi, jak w aplikacjach
  * typu Duolingo. Spokojny, ciepły ton (DESIGN.md), bez wykrzyknika na każdym kroku.
  */
 export function zusikLine(step: StepId, answers: Answers): string {
@@ -305,7 +305,7 @@ export function zusikLine(step: StepId, answers: Answers): string {
   const many = childTotal(answers) > 1;
   switch (step) {
     case "situation":
-      return "Kilka pytań i ułożę Ci plan spraw — od urzędu po urlop.";
+      return "Cześć, jestem Zusik. Kilka pytań i ułożę Ci plan spraw — od urzędu po urlop.";
     case "role":
       switch (answers.situation) {
         case "ciaza":

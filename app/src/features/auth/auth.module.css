@@ -1,7 +1,6 @@
 /*
- * Rama ścieżki logowania demo (pasek, nagłówek), wczytywanie danych i ekran /start.
- * Wartości wyglądu z tokenów DESIGN.md (globals.css). Ekrany eZUS i login.gov.pl mają
- * własne style w ezus/ i gov/, odwzorowane ze zrzutów tych usług.
+ * Ścieżka logowania demo. Wartości wyglądu z tokenów DESIGN.md (globals.css).
+ * Jasna kartka, jedna karta na środku, szeryfowy nagłówek, pigułki dla akcji.
  */
 
 /* ---------- Rama ---------- */
@@ -163,7 +162,7 @@
   }
 }
 
-/* Telefon: bez karty w karcie, żeby treść miała całą szerokość ekranu */
+/* Telefon: bez karty w karcie, żeby metody miały całą szerokość ekranu */
 @media (max-width: 559px) {
   .card {
     padding: 0;
@@ -226,6 +225,160 @@
   text-wrap: pretty;
 }
 
+/* ---------- Metody logowania ---------- */
+
+.methodGroup {
+  margin-top: var(--space-stack);
+}
+
+.methodGroup + .methodGroup {
+  margin-top: 28px;
+}
+
+.groupLabel {
+  margin-bottom: 12px;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.methods {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.method {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 16px 16px 16px;
+  border: 1px solid var(--color-outline);
+  border-radius: var(--rounded-lg);
+  color: var(--color-on-surface);
+  text-decoration: none;
+}
+
+@media (min-width: 768px) {
+  .method {
+    padding: 18px 20px;
+  }
+}
+
+/* Jedyna aktywna droga: biała karta z obrysem w kolorze marki i strzałką w pigułce */
+.methodActive {
+  border-color: var(--color-primary);
+  background: var(--color-background);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+  transition: background-color 150ms ease;
+}
+
+/* do weryfikacji: hover aktywnej metody to biel z odrobiną zieleni marki */
+.methodActive:hover {
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-background));
+}
+
+.methodActive:focus-visible {
+  outline-offset: 4px;
+}
+
+.methodDisabled {
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding-block: 12px;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+}
+
+/* Metoda z polami (login i hasło): ikona zostaje przy tytule */
+.methodDisabled[data-extra] {
+  align-items: start;
+}
+
+.methodIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--rounded-full);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
+.methodActive .methodIcon {
+  background: var(--color-secondary);
+}
+
+.methodDisabled .methodIcon {
+  border: 1px solid var(--color-outline);
+  background: var(--color-background);
+  color: var(--color-on-surface-variant);
+}
+
+.methodText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.methodTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.methodDisabled[data-extra] .methodTitle {
+  padding-top: 10px;
+}
+
+.methodDesc {
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.methodGo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--rounded-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.methodGo svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 559px) {
+  .method {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .methodDisabled {
+    grid-template-columns: 40px minmax(0, 1fr);
+    background: var(--color-surface);
+  }
+
+  .methodIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .methodGo {
+    width: 32px;
+    height: 32px;
+  }
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -237,6 +390,289 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
+}
+
+.reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.reasonIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Login i hasło: pola widoczne, ale nieaktywne i bez możliwości wpisania tekstu */
+.fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@media (min-width: 560px) {
+  .fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-outline);
+  border-radius: var(--rounded-sm);
+  background: var(--color-background);
+  color: var(--color-on-surface-variant);
+  font: inherit;
+  font-size: 15px;
+  cursor: not-allowed;
+}
+
+/* ---------- Linki i stopka karty ---------- */
+
+.textLink {
+  color: var(--color-on-surface);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  border-radius: 2px;
+}
+
+.textLink:hover {
+  color: var(--color-primary);
+}
+
+.cardFooter {
+  margin-top: var(--space-stack);
+  padding-top: 20px;
+  border-top: 1px solid var(--color-outline);
+  font-size: 15px;
+}
+
+.quietLink {
+  display: inline-block;
+  margin-top: 20px;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.quietLink:hover {
+  color: var(--color-on-surface);
+}
+
+.infoList {
+  display: grid;
+  gap: 12px;
+  margin-top: var(--space-stack);
+  padding: 0;
+  list-style: none;
+}
+
+.info {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--rounded-sm);
+  background: var(--color-background);
+  font-size: 15px;
+}
+
+@media (max-width: 559px) {
+  .info {
+    background: var(--color-surface);
+  }
+}
+
+.infoIcon {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--color-on-surface-variant);
+}
+
+.infoTitle {
+  font-weight: 500;
+}
+
+.externalIcon {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  vertical-align: -1px;
+}
+
+/* ---------- Aplikacja mObywatel ---------- */
+
+.qrLayout {
+  display: grid;
+  gap: var(--space-stack);
+  margin-top: var(--space-stack);
+}
+
+@media (min-width: 860px) {
+  .qrLayout {
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+}
+
+.qrPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-card);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--rounded-lg);
+  background: var(--color-background);
+}
+
+.qrFrame {
+  position: relative;
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 1;
+}
+
+.qr {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.qrFrame[data-expired] .qr {
+  opacity: 0.12;
+}
+
+.qrExpired {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.qrExpiredTitle {
+  font-family: var(--font-serif);
+  font-size: var(--type-title-size);
+  line-height: 1.05;
+}
+
+.timer {
+  margin-top: 16px;
+  color: var(--color-on-surface-variant);
+  font-size: 15px;
+  text-align: center;
+}
+
+.timerValue {
+  color: var(--color-on-surface);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.scanButton {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.shortcut {
+  display: none;
+  margin-top: 10px;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+/* Skrót Spacja pokazujemy tylko tam, gdzie jest klawiatura i precyzyjny wskaźnik */
+@media (hover: hover) and (pointer: fine) {
+  .shortcut {
+    display: block;
+  }
+}
+
+.kbd {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--color-outline);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stepsTitle {
+  font-family: var(--font-serif);
+  font-size: var(--type-title-size);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.stepList {
+  display: grid;
+  gap: 0;
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-outline);
+}
+
+.stepNumber {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-outline);
+  border-radius: var(--rounded-full);
+  background: var(--color-background);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+}
+
+.hintIcon {
+  width: 20px;
+  height: 20px;
 }
 
 /* ---------- Wczytywanie danych ---------- */

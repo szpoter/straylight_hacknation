@@ -4,10 +4,12 @@ import { Pool } from "pg";
 import { CHECKPOINT_SCHEMA, ConfigError, DEFAULT_EMBED_MODEL, requireEnv } from "./config";
 import { SESSION_COOKIE } from "./constants";
 import { generateAnswer } from "../rag/answer";
+import { runPublicModelTask } from "../rag/local-queue";
 import { searchCorpus } from "../rag/corpus-search";
+import { discoverOfficialEvidence } from "../rag/official-fetch";
 import { loadCorpus } from "../rag/corpus-fs";
 import { qdrantKnowledgeSearch } from "../rag/retrieve";
-import { AskService } from "./ask-service";
+import { AskService, type AnswerDeps } from "./ask-service";
 import { suggestTopic } from "./topic-ranker";
 import { PgCaseStore } from "./case-store";
 import { PgTurnStore } from "./turn-store";
@@ -42,7 +44,8 @@ function qdrantSettings() {
 
 /** Knowledge collection (zusik_marta_v1) with its own read-scoped key; the probe keeps its own. */
 export function knowledgeSettings() {
-  if (!process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || !process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim()) {
+  if (!["preview", "production"].includes(process.env.VERCEL_ENV || "") &&
+      (!process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || !process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim())) {
     return qdrantSettings();
   }
   return {
@@ -68,23 +71,34 @@ export function assertProviderConfig(): void {
 }
 
 
-/** Informational answers with citations, saved on the session's thread. */
-export function askService(): AskService {
+export function publicAnswerDeps(deadlineMs?: number): AnswerDeps {
   const { pool: db } = runtime();
-  const corpus = loadCorpus("marta");
+  return {
+    deadlineMs,
+    corpus: loadCorpus("marta"),
+    selectCorpus: (name) => loadCorpus(name),
+    publicTask: process.env.ZUSIK_PLANNER_MODEL || process.env.ZUSIK_VERIFIER_MODEL
+      ? (input, deadline) => runPublicModelTask(db, input, deadline).catch(() =>
+        ({ status: "unavailable", attemptId: null, backend: null, output: null, ms: 0 })) : undefined,
+    suggestTopic,
+    searchCorpus,
+    discoverOfficial: discoverOfficialEvidence,
+    search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
+    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db, deadlineMs }, activeCorpus, question, evidence),
+  };
+}
+
+/** Informational answers with citations, saved on the session's thread. */
+export function askService(deadlineMs?: number): AskService {
+  const { pool: db } = runtime();
   return new AskService({
+    ...publicAnswerDeps(deadlineMs),
     store: new PgCaseStore(db),
     turns: new PgTurnStore(db),
     readMarta: async (sessionId) => {
       const { readMarta } = await import("../marta/server");
       return readMarta(sessionId);
     },
-    corpus,
-    selectCorpus: (name) => loadCorpus(name),
-    suggestTopic,
-    searchCorpus,
-    search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
-    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db }, activeCorpus, question, evidence),
   });
 }
 

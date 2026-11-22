@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "zusik:migrate": "tsx scripts/zusik-migrate.ts",
+    "zusik:expire-memory": "tsx scripts/zusik-expire-memory.ts",
     "zusik:seed-probe": "tsx scripts/zusik-seed-probe.ts",
     "kamil:docs": "tsx scripts/kamil-demo-docs.ts",
     "prebuild": "node scripts/copy-ocr-assets.mjs",

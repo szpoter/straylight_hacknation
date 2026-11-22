@@ -2,23 +2,25 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertIcon, ArrowLeftIcon, Button, ButtonLink, CheckIcon, Page, PageTitle, Panel, SectionTitle, Tag } from "@/components/ui";
+import { useDemoSession } from "@/features/auth/demo-session";
+import { OLA } from "@/lib/family/ola";
 import { usePlan } from "@/features/family/PlanProvider";
-import { DEMO_TODAY, daysLeftLabel, formatLong } from "@/lib/demo/dates";
+import { todayInPoland, daysLeftLabel, formatLong } from "@/lib/demo/dates";
 import { formFor, prefillContext, type Channel, type FormDef } from "@/lib/demo/forms";
-import { docStatus } from "@/lib/plan/status";
+import { docStatus, HANDOFF_RECORDED } from "@/lib/plan/status";
 import type { DocCase } from "./model";
 import { GROUP_TONE } from "./model";
 import { Timeline } from "./CaseTimeline";
 import { FormEditor } from "./FormEditor";
 import { CheckAnswers, SendStep } from "./FormReview";
-import { canEdit, demoProfile, initialValues, nextState, progress, sendEvents, validate, type Values } from "./flow";
+import { canEdit, documentDraft, initialValues, nextState, progress, sendEvents, validate, type Values } from "./flow";
 import { buildTimeline } from "./timeline";
 
 /** Krok sprawy w adresie (`?krok=`), żeby wiersz listy mógł prowadzić prosto do wniosku. */
 export type Step = "wniosek" | "sprawdz" | "przekaz" | "podglad";
-const STEP_TITLE: Record<Step, string> = { wniosek: "Wniosek", sprawdz: "Sprawdź odpowiedzi", przekaz: "Przekaż wniosek", podglad: "Wysłany wniosek" };
+const STEP_TITLE: Record<Step, string> = { wniosek: "Wniosek", sprawdz: "Sprawdź odpowiedzi", przekaz: "Oznacz przekazanie wniosku", podglad: "Zapisany wniosek" };
 const CORRECTION = "_korekta";
 
 function BackLink() {
@@ -39,8 +41,13 @@ export function CaseDetail({ id }: { id: string }) {
   const [focusField, setFocusField] = useState<string | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
   const def = formFor(id);
-  const saved = formValues(id);
-  const values = useMemo(() => (def ? initialValues(def, prefillContext(plan, demoProfile()), saved) : {}), [def, plan, saved]);
+  const { key: draftKey, values: saved } = documentDraft(plan.id, id, formValues);
+  const family = useDemoSession()?.family ?? OLA;
+  const context = prefillContext(plan, {
+    parentName: family.mother, secondParentName: family.father, employer: family.employer,
+    childName: family.child, birthDate: family.birthDate,
+  });
+  const values = def ? initialValues(def, context, saved) : {};
   const top = useRef<HTMLDivElement>(null);
 
   const go = (next?: Step, field?: string) => {
@@ -57,7 +64,7 @@ export function CaseDetail({ id }: { id: string }) {
       <Page>
         <BackLink />
         <PageTitle className="mt-stack">Nie znaleźliśmy tej sprawy</PageTitle>
-        <p className="mt-4 max-w-prose text-on-surface-variant">Ta sprawa nie należy do planu „{plan.name}”. Mogła dotyczyć innego dziecka — zmień plan w pasku u góry albo wróć do listy.</p>
+        <p className="mt-4 max-w-prose text-on-surface-variant">Ta sprawa nie należy do planu „{plan.name}”. Wróć do listy dokumentów, aby zobaczyć sprawy tego dziecka.</p>
       </Page>
     );
   }
@@ -70,7 +77,7 @@ export function CaseDetail({ id }: { id: string }) {
 
   // Kroki wniosku: każdy zapisuje wartości i stan sprawy przez wspólny plan, więc ścieżka
   // na „Moim planie” i lista dokumentów zmieniają się razem z nim.
-  const saveValues = (next: Values) => setFormValues(c.id, next);
+  const saveValues = (next: Values) => setFormValues(draftKey, next);
   const commitDraft = (d: FormDef) => {
     const valid = Object.keys(validate(d, values)).length === 0;
     const { done, total } = progress(d, values);
@@ -78,27 +85,37 @@ export function CaseDetail({ id }: { id: string }) {
     const state = c.state === "warunek" ? c.state : nextState(c.state, "save", valid);
     patchStop(c.id, {
       state,
-      doc: { hasDraft: true, note: valid ? "Wniosek uzupełniony — sprawdź i zatwierdź" : `Uzupełnione ${done} z ${total} pól`, lastEvent: `Szkic zapisany ${formatLong(DEMO_TODAY)}` },
+      doc: { hasDraft: true, note: valid ? "Wniosek uzupełniony — sprawdź i zatwierdź" : `Uzupełnione ${done} z ${total} pól`, lastEvent: `Szkic zapisany ${formatLong(todayInPoland())}` },
     });
     return valid;
   };
   const approve = () => {
-    patchStop(c.id, { state: "zatwierdzony", doc: { note: "Zatwierdzony — gotowy do przekazania", lastEvent: `Zatwierdzony ${formatLong(DEMO_TODAY)}` } });
+    if (!def || Object.keys(validate(def, values)).length) {
+      go("wniosek");
+      return;
+    }
+    patchStop(c.id, { state: "zatwierdzony", doc: { note: "Zatwierdzony — gotowy do przekazania", lastEvent: `Zatwierdzony ${formatLong(todayInPoland())}` } });
     go("przekaz");
   };
   const send = (channel: Channel) => {
+    if (c.state !== "zatwierdzony" || !def) return;
+    if (Object.keys(validate(def, values)).length) {
+      go("wniosek");
+      return;
+    }
+    const today = todayInPoland();
     const correction = values[CORRECTION] === "1";
     patchStop(c.id, {
       state: nextState("zatwierdzony", "send", true),
-      doc: { events: sendEvents(c.doc.events, channel, c.doc.recipient, DEMO_TODAY, correction), lastEvent: `Wysłano ${formatLong(DEMO_TODAY)}`, note: undefined, hasDraft: false },
+      doc: { events: sendEvents(c.doc.events, channel, c.doc.recipient, today, correction), lastEvent: `Oznaczono przekazanie ${formatLong(today)}`, note: undefined, hasDraft: false },
     });
     saveValues({ ...values, [CORRECTION]: "" });
-    setNotice(correction ? "Korekta wysłana. Potwierdzenie wpływu jest w przebiegu sprawy." : "Wniosek wysłany. Potwierdzenie wpływu jest w przebiegu sprawy.");
+    setNotice(correction ? "Zapisano Twoją informację o przekazaniu korekty." : "Zapisano Twoją informację o przekazaniu wniosku.");
     go();
   };
   const startCorrection = () => {
     saveValues({ ...values, [CORRECTION]: "1" });
-    patchStop(c.id, { state: nextState(c.state, "correct", true), doc: { hasDraft: true, note: "Korekta wysłanego wniosku", lastEvent: `Korekta rozpoczęta ${formatLong(DEMO_TODAY)}` } });
+    patchStop(c.id, { state: nextState(c.state, "correct", true), doc: { hasDraft: true, note: "Korekta wysłanego wniosku", lastEvent: `Korekta rozpoczęta ${formatLong(todayInPoland())}` } });
     go("wniosek");
   };
 
@@ -121,7 +138,7 @@ export function CaseDetail({ id }: { id: string }) {
             </p>
             <PageTitle>{def.name}</PageTitle>
             <p className="text-meta text-on-surface-variant">{def.fidelity}</p>
-            {values[CORRECTION] === "1" && <p className="rounded-sm bg-tertiary p-3">Korekta: zmień, co trzeba, i wyślij wniosek ponownie. Poprzednia wersja zostaje w przebiegu sprawy.</p>}
+            {values[CORRECTION] === "1" && <p className="rounded-sm bg-tertiary p-3">Przygotuj korektę i przekaż ją odbiorcy. Poprzednia wersja zostaje w przebiegu sprawy.</p>}
           </header>
           {step === "wniosek" && (
             <>
@@ -170,7 +187,6 @@ export function CaseDetail({ id }: { id: string }) {
         <div className="flex flex-wrap items-center gap-2">
           <span>{c.doc.recipient}</span>
           <Tag tone={c.state === "wezwanie" ? "accent" : GROUP_TONE[status.group]}>{status.label}</Tag>
-          <Tag>Symulacja</Tag>
           {c.doc.optional && <span className="text-meta text-on-surface-variant">Jeśli chcesz skorzystać</span>}
         </div>
       </header>
@@ -232,7 +248,7 @@ function StaleStep({ onBack }: { onBack: () => void }) {
   return (
     <Page>
       <PageTitle className="mt-stack">Ten krok jest już za Tobą</PageTitle>
-      <p className="mt-4 max-w-prose text-on-surface-variant">Stan sprawy się zmienił, np. wniosek został już wysłany.</p>
+      <p className="mt-4 max-w-prose text-on-surface-variant">Stan sprawy się zmienił, np. wniosek został już oznaczony jako przekazany.</p>
       <Button variant="secondary" className="mt-stack" onClick={onBack}>
         Wróć do sprawy
       </Button>
@@ -310,7 +326,7 @@ function NowCard({
           </p>
           {filled && c.state !== "zatwierdzony" && (
             <p className="text-meta text-on-surface-variant">
-              Uzupełnione {filled.done} z {filled.total} wymaganych pól. Część danych podstawiliśmy z planu i profilu — sprawdzisz je przed wysłaniem.
+              Uzupełnione {filled.done} z {filled.total} wymaganych pól.
             </p>
           )}
           {def ? (
@@ -318,7 +334,7 @@ function NowCard({
               {c.state === "aktualna" && <Button onClick={() => onStep("wniosek")}>Rozpocznij wniosek</Button>}
               {c.state === "szkic" && <Button onClick={() => onStep("wniosek")}>Uzupełnij wniosek</Button>}
               {c.state === "wypelniony" && <Button onClick={() => onStep("sprawdz")}>Sprawdź i zatwierdź</Button>}
-              {c.state === "zatwierdzony" && <Button onClick={() => onStep("przekaz")}>Przekaż</Button>}
+              {c.state === "zatwierdzony" && <Button onClick={() => onStep("przekaz")}>Oznacz przekazanie</Button>}
               {(c.state === "wypelniony" || c.state === "zatwierdzony") && (
                 <Button variant="secondary" onClick={() => onStep("wniosek")}>
                   Edytuj wniosek
@@ -340,31 +356,25 @@ function NowCard({
         </div>
       );
     case "wyslano": {
-      const received = c.doc.events?.some((e) => e.title === "Potwierdzenie wpływu");
+      const recorded = c.doc.events?.some(e => e.title === HANDOFF_RECORDED);
       return (
         <div className="mt-4 flex flex-col gap-4">
           <p className="flex items-start gap-2">
             <CheckIcon className="mt-0.5 shrink-0 text-primary" />
-            {received ? `Wniosek dotarł do odbiorcy (${c.doc.recipient.replace(/^Do /, "")}). Na razie nic nie musisz robić.` : "Wniosek został przekazany. Czekamy na potwierdzenie wpływu, na razie nic nie musisz robić."}
+            {recorded ? "Przekazanie zostało oznaczone przez Ciebie. Status u odbiorcy możesz sprawdzić bezpośrednio u niego." : "Historia planu zawiera wcześniejszy wpis o przekazaniu wniosku. Status możesz sprawdzić u odbiorcy."}
           </p>
           <Actions>
-            {received ? (
-              <ButtonLink href="#etap-wplyw" variant="secondary">
-                Zobacz potwierdzenie
-              </ButtonLink>
-            ) : (
-              <ButtonLink href="#przebieg" variant="secondary">
-                Zobacz przebieg sprawy
-              </ButtonLink>
-            )}
+            <ButtonLink href="#przebieg" variant="secondary">
+              Zobacz przebieg sprawy
+            </ButtonLink>
             {def && (
               <Button variant="secondary" onClick={() => onStep("podglad")}>
-                Zobacz wysłany wniosek
+                Zobacz zapisany wniosek
               </Button>
             )}
             {def && (
               <Button variant="quiet" onClick={onCorrect}>
-                Edytuj i wyślij korektę
+                Przygotuj korektę
               </Button>
             )}
           </Actions>

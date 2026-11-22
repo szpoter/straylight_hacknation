@@ -1,3 +1,4 @@
+import { OLA } from "../family/ola";
 import { addDays } from "../rules/dates";
 import type { Command, MartaView, Period, Plan } from "./types";
 
@@ -14,7 +15,8 @@ function compare(c: Extract<Command, { type: "compare" }>, version: number): Mar
       total: first.amount === null || second.amount === null ? null : Math.round((first.amount + second.amount) * 100) / 100 };
   }
   const { firstStart, days, firstDaily, secondDaily, firstName, secondName, childName } = c;
-  return { version, inputs: { firstStart, days, firstDaily, secondDaily }, firstName, secondName, childName,
+  const childBirthDate = OLA.birthDate;
+  return { version, childBirthDate, inputs: { firstStart, days, firstDaily, secondDaily }, firstName, secondName, childName,
     variants: { together: plan(true), sequential: plan(false) }, selected: null, confirmed: false, submitted: false,
     submittedAt: null, attachmentName: null, employerHasCopy: null, previousParts: null, previousDays: null };
 }
@@ -22,7 +24,7 @@ function compare(c: Extract<Command, { type: "compare" }>, version: number): Mar
 export function applyMarta(view: MartaView | null, c: Command, now = new Date()): { status: number; view: MartaView | null; error?: string } {
   const version = (view?.version ?? 0) + 1;
   if (c.version !== version - 1) return { status: 409, view, error: "stale_version" };
-  if (view?.submitted) return { status: 409, view, error: "already_submitted" };
+  if (view?.submitted && (view.handoffRecordedByParent || c.type !== "record_handoff")) return { status: 409, view, error: "already_submitted" };
   if (c.type === "compare") return { status: 200, view: compare(c, version) };
   if (!view) return { status: 422, view, error: "compare_first" };
   if (c.type === "choose") return { status: 200, view: { ...view, selected: c.variant, version,
@@ -32,9 +34,11 @@ export function applyMarta(view: MartaView | null, c: Command, now = new Date())
     if (!c.employerHasCopy && !c.attachmentName) return { status: 422, view, error: "missing_attachment" };
     if ((c.previousParts === 0) !== (c.previousDays === 0) || c.previousParts + 2 > 5 ||
         c.previousDays + 2 * view.inputs.days > 287) return { status: 422, view, error: "check_remaining_entitlement" };
-    return { status: 200, view: { ...view, version, confirmed: true, previousDays: c.previousDays,
+    return { status: 200, view: { ...view, version, attachmentVersion: version, attachmentFamily: "ola", confirmed: true, previousDays: c.previousDays,
       previousParts: c.previousParts, employerHasCopy: c.employerHasCopy, attachmentName: c.employerHasCopy ? null : c.attachmentName ?? null } };
   }
   if (!view.confirmed) return { status: 422, view, error: "confirm_first" };
-  return { status: 200, view: { ...view, version, submitted: true, submittedAt: now.toISOString() } };
+  return { status: 200, view: { ...view, version, submitted: true, submittedAt: now.toISOString(),
+    handoffRecordedByParent: true, attachmentVersion: view.attachmentVersion ?? (view.version - (view.submitted ? 1 : 0)),
+    ...(view.submittedAt ? { previousPlanEntryAt: view.submittedAt } : {}) } };
 }

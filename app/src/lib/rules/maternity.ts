@@ -16,11 +16,14 @@
  * Miejsca, których materiały nie rozstrzygają, mają `assumption` w wyniku — UI pokazuje je jako
  * „do weryfikacji”. Kwoty są brutto; podatek to szacunek (osobno, `estimateNet`).
  */
-import { addDays, addMonths, daysBetween } from "./dates";
+import { addDays, addMonths, daysBetween, isValidIso } from "./dates";
+import { hospitalLeaveWeeks, type HospitalCertificate } from "./hospital-stays";
+import { maternityParametersOn } from "./maternity-schedule";
+import { rateOn, type RateKind } from "./rates";
 import { MINIMUM_WAGE } from "./arrears";
 import { valueWithDefaults, type RuleSchedule, type ScheduledValue } from "./parameters";
 
-export const MATERNITY_RULES_VERSION = "maternity-2026-11-22";
+export const MATERNITY_RULES_VERSION = "maternity-2026-11-22.2";
 
 // ---------- Parametry (do panelu administracyjnego) ----------
 
@@ -164,10 +167,16 @@ export type ScenarioInput = {
   parentB: ParentInput | null;
   /** Tygodnie urlopu macierzyńskiego przed porodem (0–6). */
   weeksBeforeBirth: number;
+  /** Exact dates from confirmed evidence; the form continues to accept whole weeks. */
+  prenatalLeaveDays?: number;
+  /** One date per deceased child; stillbirth is recorded on the delivery date. */
+  childDeathDates?: string[];
   /** Tygodnie macierzyńskiego przejęte przez drugiego rodzica (po min. 14 tygodniach matki). */
   transferWeeks: number;
   /** Uzupełniający urlop macierzyński (wcześniak, hospitalizacja). */
   supplementaryWeeks: number;
+  /** Dated, complete hospital evidence takes precedence over manually estimated weeks. */
+  hospitalCertificate?: HospitalCertificate;
   supplementaryParent: ParentId;
   parentalWeeksA: number;
   parentalWeeksB: number;
@@ -261,18 +270,13 @@ export function round2(value: number): number {
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 
-function paramsOf(schedule?: RuleSchedule) {
-  void schedule; // TODO(admin): stawki i wymiary z harmonogramu panelu, gdy parametry trafią do RULE_PARAMETERS.
-  return MATERNITY_PARAMETERS;
-}
-
 export function minimumWageOn(date: string, schedule?: RuleSchedule): number {
   return valueWithDefaults(schedule, "wage.minimum", date, MINIMUM_WAGE_HISTORY).value;
 }
 
 /** Minimalna podstawa pracownika na pełny etat w danym dniu: płaca minimalna − 13,71% (UZ art. 45). */
 export function minimumBasisOn(date: string, schedule?: RuleSchedule): number {
-  const p = paramsOf(schedule);
+  const p = maternityParametersOn(schedule, date);
   const wage = minimumWageOn(date, schedule);
   return Number.isFinite(wage) ? round2((wage * (100 - p.deductionPct)) / 100) : 0;
 }
@@ -286,7 +290,7 @@ export function basisMonthLabels(eventDate: string): string[] {
 }
 
 export function computeBasis(parent: ParentInput, eventDate: string, schedule?: RuleSchedule): BasisResult {
-  const p = paramsOf(schedule);
+  const p = maternityParametersOn(schedule, eventDate);
   const employee = parent.title === "pracownik";
   const steps: BasisStep[] = [];
   const floorApplies = employee && parent.fullTime;
@@ -299,9 +303,15 @@ export function computeBasis(parent: ParentInput, eventDate: string, schedule?: 
     steps.push({ text: "Podstawa wymiaru z decyzji ZUS / zaświadczenia płatnika", value: basis, source: employee ? "zusBasisEmployee" : "zusBasisNonEmployee" });
   } else {
     const months: BasisMonth[] = parent.basis.kind === "average" ? [{ amount: parent.basis.amount }] : parent.basis.months.filter((m) => m.amount >= 0);
-    const full = months.filter((m) => !m.underHalf);
+    const labels = basisMonthLabels(eventDate).slice(-months.length);
+    const datedMonths = months.map((m, i) => ({
+      ...m,
+      deductionPct: m.deductionPct ?? (parent.basis.kind === "months"
+        ? maternityParametersOn(schedule, labels[i] + "-01").deductionPct : p.deductionPct),
+    }));
+    const full = datedMonths.filter((m) => !m.underHalf);
     // Gdy w każdym miesiącu przepracowano mniej niż połowę — bierze się wszystkie (UZ art. 38 ust. 3).
-    const used = full.length > 0 ? full : months;
+    const used = full.length > 0 ? full : datedMonths;
     monthsUsed = used.length;
     monthsExcluded = months.length - used.length;
     if (used.length === 0) {
@@ -355,8 +365,8 @@ export function dailyAmount(basis: number, ratePct: number, work = 0): number {
 
 const childIndex = (children: number) => Math.min(Math.max(Math.round(children), 1), 5) - 1;
 
-export function limitsFor(input: Pick<ScenarioInput, "children" | "zaZyciem">, schedule?: RuleSchedule) {
-  const p = paramsOf(schedule);
+export function limitsFor(input: Pick<ScenarioInput, "children" | "zaZyciem"> & { date?: string }, schedule?: RuleSchedule) {
+  const p = input.date ? maternityParametersOn(schedule, input.date) : MATERNITY_PARAMETERS;
   const many = input.children > 1;
   const pool = input.zaZyciem ? (many ? p.parentalWeeks.manyZaZyciem : p.parentalWeeks.oneZaZyciem) : many ? p.parentalWeeks.many : p.parentalWeeks.one;
   const withWork = input.zaZyciem
@@ -373,6 +383,27 @@ export function limitsFor(input: Pick<ScenarioInput, "children" | "zaZyciem">, s
     maxParentalOneParent: pool - p.exclusiveWeeks,
     parentalWithWorkMaxWeeks: withWork,
   };
+}
+
+/** KP art. 180 §1–2 and 180¹ §1–2, text in force 22.11.2026. Dates are inclusive. */
+export function birthLeaveWindow(birth: string, children: number, prenatalDays: number, deathDates: readonly string[] = [], schedule?: RuleSchedule) {
+  const p = maternityParametersOn(schedule, birth);
+  if (!Number.isSafeInteger(children) || children < 1 || !Number.isInteger(prenatalDays) || prenatalDays < 0 || prenatalDays > 7 * p.maxWeeksBeforeBirth || deathDates.length > children) {
+    throw new RangeError("invalid_birth_history");
+  }
+  const from = addDays(birth, -prenatalDays);
+  const ordinaryEnd = (count: number) => addDays(from, p.maternityWeeks[childIndex(count)] * 7 - 1);
+  const eightWeeksEnd = addDays(birth, 7 * p.stillbirthWeeksAfterBirth - 1);
+  let to = ordinaryEnd(children);
+  for (const [i, death] of [...deathDates].sort().entries()) {
+    if (!isValidIso(death) || death < birth) throw new RangeError("invalid_child_death_date");
+    if (death > to) continue;
+    const remaining = children - i - 1;
+    const remainingEnd = remaining ? ordinaryEnd(remaining) : eightWeeksEnd;
+    const minimumEnd = addDays(death, 6);
+    to = remaining && death <= eightWeeksEnd ? remainingEnd : [remainingEnd, minimumEnd].sort()[1];
+  }
+  return { from, to, days: daysBetween(from, to) + 1 };
 }
 
 /**
@@ -405,29 +436,47 @@ function daysInMonth(iso: string): number {
 }
 
 /** Dzieli okres na kawałki w miesiącach kalendarzowych. */
-function splitByMonth(from: string, to: string): Array<{ from: string; to: string; days: number }> {
+function splitByMonth(from: string, to: string, changeDays: string[]): Array<{ from: string; to: string; days: number }> {
   const parts: Array<{ from: string; to: string; days: number }> = [];
   let cur = from;
   while (cur <= to) {
-    const end = monthEnd(cur) < to ? monthEnd(cur) : to;
+    const boundary = changeDays.find(day => day > cur);
+    const end = [monthEnd(cur), to, boundary ? addDays(boundary, -1) : to].sort()[0];
     parts.push({ from: cur, to: end, days: daysBetween(cur, end) + 1 });
     cur = addDays(end, 1);
   }
   return parts;
 }
 
-type RawPeriod = { id: string; parent: ParentId; kind: LeaveKind; from: string; days: number; ratePct: number; work: number; note?: string };
+type RawPeriod = { id: string; parent: ParentId; kind: LeaveKind; from: string; days: number; rate: RateKind; work: number; note?: string };
 
 export function computeScenario(given: ScenarioInput): ScenarioResult {
-  const p = paramsOf(given.schedule);
-  const stillbirth = Boolean(given.stillbirth) && given.event === "birth";
+  const p = maternityParametersOn(given.schedule, given.date);
+  const exactLoss = given.event === "birth" && given.childDeathDates?.length === given.children && given.children > 0;
+  const stillbirth = (Boolean(given.stillbirth) || exactLoss) && given.event === "birth";
   // Martwe urodzenie: tylko urlop macierzyński matki, 100% (Poradnik ZUS 2026, s. 34), bez rodzicielskiego i ojcowskiego.
   const input: ScenarioInput = stillbirth
-    ? { ...given, variant: "100-70", transferWeeks: 0, supplementaryWeeks: 0, parentalWeeksA: 0, parentalWeeksB: 0, workA: 0, workB: 0, paternityDays: 0 }
+    ? { ...given, variant: given.stillbirth ? "100-70" : given.variant, transferWeeks: 0, supplementaryWeeks: 0, parentalWeeksA: 0, parentalWeeksB: 0, workA: 0, workB: 0, paternityDays: 0 }
     : given;
   const errors: Message[] = [];
   const warnings: Message[] = [];
   const assumptions: Message[] = [];
+  let supplementaryWeeks = input.supplementaryWeeks;
+  if (input.hospitalCertificate && !stillbirth) {
+    const certificate = input.hospitalCertificate;
+    if (certificate.children.length !== input.children || (input.event === "birth"
+      ? certificate.birth !== input.date || !!certificate.acceptedOn
+      : certificate.birth !== input.childBirthDate || certificate.acceptedOn !== input.date)) {
+      errors.push({ text: "Zaświadczenie szpitala nie odpowiada dzieciom i zdarzeniu z wniosku.", source: "kp180-2" });
+    } else {
+      try {
+        supplementaryWeeks = hospitalLeaveWeeks(certificate).weeks;
+      } catch (issue) {
+        if (!(issue instanceof RangeError)) throw issue;
+        errors.push({ text: "Sprawdź daty pobytów, masy i wiek ciążowy na zaświadczeniu szpitala.", source: "kp180-2" });
+      }
+    }
+  }
   const limits = limitsFor(input, input.schedule);
   const birth = input.event === "birth";
   const hasB = input.parentB !== null;
@@ -453,7 +502,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   }
 
   const weeksBefore = birth ? Math.min(Math.max(Math.round(input.weeksBeforeBirth), 0), p.maxWeeksBeforeBirth) : 0;
-  if (stillbirth) {
+  if (stillbirth && !given.childDeathDates) {
     maternityWeeks = weeksBefore + p.stillbirthWeeksAfterBirth;
     assumptions.push({
       text: "Przy urodzeniu martwego dziecka zasiłek macierzyński przysługuje za 8 tygodni po porodzie (100%). Przy zgonie dziecka — nie krócej niż 7 dni od dnia zgonu; tego kalkulator nie liczy osobno.",
@@ -500,15 +549,15 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   if ((workA > 0 && input.parentA.title !== "pracownik") || (workB > 0 && input.parentB?.title !== "pracownik")) {
     assumptions.push({ text: "Łączenie urlopu rodzicielskiego z pracą opisują przepisy dla pracowników; dla innych tytułów ubezpieczenia do weryfikacji.", source: "kp182-1f" });
   }
-  if (input.supplementaryWeeks > 0 && input.supplementaryParent === "B" && !hasB) {
+  if (supplementaryWeeks > 0 && input.supplementaryParent === "B" && !hasB) {
     errors.push({ text: "Uzupełniający urlop macierzyński wybrany dla drugiego rodzica, który nie jest ubezpieczony.", source: "kp180-2" });
   }
   if (input.paternityDays > 0 && !hasB) {
     errors.push({ text: "Zasiłek za urlop ojcowski przysługuje ojcu, który podlega ubezpieczeniu chorobowemu.", source: "kp182-3" });
   }
 
-  const rateMat = input.variant === "815" ? p.rateAveraged : p.rateMaternity;
-  const rateParental = input.variant === "815" ? p.rateAveraged : p.rateParental;
+  const rateMat: RateKind = input.variant === "815" ? "averaged" : "maternity";
+  const rateParental: RateKind = input.variant === "815" ? "averaged" : "parental";
   if (input.variant === "815" && transfer > 0) {
     assumptions.push({ text: "Przejętą część urlopu macierzyńskiego liczymy drugiemu rodzicowi po 81,5%, tak jak matce — materiały ZUS nie mówią tego wprost.", source: "uz31" });
   }
@@ -519,31 +568,37 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   // --- Oś czasu ---
   const raw: RawPeriod[] = [];
   const kindMat: LeaveKind = birth ? "macierzynski" : "na-warunkach";
-  const startA = birth ? addDays(input.date, -7 * weeksBefore) : input.date;
-  const matDaysA = 7 * (maternityWeeks - transfer);
-  raw.push({ id: "mat-A", parent: "A", kind: kindMat, from: startA, days: matDaysA, ratePct: rateMat, work: 0, note: weeksBefore ? `w tym ${weeksBefore} tyg. przed porodem` : undefined });
+  const exactWindow = birth && (input.prenatalLeaveDays !== undefined || input.childDeathDates !== undefined)
+    ? birthLeaveWindow(input.date, input.children, input.prenatalLeaveDays ?? weeksBefore * 7, input.childDeathDates ?? (input.stillbirth ? [input.date] : []), input.schedule)
+    : undefined;
+  const startA = exactWindow?.from ?? (birth ? addDays(input.date, -7 * weeksBefore) : input.date);
+  const matDaysA = (exactWindow?.days ?? 7 * maternityWeeks) - 7 * transfer;
+  raw.push({ id: "mat-A", parent: "A", kind: kindMat, from: startA, days: matDaysA, rate: rateMat, work: 0, note: weeksBefore ? `w tym ${weeksBefore} tyg. przed porodem` : undefined });
   let next = addDays(startA, matDaysA);
   if (transfer > 0) {
-    raw.push({ id: "mat-B", parent: "B", kind: kindMat, from: next, days: 7 * transfer, ratePct: rateMat, work: 0, note: "przejęta część urlopu macierzyńskiego" });
+    raw.push({ id: "mat-B", parent: "B", kind: kindMat, from: next, days: 7 * transfer, rate: rateMat, work: 0, note: "przejęta część urlopu macierzyńskiego" });
     next = addDays(next, 7 * transfer);
   }
-  if (input.supplementaryWeeks > 0) {
-    const weeks = Math.min(Math.round(input.supplementaryWeeks), 15);
-    raw.push({ id: "sup", parent: input.supplementaryParent, kind: "uzupelniajacy", from: next, days: 7 * weeks, ratePct: p.rateMaternity, work: 0 });
+  if (supplementaryWeeks > 0) {
+    if (input.hospitalCertificate && addDays(next, -1) < "2025-03-19") {
+      errors.push({ text: "Urlop macierzyński zakończył się przed wejściem w życie przepisów o urlopie uzupełniającym.", source: "kp180-2" });
+    }
+    const weeks = Math.min(Math.round(supplementaryWeeks), 15);
+    raw.push({ id: "sup", parent: input.supplementaryParent, kind: "uzupelniajacy", from: next, days: 7 * weeks, rate: "maternity", work: 0 });
     next = addDays(next, 7 * weeks);
   }
   const parentalStart = next;
   const capDays = limits.parentalWithWorkMaxWeeks * 7;
   const stretched = (weeks: number, work: number) => Math.min(Math.floor((7 * weeks) / (1 - work)), capDays);
-  if (weeksA > 0) raw.push({ id: "par-A", parent: "A", kind: "rodzicielski", from: parentalStart, days: stretched(weeksA, workA), ratePct: rateParental, work: workA });
+  if (weeksA > 0) raw.push({ id: "par-A", parent: "A", kind: "rodzicielski", from: parentalStart, days: stretched(weeksA, workA), rate: rateParental, work: workA });
   if (weeksB > 0) {
     const fromB = input.parentalOrder === "together" || weeksA === 0 ? parentalStart : addDays(parentalStart, stretched(weeksA, workA));
     // 9 tygodni drugiego rodzica zawsze po 70% (UZ art. 31 ust. 3f); w wariancie 100/70 i tak 70%.
     const exclusive = Math.min(weeksB, limits.exclusiveWeeks);
     const exclusiveDays = stretched(exclusive, workB);
-    raw.push({ id: "par-B", parent: "B", kind: "rodzicielski", from: fromB, days: exclusiveDays, ratePct: p.rateParental, work: workB, note: "wyłączna część drugiego rodzica" });
+    raw.push({ id: "par-B", parent: "B", kind: "rodzicielski", from: fromB, days: exclusiveDays, rate: "parental", work: workB, note: "wyłączna część drugiego rodzica" });
     if (weeksB > exclusive) {
-      raw.push({ id: "par-B2", parent: "B", kind: "rodzicielski", from: addDays(fromB, exclusiveDays), days: stretched(weeksB, workB) - exclusiveDays, ratePct: rateParental, work: workB });
+      raw.push({ id: "par-B2", parent: "B", kind: "rodzicielski", from: addDays(fromB, exclusiveDays), days: stretched(weeksB, workB) - exclusiveDays, rate: rateParental, work: workB });
     }
   }
   if (input.paternityDays > 0 && hasB) {
@@ -554,7 +609,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       errors.push({ text: `Urlop ojcowski trzeba wykorzystać do ukończenia przez dziecko ${p.paternityMonths} miesięcy (do ${deadline}).`, source: "kp182-3" });
     }
     if (start < input.date) errors.push({ text: "Urlop ojcowski zaczyna się najwcześniej w dniu urodzenia lub przyjęcia dziecka.", source: "kp182-3" });
-    raw.push({ id: "pat", parent: "B", kind: "ojcowski", from: start, days, ratePct: p.rateMaternity, work: 0 });
+    raw.push({ id: "pat", parent: "B", kind: "ojcowski", from: start, days, rate: "maternity", work: 0 });
   }
   if (!birth && input.paternityDays > 0) {
     assumptions.push({ text: "Przy adopcji urlop ojcowski liczy się od uprawomocnienia postanowienia o przysposobieniu — przyjmujemy datę przyjęcia dziecka.", source: "kp182-3" });
@@ -568,21 +623,27 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     const to = addDays(r.from, r.days - 1);
     const basis = r.parent === "A" ? basisA : basisB;
     if (!basis) continue;
-    const segs: Segment[] = splitByMonth(r.from, to).map((part) => {
+    const changeDays = [
+      ...(input.schedule?.[`rate.${r.rate}`] ?? []),
+      ...(basis.floorApplies ? input.schedule?.["wage.minimum"] ?? [] : []),
+    ].map(change => change.validFrom).filter(day => day > r.from && day <= to).sort();
+    const segs: Segment[] = splitByMonth(r.from, to, changeDays).map((part) => {
+      const ratePct = rateOn(r.rate, part.from, input.schedule) / 10;
+      const allowance = maternityParametersOn(input.schedule, part.from.slice(0, 7) + "-01").parentalAllowance;
       const b = basisOn(basis, part.from, input.schedule);
-      const daily = dailyAmount(b, r.ratePct, r.work);
+      const daily = dailyAmount(b, ratePct, r.work);
       let amount = round2(daily * part.days);
       let topUp = 0;
       // Podwyższenie do świadczenia rodzicielskiego: nie dotyczy urlopu ojcowskiego (zus.pl); część miesiąca proporcjonalnie.
-      if (r.kind !== "ojcowski" && (b * r.ratePct * (1 - r.work)) / 100 < p.parentalAllowance) {
-        const floor = round2(round2(p.parentalAllowance / daysInMonth(part.from)) * part.days);
+      if (r.kind !== "ojcowski" && (b * ratePct * (1 - r.work)) / 100 < allowance) {
+        const floor = round2(round2(allowance / daysInMonth(part.from)) * part.days);
         if (floor > amount) {
           topUp = Math.ceil(round2(floor - amount) * 10 - 1e-7) / 10; // ZUS: dopłata zaokrąglana do 10 gr w górę
           amount = round2(amount + topUp);
           topUpUsed = true;
         }
       }
-      return { periodId: r.id, parent: r.parent, kind: r.kind, month: part.from.slice(0, 7), from: part.from, to: part.to, days: part.days, ratePct: r.ratePct, work: r.work, basis: b, daily, amount, topUp };
+      return { periodId: r.id, parent: r.parent, kind: r.kind, month: part.from.slice(0, 7), from: part.from, to: part.to, days: part.days, ratePct, work: r.work, basis: b, daily, amount, topUp };
     });
     segments.push(...segs);
     periods.push({
@@ -593,7 +654,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       from: r.from,
       to,
       days: r.days,
-      ratePct: r.ratePct,
+      ratePct: segs[0].ratePct,
       work: r.work,
       daily: segs[0]?.daily ?? 0,
       amount: round2(sum(segs.map((s) => s.amount))),

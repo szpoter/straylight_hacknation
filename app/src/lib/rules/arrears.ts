@@ -64,14 +64,14 @@ export function assessArrears(input: ArrearsInput): ArrearsResult {
       text: `Zadłużenie ${pln(input.arrears)} nie przekracza 1% minimalnego wynagrodzenia (${pln(threshold)}). Nie wstrzymuje zasiłku.`,
     };
   }
-  if (input.paidOn && input.paidOn <= payBy) {
+  if (input.paidOn && input.paidOn <= input.today && input.paidOn <= payBy) {
     return {
       ...base,
       status: "paid",
       text: `Zadłużenie spłacono ${day(input.paidOn)}, przed upływem 6 miesięcy. Prawo do zasiłku się nie przedawniło i zasiłek może zostać wypłacony.`,
     };
   }
-  if (input.today > payBy || (input.paidOn && input.paidOn > payBy)) {
+  if (input.today > payBy) {
     return {
       ...base,
       status: "expired",

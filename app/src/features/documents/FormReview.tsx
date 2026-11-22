@@ -89,24 +89,24 @@ export function CheckAnswers({
   );
 }
 
-/** „Przekaż”: wybór kanału i symulowana wysyłka. */
+/** Zapis kanału użytego przez rodzica poza aplikacją. */
 export function SendStep({ channels, recipient, onSend, onBack }: { channels: Channel[]; recipient: string; onSend: (channel: Channel) => void; onBack: () => void }) {
   const [channel, setChannel] = useState<Channel>(channels[0]);
   return (
     <div className="flex flex-col gap-stack">
       <ChoiceGroup
-        legend={`Jak przekazać wniosek? Odbiorca: ${recipient.replace(/^Do /, "")}`}
+        legend={`Jak przekazano wniosek? Odbiorca: ${recipient.replace(/^Do /, "")}`}
         choices={channels.map((c) => ({ value: c, label: CHANNEL_LABEL[c].label, hint: CHANNEL_LABEL[c].hint }))}
         value={channel}
         onChange={(v) => setChannel(v as Channel)}
         columns={2}
       />
       <p className="max-w-prose rounded-sm bg-surface p-4 text-on-surface-variant">
-        To wersja demonstracyjna: wysyłka jest symulacją. Wniosek nie trafi do urzędu ani pracodawcy — w przebiegu sprawy zobaczysz, jak wyglądałoby potwierdzenie.
+        Najpierw samodzielnie przekaż wniosek odbiorcy. Potem zapisz w planie datę i sposób przekazania. Urzędowe potwierdzenie zachowaj u siebie.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button className="justify-center" onClick={() => onSend(channel)}>
-          Przekaż wniosek
+          Potwierdzam samodzielne przekazanie
         </Button>
         <Button variant="secondary" className="justify-center" onClick={onBack}>
           Wróć do sprawy

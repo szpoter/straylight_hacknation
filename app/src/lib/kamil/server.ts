@@ -1,12 +1,9 @@
-import { chatModel } from "../zusik/model-provider";
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
-import { generateText } from "ai";
 import { Pool } from "pg";
-import { CHECKPOINT_SCHEMA, SHERLOCK_TIMEOUT_MS, requireEnv } from "../zusik/config";
+import { CHECKPOINT_SCHEMA, requireEnv } from "../zusik/config";
 import { MemorySaver } from "@langchain/langgraph";
 import { PgCaseStore, newThreadId, type CaseStore, type DemoCase } from "../zusik/case-store";
-import { MODEL_FACTS_INSTRUCTION, parseModelFacts } from "./interpret";
-import { KamilService, type KamilModel } from "./service";
+import { KamilService } from "./service";
 
 /**
  * Runtime wiring for /api/kamil. Same Neon database, schema and demo_cases table as Marta's flow;
@@ -21,41 +18,6 @@ function runtime() {
     checkpointer = new PostgresSaver(pool, undefined, { schema: CHECKPOINT_SCHEMA });
   }
   return { pool, checkpointer };
-}
-
-/** Bielik via Sherlock when configured; without it the case works on rules and templates. */
-function sherlockModel(): KamilModel | null {
-  const baseURL = process.env.SHERLOCK_BASE_URL?.trim();
-  const apiKey = process.env.SHERLOCK_API_KEY?.trim();
-  const id = process.env.SHERLOCK_MODEL?.trim();
-  if (!baseURL || !apiKey || !id) return null;
-  const model = chatModel(baseURL, apiKey, id);
-  const call = async (system: string, prompt: string) => {
-    const { text } = await generateText({
-      model,
-      system,
-      prompt,
-      temperature: 0.1,
-      maxRetries: 0,
-      abortSignal: AbortSignal.timeout(SHERLOCK_TIMEOUT_MS),
-    });
-    return text;
-  };
-  return {
-    async extract(text, today) {
-      // Only the parent's sentence and today's date go to the provider, never document content.
-      const raw = await call(MODEL_FACTS_INSTRUCTION, `Dzisiaj jest ${today}.\nWiadomość: """${text}"""`);
-      return parseModelFacts(raw);
-    },
-    async rephrase(text) {
-      const raw = await call(
-        "Jesteś Zusikiem, uprzejmym asystentem ZUS. Przeredaguj odpowiedź po polsku, krótko i naturalnie, w drugiej osobie. " +
-          "Nie zmieniaj, nie dodawaj i nie usuwaj żadnej liczby ani daty. Zwróć tylko tekst odpowiedzi.",
-        text,
-      );
-      return raw.trim().replace(/^["„]|["”]$/g, "") || null;
-    },
-  };
 }
 
 /**
@@ -81,11 +43,12 @@ class DevMemoryStore implements CaseStore {
 }
 let devService: KamilService | null = null;
 
+/** Case messages and document fields stay within the session-bound rules service. */
 export function kamilService(): KamilService {
   if (process.env.KAMIL_MEMORY_STORE === "1" && process.env.NODE_ENV !== "production") {
-    devService ??= new KamilService({ store: new DevMemoryStore(), checkpointer: new MemorySaver(), model: sherlockModel() });
+    devService ??= new KamilService({ store: new DevMemoryStore(), checkpointer: new MemorySaver() });
     return devService;
   }
   const { pool: db, checkpointer: saver } = runtime();
-  return new KamilService({ store: new PgCaseStore(db), checkpointer: saver, model: sherlockModel() });
+  return new KamilService({ store: new PgCaseStore(db), checkpointer: saver });
 }

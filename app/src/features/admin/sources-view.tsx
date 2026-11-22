@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { SupportRow } from "@/lib/admin/support-edits";
+import review from "../../../corpus/source-review.json";
 import type { KnowledgePackage, KnowledgeSource } from "@/lib/admin/types";
-import { SITUATION_LABEL, isStale } from "@/lib/support/organizations";
+import { SITUATION_LABEL, isStale, type SupportOrganization } from "@/lib/support/organizations";
 import { formatDate } from "./mock-data";
-import { SupportEditor, type SupportActions } from "./support-editor";
 import { Badge, Card, SourceLink, StatTile, cx } from "./ui";
 import s from "./admin.module.css";
 
@@ -27,21 +26,14 @@ export function SourcesView({
   packages,
   sources,
   organizations,
-  revision,
   today,
-  actions,
 }: {
   packages: KnowledgePackage[];
   sources: KnowledgeSource[];
-  organizations: SupportRow[];
-  revision: number;
+  organizations: SupportOrganization[];
   today: string;
-  actions: SupportActions;
 }) {
   const [pkg, setPkg] = useState<string>("Wszystkie");
-  /** undefined = closed, null = new organisation. */
-  const [editing, setEditing] = useState<SupportRow | null | undefined>(undefined);
-  const changed = organizations.filter((o) => o.session !== "bez zmian" || o.withdrawn).length;
   const filters = ["Wszystkie", ...packages.map((p) => p.version)];
   const rows = sources.filter((src) => pkg === "Wszystkie" || src.packageVersion === pkg);
   const fragments = packages.reduce((n, p) => n + p.fragments, 0);
@@ -60,7 +52,21 @@ export function SourcesView({
         note={stale ? `${stale} źródeł starszych niż 6 miesięcy` : "wszystkie źródła aktualne"}
       />
 
-      <Card className={s.span12} title="Źródła wiedzy" id="sources" meta="Odpowiedzi Zusika cytują wyłącznie te dokumenty">
+      {review.changes.length > 0 && (
+        <Card className={s.span12} title="Publikacje ZUS do sprawdzenia" id="source-review">
+          <ul className={s.list}>
+            {review.changes.map(change => (
+              <li key={change.url} className={s.listItem}>
+                <SourceLink label={change.title} url={change.url} />
+                <span className={s.small}>{change.kind === "new" ? "Nowa w katalogu" :
+                  change.kind === "changed" ? "Zmieniona treść" : "Usunięta z katalogu"}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Card className={s.span12} title="Źródła wiedzy" id="sources" meta="Dokumenty w aktywnych pakietach wiedzy">
         <div className={s.tabs} role="group" aria-label="Pakiet wiedzy">
           {filters.map((f) => (
             <button key={f} type="button" className={s.tab} aria-pressed={pkg === f} onClick={() => setPkg(f)}>
@@ -119,11 +125,7 @@ export function SourcesView({
         className={s.span12}
         title="Organizacje wsparcia"
         id="support"
-        meta={
-          changed
-            ? `${changed} ${changed === 1 ? "zmiana" : changed < 5 ? "zmiany" : "zmian"} w tej sesji demo`
-            : "Wyłącznie fundacje i stowarzyszenia. Opisy i kontakty ze stron organizacji."
-        }
+        meta="Wyłącznie fundacje i stowarzyszenia. Opisy i kontakty ze stron organizacji."
       >
         <div className={s.tableWrap}>
           <table className={s.table}>
@@ -137,23 +139,13 @@ export function SourcesView({
                   Kontakt
                 </th>
                 <th scope="col">Zweryfikowano</th>
-                <th scope="col">
-                  <span className={s.visuallyHidden}>Akcje</span>
-                </th>
               </tr>
             </thead>
             <tbody>
               {organizations.map((o) => (
-                <tr key={o.id} className={o.withdrawn ? s.muted : undefined}>
+                <tr key={o.id}>
                   <td>
                     <SourceLink label={o.name} url={o.url} />
-                    {o.withdrawn || o.session !== "bez zmian" ? (
-                      <div style={{ marginTop: 4 }}>
-                        <Badge tone={o.withdrawn ? "historic" : "planned"}>
-                          {o.withdrawn ? "Wycofana z listy" : o.session === "dodana" ? "Dodana w tej sesji" : "Zmieniona w tej sesji"}
-                        </Badge>
-                      </div>
-                    ) : null}
                     <div className={cx(s.small, s.muted)}>{o.helps}</div>
                     {o.freeOfCharge ? <div className={s.small}>{o.freeOfCharge}</div> : null}
                     <div className={cx(s.small, s.muted)}>
@@ -172,39 +164,12 @@ export function SourcesView({
                       formatDate(o.verifiedAt)
                     )}
                   </td>
-                  <td className={s.nowrap}>
-                    <button
-                      type="button"
-                      className={s.btnSmall}
-                      aria-label={`Edytuj: ${o.name}`}
-                      onClick={() => setEditing(o)}
-                    >
-                      Edytuj
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className={s.cardActions}>
-          <button type="button" className={s.btnSecondary} onClick={() => setEditing(null)}>
-            Dodaj organizację
-          </button>
-        </div>
       </Card>
-
-      {editing !== undefined ? (
-        <SupportEditor
-          key={editing?.id ?? "new"}
-          row={editing}
-          open
-          onClose={() => setEditing(undefined)}
-          today={today}
-          revision={revision}
-          actions={actions}
-        />
-      ) : null}
 
       <Card className={s.span12} title="Pakiety" id="packages">
         <ul className={s.list}>

@@ -1,0 +1,345 @@
+{
+  "build": "da524af0cbe7b2792d7234a8446a7ceaa02f1832",
+  "buildId": "F_XAUQg8guFH2spdvBA78",
+  "searchFreeze": "1ef137a",
+  "fixture": "../g3-extension.json",
+  "webAvailable": false,
+  "fullPoints": 519,
+  "withdrawnPoints": 518,
+  "bothReleases": [
+    {
+      "version": "marta-v1",
+      "count": 23,
+      "digest": "62ad9dea11189bcccc57160d3e17f38eae535b8a2bf080064e15f395ad8304d5",
+      "targets": [
+        "zusik_test_extension_20261122_full",
+        "zusik_test_extension_20261122_withdrawn"
+      ]
+    },
+    {
+      "version": "rodzina-2026-11-v1",
+      "count": 487,
+      "digest": "4a5492908873b2bb9796b00357e63a53dea169aba3c659703992dba3abe57112",
+      "targets": [
+        "zusik_test_extension_20261122_full",
+        "zusik_test_extension_20261122_withdrawn"
+      ]
+    }
+  ],
+  "extensionDigestPrefixes": {
+    "full": "75b14d50a3457393",
+    "withdrawn": "2d2f72d4ec546da4"
+  },
+  "strictPasses": {
+    "full": 1,
+    "withdrawn": 0
+  },
+  "review": {
+    "full": {
+      "1": "Question about the first step correctly answered. Strict frozen check also demanded the finality condition.",
+      "2": "Unrelated parental leave deadline.",
+      "3": "Correct. Wait until the WZON decision becomes final.",
+      "4": "Correct fragment and previous turn recovered. Did not state the specified consequence of an early application."
+    },
+    "withdrawn": {
+      "1": "HTTP 503, no claim or target evidence.",
+      "2": "Unrelated parental leave deadline.",
+      "3": "HTTP 503, no claim or target evidence.",
+      "4": "HTTP 503, no claim or target evidence."
+    }
+  },
+  "rows": [
+    {
+      "mode": "full",
+      "index": 1,
+      "question": "Czy w sprawie świadczenia wspierającego najpierw składa się pismo do ZUS czy do zespołu wojewódzkiego?",
+      "refreshed": false,
+      "pass": false,
+      "http": 200,
+      "status": "answered",
+      "ms": 10909,
+      "top": [
+        "wzon-kolejnosc",
+        "poradnik-40-2",
+        "poradnik-18-2",
+        "dobry-start-termin",
+        "poradnik-13-1"
+      ],
+      "evidence": [
+        "wzon-kolejnosc"
+      ],
+      "citations": [
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Aby otrzymać świadczenie wspierające, złóż wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON).",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        }
+      ],
+      "claims": "Aby otrzymać świadczenie wspierające, należy najpierw złożyć wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON).",
+      "contextRequestId": null,
+      "backend": "hosted",
+      "message": "",
+      "attemptId": "38c318d8-6378-439c-ad6c-1ed25eed80a2"
+    },
+    {
+      "mode": "full",
+      "index": 4,
+      "question": "Co zrobi ZUS, jeśli wniosek o to świadczenie wyprzedzi decyzję wojewódzkiego zespołu?",
+      "refreshed": true,
+      "pass": false,
+      "http": 200,
+      "status": "answered",
+      "ms": 13548,
+      "top": [
+        "wzon-kolejnosc",
+        "poradnik-29-1",
+        "rw-8-3",
+        "poradnik-40-2",
+        "poradnik-9-1"
+      ],
+      "evidence": [
+        "wzon-kolejnosc"
+      ],
+      "citations": [
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Aby otrzymać świadczenie wspierające, złóż wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON).",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        },
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Wniosek do ZUS o przyznanie świadczenia wspierającego możesz złożyć dopiero wtedy, gdy decyzja ustalająca poziom potrzeby wsparcia wydana przez WZON stanie się ostateczna.",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        },
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Decyzja ustalająca poziom potrzeby wsparcia stanie się ostateczna po upływie 14 dni od dnia jej doręczenia, jeżeli w tym terminie nie złożysz wniosku o ponowne rozpatrzenie sprawy.",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        }
+      ],
+      "claims": "Aby otrzymać świadczenie wspierające, należy złożyć wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON). Wniosek do ZUS o przyznanie świadczenia wspierającego można złożyć dopiero po tym, gdy decyzja WZON stanie się ostateczna. Decyzja WZON staje się ostateczna po upływie 14 dni od doręczenia, jeśli nie złożono wniosku o ponowne rozpatrzenie sprawy.",
+      "contextRequestId": "da108c21-70e1-4425-935c-e060532cec22",
+      "backend": "hosted",
+      "message": "",
+      "attemptId": "e9fc1d68-97fb-4f60-963b-8b2bc8d171f2"
+    },
+    {
+      "mode": "full",
+      "index": 2,
+      "question": "Mam już decyzję WZON. Kiedy wysłać wniosek o świadczenie wspierające?",
+      "refreshed": false,
+      "pass": false,
+      "http": 200,
+      "status": "answered",
+      "ms": 15256,
+      "top": [
+        "mrpips-korzystanie-wniosek",
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2"
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22"
+      ],
+      "citations": [
+        {
+          "fragmentId": "kp-art182-1d-par1",
+          "quote": "Urlop rodzicielski jest udzielany na wniosek w postaci papierowej lub elektronicznej składany przez pracownika – rodzica dziecka w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=67",
+          "locator": "art. 182¹d § 1"
+        },
+        {
+          "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
+          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
+          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
+          "locator": "§ 15 ust. 2 pkt 2"
+        }
+      ],
+      "claims": "Wniosek o urlop rodzicielski należy złożyć do pracodawcy nie krócej niż 21 dni przed rozpoczęciem korzystania z urlopu. Do wniosku należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu. Wniosek składa się w formie papierowej lub elektronicznej.",
+      "contextRequestId": null,
+      "backend": "hosted",
+      "message": "",
+      "attemptId": "2db6796c-5b41-44ac-86bf-70e377323d2e"
+    },
+    {
+      "mode": "full",
+      "index": 3,
+      "question": "Czy mogę wystąpić do ZUS o wsparcie, gdy decyzja o poziomie potrzeby wsparcia jeszcze nie jest ostateczna?",
+      "refreshed": false,
+      "pass": true,
+      "http": 200,
+      "status": "answered",
+      "ms": 14167,
+      "top": [
+        "wzon-kolejnosc",
+        "poradnik-38-2",
+        "poradnik-40-2",
+        "poradnik-28-2",
+        "poradnik-34-2"
+      ],
+      "evidence": [
+        "wzon-kolejnosc"
+      ],
+      "citations": [
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Aby otrzymać świadczenie wspierające, złóż wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON).",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        },
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Wniosek do ZUS o przyznanie świadczenia wspierającego możesz złożyć dopiero wtedy, gdy decyzja ustalająca poziom potrzeby wsparcia wydana przez WZON stanie się ostateczna.",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        },
+        {
+          "fragmentId": "wzon-kolejnosc",
+          "quote": "Decyzja ustalająca poziom potrzeby wsparcia stanie się ostateczna po upływie 14 dni od dnia jej doręczenia, jeżeli w tym terminie nie złożysz wniosku o ponowne rozpatrzenie sprawy.",
+          "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+          "locator": "Co trzeba zrobić, aby uzyskać świadczenie wspierające"
+        }
+      ],
+      "claims": "Aby otrzymać świadczenie wspierające, należy złożyć wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON). Wniosek do ZUS o przyznanie świadczenia wspierającego można złożyć dopiero po tym, gdy decyzja WZON stanie się ostateczna. Decyzja WZON staje się ostateczna po upływie 14 dni od doręczenia, jeśli nie złożono wniosku o ponowne rozpatrzenie sprawy.",
+      "contextRequestId": null,
+      "backend": "hosted",
+      "message": "",
+      "attemptId": "f24145a2-778f-4247-836a-1598e303bc81"
+    },
+    {
+      "mode": "withdrawn",
+      "index": 1,
+      "question": "Czy w sprawie świadczenia wspierającego najpierw składa się pismo do ZUS czy do zespołu wojewódzkiego?",
+      "refreshed": false,
+      "pass": false,
+      "http": 503,
+      "status": "unavailable",
+      "ms": 438,
+      "top": [
+        "poradnik-40-2",
+        "poradnik-18-2",
+        "dobry-start-termin",
+        "poradnik-13-1",
+        "rw-11-3"
+      ],
+      "evidence": [],
+      "citations": [],
+      "claims": "",
+      "contextRequestId": null,
+      "backend": null,
+      "message": "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.",
+      "attemptId": null
+    },
+    {
+      "mode": "withdrawn",
+      "index": 4,
+      "question": "Co zrobi ZUS, jeśli wniosek o to świadczenie wyprzedzi decyzję wojewódzkiego zespołu?",
+      "refreshed": true,
+      "pass": false,
+      "http": 503,
+      "status": "unavailable",
+      "ms": 265,
+      "top": [
+        "poradnik-29-1",
+        "rw-8-3",
+        "poradnik-9-1",
+        "rw-10-3",
+        "poradnik-40-2"
+      ],
+      "evidence": [],
+      "citations": [],
+      "claims": "",
+      "contextRequestId": null,
+      "backend": null,
+      "message": "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.",
+      "attemptId": null
+    },
+    {
+      "mode": "withdrawn",
+      "index": 2,
+      "question": "Mam już decyzję WZON. Kiedy wysłać wniosek o świadczenie wspierające?",
+      "refreshed": false,
+      "pass": false,
+      "http": 200,
+      "status": "answered",
+      "ms": 16374,
+      "top": [
+        "mrpips-korzystanie-wniosek",
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2"
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22"
+      ],
+      "citations": [
+        {
+          "fragmentId": "kp-art182-1d-par1",
+          "quote": "Urlop rodzicielski jest udzielany na wniosek w postaci papierowej lub elektronicznej składany przez pracownika – rodzica dziecka w terminie nie krótszym niż 21 dni przed rozpoczęciem korzystania z urlopu.",
+          "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=67",
+          "locator": "art. 182¹d § 1"
+        },
+        {
+          "fragmentId": "rozp-2025-322-par15-ust2-pkt2",
+          "quote": "oświadczenie pracownika o braku zamiaru korzystania z urlopu rodzicielskiego albo z zasiłku macierzyńskiego za okres odpowiadający okresowi urlopu rodzicielskiego przez drugiego z rodziców dziecka przez okres wskazany we wniosku albo o okresie, w którym drugi z rodziców dziecka zamierza korzystać z urlopu rodzicielskiego albo z zasiłku za okres odpowiadający okresowi urlopu rodzicielskiego w okresie objętym wnioskiem",
+          "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf#page=8",
+          "locator": "§ 15 ust. 2 pkt 2"
+        }
+      ],
+      "claims": "Wniosek o urlop rodzicielski należy złożyć do pracodawcy nie później niż 21 dni przed rozpoczęciem korzystania z urlopu. Do wniosku należy dołączyć oświadczenie o braku zamiaru korzystania z urlopu rodzicielskiego przez drugiego z rodziców dziecka lub o okresie, w którym drugi z rodziców zamierza korzystać z urlopu. Wniosek składa się w formie papierowej lub elektronicznej.",
+      "contextRequestId": null,
+      "backend": "hosted",
+      "message": "",
+      "attemptId": "4fcafb6c-2a8f-4494-ae48-5612f4f53008"
+    },
+    {
+      "mode": "withdrawn",
+      "index": 3,
+      "question": "Czy mogę wystąpić do ZUS o wsparcie, gdy decyzja o poziomie potrzeby wsparcia jeszcze nie jest ostateczna?",
+      "refreshed": false,
+      "pass": false,
+      "http": 503,
+      "status": "unavailable",
+      "ms": 195,
+      "top": [
+        "poradnik-28-2",
+        "poradnik-34-2",
+        "poradnik-38-2",
+        "poradnik-40-2",
+        "zam-6-2"
+      ],
+      "evidence": [],
+      "citations": [],
+      "claims": "",
+      "contextRequestId": null,
+      "backend": null,
+      "message": "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.",
+      "attemptId": null
+    }
+  ],
+  "transportDiagnosis": {
+    "affectedWithdrawnCases": [
+      1,
+      4,
+      3
+    ],
+    "search": "ok",
+    "officialFetchesPerTurn": 1,
+    "host": "www.zus.pl",
+    "officialTransport": "intentionally disabled by fixture",
+    "model": "skipped",
+    "evidence": [],
+    "http": 503,
+    "note": "The fallback reached the official catalogue and correctly reported transport unavailability. The frozen check required a clarification or insufficient evidence, so these three cases failed its status check."
+  }
+}
