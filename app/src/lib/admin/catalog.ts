@@ -194,7 +194,7 @@ function rateParameters(corpus: Corpus | null, state: RuleVersionsState, today: 
     { id: "rate.parental", unit: "uz-31-1", usedIn: "Kwota zasiłku za urlop rodzicielski (przykład +280 zł)" },
     { id: "rate.averaged", unit: "uz-31-2", usedIn: "Kwota zasiłku przy wniosku matki do 21 dni po porodzie" },
   ] as const;
-  return kinds.map(
+  const rates = kinds.map(
     ({ id, unit, usedIn }): Parameter => ({
       id: catalogIdFor(id),
       group: "Stawki",
@@ -209,10 +209,76 @@ function rateParameters(corpus: Corpus | null, state: RuleVersionsState, today: 
       appSource: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
       details: [
         { label: "O wartości decyduje", value: RULE_PARAMETERS[id].event },
-        { label: "Jeszcze nie uwzględnione", value: "podwyższenie do kwoty świadczenia rodzicielskiego (art. 31 ust. 3a)" },
+        { label: "Najniższa kwota", value: "zasiłek podwyższa się do kwoty świadczenia rodzicielskiego (art. 31 ust. 3a)" },
       ],
     }),
   );
+  const minimumId = "benefit.parentalMinimum";
+  const art31 = statute(corpus, "uz-31-2");
+  const minimum: Parameter = {
+    id: catalogIdFor(minimumId),
+    group: "Stawki",
+    name: RULE_PARAMETERS[minimumId].label,
+    state: "Obowiązuje",
+    ...versioned(state, minimumId, today),
+    source: "Ustawa o świadczeniach rodzinnych (Dz.U. 2025 poz. 1208), art. 17c ust. 5",
+    sourceUrl: "https://eli.gov.pl/eli/DU/2025/1208/ogl",
+    quote: "Świadczenie rodzicielskie przysługuje w wysokości 1000,00 zł miesięcznie, z uwzględnieniem ust. 6.",
+    usedIn: "Podwyższenie zasiłku macierzyńskiego w kalkulatorze rodzica i w sprawach testowych panelu",
+    scope: "Za część miesiąca minimum zależy od liczby dni kalendarzowych w danym miesiącu.",
+    origin: "app",
+    appSource: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
+    details: [
+      { label: "Podwyższenie", value: art31 ? `${art31.source} (ust. 3a i 3c)` : "art. 31 ust. 3a i 3c ustawy zasiłkowej" },
+      { label: "Porównuje się", value: "zasiłek po potrąceniu zaliczki na podatek (poradnik ZUS, s. 20)" },
+      { label: "O wartości decyduje", value: RULE_PARAMETERS[minimumId].event },
+    ],
+  };
+  return [...rates, minimum];
+}
+
+/**
+ * Leave lengths, the 81,5% request term and the contribution deduction of the parent calculator
+ * (MATERNITY_PARAMETERS in lib/rules/maternity.ts), changeable in the panel. The calculator reads
+ * them from the schedule once its owner connects lib/rules/maternity-schedule.ts.
+ */
+function calculatorParameters(corpus: Corpus | null, state: RuleVersionsState, today: string): Parameter[] {
+  const kinds: { id: RuleParameterId; unit: string; source?: string }[] = [
+    { id: "maternity.weeks1", unit: "kp-180-1" },
+    { id: "maternity.weeks2", unit: "kp-180-1" },
+    { id: "maternity.weeks3", unit: "kp-180-1" },
+    { id: "maternity.weeks4", unit: "kp-180-1" },
+    { id: "maternity.weeks5", unit: "kp-180-1" },
+    { id: "parental.weeksOne", unit: "kp-1821a-1" },
+    { id: "parental.weeksMany", unit: "kp-1821a-1" },
+    { id: "parental.weeksOneZaZyciem", unit: "kp-1821a-1" },
+    { id: "parental.weeksManyZaZyciem", unit: "kp-1821a-1" },
+    { id: "parental.exclusiveWeeks", unit: "kp-1821a-2" },
+    { id: "averaged.requestDays", unit: "uz-30a-1" },
+    { id: "contributions.employeePct", unit: "uz-45-1", source: "Ustawa zasiłkowa, art. 45 ust. 1" },
+  ];
+  return kinds.map(({ id, unit, source }): Parameter => {
+    const spec = CHANGE_SPECS.find((s) => s.parameter === id);
+    return {
+      id: catalogIdFor(id),
+      group: (spec?.group ?? "Wymiary") as ParameterGroup,
+      name: RULE_PARAMETERS[id].label,
+      state: "Obowiązuje",
+      ...versioned(state, id, today),
+      source: source ?? "Kodeks pracy",
+      ...(statute(corpus, unit) ?? {}),
+      usedIn: "Kalkulator rodzica (lib/rules/maternity.ts · MATERNITY_PARAMETERS). Wartość z panelu zastosuje po podpięciu harmonogramu",
+      scope: spec?.scope ?? "",
+      origin: "app",
+      appSource: "lib/rules/parameters.ts · DEFAULTS, w kształcie kalkulatora: lib/rules/maternity-schedule.ts",
+      details: [
+        { label: "O wartości decyduje", value: RULE_PARAMETERS[id].event },
+        ...(id === "contributions.employeePct"
+          ? [{ label: "Składki ubezpieczonego", value: "emerytalna 9,76%, rentowa 1,5%, chorobowa 2,45%" }]
+          : []),
+      ],
+    };
+  });
 }
 
 /** Parameters the application applies, read from its code, with versions published in this demo session. */
@@ -220,6 +286,7 @@ export function appParameters(state: RuleVersionsState = EMPTY_STATE, today = ne
   const publiczne = tryCorpus("publiczne");
   return [
     ...rateParameters(publiczne, state, today),
+    ...calculatorParameters(publiczne, state, today),
     ...paternityParameters(state, today),
     ...sicknessParameters(publiczne),
     ...payerAndArrearsParameters(publiczne, state, today),

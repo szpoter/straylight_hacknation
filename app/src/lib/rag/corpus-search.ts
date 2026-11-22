@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import { relevantFragment } from "./relevance";
+import { benefitFilter } from "./benefit-scope";
 import { isPrimary, isValidOn, type Corpus, type Fragment } from "./corpus";
 import { corpusNames, loadCorpus } from "./corpus-fs";
-import { asksAboutOwnEligibility, offerDocuments, type PublicQuestion } from "./public-query";
+import { asksAboutOwnEligibility, offerDocuments, publicLegalFacet, type PublicQuestion } from "./public-query";
 import type { AskTurn } from "../zusik/types";
 
 const stop = new Set(("gdzie kiedy dlaczego dlaczego jakiego jakich jakie jaki jaka jakim jeśli jeżeli przez można mogę może wtedy takiej takiego " +
@@ -19,7 +20,7 @@ function lemma(word: string) {
 }
 const fold = (word: string) => word.toLowerCase().replaceAll("ł", "l").normalize("NFD").replace(/\p{M}/gu, "");
 // Shared stems match common Polish inflections. Low-confidence matches stay unanswered.
-function terms(text: string) {
+export function terms(text: string) {
   const words = new Map<string, string>();
   for (const word of text.toLowerCase().match(/[a-ząćęłńóśźż]{4,}/gu) ?? []) {
     if (!stop.has(word)) {
@@ -28,6 +29,13 @@ function terms(text: string) {
     }
   }
   return words;
+}
+
+// Use full lemmas for phrases so e.g. „składki” cannot match „składniki wynagrodzenia”.
+function phrases(text: string) {
+  const words = (text.toLowerCase().match(/[a-ząćęłńóśźż]{4,}/gu) ?? [])
+    .filter(word => !stop.has(word)).map(lemma);
+  return new Set(words.slice(1).map((word, i) => words[i] + " " + word));
 }
 
 const intents = {
@@ -45,21 +53,21 @@ const intents = {
 type Intent = keyof typeof intents;
 const separator = " Hasła ze źródła: ";
 function intent(text: string): Intent {
-  if (/procent|stawka|stawki/iu.test(text)) return "rate";
-  if (/komu|kto.{0,20}(?:odbiera|otrzyma|dostaje)/iu.test(text)) return "recipient";
-  if (/poświadcz|potwierdz|stwierdz|udowod|dowodem|dowieść|zaświadcz/iu.test(text)) return "proof";
+  if (/procent|stawka|stawki|wysokoś[ćc]i? zasiłku/iu.test(text)) return "rate";
+  if (/komu.{0,32}(?:wypłac|przypada|przekaz|przysług)|kto.{0,20}(?:odbiera|otrzyma|dostaje)/iu.test(text)) return "recipient";
+  if (/poświadcz|potwierdz|stwierdz|udowod|dowodem|dowieść|jak.{0,24}zaświadczyć/iu.test(text)) return "proof";
   if (/jak długo|na jak długo|przez ile|ile (?:dni|tygodni|miesięcy)|jak dług[io]|jaki okres/iu.test(text)) return "duration";
-  if (/do kiedy|ile czasu na|termin|kiedy najpóźniej/iu.test(text)) return "deadline";
+  if (/do kiedy|ile czasu na|w jakim czasie|termin|kiedy najpóźniej/iu.test(text)) return "deadline";
   if (/dokument|załącz|dołącz|papiery/iu.test(text)) return "documents";
   if (/kto.{0,20}(?:płaci|wypłac)/iu.test(text)) return "payer";
-  if (/można (?:otrzym|pobier)|przysługuje|(?:zachowuje|traci|ma) prawo do/iu.test(text)) return "entitlement";
+  if (/można (?:otrzym|pobier)|przysługuje|uprawnia(?:ją)? do (?:zasiłku|świadczenia|urlopu|wypłaty)|(?:zachowuje|traci|ma) prawo do/iu.test(text)) return "entitlement";
   return "info";
 }
 
 const facetEvidence: Record<Exclude<Intent,"info">, RegExp> = {
   entitlement: /przysług|(?:prawo|prawa) do|uprawnion/iu,
   duration: /dni|dnia|dzień|tygodni|miesię|miesią|przez|okres|lat\b|rok/iu,
-  deadline: /termin|do dnia|w ciągu|najpóźniej|wcześniej/iu,
+  deadline: /termin|do dnia|w ciągu|najpóźniej|wcześniej|po upływie/iu,
   payer: /wypłac|płatni/iu,
   documents: /dokument|wniosek|odpis|załącz|zaświadczeni/iu,
   rate: /%|procent/iu,
@@ -80,7 +88,7 @@ export function corpusKeywords(question: string, fragment: Fragment): string[] |
   return allowed.join(", ") === keywords && question === instruction + separator + keywords ? allowed : null;
 }
 
-type Entry = { name: typeof corpusNames[number]; corpus: Corpus; fragment: Fragment; words: Map<string, string> };
+type Entry = { name: typeof corpusNames[number]; corpus: Corpus; fragment: Fragment; words: Map<string, string>; phrases: Set<string> };
 function buildIndex() {
   const entries: Entry[] = [];
   const frequency = new Map<string, number>();
@@ -89,20 +97,26 @@ function buildIndex() {
     for (const fragment of corpus.fragments.values()) {
       const words = terms(fragment.sourceText);
       for (const key of words.keys()) frequency.set(key, (frequency.get(key) ?? 0) + 1);
-      entries.push({ name, corpus, fragment, words });
+      entries.push({ name, corpus, fragment, words, phrases: phrases(fragment.sourceText) });
     }
   }
   return { entries, frequency };
 }
 let cached: ReturnType<typeof buildIndex> | undefined;
 
-export function searchCorpus(text: string, direct?: PublicQuestion | null, kind = intent(text)): PublicQuestion | null {
+export function searchCorpus(text: string, direct?: PublicQuestion | null, kind = publicLegalFacet(text) ?? intent(text), citedDocument?: string): PublicQuestion | null {
+  const matchesBenefit = benefitFilter(text);
+  const statuteDetail = publicLegalFacet(text);
+  if (statuteDetail) text = (text.startsWith("Zasiłek chorobowy.") ? "zasiłek chorobowy " : "") + text.split(" — ")[1];
   const {entries, frequency} = cached ??= buildIndex();
   const scopes = direct?.corpus === "oferta" ? offerDocuments.filter(([name]) => name.test(text)) : [];
   const scope = scopes.length === 1 ? scopes[0] : undefined;
   if (direct?.corpus === "oferta" && !scope) return null;
   const raw = terms(scope ? text.replace(scope[0], "") : text);
-  const input = [...raw.keys()];
+  const input = [...raw].filter(([, word]) => !/^dotycz/iu.test(word)).map(([key]) => key);
+  // A follow-up passes a bag of source words without their original order. Programme
+  // lookups also use unordered projected terms. Neither supplies phrase evidence.
+  const inputPhrases = !scope && (kind === "info" || kind === "deadline") ? [...phrases(text)] : [];
   const variants = input.map(key => {
     const word = lemma(raw.get(key)!);
     const related = Object.hasOwn(dictionary.neighbors, word) ? dictionary.neighbors[word] : [];
@@ -119,8 +133,11 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     ? { corpus:direct.corpus, question:"", clarify:"Który warunek chcesz sprawdzić? Nie udało mi się powiązać całej opisanej sytuacji z konkretnym przepisem." }
     : null;
   const day = new Date().toISOString().slice(0, 10);
-  const ranked = entries.flatMap(entry => {
+  let ranked = entries.flatMap(entry => {
+    if (!matchesBenefit(entry.corpus, entry.fragment)) return [];
+    if (citedDocument && entry.fragment.documentId !== citedDocument) return [];
     if (scope && entry.fragment.documentId !== scope[1]) return [];
+    if (statuteDetail && (entry.name !== "publiczne" || entry.fragment.documentId !== "uz")) return [];
     if (!isValidOn(entry.corpus, entry.fragment, day) || (kind !== "info" && !facetEvidence[kind].test(entry.fragment.sourceText))) return [];
     const weights = new Map<string, number>();
     for (let i = 0; i < variants.length; i++) {
@@ -129,17 +146,41 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     }
     const matches = [...weights.keys()];
     const exact = matches.filter(key => weights.get(key) === 1);
-    if (matches.length < 2 || !exact.length || !matches.some(key => idf(key) > 3.3)) return [];
+    const phraseHits = inputPhrases.filter(phrase => entry.phrases.has(phrase));
+    if (matches.length < 2 || !exact.length || (!matches.some(key => idf(key) > 3.3) && phraseHits.length < 2)) return [];
     const positions = [...entry.words.keys()].flatMap((key, index) => matches.includes(key) && idf(key) > 2 ? [index] : []);
     const adjacent = positions.some((at,i) => i > 0 && at - positions[i-1] <= 4);
     // For legal conditions, prefer the provision over a form or guide which restates its vocabulary.
-    const legalWeight = ["entitlement", "rate", "proof"].includes(kind) && isPrimary(entry.corpus, entry.fragment) ? 1.15 : 1;
-    const score = matches.reduce((sum,key) => sum + idf(key) * weights.get(key)!, 0) * (adjacent ? 1.25 : 1) * legalWeight / (1 + 0.18 * Math.log(1 + entry.words.size));
-    return [{entry, matches, score}];
+    const primary = isPrimary(entry.corpus, entry.fragment);
+    const legalWeight = primary && phraseHits.length >= 2 ? 1.25 :
+      primary && ["entitlement", "rate", "proof", "deadline"].includes(kind) ? 1.15 : 1;
+    const score = matches.reduce((sum,key) => sum + idf(key) * weights.get(key)!, phraseHits.length * 2) * (adjacent ? 1.25 : 1) * legalWeight / (1 + 0.18 * Math.log(1 + entry.words.size));
+    return [{entry, matches, phraseHits, score}];
   }).sort((a,b) => b.score-a.score);
+  // A broad benefit label cannot replace a rare, independently attested condition.
+  if (direct?.broad || statuteDetail) {
+    const conditions = [...raw].filter(([key]) => frequency.has(key) && idf(key) > 4)
+      .sort(([a], [b]) => idf(b) - idf(a));
+    const condition = conditions.find(([key, word]) => ranked.some(({entry}) =>
+      isPrimary(entry.corpus, entry.fragment) && lemma(entry.words.get(key) ?? "") === lemma(word)));
+    if (condition) {
+      const [key] = condition;
+      ranked = ranked.filter(({entry}) => entry.words.has(key));
+    }
+  }
+  // A continuation can repeat the whole query yet describe a narrower exception. Prefer the
+  // opening rule when it covers every matching word and phrase of the higher ranked chunk.
+  const first = ranked[0];
+  if (first && isPrimary(first.entry.corpus, first.entry.fragment) && !/^Art\.|^§/iu.test(first.entry.fragment.sourceText)) {
+    const index = ranked.findIndex(hit => hit.entry.fragment.documentId === first.entry.fragment.documentId &&
+      hit.entry.fragment.locator === first.entry.fragment.locator && /^Art\.|^§/iu.test(hit.entry.fragment.sourceText) &&
+      first.matches.every(key => hit.matches.includes(key)) && first.phraseHits.every(phrase => hit.entry.phrases.has(phrase)));
+    if (index > 0) ranked.unshift(...ranked.splice(index, 1));
+  }
   const best = ranked[0];
   if (!best || best.score < 4.5 || best.matches.length < input.length * 0.25) return unknownCondition;
   if (variants.some(variantsForWord => variantsForWord.length === 0)) {
+    if (unknownCondition && best.matches.length * 2 < input.length) return unknownCondition;
     // A dropped condition and an accidental stem collision must not corroborate each other.
     // Require the same dictionary lemma in at least one term occurring in <5% of fragments.
     const preservesCondition = best.matches.some(key => {
@@ -154,7 +195,7 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     !(hit.entry.fragment.documentId === best.entry.fragment.documentId && hit.entry.fragment.locator === best.entry.fragment.locator));
   if (rival && best.score < rival.score * 1.055) return unknownCondition;
   // A reviewed plan wins unless it discards a distinctive condition that the corpus covers.
-  if (direct) {
+  if (direct?.locators?.length || direct?.corpus === "marta") {
     if (!direct.broad && direct.locators?.length && direct.corpus === best.entry.name && relevantFragment(direct, best.entry.corpus)(best.entry.fragment)) return null;
     const newConditions = best.matches.filter(key => isExtra(key) && raw.has(key));
     if (newConditions.length < (anchors.length && !direct.broad ? 2 : 1)) return unknownCondition;
@@ -176,7 +217,7 @@ export function corpusFollowUp(text: string, previous: AskTurn | undefined): Pub
   const remaining = text.toLocaleLowerCase("pl").replace(/[?!.]/g, "").split(/\s+/u).filter(Boolean);
   const reference = /^(?:a|i|czy|to|ten|tę|tej|tego|tym|taki|taką|takie|takim|muszę|mam|się|jest|ma|są|być|kto|co|od|do|jak|jaki|jakie|który|na|w|z|za|przez|ile|dni|wtedy|dokładnie|czym|czego|długo|potrwa|trwa|musi|mi|może|można|kiedy|gdzie|zrobić|potrzebne|otrzymać|przedstawić|zebrać|złożyć|wykazać)$/u;
   const hasNewSubject = kind === "info" || remaining.some(word => !reference.test(word) &&
-    !/^(?:okres|okolicznoś|sytuacj|świadczeni|stwierdz|potwierdz|poświadcz|zaświadcz|dowod|dowód|udowod|płac|wypłac|obowiąz|termin|dokument|przygotow|prawomoc|lekarz|lekars|ubezpiec|pracodawc)/u.test(word));
+    !/^(?:procent|stawk|okres|okolicznoś|sytuacj|świadczeni|stwierdz|potwierdz|poświadcz|zaświadcz|dowod|dowód|udowod|płac|wypłac|obowiąz|termin|dokument|przygotow|prawomoc|lekarz|lekars|ubezpiec|pracodawc)/u.test(word));
   for (const name of corpusNames) {
     const corpus = loadCorpus(name);
     if (corpus.manifest.corpusVersion !== previous.corpusVersion) continue;
@@ -191,7 +232,8 @@ export function corpusFollowUp(text: string, previous: AskTurn | undefined): Pub
         return next && next.documentId === fragment.documentId && next.locator === fragment.locator ? candidate : null;
       }
       // A new facet can live in another article, so search again with the previous *public* subject.
-      const reranked = searchCorpus(words.join(" "), null, kind);
+      const subject = words.join(" ");
+      const reranked = searchCorpus(subject, null, kind, fragment.documentId) ?? searchCorpus(subject, null, kind);
       if (reranked) return reranked;
       if (facetEvidence[kind].test(fragment.sourceText)) {
         return {corpus:name, question:query(kind, words), searchText:words.join(" "), fragmentId:fragment.logicalId};

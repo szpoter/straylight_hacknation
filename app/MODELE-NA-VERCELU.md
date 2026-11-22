@@ -1,4 +1,4 @@
-# Lokalny Bielik i PLLuM dla Vercela
+# Lokalne modele odpowiedzi dla Vercela
 
 ## Działająca konfiguracja z Neonem
 
@@ -9,6 +9,18 @@ Domyślny model to lokalny Bielik. Serwerowa zmienna `ZUSIK_RAG_MODEL=pllum` wyb
 Kolejka przyjmuje pytanie, które dokładnie odpowiada wynikowi ponownej projekcji na publiczny wzorzec, oraz fragmenty wczytane z tego samego zatwierdzonego korpusu. Projekcje, które przy drugim przebiegu zmieniają treść, obsługuje dotychczasowa ścieżka hostowana z pierwszą publiczną projekcją. Do tabeli trafiają tylko losowy UUID, wybrany model, publiczny prompt oraz tymczasowe pola wyniku i dzierżawy. Akta, oryginalne pytanie, identyfikatory sesji i rozmowy pozostają poza kolejką.
 
 Worker pobiera zadanie atomowo, odnawia 9-sekundową dzierżawę i może ponowić pracę najwyżej raz. Po 42 sekundach wynik wygasa. Odczytany wynik aplikacja usuwa od razu. Osierocone wpisy usuwa kolejny odbiór lub zapis. Oczekiwanie na wolnego workera trwa około 3,5 sekundy, a cała próba lokalna ma limit 38 sekund. Wczesna awaria pozostawia czas na hostowanego Bielika. Po późnej awarii aplikacja używa dotychczasowej ścieżki cytatu źródłowego lub informuje o niedostępności. Model lokalny i hostowany dzielą budżet 45 sekund i przechodzą ten sam walidator cytatów.
+
+### Qwen 3.8 27B w Preview
+
+W obu wejściach czatu można wybrać **Qwen 3.8 27B (LM Studio)** do sformułowania odpowiedzi z publicznych źródeł. Do modelu trafiają zatwierdzona publiczna wersja pytania i fragmenty źródeł. Wygenerowane twierdzenia i cytaty przechodzą ten sam walidator co odpowiedzi polskich modeli. Przy awarii użytkownik może ponowić próbę. Gdy reguła zwraca sam przepis, aplikacja może odpowiedzieć bez wywoływania modelu.
+
+Na bazie **Preview** z rolami aplikacji i workera zastosuj migrację `app/workers/queue.sql`. W chronionym pliku JSON na Macu (prawa `0600`) ustaw `url` na adres połączenia do tej samej bazy dla roli `zusik_model_worker` z weryfikacją TLS. Jeżeli lokalne LM Studio wymaga tokenu, dodaj `lmStudioToken`. Włącz serwer LM Studio pod `127.0.0.1:1234` i sprawdź, czy `GET /v1/models` wymienia `qwen/qwen3.8-27b`. Z katalogu `app`, z zainstalowanymi zależnościami i Node 24, uruchom osobny proces:
+
+```sh
+node --import tsx workers/ollama.mjs "$HOME/.config/zusik/preview-worker.json" --lmstudio-qwen-27b
+```
+
+Proces rezerwuje tylko zadania `qwen-27b`. Generację zleca przez `POST /api/v1/chat` z `reasoning: "off"` i `store: false`. Akceptuje odpowiedź po sprawdzeniu identyfikatora instancji. Kod i komunikat o niedostępności można sprawdzić, zatrzymując wyłącznie ten proces i ponawiając pytanie wymagające generacji. [API modeli LM Studio](https://lmstudio.ai/docs/developer/openai-compat/models) · [Parametry generacji i identyfikator instancji](https://lmstudio.ai/docs/developer/rest/chat)
 
 ### Zadania planera i weryfikatora
 

@@ -20,7 +20,7 @@ vi.mock("../src/features/kamil/read-document", () => ({
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("reads payroll cells with Polish OCR from PNG, mixed PDF and 90°/180° JPEG scans", async () => {
+it("reads payroll cells with Polish OCR from PNG, mixed PDF and ±90°/180° JPEG scans", async () => {
   vi.stubGlobal("document", { createElement: () => createCanvas(1, 1) });
   const canvas = createCanvas(1600, 650);
   const ctx = canvas.getContext("2d");
@@ -44,6 +44,11 @@ it("reads payroll cells with Polish OCR from PNG, mixed PDF and 90°/180° JPEG 
   turned.translate(canvas.height, 0);
   turned.rotate(Math.PI / 2);
   turned.drawImage(canvas, 0, 0);
+  const counterclockwise = createCanvas(canvas.height, canvas.width);
+  const left = counterclockwise.getContext("2d");
+  left.translate(0, canvas.width);
+  left.rotate(-Math.PI / 2);
+  left.drawImage(canvas, 0, 0);
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([800, 500]);
   page.drawText("Zestawienie wynagrodzen platnika skladek", { x: 35, y: 450, size: 16 });
@@ -54,17 +59,27 @@ it("reads payroll cells with Polish OCR from PNG, mixed PDF and 90°/180° JPEG 
   decision.getPage(0).drawText("Decyzja", { x: 30, y: 470, size: 12, opacity: 0 });
   const docs = await readCaseDocuments([new File([png], "pierwszy.bin"), new File([rasterPacket], "drugi.bin"),
     new File([Uint8Array.from(upsideDown.toBuffer("image/jpeg"))], "trzeci.bin"),
-    new File([Uint8Array.from(sideways.toBuffer("image/jpeg"))], "czwarty.bin"), new File([Uint8Array.from(await decision.save())], "piaty.bin")], {
+    new File([Uint8Array.from(sideways.toBuffer("image/jpeg"))], "czwarty.bin"), new File([Uint8Array.from(counterclockwise.toBuffer("image/jpeg"))], "piaty.bin"),
+    new File([Uint8Array.from(await decision.save())], "szosty.bin")], {
     caseId: "scan-A", signal: AbortSignal.timeout(55_000), onProgress() {},
   });
-  expect(docs[4].pages[0]).toMatchObject({ status: "excluded", role: "decision", candidates: [] });
-  for (const doc of docs.slice(0, 4)) {
+  expect(docs[5].pages[0]).toMatchObject({ status: "excluded", role: "decision", candidates: [] });
+  for (const doc of docs.slice(0, 5)) {
     expect(doc.pages[0].method).toBe("ocr");
     expect(doc.pages[0].candidates, doc.pages[0].text).toContainEqual(expect.objectContaining({
       field: "monthlyGrossPay", value: { kind: "money", currency: "PLN", grosze: 650000 },
       locator: expect.objectContaining({ clientDocumentId: doc.metadata.clientDocumentId, page: 1, column: 2 }),
     }));
   }
+  const rotated = docs[4].pages[0];
+  const row = rotated.lines?.[rotated.candidates[0].locator.lineStart - 1];
+  // The source is turned left. The middle of the drawn amount must fall inside its highlighted row.
+  const x = 314 / canvas.height, y = 1 - 633 / canvas.width;
+  expect.assert(row);
+  expect(row.box.x).toBeLessThan(x);
+  expect(row.box.x + row.box.w).toBeGreaterThan(x);
+  expect(row.box.y).toBeLessThan(y);
+  expect(row.box.y + row.box.h).toBeGreaterThan(y);
 }, 60_000);
 
 it("reads a signed-letter layout and keeps its cited leave period local", async () => {

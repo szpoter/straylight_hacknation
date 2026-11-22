@@ -1,14 +1,18 @@
 import { citationUrl, isValidOn, normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
-import { listOpportunities } from "../plan/opportunities";
-import type { PublicTaskInput } from "../rag/model-tasks";
+import { cardPrefix, catalogPrompt, listOpportunities, opportunityQuestion } from "../plan/opportunities";
+import type { ChatModelOptions } from "./chat-model";
+import { localModelIds, type PublicTaskInput } from "../rag/model-tasks";
 import type { runPublicModelTask } from "../rag/local-queue";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
-import { corpusFollowUp } from "../rag/corpus-search";
+import { checkCitedSources } from "../rag/source-check";
+import { corpusFollowUp, type searchCorpus } from "../rag/corpus-search";
+import { compoundQuestion } from "../rag/compound";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
 import { nurseryIntent, runSectionTurn, schoolRecipientIntent } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
+import { benefitFilter, matchesPublishedBenefit } from "../rag/benefit-scope";
 import { extractiveAnswer, needsStatutoryText, reviewedSourceIds, withSourceException } from "../rag/excerpt";
-import { offerDetail, publicQuestion, type PublicQuestion } from "../rag/public-query";
+import { isPublicLegalDetail, offerDetail, publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
 import type { CaseStore } from "./case-store";
@@ -17,7 +21,10 @@ import type { AskAnswer, AskTurn } from "./types";
 import type { MartaView } from "../marta/types";
 import { caseSources, previousSources, sourceIntent } from "./context-answer";
 
+import { publicClarification } from "./public-clarification";
 import { familyTopic } from "./family-chat";
+import { ageMessage, conversationAge } from "./conversation-age";
+import { publicContinuation, publicSituation } from "./public-continuation";
 import { resolveFollowUp } from "./retrieval-context";
 import { conversationInput, conversationOwner, type CaseName, type FamilyChatScope } from "./conversation";
 
@@ -26,6 +33,8 @@ type Progress = (status: string) => void;
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
 
 export interface AnswerDeps {
+  selectedModel?: ChatModelOptions["model"];
+  extraVerification?: boolean;
   deadlineMs?: number;
   publicTask?(input: PublicTaskInput, deadline: number): ReturnType<typeof runPublicModelTask>;
   readOfficial?: typeof fetchOfficialEvidence;
@@ -34,7 +43,7 @@ export interface AnswerDeps {
   search: KnowledgeSearch;
   /** Local-only fallback mapping the current utterance onto a reviewed public query. */
   suggestTopic?(text: string): PublicQuestion | null;
-  searchCorpus?(text: string, direct?: PublicQuestion | null): PublicQuestion | null;
+  searchCorpus?: typeof searchCorpus;
   selectCorpus?(name: PublicQuestion["corpus"]): Corpus;
   /** Bielik via Sherlock. Receives only the sanitised question and public fragments. */
   generate(question: string, evidence: Fragment[], corpus: Corpus): Promise<GenerationResult>;
@@ -79,7 +88,13 @@ function newTrace(sanitized: string, contextRequestId: string | null): AnswerTra
 }
 
 function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null {
+  if (isPublicLegalDetail(text)) return deps.searchCorpus?.(text) ?? {
+    corpus: "publiczne", question: "", uncovered: "Nie znalazłem potwierdzonego fragmentu dotyczącego tego szczegółu.",
+  };
   const direct = publicQuestion(text);
+  const compound = deps.searchCorpus && compoundQuestion(text, deps.searchCorpus);
+  if (compound) return compound;
+  if (direct?.requiredFragmentIds?.length) return direct;
   if (direct?.corpus === "oferta" && !direct.clarify && text !== direct.question && offerDetail(text, direct).question === text) {
     return deps.searchCorpus?.(text, direct) ?? { corpus:"oferta", question:text,
       uncovered:"Nie znalazłem potwierdzonego fragmentu o tym szczególe programu." };
@@ -88,7 +103,7 @@ function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null 
     !/rodzicielsk/iu.test(text);
   // The legacy Marta gate treats the programme name itself as a personal amount request.
   const gateText = direct?.corpus === "oferta" ? text.replace(/\b800\s*(?:\+|plus)/iu, "") : text;
-  if (direct?.clarify || scopeGate(gateText) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
+  if (direct?.clarify || direct?.question.startsWith("Co stanowi art.") || scopeGate(gateText) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
   const preset = (!direct || genericForm) ? deps.suggestTopic?.(text) : null;
   // Preserve reviewed compound rules whose exceptions must travel with the main article.
   if (preset || (direct?.corpus === "oferta" && !["program:800-plus", "program:aktywny-rodzic", "program:dobry-start"].includes(direct.locators?.[0] ?? "")) ||
@@ -98,13 +113,12 @@ function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null 
 }
 
 async function discoverOpportunities(deps: AnswerDeps, text: string, progress?: Progress) {
-  const fullCatalog = /(?:cał[ayąe]|pełn[yąae]|wszystki[e])\s+(?:katalog|list|ofert|program|możliwoś|świadczeni)/iu.test(text);
-  if (!deps.selectCorpus || /(?<!\d)(?:19|20)\d{2}(?!\d)|kiedyś|dawniej|zeszł|ubiegł/iu.test(text)) return null;
-  const describesCare = !/[?]|(?:kiedy|ile|czy |jaki|komu|kwot|wniosek|załącznik)/iu.test(text)
-    && /babci|dziadk|inkubator|zamknęli.{0,20}żłob|zaczyna.{0,20}(?:szkoł|podstawówk)/iu.test(text);
-  if (!fullCatalog && !describesCare && !/co (?:warto|mogę|możemy|można)|co (?:mi|nam) (?:przysługuje|się należy)|(?:jakie|jaką|jakiego) (?:są |mam |mamy )?(?:możliwoś|opcje|wsparci|pomoc|świadczeni)|z czego|porównaj|jakie programy|nie wiem.{0,20}zapytać|jednak.{0,25}(?:babci|w domu)/iu.test(text)) return null;
+  if (!deps.selectCorpus) return null;
   const asOf = (deps.asOf ?? today)();
-  const catalog = listOpportunities({ text, asOf, fullCatalog });
+  const question = text.startsWith(cardPrefix) ? text : opportunityQuestion(text, asOf);
+  if (!question) return null;
+  const fullCatalog = question === catalogPrompt;
+  const catalog = listOpportunities({ text: question, asOf, fullCatalog });
   const corpus = deps.selectCorpus("oferta");
   const version = corpus.manifest.corpusVersion;
   const candidates = catalog.candidates.flatMap(card => {
@@ -178,13 +192,14 @@ export async function answerQuestion(
   });
   const asOf = (deps.asOf ?? today)();
   async function missingEvidence(fallback: AskAnswer) {
-    if (!deps.discoverOfficial || !/program|świadczeni|dofinansowan|wsparci|dopłat/iu.test(question) ||
+    if (projected?.requiredFragmentIds?.length || !deps.discoverOfficial || !/program|świadczeni|dofinansowan|wsparci|dopłat/iu.test(question) ||
         /(?<!\d)(?:19|20)\d{2}(?!\d)|zeszł|dawn|kiedyś|ubiegł|przed lat|wtedy/iu.test(question)) return { answer: fallback, trace };
     onProgress?.("Sprawdzam katalog świadczeń na stronie ZUS…");
     const live = await deps.discoverOfficial(question, asOf, deps.deadlineMs);
     trace.officialFetches = live.fetches;
     const c = live.citation;
     if (!c) return { answer: live.unavailable ? plain("unavailable", UNAVAILABLE_MESSAGE) : fallback, trace };
+    if (!matchesPublishedBenefit(question, [c.title, ...(c.headingPath ?? []), c.quote].join(" "))) return { answer: fallback, trace };
     trace.evidenceIds = [c.fragmentId];
     return { answer: { ...plain("answered", "Podaję treść aktualnej instrukcji ZUS."), publicQuery: c.title, corpusVersion: c.corpusVersion,
       citations: [c], claims: [{ text: c.quote, citationIds: [c.id] }] }, trace };
@@ -209,14 +224,16 @@ export async function answerQuestion(
   if (!projected) return missingEvidence(plain("insufficient_evidence",
     "Nie rozpoznałem tematu w bazie Zusika. O jakie świadczenie, dokument albo sytuację chcesz zapytać?"));
   trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
-  trace.calls.qdrant += 1;
-  onProgress?.("Szukam w źródłach urzędowych…");
-  const exact = projected.fragmentId ? [projected.fragmentId] : reviewedSourceIds(projected);
+  const exact = projected.requiredFragmentIds ?? (projected.fragmentId ? [projected.fragmentId] : reviewedSourceIds(projected, corpus));
+  const quoteInFull = projected.quoteProvision !== undefined || projected.question.startsWith("Co stanowi art.");
+  if (quoteInFull && !exact.length) return {answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace};
   const lexical = projected.lexical ?? exact.flatMap(id => {
     const f = corpus.fragments.get(id);
     return f && isValidOn(corpus, f, asOf)
       ? [{ logicalId:id, fragmentSha256:f.fragmentSha256, corpusVersion:version }] : [];
   });
+  trace.calls.qdrant += 1;
+  onProgress?.("Szukam w źródłach urzędowych…");
   const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version,
     limit: TOP_K, deadlineMs: deps.deadlineMs, ...(lexical.length ? { lexical, asOf } : {}) });
   trace.search = found.status;
@@ -224,26 +241,37 @@ export async function answerQuestion(
   trace.vectorHits = found.hits;
 
   const evidence = assembleEvidence(corpus, found.hits, {
+    targetId: projected.fragmentId,
+    requiredIds: projected.requiredFragmentIds,
     locatorKeys: projected.locators ?? explicitLocatorKeys(question),
     excludeTopics: excludedTopics(question),
     asOf,
   });
   trace.rankings = found.rankings;
   trace.vectorIds = found.rankings ? found.hits.map(hit => hit.logicalId) : evidence.vectorIds;
-  const relevant = relevantFragment(projected, corpus);
+  const relevantSource = relevantFragment(projected, corpus);
+  const matchesBenefit = benefitFilter(question);
+  const relevant = (f: Fragment) => relevantSource(f) && matchesBenefit(corpus, f);
   const rawSubjectHit = evidence.vectorIds.some((id) => {
     const fragment = corpus.fragments.get(id);
     return fragment && relevant(fragment);
   });
   const confirmed = new Set([...(found.rankings?.lexical ?? []), ...evidence.vectorIds]);
-  const missingReviewedUnit = found.rankings && exact.some(id => !confirmed.has(id));
-  const fragments = rawSubjectHit && !missingReviewedUnit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
+  const missingReviewedUnit = (quoteInFull || !!found.rankings) && exact.some(id => !confirmed.has(id));
+  const targetPresent = !projected.fragmentId || evidence.vectorIds.includes(projected.fragmentId);
+  const fragments = rawSubjectHit && targetPresent && !missingReviewedUnit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
   trace.evidenceIds = fragments.map((f) => f.logicalId);
-  if (fragments.length === 0) {
+  const missingRequired = projected.requiredFragmentIds?.some(id => !evidence.vectorIds.includes(id) || !trace.evidenceIds.includes(id));
+  if (fragments.length === 0 || missingRequired || (quoteInFull && !exact.every(id => trace.evidenceIds.includes(id)))) {
     const { answer } = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
     return missingEvidence(answer);
   }
 
+  // A complete, confirmed provision can answer without losing conditions during generation.
+  if (quoteInFull) {
+    const answer = extractiveAnswer(corpus, projected, fragments, [...confirmed], evidence.vectorIds);
+    return {answer: answer ?? plain("insufficient_evidence", NO_BASIS_MESSAGE), trace};
+  }
   trace.calls.sherlock += 1;
   onProgress?.("Przygotowuję odpowiedź na podstawie źródeł…");
   const generated = await deps.generate(sanitized, fragments, corpus);
@@ -256,8 +284,10 @@ export async function answerQuestion(
   trace.proposedStatus = generated.output?.status ?? null;
   trace.finishReason = generated.finishReason ?? null;
   if (generated.status !== "ok" || !generated.output) {
+    if (generated.model === "qwen-27b")
+      return { answer: plain("unavailable", "Qwen 3.8 27B (LM Studio) nie wygenerował odpowiedzi. Możesz ponowić próbę."), trace };
     // An unusable generation can still leave an exact, reviewed statute already retrieved.
-    const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
+    const quote = extractiveAnswer(corpus, projected, fragments, [...confirmed], evidence.vectorIds);
     if (quote) trace.quoteReason = "model_unavailable";
     return { answer: quote ?? plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   }
@@ -275,13 +305,8 @@ export async function answerQuestion(
     if (check.output && "verdict" in check.output && check.output.verdict !== "supported")
       return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
   }
-  const complete = withSourceException(projected, answer, fragments);
-  if (complete) {
-    trace.quoteReason = "statutory_conditions";
-    return { answer: complete, trace };
-  }
-  if (answer.status === "insufficient_evidence" || (answer.status === "answered" && needsStatutoryText(projected, answer))) {
-    const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
+  if (answer.status === "insufficient_evidence" || (answer.status === "answered" && needsStatutoryText(projected, answer, corpus, evidence.vectorIds))) {
+    const quote = extractiveAnswer(corpus, projected, fragments, [...confirmed], evidence.vectorIds);
     if (quote) {
       if (answer.status === "answered") trace.quoteReason = "statutory_conditions";
       else trace.quoteReason = generated.output.status === "insufficient_evidence" ? "model_abstained" : "claim_validation";
@@ -289,11 +314,45 @@ export async function answerQuestion(
     }
     if (answer.status === "answered") return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
   }
+  const complete = withSourceException(projected, answer, fragments);
+  if (complete) {
+    trace.quoteReason = "statutory_conditions";
+    return { answer: complete, trace };
+  }
   return { answer, trace };
 }
 
 export async function answerPublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
+  const result = await resolvePublicTurn(deps, text, history, onProgress, family);
+  const { answer, trace } = result;
+  const notes = [];
+  if (trace.modelId === localModelIds["qwen-27b"] && trace.model === "ok")
+    notes.push(`Źródła przeanalizował ${trace.modelId} w LM Studio.`);
+  else if (deps.selectedModel === "qwen-27b" && trace.model === "skipped" && answer.citations.length)
+    notes.push("Odpowiedź pochodzi bezpośrednio ze źródeł. Model nie był wywoływany.");
+  if (trace.modelId === "pllum" && trace.model !== "ok" && answer.citations.length)
+    notes.push("PLLuM nie wygenerował tej odpowiedzi. Pokazuję sprawdzone fragmenty źródeł.");
+  if (deps.extraVerification && answer.citations.length && deps.selectCorpus) {
+    onProgress?.("Porównuję cytaty z publikacjami urzędowymi…");
+    const corpora = [deps.selectCorpus("marta"), deps.selectCorpus("oferta"), deps.selectCorpus("publiczne")];
+    const count = await checkCitedSources(answer.citations, corpora, deps.deadlineMs ?? Date.now() + 3500);
+    notes.push(`Dodatkowa weryfikacja źródeł: ${count}/${answer.citations.length} potwierdzonych w publikacji urzędowej.`);
+  }
+  return notes.length ? { ...result, answer: { ...answer, message: [answer.message, ...notes].filter(Boolean).join(" ") } } : result;
+}
+
+async function resolvePublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
+  const clarification = publicClarification(text);
+  if (clarification) {
+    const trace = newTrace("", null);
+    trace.gate = clarification.amount ? "amount" : "clarify";
+    const answer: AskAnswer = {status:clarification.amount ? "insufficient_evidence" : "needs_clarification",
+      message:clarification.message, claims:[], citations:[], corpusVersion:deps.corpus.manifest.corpusVersion};
+    return {answer,trace};
+  }
   const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
+  const continuation = previous && publicContinuation(text, previous.publicQuery);
+  text = continuation ?? publicSituation(text) ?? text;
   const section = schoolRecipientIntent(text, previous) ? "schoolRecipient" : nurseryIntent(text, previous);
   if (section && deps.selectCorpus) {
     const { answer, result: resolved, query } = await runSectionTurn(section, deps.selectCorpus("oferta"),
@@ -381,7 +440,19 @@ export class AskService {
       onProgress?.("Sprawdzam kontekst pytania…");
       const { text, reply } = conversationInput(question, scenario);
       const intent = sourceIntent(text);
-      if (reply) {
+      const age = conversationAge(text);
+      if (age) {
+        let note = age === "recall" ? undefined : age;
+        if (age === "recall") {
+          const turns = await this.deps.turns.list(threadId, requestId);
+          for (const turn of turns.reverse()) {
+            const prior = conversationAge(turn.question);
+            if (prior && prior !== "recall") { note = prior; break; }
+          }
+        }
+        result = {answer:{status:"conversation",message:ageMessage(note),citations:[],claims:[],
+          corpusVersion:this.deps.corpus.manifest.corpusVersion},trace:null};
+      } else if (reply) {
         result = { answer: { status: "conversation", message: reply, claims: [], citations: [],
           corpusVersion: this.deps.corpus.manifest.corpusVersion }, trace: null };
       } else if (intent) {

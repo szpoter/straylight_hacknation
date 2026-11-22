@@ -54,6 +54,14 @@
   line-height: 1.5;
 }
 
+.demo {
+  max-width: 40ch;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .columns {
   display: grid;
   gap: 32px;
@@ -93,7 +101,9 @@
   outline-color: var(--color-on-primary);
 }
 
+/* inline jawnie: preflight Tailwinda (globals.css) robi z każdego svg element blokowy */
 .external {
+  display: inline;
   margin-left: 6px;
   vertical-align: 0;
   opacity: 0.8;

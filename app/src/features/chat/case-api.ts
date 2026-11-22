@@ -14,7 +14,7 @@ export type Decision = DecisionTrace & { status: "eligible" | "ineligible" | "ne
 export type Assessment = { id: string; stale: boolean; ruleVersion: string; input: AssessmentInput; decisions: Decision[] };
 
 export class ApiError extends Error {
-  constructor(readonly status: number) { super("HTTP " + status); }
+  constructor(readonly status: number, readonly code?: string) { super("HTTP " + status); }
 }
 async function request<T>(path: string, method = "GET", body?: unknown, key?: string, etag?: string) {
   const headers = new Headers();
@@ -22,7 +22,10 @@ async function request<T>(path: string, method = "GET", body?: unknown, key?: st
   if (key) headers.set("Idempotency-Key", key);
   if (etag) headers.set("If-Match", etag);
   const res = await fetch("/api/v1/" + path, { method, headers, body: JSON.stringify(body), credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(70000) });
-  if (!res.ok) throw new ApiError(res.status);
+  if (!res.ok) {
+    const problem = await res.json().catch(() => null);
+    throw new ApiError(res.status, typeof problem?.code === "string" ? problem.code : undefined);
+  }
   return { data: (res.status === 204 ? undefined : await res.json()) as T };
 }
 function versioned<T extends Profile | CaseFile>({data}: {data:T}) {

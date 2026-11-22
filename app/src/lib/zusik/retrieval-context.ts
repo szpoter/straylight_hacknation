@@ -1,7 +1,7 @@
 import { asksAboutOwnEligibility, publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { suggestSubmissionFacet } from "./topic-ranker";
 import type { AskTurn } from "./types";
-import { sourceIntent } from "./context-answer";
+import { sourceIntent } from "./conversation";
 
 // Read a subject from the previous public search, not from model prose or a private form.
 const subjects: ReadonlyArray<readonly [RegExp, string]> = [
@@ -50,7 +50,9 @@ const followUpStems = ("jak musi musz mog moż będ potrzeb zło skład dostarcz
   "wysokoś procent stawk wynosi wypłac płac pieniędz załącz dołącz formularz odpis dokument papier warun kanał portal " +
   "internet elektroniczn poczt aplikacj pracowni eta pracodawc działalnoś firm prowadz przedsiębior").split(" ");
 
-export function resolveFollowUp(text: string, history: AskTurn[],
+type TopicTurn = Pick<AskTurn, "status" | "question" | "publicQuery" | "requestId">;
+
+export function resolveFollowUp(text: string, history: TopicTurn[],
   suggestTopic?: (text: string) => PublicQuestion | null,
   hasOpeningTopic = false,
 ): { plan: PublicQuestion; requestId: string | null; needsTopic?: boolean } | null {

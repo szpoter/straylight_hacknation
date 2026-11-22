@@ -77,3 +77,10 @@ it("uses the first registration month for a new contribution payer including a c
   expect(benefitPayer({ ...input, payerInsuredCount: 20 }).payer).toBe("zus");
   expect(benefitPayer({ ...input, payerInsuredCount: 21 }).payer).toBe("employer");
 });
+
+it("asks for the first registration month when nobody was insured on 30 November", () => {
+  const result = benefitPayer({ situation: "employee", payerInsuredCount: 0, benefitDate: "2026-09-15" });
+  expect(result.payer).toBeNull();
+  expect(result.question).toContain("pierwszym miesiącu");
+  expect(result.countDate).toBe("2025-11-30");
+});

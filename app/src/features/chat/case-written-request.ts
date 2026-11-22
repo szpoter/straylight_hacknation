@@ -1,9 +1,8 @@
-import { documentDay } from "./case-claim-fields";
+import { documentDay, documentDayPattern } from "./case-claim-fields";
 import type { EvidenceCandidate, LocalLocator } from "./case-evidence";
 
 export type LeaveRequest = { kind: "maternity" | "parental" | "paternity"; validFrom: string; validTo: string; locator: LocalLocator };
-const day = "(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[a-z]{3,15}\\s+\\d{4})(?:\\s*r\\.?)?";
-const interval = new RegExp(`(?:^|\\s)(?:(?:od(?: dnia)?|za okres|w okresie|w terminie)\\s*:?\\s*)?(${day})\\s*(?:do(?: dnia)?|[-–—])\\s*(${day})(?!\\d)`, "u");
+const interval = new RegExp(`(?:^|\\s)(?:(?:od(?: dnia)?|za okres|w okresie|w terminie)\\s*:?\\s*)?(${documentDayPattern})\\s*(?:do(?: dnia)?|[-–—])\\s*(${documentDayPattern})(?!\\d)`, "u");
 const start = /^(?:wniosek(?: o)?|wnosze o|wnioskuje o|prosze o|zwracam sie z (?:uprzejma )?prosba o)\b/u;
 const subjectPrefix = /^(?:o )?(?:(?:wyplate|przyznanie|udzielenie)(?: mi)?(?: (?:czesci|\d{1,2} (?:tygodni|dni)))?)?$/u;
 const periodPrefix = /^(?:(?:za |na |w )?(?:okres(?:ie)?|czas|terminie|wymiarze)\s*)?(?:(?:\d{1,3}|jednego|dwoch) (?:tygodni(?:a|e)?|dni)\s*)?(?:(?:od|poczawszy|tj\.?)\s*)?$/u;

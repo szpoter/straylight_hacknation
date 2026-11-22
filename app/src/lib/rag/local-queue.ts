@@ -4,23 +4,27 @@ import type { Pool, PoolClient } from "pg";
 import type { Corpus, Fragment } from "./corpus";
 import { corpusNames, loadCorpus } from "./corpus-fs";
 import { corpusKeywords } from "./corpus-search";
+import { statutoryListIds } from "./relevance";
 import { publicQuestion } from "./public-query";
-import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, TYPED_CONTEXT_TOKENS, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
+import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, TYPED_CONTEXT_TOKENS, type localModelIds, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
 import { modelForTask } from "../zusik/model-provider";
 
 /** Verify against shipped public material at the last boundary before persistence. */
 export function publicQueueEvidence(corpus: Corpus, question: string, evidence: Fragment[]) {
-  if (evidence.length === 1 && corpusKeywords(question, evidence[0]) &&
-      (["marta", "publiczne", "oferta"] as const).some(name => loadCorpus(name) === corpus) &&
-      corpus.fragments.get(evidence[0].logicalId) === evidence[0]) return evidence;
+  if (!evidence.length || !corpusNames.some(name => loadCorpus(name) === corpus) ||
+      !evidence.every(f => corpus.fragments.get(f.logicalId) === f)) return null;
+  const fromShippedWords = evidence.some(anchor => {
+    if (!corpusKeywords(question, anchor)) return false;
+    const allowed = new Set([...statutoryListIds(corpus, anchor), ...anchor.primaryIds, ...anchor.relatedIds]);
+    return evidence.every(f => allowed.has(f.logicalId));
+  });
+  if (fromShippedWords) return evidence;
   const plan = publicQuestion(question);
-  if (!plan || plan.clarify || plan.question !== question || /\d{4}/u.test(question) || !evidence.length) return null;
-  const official = loadCorpus(plan.corpus);
-  if (official !== corpus || !evidence.every(f => official.fragments.get(f.logicalId) === f)) return null;
-  return evidence;
+  return plan && !plan.clarify && plan.question === question && !/\d{4}/u.test(question) && loadCorpus(plan.corpus) === corpus
+    ? evidence : null;
 }
 
-export type LocalModel = "bielik" | "pllum";
+export type LocalModel = keyof typeof localModelIds;
 export async function localCompletion(db: Pool, model: LocalModel, prompt: string, id = randomUUID(), kind: ModelTaskKind = "answer_evidence",
   budgetMs: number = taskSpecs[kind].timeout) {
   const started = Date.now();

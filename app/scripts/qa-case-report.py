@@ -42,8 +42,14 @@ def compare(case, read, observed):
         eligible = [(branch, row[metric]) for branch, row in expected.items() if row.get(metric) is not None]
         metrics[metric] = dict(correct=sum(actual.get(branch, {}).get(metric) == value for branch, value in eligible),
                                total=len(eligible))
-    complete = read is not None and case.get("completeReference") is True and bool(expected) and observed is not None and not extra and actual.keys() == expected.keys() and all(
-        m["total"] == m["correct"] for m in metrics.values()) and all(row.get("decision") is not None for row in expected.values())
+    complete = (
+        read is not None and case.get("completeReference") is True and bool(expected)
+        and actual.keys() == expected.keys()
+        and all(row.get("decision") and row.get("period") and row.get("evidence")
+                and (row["decision"] != "eligible" or row.get("amount") is not None)
+                for row in expected.values())
+        and all(actual[b].get(m) == row.get(m) for b, row in expected.items() for m in METRICS)
+    )
     return dict(blocker=blocker, reviewed=bool(expected), amountReference=bool(metrics["amount"]["total"]),
                 extra=extra, metrics=metrics, full=complete)
 

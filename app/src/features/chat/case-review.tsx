@@ -15,7 +15,7 @@ const currency = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "
 export const labels: Record<FactInput["field"], string> = {
   birthChildCount: "Liczba urodzonych dzieci", prenatalLeaveDays: "Dni urlopu przed porodem", maternityCourse: "Przebieg urlopu macierzyńskiego",
   childDeathDate: "Data śmierci dziecka", debtSettlement: "Rozliczenie zadłużenia", accountArrears: "Zadłużenie składkowe", sicknessCertificate: "Zwolnienie lekarskie", benefitHistory: "Historia świadczeń",
-  birthDate: "Data urodzenia dziecka", insuranceTitle: "Tytuł ubezpieczenia", employerRef: "Płatnik",
+  birthDate: "Data urodzenia wskazanej osoby", insuranceTitle: "Tytuł ubezpieczenia", employerRef: "Płatnik",
   monthlyGrossPay: "Wynagrodzenie brutto", monthlyContributionBasis: "Podstawa składek", submissionStatus: "Status wniosku", benefitRequest: "Wnioskowane świadczenie",
   deliveryDate: "Data porodu", sicknessCoverage: "Ubezpieczenie chorobowe", otherCoverage: "Inny tytuł ubezpieczenia",
   postInsuranceException: "Wyjątek po ustaniu ubezpieczenia", maternityPayVariant: "Wariant wypłaty", payrollRegime: "Sposób ustalania płacy",
@@ -95,13 +95,15 @@ export function DecisionCard({ assessment, historical, documents, local, prior }
 }
 
 const codeChoices: Partial<Record<FactInput["field"], [string, string][]>> = {
-  benefitRequest: [["maternity", "Zasiłek macierzyński"], ["paternity", "Za okres ojcowski"], ["parental", "Za okres rodzicielski"]],
-  insuranceTitle: [["employee", "Pracownik"], ["zleceniobiorca", "Zleceniobiorca"], ["dzialalnosc", "Działalność"]],
-  sicknessCoverage: [["covered", "Podlega"], ["excluded", "Nie podlega"]],
+  benefitRequest: [["maternity", "Zasiłek macierzyński"], ["sickness", "Zasiłek chorobowy"], ["paternity", "Za okres ojcowski"], ["parental", "Za okres rodzicielski"]],
+  insuranceTitle: [["employee", "Pracownik"], ["employee_childcare_leave", "Pracownica na urlopie wychowawczym"], ["zleceniobiorca", "Zleceniobiorca"], ["dzialalnosc", "Działalność"]],
+  sicknessCoverage: [["covered", "Podlega"], ["excluded", "Nie podlega"], ["ended", "Ubezpieczenie ustało"]],
   otherCoverage: [["none", "Potwierdzony brak innych tytułów"]],
-  postInsuranceException: [["none", "Potwierdzony brak wyjątku"]],
-  maternityPayVariant: [["100-70", "100% / 70%"], ["815", "81,5%"]],
-  payrollRegime: [["full_time_fixed_full_months", "Pełny etat, stałe wynagrodzenie, pełne miesiące"]],
+  postInsuranceException: [["none", "Potwierdzony brak wyjątku"], ["employer_death", "Śmierć pracodawcy"],
+    ["employer_bankruptcy", "Upadłość pracodawcy"], ["employer_liquidation", "Likwidacja pracodawcy"],
+    ["unlawful_termination_final_judgment", "Prawomocne orzeczenie o niezgodnym z prawem rozwiązaniu umowy"]],
+  maternityPayVariant: [["100-70", "100% / 70%"], ["815", "81,5% – podano stawkę"], ["815_full_election", "81,5% – wniosek lub deklaracja na cały należny okres, z rodzicielskim w pierwszym roku życia"]],
+  payrollRegime: [["full_time_fixed_full_months", "Pełny etat, stałe wynagrodzenie, pełne miesiące"], ["full_year_contribution_months", "Pełne 12 miesięcy podstaw składek chorobowych"]],
 };
 export function FactForm({ draft, manual, save, cancel }: { draft?: FactDraft; manual?: ManualSource; save: (fact: FactInput, previous?: EvidenceFact) => void; cancel: () => void }) {
   const heading = useRef<HTMLElement>(null);
@@ -120,9 +122,11 @@ export function FactForm({ draft, manual, save, cancel }: { draft?: FactDraft; m
   const [title, setTitle] = useState(f?.titleRef ?? "");
   const choice = draft?.choice;
   const [error, setError] = useState("");
+  const [filedOn, setFiledOn] = useState(f?.asOf ?? "");
   const [pointInTime, setPointInTime] = useState(Boolean(f?.asOf && !f.validFrom));
   const kind = factValueKinds[field];
   const money = kind === "money";
+  const showFilingDate = !choice && !pointInTime && (field === "benefitRequest" || field === "maternityPayVariant");
   return <form className={s.reviewForm} onSubmit={event => {
     event.preventDefault();
     if (choice) {
@@ -138,6 +142,7 @@ export function FactForm({ draft, manual, save, cancel }: { draft?: FactDraft; m
     const parsedValue = money ? { kind: "money", currency: "PLN", grosze: /^\d+(\.\d{1,2})?$/.test(raw) ? Number(whole + fraction.padEnd(2, "0")) : NaN }
       : kind === "count" ? { kind, count: /^\d+$/.test(value) ? Number(value) : NaN } : kind === "date" ? { kind: "date", date: value } : { kind: "code", code: value };
     const result = factInput.safeParse({ subjectId: subject, field, value: parsedValue, ...(pointInTime ? { asOf: from } : { validFrom: from, ...(to ? { validTo: to } : {}) }),
+      ...(showFilingDate && filedOn ? { asOf: filedOn } : {}),
       ...(payer ? { payerRef: payer } : {}), ...(title ? { titleRef: title } : {}),
       source: manual ? { kind: "document", referenceId: manual.referenceId, page: manual.page } : { kind: "declaration", referenceId: crypto.randomUUID() } });
     if (!result.success) { setError("Sprawdź wartość oraz kolejność dat."); return; }
@@ -160,6 +165,7 @@ export function FactForm({ draft, manual, save, cancel }: { draft?: FactDraft; m
       <option value="period">Od dnia lub przez okres</option><option value="day">Stan na jeden dzień</option></select></label>}
     <label>{pointInTime ? "Stan na dzień" : "Obowiązuje od"}<input type="date" readOnly={!!(choice?.candidate.validFrom || choice?.candidate.asOf)} required value={from} onChange={e => setFrom(e.target.value)} /></label>
     {!pointInTime && <label>Obowiązuje do<input type="date" readOnly={!!choice} min={from} value={to} onChange={e => setTo(e.target.value)} /></label>}
+    {showFilingDate && <label>Data złożenia wniosku lub deklaracji<input type="date" value={filedOn} onChange={e => setFiledOn(e.target.value)} /></label>}
     <label>Tytuł w tej sprawie<select required={money} value={title} onChange={e => setTitle(e.target.value)}>
       <option value="">Wybierz tytuł</option>{Array.from(new Set(["title-A","title-B",...(f?.titleRef ? [f.titleRef] : [])])).map(v => <option key={v}>{v}</option>)}</select></label>
     <label>Płatnik w tej sprawie<select required={money} value={payer} onChange={e => setPayer(e.target.value)}>

@@ -39,7 +39,7 @@ export function FamilyCard({ kind, title, text }: { kind: IllustrationKind; titl
   }
 
   return (
-    <li className={styles.card} onMouseEnter={play}>
+    <li className={styles.card} onPointerEnter={play}>
       <div className={styles.art}>
         {/* Nowy klucz to nowy obieg od pierwszej klatki */}
         <Illustration key={run} kind={kind} playing={run > 0} />

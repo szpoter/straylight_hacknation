@@ -46,7 +46,7 @@ export type ScopeGate =
   | null;
 
 export const AMOUNT_MESSAGE =
-  "Te źródła nie wystarczają do wyliczenia Waszej wypłaty. Brak podstawy w tych materiałach nie oznacza, że świadczenie Wam nie przysługuje.";
+  "Ogólne zasady nie wystarczają do wyliczenia indywidualnej wypłaty. Jakiego świadczenia i ilu dni dotyczy pytanie? W kalkulatorze sprawy możesz podać podstawę wymiaru lub dane o wynagrodzeniu.";
 export const BENEFIT_800_MESSAGE =
   "W tych źródłach nie ma podstawy do odpowiedzi o świadczeniu 800+. To nie przesądza, czy Ci przysługuje.";
 export const PURPOSE_QUESTION = "Pytasz o wniosek o urlop do pracodawcy czy o wypłatę zasiłku?";

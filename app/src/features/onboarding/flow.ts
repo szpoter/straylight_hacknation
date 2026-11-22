@@ -297,7 +297,7 @@ export function joinNames(names: string[]): string {
 }
 
 /**
- * Krótka reakcja Zusika nad pytaniem — nawiązuje do poprzedniej odpowiedzi, jak w aplikacjach
+ * Krótka reakcja nad pytaniem (bez maskotki) — nawiązuje do poprzedniej odpowiedzi, jak w aplikacjach
  * typu Duolingo. Spokojny, ciepły ton (DESIGN.md), bez wykrzyknika na każdym kroku.
  */
 export function zusikLine(step: StepId, answers: Answers): string {
@@ -305,7 +305,7 @@ export function zusikLine(step: StepId, answers: Answers): string {
   const many = childTotal(answers) > 1;
   switch (step) {
     case "situation":
-      return "Cześć, jestem Zusik. Kilka pytań i ułożę Ci plan spraw — od urzędu po urlop.";
+      return "Kilka pytań i ułożę Ci plan spraw — od urzędu po urlop.";
     case "role":
       switch (answers.situation) {
         case "ciaza":
@@ -374,7 +374,8 @@ export function planReadyText(name: string): string {
 }
 
 export function warningCount(answers: Answers): number {
-  return (answers.jobChange === "tak" ? 1 : 0) + (answers.employment === "nie-pracuje" ? 1 : 0);
+  const employment = answers.employment;
+  return (answers.jobChange === "tak" ? 1 : 0) + (employment === "nie-pracuje" || employment === "dzialalnosc" || employment === "inne" ? 1 : 0);
 }
 
 const MONTHS = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień"];

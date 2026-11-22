@@ -222,7 +222,7 @@
   }
 
   .headline {
-    font-size: clamp(32px, 6.5vh, 44px);
+    font-size: clamp(28px, min(11vw, 6.5vh), 44px);
   }
 
   .card {

@@ -41,13 +41,14 @@ export function adminCookieOptions(maxAge = ADMIN_SESSION_SECONDS) {
 
 /** The signed-in admin login, or null. Memoised per request. */
 export const getAdmin = cache(async (): Promise<string | null> => {
+  // Read the request even when the signing secret is supplied only at runtime.
+  const raw = (await cookies()).get(ADMIN_COOKIE)?.value;
   let secret: string;
   try {
     secret = requireEnv("SESSION_SIGNING_SECRET");
   } catch {
     return null;
   }
-  const raw = (await cookies()).get(ADMIN_COOKIE)?.value;
   return decodeAdminSession(raw, secret, nowSeconds());
 });
 

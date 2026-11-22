@@ -1,3 +1,4 @@
+import type { ChatModelOptions } from "../chat-model";
 import type { Pool, PoolClient } from "pg";
 import { caseInput, docInput, MemoryError, profileInput, profilePatch, type MemoryRepository } from "../memory/contract";
 import { withMemoryTransaction } from "../memory/repository";
@@ -6,7 +7,7 @@ import { etag, matchRevision, pagination } from "./guards";
 import { ApiProblem, json, problem, readJson, requireOrigin } from "./http";
 import { replayable, type SavedResponse, type WriteResult } from "./replay";
 
-type Dependencies = { owner: string; pool: Pool; secret: string; publicAnswer: (question: string, previous?: Message) => Promise<Answer> };
+type Dependencies = { owner: string; pool: Pool; secret: string; publicAnswer: (question: string, previous?: Message, options?: ChatModelOptions) => Promise<Answer> };
 
 async function context(repo: MemoryRepository, db: PoolClient, owner: string, caseId: string, lock: boolean): Promise<Context> {
   const first = await repo.getCase(caseId);

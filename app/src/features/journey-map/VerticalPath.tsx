@@ -4,8 +4,10 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { SpeechBubble } from "@/components/mascot/Zusik";
 import { cn } from "@/components/ui/cn";
 import { ArrowUpIcon, ListIcon } from "@/components/ui/icons";
+import { formatShort } from "@/lib/demo/dates";
 import type { StageId, Stop } from "@/lib/demo/types";
 import { STAGE_ORDER } from "@/lib/plan/path";
+import { pathStatus } from "@/lib/plan/status";
 import { type PathItem } from "./layout";
 import { CollapsedStage, StopLabel, StopNode, nodeTone, pawnBubble, pedestalGeometry } from "./shared";
 import { TravellingZusik } from "./TravellingZusik";
@@ -17,6 +19,38 @@ const PERIOD = 150; // px na radian — łagodna fala w dół, równe zakręty
 
 /** Fala zależna od wysokości (jak na komputerze od x): węzły leżą na jednej gładkiej krzywej. */
 const xAt = (y: number) => 50 + (Math.round(Math.sin(y / PERIOD + 0.4) * 1000) / 1000) * AMP;
+
+/*
+ * Szacunek wysokości podpisów, żeby rzędy nie nachodziły na siebie. Celowo ostrożny: wiersz
+ * podpisu na wąskim telefonie (320–390 px) mieści ok. 16–20 znaków, liczymy 14. Za dużo
+ * miejsca daje tylko trochę więcej odstępu; za mało — nachodzące napisy.
+ */
+const GAP = 20; // odstęp między podpisem a kolejnym rzędem
+const LABEL_LINE = 19.25; // text-meta 14 px, leading-snug
+const LABEL_CHARS = 14;
+const NODE_HALF = pedestalGeometry(64).height / 2;
+const NODE_ABOVE = NODE_HALF + 12; // wybrany podest unosi się, plakietka ostrzeżenia wystaje nad nim
+const COLLAPSED_HALF = pedestalGeometry(72).height / 2;
+const PAWN_ABOVE = ROW / 2 + 132; // górna krawędź dymka nad pionkiem (patrz niżej)
+
+const labelLines = (text: string | undefined, max: number) => (text ? Math.min(max, Math.ceil(text.length / LABEL_CHARS)) : 0);
+
+/** Wysokość podpisu StopLabel: nazwa (≤ 2 wiersze), status, termin albo warunek (≤ 2 wiersze). */
+function labelHeight(stop: Stop): number {
+  const due = stop.due ? `do ${formatShort(stop.due)}` : stop.condition;
+  const n = labelLines(stop.title, 2) + labelLines(pathStatus(stop), 2) + labelLines(due, 2);
+  return n * LABEL_LINE + (n - 1) * 2;
+}
+
+/** Ile rząd zajmuje nad i pod swoim środkiem (podest z podpisem). */
+function extent(item: PathItem, pawnRow: boolean): { above: number; below: number } {
+  if (item.type === "collapsed") return { above: COLLAPSED_HALF, below: COLLAPSED_HALF + 8 + 2 * LABEL_LINE };
+  const label = Math.max(...item.stops.map(labelHeight));
+  // Para: podpisy pod podestami. Pojedynczy: podpis z boku, wyśrodkowany na podeście.
+  const { above, below } =
+    item.stops.length === 2 ? { above: NODE_ABOVE, below: NODE_HALF + 8 + label } : { above: Math.max(NODE_ABOVE, label / 2), below: Math.max(NODE_HALF, label / 2) };
+  return { above: pawnRow ? Math.max(above, PAWN_ABOVE) : above, below };
+}
 
 type Line = { kind: "stage"; stage: StageId; y: number } | { kind: "item"; item: PathItem; i: number; y: number; x: number };
 
@@ -52,22 +86,29 @@ export function VerticalPath({
   const [pawnVisible, setPawnVisible] = useState(true);
   const [currentStage, setCurrentStage] = useState<StageId>(items[0]?.stage ?? "przed");
 
-  // Układ: nagłówek etapu, potem jego rzędy.
+  // Układ: nagłówek etapu, potem jego rzędy. Odstęp między rzędami to co najmniej ROW, a gdy
+  // podpisy są wysokie (para przystanków ma podpisy pod spodem), tyle, żeby na siebie nie nachodziły.
   const lines: Line[] = [];
-  let y = 0;
+  let prevCenter = -ROW / 2;
+  let prevBottom = 0;
   let lastStage: StageId | undefined;
   items.forEach((item, i) => {
     if (item.stage !== lastStage) {
-      lines.push({ kind: "stage", stage: item.stage, y });
-      y += STAGE_ROW;
+      const top = Math.max(prevCenter + ROW / 2, prevBottom);
+      lines.push({ kind: "stage", stage: item.stage, y: top });
+      prevCenter = top + STAGE_ROW - ROW / 2;
+      prevBottom = top + STAGE_ROW;
       lastStage = item.stage;
     }
-    const isPawnRow = item.type === "row" && item.index === pawnIndex;
-    if (isPawnRow) y += 140; // miejsce na dymek i lewitującego Bąbelka
-    lines.push({ kind: "item", item, i, y: y + ROW / 2, x: xAt(y + ROW / 2) });
-    y += ROW;
+    const { above, below } = extent(item, item.type === "row" && item.index === pawnIndex);
+    // Rząd pionka: dodatkowe 140 px na dymek i lewitującego Bąbelka (jak dotąd).
+    const extra = item.type === "row" && item.index === pawnIndex ? 140 : 0;
+    const center = Math.max(prevCenter + ROW + extra, prevBottom + GAP + above);
+    lines.push({ kind: "item", item, i, y: center, x: xAt(center) });
+    prevCenter = center;
+    prevBottom = center + below;
   });
-  const height = y + 16;
+  const height = Math.max(prevCenter + ROW / 2, prevBottom) + 16;
 
   // Pozycja Bąbelka-pionka: nad podestem pionka (w parze: lewa ≈ 25%, prawa ≈ 75% szerokości).
   const pawnLine = lines.find((l): l is Extract<Line, { kind: "item" }> => l.kind === "item" && l.item.type === "row" && l.item.index === pawnIndex);
@@ -116,7 +157,7 @@ export function VerticalPath({
       {/* Przyklejony baner etapu */}
       <div className="sticky top-[72px] z-30 -mx-gutter-mobile mb-2 bg-background px-gutter-mobile py-2">
         <div className="flex items-center gap-3 rounded-full bg-secondary py-1.5 pl-5 pr-1.5">
-          <p className="min-w-0 flex-1 truncate text-meta" aria-live="polite">
+          <p className="min-w-0 flex-1 text-meta" aria-live="polite">
             <span className="font-medium">
               Etap {stageNumber} · {stageLabels[currentStage]}
             </span>
@@ -152,7 +193,7 @@ export function VerticalPath({
           if (item.type === "collapsed") {
             return (
               <div key={`c-${item.stage}`} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${line.x}%`, top: line.y }}>
-                <CollapsedStage item={item} onExpand={onExpand} labelClassName="top-full mt-2" />
+                <CollapsedStage item={item} onExpand={onExpand} labelClassName="top-full mt-2 max-w-[48vw]" />
               </div>
             );
           }

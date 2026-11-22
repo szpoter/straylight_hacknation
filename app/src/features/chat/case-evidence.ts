@@ -1,3 +1,4 @@
+import { MIN_CONFIDENCE } from "@/lib/ocr/birth-certificate";
 import { factInput, type CaseDocument, type DocInput, type FactInput } from "@/lib/zusik/memory/contract";
 
 import { claimFields, documentDay, documentMoney } from "./case-claim-fields";
@@ -9,7 +10,7 @@ export type LocalLocator = { clientDocumentId: string; page: number; lineStart: 
 type DateScope = Pick<FactInput, "validFrom" | "validTo" | "asOf">;
 export type EvidenceCandidate = Pick<FactInput, "field" | "value"> & DateScope & { locator: LocalLocator };
 export type PageRole = DocumentKind | "medical_leave" | "history";
-type Column = "month" | "monthlyGrossPay" | "monthlyContributionBasis" | "monthlyEmployeeDeduction" | "monthlyPayAfterDeduction" | "other";
+type Column = "year" | "month" | "monthlyGrossPay" | "monthlyContributionBasis" | "monthlyEmployeeDeduction" | "monthlyPayAfterDeduction" | "other";
 export type LocalCasePage = {
   page: number;
   text: string;
@@ -30,8 +31,12 @@ function foldLabel(text: string) {
   return text.normalize("NFD").replace(/\p{M}/gu, "").replace(/ł/gi, "l").toLowerCase().trim();
 }
 
+export function containsRegistryBirthTitle(text: string) {
+  return /\bodpis\s+(?:skrocony|zupelny)\s+aktu\s+urodzenia\b/u.test(foldLabel(text));
+}
+
 export function containsDecision(text: string) {
-  return /\b(decyzj[ae]|przyznano|odmowiono|odmowa prawa|odmawia(?:m| sie)|przyznaje(?:my| sie)? zasilek|ustalona kwota zasilku|rozstrzygniecie)\b/u.test(foldLabel(text));
+  return /\b(d[ \t]*e[ \t]*c[ \t]*y[ \t]*z[ \t]*j[ \t]*[ae]|wzorzec\s+wyniku|klucz\s+odpowiedzi|przyznano|odmowiono|odmowa prawa|odmawia(?:m| sie)|przyznaje(?:my| sie)? zasilek|ustalona kwota zasilku|rozstrzygniecie)\b/u.test(foldLabel(text));
 }
 
 function classify(text: string): PageRole | undefined {
@@ -52,7 +57,11 @@ function columns(line: string) {
   return line.split(/\s*[|;\t]\s*| {2,}/u).map(cell => cell.trim());
 }
 
-function monthScope(value: string) {
+function monthScope(value: string, year?: string) {
+  if (year !== undefined) {
+    if (!/^\d{4}$/u.test(year) || !/^\d{1,2}$/u.test(value)) return;
+    value = year + "-" + value.padStart(2, "0");
+  }
   const normalized = value.replace(/^(\d{2})[./](\d{4})$/u, "$2-$1");
   const validFrom = documentDay(normalized + "-01");
   if (!validFrom) return;
@@ -61,11 +70,16 @@ function monthScope(value: string) {
   return { validFrom, validTo: end.toISOString().slice(0, 10) };
 }
 
-export function analyzeCasePage(clientDocumentId: string, page: number, text: string, method: LocalCasePage["method"], previous?: LocalCasePage, confidence?: number): LocalCasePage {
+function rowPeriod(cells: string[], table: Column[]) {
+  if (cells.length === table.length) return monthScope(cells[table.indexOf("month")] ?? "", cells[table.indexOf("year")]);
+}
+
+export function analyzeCasePage(clientDocumentId: string, page: number, text: string, method: LocalCasePage["method"], previous?: LocalCasePage, confidence?: number, positionedLines?: PageLine[]): LocalCasePage {
   const folded = foldLabel(text);
   const identified = classify(folded.replace(/^[ \t]*(?:\d+[.)]\s*)?/gmu, "").replace(/(odpis (?:skrocony|zupelny)|aktu)\s*\n\s*/gu, "$1 "));
-  const continued = /(?:ciag dalszy|kontynuacja|c\.d\.)/u.test(folded) ||
-    (previous?.role === "payroll" && /^(?:\d{4}-\d{2}|\d{2}[./]\d{4})[ |;\t]/mu.test(folded));
+  const firstLine = folded.split("\n", 1)[0];
+  const continued = /^(?:ciag dalszy|kontynuacja|c\.d\.)(?:\s|$)/u.test(firstLine) ||
+    (previous?.role === "payroll" && previous.table && rowPeriod(columns(firstLine), previous.table));
   const role = identified ?? (previous?.role === "decision" || continued ? previous?.role : undefined) ?? "other";
   const kind = role === "medical_leave" ? "certificate" : role === "history" ? "other" : role;
   const result: LocalCasePage = { page, text, method, kind, role, status: "read", candidates: [], confidence };
@@ -100,19 +114,28 @@ export function analyzeCasePage(clientDocumentId: string, page: number, text: st
     if (kind !== "payroll") continue;
     const cells = columns(label);
     if (cells.includes("miesiac") || cells.includes("miesiac nalezny")) {
-      table = cells.map(cell => /^miesiac(?: nalezny)?$/u.test(cell) ? "month" :
+      if (positionedLines && (positionedLines[index]?.confidence ?? 0) < MIN_CONFIDENCE) {
+        table = undefined;
+        result.reason = "ambiguous_field";
+        continue;
+      }
+      table = cells.map(cell => cell === "rok" ? "year" : /^miesiac(?: nalezny)?$/u.test(cell) ? "month" :
         /^(?:wynagrodzenie )?brutto(?: \(zl\)| pln)?$/u.test(cell) ? "monthlyGrossPay" :
         /^podstawa skladki chorobowej(?: \(zl\)| pln)?$/u.test(cell) ? "monthlyContributionBasis" :
         /^(?:skladki potracone|potracone skladki(?: pracownika)?|skladki pracownika)(?: \(zl\)| pln)?$/u.test(cell) ? "monthlyEmployeeDeduction" :
         /^(?:kwota|wynagrodzenie) po potraceniu(?: skladek)?(?: \(zl\)| pln)?$/u.test(cell) ? "monthlyPayAfterDeduction" : "other");
-      if (table.filter(c => c === "month").length !== 1) table = undefined;
+      if (table.filter(c => c === "month").length !== 1 || table.filter(c => c === "year").length > 1) table = undefined;
       continue;
     }
-    if (!table || !/\d/u.test(label)) continue;
-    const period = monthScope(cells[table.indexOf("month")] ?? "");
-    if (!period || cells.length !== table.length) { result.reason = "ambiguous_field"; continue; }
+    if (!table) continue;
+    if (!/\d/u.test(label)) {
+      if (cells.length > 1) table = undefined;
+      continue;
+    }
+    const period = rowPeriod(cells, table);
+    if (!period) { result.reason = "ambiguous_field"; continue; }
     for (const [column, type] of table.entries()) {
-      if (type === "month" || type === "other") continue;
+      if (type === "month" || type === "year" || type === "other") continue;
       const value = documentMoney(cells[column]);
       if (value) result.candidates.push({ field: type, value, ...period, locator: { ...locator, column: column + 1 } });
       else result.reason = "ambiguous_field";

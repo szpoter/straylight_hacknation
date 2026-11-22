@@ -3,10 +3,11 @@
  * (aktualna → szkic/wypełniony → zatwierdzony → wysłano → korekta). Czyste funkcje — testy w
  * tests/documents-flow.test.ts. Przekazanie potwierdza rodzic.
  */
+import { isValidIso } from "@/lib/rules/dates";
 import { OLA } from "@/lib/family/ola";
-import { HANDOFF_RECORDED, isHandoffEntry } from "@/lib/plan/status";
-import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/forms";
-import { formatLong } from "@/lib/demo/dates";
+import { HANDOFF_RECORDED, IN_PERSON_COMPLETED, SIMULATED_HANDOFF } from "@/lib/plan/status";
+import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/form-fields";
+import { formatLong, todayInPoland } from "@/lib/demo/dates";
 import type { CaseEvent, CaseState } from "@/lib/demo/types";
 
 export type Values = Record<string, string>;
@@ -47,9 +48,11 @@ export function allFields(def: FormDef): FormField[] {
 
 /** Wartości startowe: najpierw zapisane przez rodzica, w pustych miejscach podstawione z planu. */
 export function initialValues(def: FormDef, ctx: PrefillContext, saved: Values = {}): Values {
+  // Starsze szkice trzymały imię i nazwisko razem, także gdy nowy druk ma osobne rubryki.
+  const draftContext = { ...ctx, parentName: saved.rodzic?.trim() || ctx.parentName, childName: saved.dziecko?.trim() || ctx.childName };
   const values: Values = {};
   for (const f of allFields(def)) {
-    const prefilled = f.prefill?.(ctx);
+    const prefilled = f.prefill?.(draftContext);
     if (prefilled) values[f.id] = prefilled;
   }
   return { ...values, ...saved };
@@ -59,17 +62,39 @@ export function isVisible(field: FormField, values: Values): boolean {
   return !field.showIf || values[field.showIf.field] === field.showIf.equals;
 }
 
-/** PESEL: 11 cyfr i poprawna cyfra kontrolna. */
-export function validPesel(value: string): boolean {
+/** Numer wpisany w grupach („900512 12349”, „900512-12349”) → same cyfry. */
+export function compactDigits(value: string): string {
+  return value.replace(/[\s-]+/g, "");
+}
+
+/** PESEL: 11 cyfr i poprawna cyfra kontrolna. Spacje i myślniki między cyframi są dozwolone. */
+export function validPesel(raw: string): boolean {
+  const value = compactDigits(raw);
   if (!/^\d{11}$/.test(value)) return false;
   const w = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
   const sum = w.reduce((acc, weight, i) => acc + weight * Number(value[i]), 0);
   return (10 - (sum % 10)) % 10 === Number(value[10]);
 }
 
-/** Numer rachunku: 26 cyfr (spacje i „PL” na początku dozwolone). */
+/** Komunikat przy PESEL-u mówi, co dokładnie jest nie tak: znaki, liczba cyfr albo cyfra kontrolna. */
+export function peselError(raw: string): string | undefined {
+  const value = compactDigits(raw);
+  if (!/^\d+$/.test(value)) return "PESEL składa się tylko z cyfr";
+  if (value.length !== 11) return `PESEL ma 11 cyfr, a wpisano ${value.length}`;
+  if (!validPesel(value)) return "Ostatnia cyfra PESEL-u (kontrolna) nie zgadza się z pozostałymi. Sprawdź, czy nie ma literówki";
+  return undefined;
+}
+
+/** Numer rachunku: 26 cyfr (spacje, myślniki i „PL” na początku dozwolone). */
 export function normalizeAccount(value: string): string {
-  return value.replace(/\s+/g, "").replace(/^PL/i, "");
+  return compactDigits(value).replace(/^PL/i, "");
+}
+
+function accountError(raw: string): string | undefined {
+  const value = normalizeAccount(raw);
+  if (!/^\d+$/.test(value)) return "Numer rachunku składa się z cyfr. Możesz je oddzielić spacjami";
+  if (value.length !== 26) return `Numer rachunku ma 26 cyfr, a wpisano ${value.length}`;
+  return undefined;
 }
 
 export function validateField(field: FormField, raw: string | undefined): string | undefined {
@@ -77,11 +102,11 @@ export function validateField(field: FormField, raw: string | undefined): string
   if (!value) return field.required ? (field.type === "radio" || field.type === "select" ? "Wybierz jedną odpowiedź" : `Uzupełnij pole „${field.label}”`) : undefined;
   switch (field.type) {
     case "pesel":
-      return validPesel(value) ? undefined : "PESEL ma 11 cyfr. Sprawdź, czy nie ma literówki";
+      return peselError(value);
     case "account":
-      return /^\d{26}$/.test(normalizeAccount(value)) ? undefined : "Numer rachunku ma 26 cyfr";
+      return accountError(value);
     case "date":
-      return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? undefined : "Wpisz datę, np. 10.11.2026";
+      return isValidIso(value) ? undefined : "Wpisz datę, np. 10.11.2026";
     case "select":
     case "radio":
       return field.options && !field.options.includes(value) ? "Wybierz jedną z odpowiedzi" : undefined;
@@ -91,8 +116,8 @@ export function validateField(field: FormField, raw: string | undefined): string
 }
 
 /** Błędy widocznych pól (ukryte przez `showIf` nie blokują wniosku). */
-export function validate(def: FormDef, values: Values): Errors {
-  const errors: Errors = {};
+export function validate(def: FormDef, values: Values, today = todayInPoland()): Errors {
+  const errors = { ...def.validate?.(values, today) };
   for (const f of allFields(def)) {
     if (!isVisible(f, values)) continue;
     const error = validateField(f, values[f.id]);
@@ -104,13 +129,15 @@ export function validate(def: FormDef, values: Values): Errors {
 /** Ile wymaganych pól jest już poprawnie uzupełnionych. */
 export function progress(def: FormDef, values: Values): { done: number; total: number } {
   const required = allFields(def).filter((f) => f.required && isVisible(f, values));
-  return { done: required.filter((f) => !validateField(f, values[f.id])).length, total: required.length };
+  const errors = validate(def, values);
+  return { done: required.filter((f) => !errors[f.id]).length, total: required.length };
 }
 
 /** Wartość do ekranu „Sprawdź odpowiedzi”. */
 export function displayValue(field: FormField, value: string | undefined): string {
   if (!value) return "—";
   if (field.type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return formatLong(value);
+  if (field.type === "pesel") return compactDigits(value);
   if (field.type === "account") return normalizeAccount(value).replace(/(\d{2})(\d{4})(\d{4})(\d{4})(\d{4})(\d{4})(\d{4})/, "$1 $2 $3 $4 $5 $6 $7");
   return value;
 }
@@ -140,13 +167,16 @@ export function canEdit(state: CaseState): boolean {
   return state === "aktualna" || state === "szkic" || state === "wypelniony" || state === "zatwierdzony" || state === "wezwanie";
 }
 
-/** Ręczny wpis o przekazaniu poza aplikacją. */
-export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false): CaseEvent[] {
-  const history = existing.map(e => isHandoffEntry(e.title)
-    ? { ...e, title: "Poprzedni wpis o przekazaniu", detail: "Wpis dotyczący wcześniejszej wersji wniosku." }
-    : e);
-  return [...history, {
-    date: today, title: HANDOFF_RECORDED, author: "Ty",
-    detail: `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${CHANNEL_LABEL[channel].label}.`,
+/** Każde przekazanie i korekta mają osobny wpis w historii. */
+export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false, receiptName?: string): CaseEvent[] {
+  const delivery = CHANNEL_LABEL[channel];
+  const detail = `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${delivery.label}.`;
+  if (delivery.mode === "online") {
+    const receipt = receiptName ?? delivery.receipt;
+    return [...existing, { date: today, title: SIMULATED_HANDOFF, author: "Demo", detail: `${detail} Przykładowe potwierdzenie: ${receipt}.`, simulatedReceipt: receipt }];
+  }
+  return [...existing, {
+    date: today, title: delivery.mode === "osobiscie" ? IN_PERSON_COMPLETED : HANDOFF_RECORDED,
+    author: "Ty", detail,
   }];
 }

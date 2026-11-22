@@ -1,0 +1,94 @@
+[
+  {
+    "id": "alkohol",
+    "questions": [
+      "Czy ubezpieczonemu wypłaca się chorobowe od samego początku, jeśli zachorował wskutek nadużywania alkoholu?"
+    ],
+    "requiredEvidence": [
+      "uz-16-1"
+    ],
+    "facts": [
+      "pierwszych 5 dni"
+    ],
+    "group": "covered"
+  },
+  {
+    "id": "orzeczenie",
+    "questions": [
+      "Jak wykazuje się, że do niezdolności do pracy doprowadziło umyślne wykroczenie ubezpieczonego?"
+    ],
+    "requiredEvidence": [
+      "uz-15-1"
+    ],
+    "facts": [
+      "prawomocnego orzeczenia sądu"
+    ],
+    "group": "covered"
+  },
+  {
+    "id": "odwołanie",
+    "questions": [
+      "Kto rozpatruje odwołanie, kiedy rodzicowi odmówiono wyprawki Dobry Start?"
+    ],
+    "requiredEvidence": [
+      "of-dobry-9-2"
+    ],
+    "facts": [
+      "prezesa zus"
+    ],
+    "group": "covered"
+  },
+  {
+    "id": "komornik",
+    "questions": [
+      "Czy komornik może zająć pieniądze z programu Dobry Start na dług rodzica?"
+    ],
+    "requiredEvidence": [
+      "of-dobry-1-3"
+    ],
+    "facts": [
+      "nie podlega.{0,20}egzekucji|nie może zająć"
+    ],
+    "group": "covered"
+  },
+  {
+    "id": "rodzice",
+    "questions": [
+      "Jak dzieli się dofinansowanie Aktywnie w żłobku, jeśli sąd ustalił opiekę naprzemienną?"
+    ],
+    "requiredEvidence": [
+      "of-zlobek-4-2"
+    ],
+    "facts": [
+      "połow"
+    ],
+    "group": "covered"
+  },
+  {
+    "id": "nietypowy-termin",
+    "questions": [
+      "Ile godzin od wygrania aukcji na hulajnogę przewiduje Dobry Start na zarejestrowanie pojazdu?"
+    ],
+    "requiredEvidence": [],
+    "facts": [],
+    "group": "unsupported"
+  },
+  {
+    "id": "nietypowy-organ",
+    "questions": [
+      "Która komisja szachowa zatwierdza odwołanie od decyzji o świadczeniu Aktywnie w żłobku?"
+    ],
+    "requiredEvidence": [],
+    "facts": [],
+    "group": "unsupported"
+  },
+  {
+    "id": "nietypowa-kwota",
+    "questions": [
+      "Ile euro zwraca Aktywnie w domu za wymianę okna w domu rodzica?"
+    ],
+    "requiredEvidence": [],
+    "facts": [],
+    "group": "unsupported"
+  }
+]

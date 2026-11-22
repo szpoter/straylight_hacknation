@@ -48,3 +48,13 @@ export function conversationInput(raw: string, scenario: CaseName) {
   else if (/^(?:(?:a |i )?(?:co (?:umiesz|potrafisz|robisz)|(?:w czym|jak) (?:mozesz |moglbys )?(?:mi )?pomoc|kim jestes|jak (?:to )?dziala)|pomoc|pomoz(?: mi)?|potrzebuje pomocy|mam (?:pytanie|problem|sprawe)|(?:jestes|slyszysz mnie)|co (?:tam|slychac)|od czego zaczac|o co chodzi(?: w tej sprawie)?)(?: zusiku?)?$/.test(simple)) reply = prompts[scenario];
   return { text: text || original, reply };
 }
+
+export function sourceIntent(question: string): "case" | "previous" | "auto" | null {
+  const q = question.trim().toLocaleLowerCase("pl").replace(/[?!.]+$/u, "").trim();
+  if (/^(?:podaj|pokaż|wskaż|na jakiej podstawie|skąd).*(?:poprzedni|ostatni).*(?:odpowied|wiadomoś)/u.test(q)) return "previous";
+  if (/^(?:a )?(?:skąd|jak (?:obliczono|wyliczono)|z czego wynikają)/u.test(q)
+      && /(?:te |nasze |moje )(?:kwoty|stawki|wyliczenia)|(?:kalkulator|formularz|porównani|dane rodziny|dane marty|dane (?:w|z) (?:mojej|tej) spraw)/u.test(q)) return "case";
+  if (/^(?:podaj|pokaż|wskaż) (?:mi )?(?:cytat[y]?|źródł[ao]|podstawę prawną)(?: (?:do|z) (?:tej|poprzedniej|ostatniej) odpowiedzi)?$/u.test(q)) return "previous";
+  if (/^(?:(?:proszę o|podaj|pokaż|wskaż|przypomnij)(?: mi)? (?:podstawę(?: prawną)?|źródło)(?: (?:tej (?:informacji|zasady|odpowiedzi)|tego (?:przelewu|stwierdzenia)|o (?:koncie|przelewie)))?|skąd (?:to )?wiadomo o (?:tym|tej) (?:przelewie|zasadzie|informacji))$/u.test(q)) return "previous";
+  return /^(?:a )?(?:skąd (?:są |masz |pochodzą |wziąłeś )?(?:te |takie )?(?:dane|informacje|to|kwoty|stawki)|skąd (?:to |o tym )?wiesz|jakie (?:jest |są )?źródł[oa]|na jakiej podstawie|źródł[oa])$/u.test(q) ? "auto" : null;
+}

@@ -37,6 +37,10 @@ export function addMonths(iso: string, months: number): string {
   return toIso(target);
 }
 
+export function monthEnd(iso: string): string {
+  return addDays(addMonths(`${iso.slice(0, 7)}-01`, 1), -1);
+}
+
 /** Whole days from a to b (b − a). */
 export function daysBetween(a: string, b: string): number {
   return Math.round((parseIso(b).getTime() - parseIso(a).getTime()) / 86_400_000);

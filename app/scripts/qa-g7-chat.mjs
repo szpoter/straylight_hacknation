@@ -1,4 +1,5 @@
 // The 68 public G7 prompts through the ordinary composer. Rank receipts are measured by zusik-eval-g7.ts.
+// --memory-manifest-only checks the eight memory scenarios against all versioned public source links.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -13,16 +14,17 @@ const raw = readFileSync(dir+"g7.jsonl","utf8");
 assert.equal(createHash("sha256").update(raw).digest("hex"),"51ca95e212e91b7541369e327e70d467ed14ab6e02e590f2cadc9387e6b63781");
 const rows = raw.trim().split("\n").map(s=>JSON.parse(s));
 const cardAudit = process.argv.includes("--cards-only");
+const memoryAudit = process.argv.includes("--memory-manifest-only");
 const gold = JSON.parse(readFileSync(dir+"gold-evidence.json","utf8"));
 const alts = JSON.parse(readFileSync(dir+"equivalent-evidence.json","utf8"));
-const cardSources = new Map();
-if (cardAudit) for (const pack of ["oferta","publiczne","marta"]) {
+const manifestSources = new Map();
+if (cardAudit || memoryAudit) for (const pack of ["oferta","publiczne","marta"]) {
   const base = "corpus/" + pack + "/";
   const manifest = JSON.parse(readFileSync(base+"manifest.json","utf8"));
   const urls = new Map(manifest.documents.map(doc => [doc.id,doc.url]));
   for (const line of readFileSync(base+(manifest.fragmentsFile ?? "fragments.jsonl"),"utf8").trim().split("\n")) {
     const f = JSON.parse(line);
-    cardSources.set(f.corpusVersion+"/"+f.logicalId,urls.get(f.documentId)?.split("#")[0]);
+    manifestSources.set(f.corpusVersion+"/"+f.logicalId,urls.get(f.documentId)?.split("#")[0]);
   }
 }
 const browser = await chromium.launch({channel:"chrome"});
@@ -51,9 +53,9 @@ async function submit(page, question) {
   const turn = chat.locator("[data-knowledge-turn]").last();
   await turn.getByText(msg.answer,{exact:true}).first().waitFor({timeout:8000});
   const links = await turn.getByRole("link").evaluateAll(nodes=>nodes.map(n=>n.href));
-  const visibleRefs = msg.citations.filter(c=>c.kind==="public_source" && links.includes(c.publicUrl) &&
-    gold[c.ref]?.url.split("#")[0] === c.publicUrl.split("#")[0]).map(c=>c.ref);
-  return {answer:msg.answer,visibleRefs,turn,msg,clarify:!msg.citations.length && /\?|podaj|doprecyzuj|potrzeb|brak|zakres/iu.test(msg.answer)};
+  const visible = msg.citations.filter(c=>c.kind==="public_source" && links.includes(c.publicUrl) &&
+    (memoryAudit ? manifestSources.get(c.version+"/"+c.ref) : gold[c.ref]?.url.split("#")[0]) === c.publicUrl.split("#")[0]);
+  return {answer:msg.answer,visibleRefs:visible.map(c=>c.ref),visible,turn,msg,clarify:!msg.citations.length && /\?|podaj|doprecyzuj|potrzeb|brak|zakres/iu.test(msg.answer)};
 }
 async function inspectCards(sample, required) {
   if (!sample.turn) return "no_cards";
@@ -66,7 +68,7 @@ async function inspectCards(sample, required) {
     const links = await articles.filter({hasText:title}).getByRole("link").evaluateAll(nodes=>nodes.map(n=>n.href));
     for (const ref of card.citationIds) {
       const c = sample.msg.citations.find(c => c.kind === "public_source" && c.ref === ref);
-      if (!c || !links.includes(c.publicUrl) || cardSources.get(c.version+"/"+ref) !== c.publicUrl.split("#")[0]) return "card_source_unverified";
+      if (!c || !links.includes(c.publicUrl) || manifestSources.get(c.version+"/"+ref) !== c.publicUrl.split("#")[0]) return "card_source_unverified";
     }
   }
   return "pass";
@@ -107,6 +109,8 @@ async function measure(row) {
     }
     if (row.id==="memory-separate") return priorAnswered && sample.clarify && !sample.visibleRefs.length ? "pass" : "new_context";
     if (row.id==="memory-correction") return /\b15\b|piętnaście/iu.test(sample.answer) ? "pass" : "correction";
+    if (memoryAudit) console.log(JSON.stringify({id:row.id,expected:[row.expected,...(alts[row.id]?.[row.expected]??[])],
+      visible:(sample.visible??[]).map(({ref,version,publicUrl})=>({ref,version,publicUrl}))}));
     return refs(row.expected) ? "pass" : "previous_source";
   } finally { await ctx.close(); }
 }
@@ -114,6 +118,7 @@ async function lane(pending) {
   for (const row of pending) {
     let code;
     try { code = await measure(row); } catch (e) { code = e.message==="http" ? "http" : "incomplete_turn"; }
+    console.log(JSON.stringify({ id: row.id, group: row.group, outcome: code }));
     const group = tally[row.group]??={passed:0,total:0};
     group.total++;
     if (code==="pass") group.passed++;
@@ -121,7 +126,8 @@ async function lane(pending) {
   }
 }
 try {
-  const pending=(cardAudit ? rows.filter(row=>row.group==="opportunity") : rows).values();
+  const selectedGroup = memoryAudit ? "memory" : cardAudit ? "opportunity" : null;
+  const pending=(selectedGroup ? rows.filter(row=>row.group===selectedGroup) : rows).values();
   await Promise.all([lane(pending),lane(pending)]);
   console.log(JSON.stringify({groups:tally,errors:failures}));
   if(Object.values(tally).some(g=>g.passed!==g.total)) process.exitCode=1;

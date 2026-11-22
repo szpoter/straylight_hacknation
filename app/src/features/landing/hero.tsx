@@ -62,6 +62,7 @@ export function Hero() {
               Otwórz profil Oli
               <ArrowRightIcon />
             </ButtonLink>
+            <ButtonLink href="/app/rozmowa" variant="secondary">Rozmawiaj z Zusikiem</ButtonLink>
             <p className={styles.note}>
               <SourceIcon />
               <span>Na podstawie informacji ZUS i{NBSP}gov.pl</span>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
+import { maternityParametersOn } from "@/lib/rules/maternity-schedule";
 import Link from "next/link";
 import { cn } from "@/components/ui/cn";
 import { FieldError, TextField } from "@/components/ui/Field";
@@ -7,7 +9,7 @@ import { Panel } from "@/components/ui/Panel";
 import { Segmented } from "@/components/ui/Segmented";
 import { formatLong } from "@/lib/demo/dates";
 import { addDays } from "@/lib/rules/dates";
-import { basisMonthLabels, basisOn, limitsFor, MATERNITY_PARAMETERS as P, type BasisResult, type EventKind, type InsuranceTitle } from "@/lib/rules/maternity";
+import { basisMonthLabels, basisOn, limitsFor, type BasisResult, type EventKind, type InsuranceTitle } from "@/lib/rules/maternity";
 import { supplementaryWeeks, type BasisMode, type CalcForm, type FormProblem, type ParentForm } from "@/lib/plan/benefit-form";
 import { Check, monthLabel, pln, Stepper, weeksUnit } from "./ui";
 
@@ -32,6 +34,7 @@ const problemFor = (problems: FormProblem[], field: string) => problems.find((p)
 // ---------- 1. Sytuacja ----------
 
 export function SituationSection({ form, update, problems }: { form: CalcForm; update: Update; problems: FormProblem[] }) {
+  const schedule = useRuleSchedule();
   const dateLabel = form.event === "birth" ? "Data porodu (albo przewidywana)" : form.event === "adoption" ? "Data przyjęcia dziecka i wniosku do sądu" : "Data przyjęcia dziecka do rodziny zastępczej";
   const sup = supplementaryWeeks(form);
   return (
@@ -70,13 +73,13 @@ export function SituationSection({ form, update, problems }: { form: CalcForm; u
           value={String(form.children)}
           onChange={(v) => {
             const children = Number(v);
-            const l = limitsFor({ children, zaZyciem: form.zaZyciem });
+            const l = limitsFor({ ...form, children }, schedule);
             update({ children, parentalWeeksA: Math.min(form.parentalWeeksA, l.maxParentalOneParent) });
           }}
           options={["1", "2", "3", "4", "5"].map((v) => ({ value: v, label: v === "5" ? "5+" : v }))}
         />
         <p className="text-meta text-on-surface-variant">
-          Urlop {form.event === "birth" ? "macierzyński" : "na warunkach macierzyńskiego"}: {limitsFor(form).maternityWeeks} tyg. · rodzicielski: {limitsFor(form).parentalPoolWeeks} tyg. dla Was obojga.
+          Urlop {form.event === "birth" ? "macierzyński" : "na warunkach macierzyńskiego"}: {limitsFor(form, schedule).maternityWeeks} tyg. · rodzicielski: {limitsFor(form, schedule).parentalPoolWeeks} tyg. dla Was obojga.
         </p>
       </div>
       <div className="flex flex-col gap-5 border-t border-outline pt-8">
@@ -84,7 +87,7 @@ export function SituationSection({ form, update, problems }: { form: CalcForm; u
         {form.event === "birth" && (
           <Check
             label="Dziecko urodziło się martwe"
-            hint="Zasiłek macierzyński przysługuje za 8 tygodni po porodzie, w wysokości 100%. Bez urlopu rodzicielskiego."
+            hint="Zasiłek macierzyński przysługuje za 8 tygodni po porodzie, według stawki macierzyńskiej. Bez urlopu rodzicielskiego."
             checked={form.stillbirth}
             onChange={(stillbirth) => update({ stillbirth })}
           />
@@ -107,7 +110,7 @@ export function SituationSection({ form, update, problems }: { form: CalcForm; u
         <div className="flex flex-col gap-4">
           <Check
             label="Wcześniak albo pobyt dziecka w szpitalu po porodzie"
-            hint="Uzupełniający urlop macierzyński: tydzień za każdy tydzień w szpitalu, po urlopie macierzyńskim, płatny 100%."
+            hint="Uzupełniający urlop macierzyński: tydzień za każdy tydzień w szpitalu, po urlopie macierzyńskim, płatny według stawki macierzyńskiej."
             checked={form.hospital}
             onChange={(hospital) => update({ hospital })}
           />
@@ -171,6 +174,7 @@ function ParentBasis({
   basis: BasisResult | null;
   problems: FormProblem[];
 }) {
+  const schedule = useRuleSchedule();
   const employee = form.title === "pracownik";
   const amountLabel = employee ? "Wynagrodzenie brutto" : "Podstawa składki chorobowej";
   const months = date ? basisMonthLabels(date) : [];
@@ -182,7 +186,7 @@ function ParentBasis({
       {employee && (
         <Check
           label="Pełny etat"
-          hint="Podstawa nie może być niższa niż płaca minimalna po odjęciu 13,71%."
+          hint="Podstawa nie może być niższa niż płaca minimalna po odjęciu składek społecznych."
           checked={form.fullTime}
           onChange={(fullTime) => set({ fullTime })}
         />
@@ -264,7 +268,7 @@ function ParentBasis({
           </dl>
           <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-outline pt-3">
             <span>Podstawa wymiaru zasiłku</span>
-            <strong>{pln(basisOn(basis, date || "2026-01-01"))}</strong>
+            <strong>{pln(basisOn(basis, date || "2026-01-01", schedule))}</strong>
           </p>
         </div>
       )}
@@ -275,7 +279,7 @@ function ParentBasis({
 export function BasisSection({ form, update, problems, basisA, basisB }: { form: CalcForm; update: Update; problems: FormProblem[]; basisA: BasisResult | null; basisB: BasisResult | null }) {
   return (
     <Panel className="flex flex-col gap-8">
-      <SectionHead n={2} title="Podstawa zasiłku" lead="Średnie wynagrodzenie (albo podstawa składek) z 12 miesięcy, minus 13,71% składek. Każdy rodzic ma własną." />
+      <SectionHead n={2} title="Podstawa zasiłku" lead="Średnie wynagrodzenie (albo podstawa składek) z 12 miesięcy, po odjęciu składek społecznych. Każdy rodzic ma własną." />
       <ParentBasis who="A" label="Ty" form={form.A} date={form.date} onChange={(A) => update({ A })} basis={basisA} problems={problems} />
       <div className="border-t border-outline pt-8">
         <Check
@@ -299,7 +303,9 @@ const WORK = [
 ];
 
 export function SplitSection({ form, update }: { form: CalcForm; update: Update }) {
-  const l = limitsFor(form);
+  const schedule = useRuleSchedule();
+  const P = maternityParametersOn(schedule, form.date);
+  const l = limitsFor(form, schedule);
   const birth = form.event === "birth";
   const maxTransfer = Math.max(l.maternityWeeks - form.weeksBeforeBirth - P.motherMinWeeksAfterBirth, 0);
   const used = form.parentalWeeksA + (form.hasB ? form.parentalWeeksB : 0);
@@ -308,7 +314,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
   if (birth && form.stillbirth) {
     return (
       <Panel className="flex flex-col gap-8">
-        <SectionHead n={3} title="Urlop" lead="Urlop macierzyński 8 tygodni po porodzie, zasiłek 100% podstawy." />
+        <SectionHead n={3} title="Urlop" lead="Urlop macierzyński 8 tygodni po porodzie, zasiłek według stawki macierzyńskiej." />
         <Stepper
           label="Urlop macierzyński wykorzystany przed porodem"
           hint="Tygodnie przed porodem liczą się osobno — 8 tygodni przysługuje po porodzie."
@@ -333,14 +339,14 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
           value={form.variant}
           onChange={(variant) => update({ variant })}
           options={[
-            { value: "815", label: "81,5% przez cały okres" },
-            { value: "100-70", label: "100%, potem 70%" },
+            { value: "815", label: `${P.rateAveraged.toLocaleString("pl-PL")}% przez cały okres` },
+            { value: "100-70", label: `${P.rateMaternity.toLocaleString("pl-PL")}%, potem ${P.rateParental.toLocaleString("pl-PL")}%` },
           ]}
         />
         <p className="text-meta text-on-surface-variant">
           {form.variant === "815"
-            ? `Wniosek o 81,5% za macierzyński i rodzicielski składa się najpóźniej 21 dni po ${birth ? "porodzie" : "przyjęciu dziecka"}${deadline ? ` — do ${formatLong(deadline)}` : ""}. 9 tygodni drugiego rodzica jest zawsze płatne 70%.`
-            : "Urlop macierzyński 100% podstawy, rodzicielski 70%. Ten wariant obowiązuje, gdy nie złożysz wniosku o 81,5% w ciągu 21 dni."}
+            ? `Wniosek o stawkę uśrednioną składa się najpóźniej ${P.averagedRequestDays} dni po ${birth ? "porodzie" : "przyjęciu dziecka"}${deadline ? ` — do ${formatLong(deadline)}` : ""}. Wyłączna część drugiego rodzica jest płatna według stawki rodzicielskiej.`
+            : "Przy tym wariancie każdy okres jest płatny według swojej stawki."}
         </p>
       </div>
 
@@ -419,7 +425,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
         <div className="flex flex-col gap-5 border-t border-outline pt-8">
           <div className="flex flex-col gap-1">
             <p className="text-label font-medium">Urlop ojcowski</p>
-            <p className="text-meta text-on-surface-variant">2 tygodnie płatne 100%, osobno od rodzicielskiego. Do ukończenia przez dziecko 12 miesięcy, w jednej albo dwóch częściach.</p>
+            <p className="text-meta text-on-surface-variant">Odrębny okres wypłaty poza urlopem rodzicielskim. Do ukończenia przez dziecko 12 miesięcy, w jednej albo dwóch częściach.</p>
           </div>
           <div className="grid items-end gap-6 md:grid-cols-2">
             <Segmented

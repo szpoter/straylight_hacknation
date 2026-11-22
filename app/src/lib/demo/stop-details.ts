@@ -2,12 +2,24 @@
 export type StopDetails = { paragraphs: string[]; sources: Array<{ label: string; url: string }>; checked: string; uwagi?: string };
 
 export const CHECKED = "2026-11-21";
+/** Sprawdzenie nowych opisów (zadanie ZUS s. 12–13, pkt a i h) z tekstem przepisów w korpusie. */
+const CHECKED_LAW = "2026-11-22";
+
+// Te same pliki co w korpusie Zusika (manifest: Dz.U. 2026 poz. 854 i 1316, Poradnik ZUS 2026).
+const UZ_PDF = "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf";
+const RZ_PDF = "https://eli.gov.pl/api/acts/DU/2026/1316/text.pdf";
+const PORADNIK_PDF =
+  "https://www.zus.pl/documents/10182/167567/1184_26%2BPoradnik%2Bdla%2Brodzic%C3%B3w.pdf/9378de60-151e-9b9f-ba65-abdf41d9f5b4?download=true&version=1.0";
 
 export const S = {
+  leaveRequests: { label: "Dz.U. 2025 poz. 322 · Wnioski pracowników dotyczące rodzicielstwa", url: "https://eli.gov.pl/eli/DU/2025/322/ogl" },
   govParentBenefit: { label: "gov.pl · Uzyskaj świadczenie rodzicielskie", url: "https://www.gov.pl/web/gov/uzyskaj-swiadczenie-rodzicielskie" },
   zielonaLinia: { label: "zielonalinia.gov.pl · Uprawnienia związane z rodzicielstwem", url: "https://zielonalinia.gov.pl/uprawnienia-zwiazane-z-rodzicielstwem/" },
   usc: { label: "gov.pl · Zgłoś urodzenie dziecka", url: "https://www.gov.pl/web/gov/zglos-urodzenie-dziecka" },
-  odpisInfo: { label: "gov.pl · Odpis aktu stanu cywilnego — informacje ogólne", url: "https://www.gov.pl/web/gov/odpis-aktu-stanu-cywilnego-informacje-ogolne" },
+  odpisInfo: { label: "gov.pl · Uzyskaj odpis aktu stanu cywilnego", url: "https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu" },
+  uscApp: { label: "gov.pl · Zgłoś urodzenie w mObywatelu", url: "https://www.gov.pl/web/cyfryzacja/zglos-urodzenie-dziecka-w-mobywatelu-bez-umawiania-wizyty-w-urzedzie-bez-kolejek" },
+  pozDruki: { label: "Minister Zdrowia · Wzory deklaracji wyboru POZ", url: "https://eli.gov.pl/eli/DU/2020/1143/ogl" },
+  pozUstawa: { label: "Ustawa o podstawowej opiece zdrowotnej, art. 9–10", url: "https://eli.gov.pl/api/acts/DU/2025/515/text.pdf" },
   zusKomu: { label: "zus.pl · Zasiłek macierzyński — komu przysługuje", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/komu-przysluguje" },
   zusDocs: { label: "zus.pl · Zasiłek macierzyński — niezbędne dokumenty", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty" },
   zusAmount: { label: "zus.pl · Wysokość zasiłku macierzyńskiego", url: "https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-macierzynski/wysokosc" },
@@ -31,7 +43,7 @@ export const S = {
   },
   zusSickAmount: { label: "zus.pl · Zasiłek chorobowy — wysokość", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-chorobowy/z-ubezpieczenia-chorobowego/wysokosc" },
   zus800: { label: "zus.pl · Świadczenie wychowawcze 800 plus", url: "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/swiadczenie-wychowawcze-800-plus" },
-  zus800Term: { label: "zus.pl · Termin złożenia wniosku o 800 plus ma znaczenie", url: "https://www.zus.pl/en/-/termin-z%C5%82o%C5%BCenia-wniosku-o-800-plus-ma-znaczenie" },
+  zus800Term: { label: "Ustawa o pomocy państwa w wychowywaniu dzieci, art. 18", url: "https://api.sejm.gov.pl/eli/acts/DU/2026/508/text.pdf" },
   nfzInsurance: { label: "pacjent.gov.pl · Jak ubezpieczyć członka rodziny", url: "https://pacjent.gov.pl/artykul/jak-ubezpieczyc-czlonka-rodziny" },
   poz: { label: "pacjent.gov.pl · Wybierz dziecku lekarza rodzinnego", url: "https://pacjent.gov.pl/aktualnosc/wybierz-dziecku-lekarza-rodzinnego" },
   prenatal: { label: "pacjent.gov.pl · Program badań prenatalnych", url: "https://pacjent.gov.pl/program-profilaktyczny/program-badan-prenatalnych" },
@@ -44,6 +56,19 @@ export const S = {
   govParental: { label: "gov.pl · Urlop rodzicielski", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" },
   govRights: { label: "gov.pl · Uprawnienia związane z rodzicielstwem", url: "https://www.gov.pl/web/rodzina/uprawnienia-zwiazane-z-rodzicielstwem" },
   bizProtected: { label: "biznes.gov.pl · Pracownicy chronieni przed zwolnieniem", url: "https://www.biznes.gov.pl/pl/portal/00202" },
+  // Akty prawne i Poradnik ZUS z korpusu Zusika (app/corpus/publiczne/manifest.json); strona PDF w kotwicy.
+  uzArt2a: { label: "Ustawa zasiłkowa, art. 2a (zaległości w składkach)", url: `${UZ_PDF}#page=3` },
+  uzArt18: { label: "Ustawa zasiłkowa, art. 18 (świadczenie rehabilitacyjne: komu i jak długo)", url: `${UZ_PDF}#page=7` },
+  uzArt19: { label: "Ustawa zasiłkowa, art. 19 (wysokość świadczenia rehabilitacyjnego)", url: `${UZ_PDF}#page=8` },
+  uzArt29: { label: "Ustawa zasiłkowa, art. 29 (komu przysługuje zasiłek macierzyński)", url: `${UZ_PDF}#page=9` },
+  uzArt30: { label: "Ustawa zasiłkowa, art. 30–31 (zasiłek po ustaniu ubezpieczenia, wysokość zasiłku)", url: `${UZ_PDF}#page=11` },
+  uzArt61: { label: "Ustawa zasiłkowa, art. 61 (kto wypłaca zasiłki)", url: `${UZ_PDF}#page=26` },
+  rzPar17: { label: "Rozporządzenie o dokumentach zasiłkowych, § 15 i § 17", url: `${RZ_PDF}#page=4` },
+  rzZal5: { label: "Rozporządzenie o dokumentach zasiłkowych, załącznik nr 5 (wniosek o świadczenie rehabilitacyjne)", url: `${RZ_PDF}#page=16` },
+  poradnikPozor: { label: "ZUS · Poradnik dla rodziców 2026, s. 9 (umowa dla pozoru, wysokość wynagrodzenia)", url: `${PORADNIK_PDF}#page=9` },
+  poradnikZlecenie: { label: "ZUS · Poradnik dla rodziców 2026, s. 10 i 12 (zleceniobiorcy)", url: `${PORADNIK_PDF}#page=10` },
+  poradnikFirma: { label: "ZUS · Poradnik dla rodziców 2026, s. 14 (działalność: dobrowolne ubezpieczenie chorobowe)", url: `${PORADNIK_PDF}#page=14` },
+  poradnikSick: { label: "ZUS · Poradnik dla rodziców 2026, s. 25 (okres zasiłkowy, świadczenie rehabilitacyjne)", url: `${PORADNIK_PDF}#page=25` },
 } as const;
 
 export const STOP_DETAILS: Record<string, StopDetails> = {
@@ -92,22 +117,70 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "W ciąży zasiłek przysługuje przez cały czas niezdolności do pracy, najdłużej przez 270 dni. W innych przypadkach limit wynosi zwykle 182 dni.",
       "Pracownik za pierwsze 33 dni choroby w roku (14 dni po 50. roku życia) dostaje wynagrodzenie chorobowe od pracodawcy. Zasiłek z ZUS przysługuje od kolejnego dnia. Inni ubezpieczeni dostają zasiłek od pierwszego dnia.",
       "Prawo do zasiłku chorobowego masz po 30 dniach nieprzerwanego ubezpieczenia obowiązkowego albo po 90 dniach dobrowolnego.",
+      "Jeśli wykorzystasz cały okres zasiłkowy, a leczenie rokuje powrót do pracy, możesz ubiegać się o świadczenie rehabilitacyjne. Opisujemy je w osobnej sprawie na ścieżce.",
     ],
-    sources: [S.zusSickAmount, S.zusSickRight],
+    sources: [S.zusSickAmount, S.zusSickRight, S.poradnikSick],
     checked: CHECKED,
     uwagi:
       "Źródło w fixtures (zus.pl · zasiłek macierzyński — dokumenty) nie dotyczy zasiłku chorobowego. Zmieniono je na strony ZUS o wysokości i okresie zasiłku chorobowego. Te strony nie wspominają o kodzie „B” na zwolnieniu. biznes.gov.pl (Pracownicy chronieni przed zwolnieniem) wymienia kod „B” tylko jako potwierdzenie ciąży.",
+  },
+
+  ryzyka: {
+    paragraphs: [
+      "Umowa zawarta dla pozoru. Ubezpieczenie jest skuteczne tylko wtedy, gdy naprawdę pracujesz. ZUS może zbadać, w jakich okolicznościach zawarto umowę o pracę albo umowę zlecenia. Jeśli uzna, że zawarto ją dla pozoru albo w celu obejścia prawa, wydaje decyzję o niepodleganiu ubezpieczeniom społecznym. Bez ubezpieczenia chorobowego nie ma prawa do zasiłku chorobowego ani macierzyńskiego.",
+      "Podwyżka wynagrodzenia w ciąży. ZUS może zbadać, czy wynagrodzenie w umowie o pracę ustalono w uzasadnionej wysokości, i wydać decyzję w sprawie podstawy wymiaru składek. Jeśli uzna, że podwyżka miała służyć tylko wyższemu zasiłkowi, ustali niższą podstawę, więc zasiłek też będzie niższy.",
+      "Podstawą zasiłku pracownika jest średnie wynagrodzenie z 12 miesięcy kalendarzowych przed miesiącem, w którym powstało prawo do zasiłku. Jedna podwyżka tuż przed porodem zmienia więc tylko część tej średniej.",
+      "Brak ubezpieczenia chorobowego w dniu porodu. Zasiłek macierzyński przysługuje, jeśli urodzisz dziecko (albo przyjmiesz je na wychowanie) w czasie ubezpieczenia chorobowego.",
+      "Przy umowie zlecenia i przy własnej firmie ubezpieczenie chorobowe jest dobrowolne. Trzeba się do niego zgłosić (druk ZUS ZUA). Co do zasady obejmuje Cię najwcześniej od dnia złożenia zgłoszenia, nie wstecz. Przy firmie ustaje m.in. wtedy, gdy wygasa obowiązek ubezpieczeń emerytalnego i rentowych, np. po jej zamknięciu.",
+      "Jeśli umowa o pracę skończy się przed porodem, zasiłek macierzyński przysługuje tylko w wyjątkach: śmierć, upadłość lub likwidacja pracodawcy, rozwiązanie umowy z naruszeniem prawa stwierdzone prawomocnym wyrokiem sądu albo umowa na czas określony przedłużona z mocy prawa do dnia porodu.",
+      "Zaległości w składkach przy własnej firmie. Jeśli w dniu powstania prawa do zasiłku zaległość przekracza 1% minimalnego wynagrodzenia, zasiłek nie przysługuje do czasu spłaty całego długu. Bez spłaty w ciągu 6 miesięcy prawo się przedawnia.",
+    ],
+    sources: [S.poradnikPozor, S.zusBase, S.uzArt29, S.uzArt30, S.poradnikZlecenie, S.poradnikFirma, S.uzArt2a],
+    checked: CHECKED_LAW,
+    uwagi:
+      "Trzy ryzyka z treści zadania ZUS (s. 9–10, pkt H): pozorna umowa lub działalność, podwyższenie podstawy w ciąży, brak ubezpieczenia na dzień porodu. Poradnik ZUS 2026 (s. 9, 12) opisuje pozorną umowę o pracę i zlecenia oraz badanie wysokości wynagrodzenia. O obniżeniu podstawy po podwyżce w ciąży mówi treść zadania (s. 10). Pozorną działalność gospodarczą treść zadania wymienia, ale korpus jej nie opisuje, dlatego w tekście jej nie ma. Kod reguł tego nie liczy: to informacja.",
+  },
+
+  "zasilek-likwidacja": {
+    paragraphs: [
+      "Jeśli w ciąży Twoja umowa o pracę wygaśnie z powodu śmierci pracodawcy albo pracodawca rozwiąże ją z powodu ogłoszenia upadłości lub likwidacji i nie zapewni Ci innego zatrudnienia, do dnia porodu dostajesz zasiłek w wysokości zasiłku macierzyńskiego.",
+      "Zasiłek wynosi tyle, co zasiłek macierzyński za okres urlopu macierzyńskiego, czyli 100% podstawy wymiaru. Podstawę ustala się tak samo jak przy zasiłku macierzyńskim.",
+      "Po porodzie przysługuje Ci zasiłek macierzyński, choć ubezpieczenie ustało w czasie ciąży.",
+      "Zasiłek macierzyński po ustaniu ubezpieczenia przysługuje też wtedy, gdy umowę rozwiązano z Tobą w ciąży z naruszeniem prawa, a stwierdził to prawomocny wyrok sądu.",
+      "Zasiłek za okres po ustaniu ubezpieczenia wypłaca ZUS, a nie były pracodawca.",
+      "Do wniosku dołącz: zaświadczenie lekarskie na zwykłym druku, że byłaś w ciąży w czasie zatrudnienia, świadectwo pracy albo inny dokument z przyczyną końca umowy oraz oświadczenie, że nie zapewniono Ci innego zatrudnienia.",
+      "Ten zasiłek dotyczy tylko pracownic, czyli osób zatrudnionych na umowę o pracę.",
+    ],
+    sources: [S.uzArt30, S.rzPar17, S.uzArt61],
+    checked: CHECKED_LAW,
+    uwagi:
+      "Art. 30 ust. 3 ustawy zasiłkowej daje zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu tylko przy śmierci, upadłości lub likwidacji pracodawcy. Treść zadania (s. 4) dopisuje do tej listy naruszenie prawa przy rozwiązaniu umowy, ale ustawa wiąże je wyłącznie z zasiłkiem macierzyńskim po porodzie (art. 30 ust. 1 pkt 2) i tak to opisujemy. 100% podstawy: treść zadania (s. 4) i art. 31 ust. 1. Podstawa: art. 47. Wypłata przez ZUS: art. 61 ust. 1 pkt 2 lit. d.",
+  },
+
+  "swiadczenie-rehabilitacyjne": {
+    paragraphs: [
+      "Zasiłek chorobowy w ciąży przysługuje najdłużej przez 270 dni, czyli przez okres zasiłkowy. Wlicza się do niego zwolnienia bez przerwy oraz zwolnienia z przerwą krótszą niż 61 dni.",
+      "Jeśli po wykorzystaniu zasiłku chorobowego nadal nie możesz pracować, a dalsze leczenie lub rehabilitacja lecznicza rokują odzyskanie zdolności do pracy, przysługuje Ci świadczenie rehabilitacyjne.",
+      "Przysługuje przez czas potrzebny do odzyskania zdolności do pracy, najdłużej przez 12 miesięcy.",
+      "O tym, czy świadczenie Ci przysługuje i na jak długo, orzeka lekarz orzecznik ZUS. Od jego orzeczenia możesz wnieść sprzeciw do komisji lekarskiej ZUS. Orzeczenie jest podstawą decyzji o świadczeniu.",
+      "Świadczenie wynosi 90% podstawy wymiaru zasiłku chorobowego przez pierwsze 3 miesiące i 75% przez pozostały okres. Jeśli niezdolność do pracy przypada w okresie ciąży, wynosi 100% podstawy.",
+      "Nie przysługuje m.in. osobie, która ma prawo do emerytury, renty z tytułu niezdolności do pracy albo zasiłku dla bezrobotnych.",
+      "We wniosku o świadczenie część wypełniasz Ty, a część płatnik składek i płatnik zasiłku chorobowego, np. pracodawca.",
+    ],
+    sources: [S.poradnikSick, S.uzArt18, S.uzArt19, S.rzZal5],
+    checked: CHECKED_LAW,
+    uwagi: "Treść zadania ZUS, s. 12, pkt a. Kod reguł nie liczy tego świadczenia: to informacja.",
   },
 
   "macierzynski-przed": {
     paragraphs: [
       "Przed porodem możesz wykorzystać najwyżej 6 tygodni urlopu macierzyńskiego i zasiłku macierzyńskiego.",
       "Ten czas odlicza się od całego urlopu, np. 20 tygodni przy jednym dziecku. Po porodzie wykorzystujesz pozostałą część. Jeśli nie zaczniesz urlopu wcześniej, zaczyna się on w dniu porodu.",
-      "Do zasiłku za okres przed porodem potrzebne jest zaświadczenie lekarskie o przewidywanej dacie porodu.",
+      "Podaj pracodawcy dzień, od którego chcesz rozpocząć urlop. Dołącz kopię zaświadczenia lekarskiego o przewidywanej dacie porodu, chyba że jest już w Twoich aktach osobowych.",
       "Zasiłek za urlop macierzyński wynosi 100% podstawy albo 81,5%, jeśli w ciągu 21 dni po porodzie złożysz wniosek o zasiłek za cały okres.",
     ],
-    sources: [S.zusMaternity, S.govMaternity, S.zusDocs],
-    checked: CHECKED,
+    sources: [S.govMaternity, S.leaveRequests, S.zusMaternity],
+    checked: CHECKED_LAW,
   },
 
   "zaplanuj-urlopy": {
@@ -151,14 +224,12 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
     paragraphs: [
       "Urodzenie dziecka zgłasza matka albo ojciec w ciągu 21 dni od wystawienia karty urodzenia. Kartę wystawia lekarz lub położna i w ciągu 3 dni przekazuje ją do urzędu stanu cywilnego.",
       "W urzędzie zgłaszasz urodzenie w USC właściwym dla miejsca urodzenia, z dowodem osobistym lub paszportem. Online potrzebujesz profilu zaufanego, e-dowodu albo podpisu kwalifikowanego, a od 1 stycznia 2026 r. także adresu do e-Doręczeń.",
-      "Zgłoszenie jest bezpłatne. Akt urodzenia powstaje następnego dnia roboczego, jeśli urząd ma już kartę urodzenia.",
+      "Możesz też skorzystać z usługi „Zgłoś urodzenie dziecka” w aplikacji mObywatel. Zgłoszenie jest bezpłatne. Jeśli urząd ma kartę urodzenia, sporządzi akt w dniu wizyty albo następnego dnia roboczego po zgłoszeniu online.",
       "Dostajesz jeden bezpłatny odpis skrócony aktu urodzenia, powiadomienie o nadaniu numeru PESEL i potwierdzenie zameldowania, jeśli dziecko zostało zameldowane.",
       "Jeśli nie zgłosisz urodzenia w terminie, kierownik USC sam wybierze dziecku imię i zarejestruje urodzenie na podstawie karty urodzenia.",
     ],
-    sources: [S.usc],
-    checked: CHECKED,
-    uwagi:
-      "Strona gov.pl nie mówi wprost, że bez numeru PESEL nie da się zgłosić dziecka do ubezpieczenia ani złożyć wniosku o 800+. Potwierdzają to pośrednio inne strony: termin zgłoszenia do ubezpieczenia liczy się od nadania numeru PESEL (pacjent.gov.pl), a wniosek SW-R przez mZUS, Emp@tię lub bank wymaga numeru PESEL (zus.pl).",
+    sources: [S.usc, S.uscApp],
+    checked: "2026-11-22",
   },
 
   "zasilek-macierzynski": {
@@ -166,65 +237,62 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "Zasiłek macierzyński za okres urlopu macierzyńskiego i rodzicielskiego może wynosić 81,5% podstawy. Warunek: najpóźniej 21 dni po porodzie złożysz wniosek o zasiłek za cały ten okres albo za urlop macierzyński z deklaracją, że wykorzystasz pełny urlop rodzicielski.",
       "Bez takiego wniosku w terminie dostaniesz 100% za urlop macierzyński i 70% za rodzicielski.",
       "Do wniosku podajesz dane dziecka: imię i nazwisko, PESEL, datę i miejsce urodzenia, a także imię, nazwisko i PESEL drugiego rodzica.",
-      "Gdy zasiłek wypłaca ZUS, czyli u pracodawców zgłaszających do 20 ubezpieczonych, potrzebne jest też zaświadczenie Z-3 od pracodawcy. Dokumenty można złożyć papierowo albo przez PUE/eZUS.",
+      "Sprawdź w kadrach, kto wypłaca zasiłek. Jeśli pracodawca, przekaż mu podpisany wydruk albo dokument elektroniczny zgodnie z zasadami w firmie. Dołącz skrócony odpis aktu urodzenia lub jego kopię.",
+      "Jeśli wypłaca ZUS, możesz przekazać dokumenty przez kadry lub złożyć wniosek w ZUS osobiście, pocztą, przez eZUS albo e-Doręczenia. Pracodawca przekazuje zaświadczenie Z-3. ZUS pobiera polski akt z rejestru i może poprosić o odpis, jeżeli go nie uzyska.",
+      "Deklaracja na druku ZAM przewiduje co najmniej jeden dzień urlopu rodzicielskiego w pierwszym roku życia dziecka. Dziewięć tygodni przysługujących wyłącznie drugiemu rodzicowi pozostaje płatne w wysokości 70%.",
       "Zasiłek nie może być niższy niż 1000 zł miesięcznie po odjęciu zaliczki na podatek, bo płatnik podnosi go do tej kwoty.",
     ],
-    sources: [S.zusAmount, S.zusDocs, S.zusPayers],
-    checked: CHECKED,
-    uwagi:
-      "Według listy dokumentów ZUS przy urodzeniu żywego dziecka w Polsce wystarczą dane dziecka (imię, nazwisko, PESEL, data i miejsce urodzenia). ZUS wymaga odpisu skróconego aktu urodzenia tylko w szczególnych sytuacjach (martwe urodzenie, poród za granicą, uzupełniający urlop macierzyński). Pozycje „Akt urodzenia” w `prepare` i „Skrócony odpis aktu urodzenia” w `howTo.zalaczniki` warto zweryfikować.",
+    sources: [S.zusAmount, S.zusDocs, S.zusPayers, { label: "Rozporządzenie z 27.09.2026 r., § 13", url: "https://eli.gov.pl/eli/DU/2026/1316/ogl" }, { label: "ZUS · Kanały składania wniosków", url: "https://www.zus.pl/o-zus/aktualnosci/-/asset_publisher/aktualnosci/content/id/14233105" }],
+    checked: CHECKED_LAW,
   },
 
   "urlop-macierzynski": {
     paragraphs: [
       "Urlop macierzyński trwa 20 tygodni przy jednym dziecku. Przy porodzie mnogim trwa 31, 33, 35 albo 37 tygodni, zależnie od liczby dzieci.",
-      "Najwyżej 6 tygodni możesz wykorzystać przed przewidywaną datą porodu. Jeśli nie zaczniesz urlopu wcześniej, zaczyna się on w dniu porodu.",
+      "Jeśli nie korzystałaś z urlopu przed porodem, Twój urlop rozpoczyna się w dniu porodu z mocy prawa. Nie musisz składać wniosku o jego udzielenie.",
       "Matka musi wykorzystać co najmniej 14 tygodni po porodzie. Resztę może przejąć ojciec wychowujący dziecko. Wniosek o rezygnację z części urlopu składasz co najmniej 7 dni przed powrotem do pracy, a wniosek ojca o tę część co najmniej 14 dni przed jej rozpoczęciem.",
       "Za urlop przysługuje zasiłek macierzyński: 100% podstawy albo 81,5%, jeśli wniosek o taki zasiłek złożysz najpóźniej 21 dni po porodzie.",
       "W ciąży i w czasie urlopu pracodawca nie może wypowiedzieć umowy ani przygotowywać jej rozwiązania, z nielicznymi wyjątkami, np. upadłości lub likwidacji firmy.",
     ],
     sources: [S.govMaternity, S.zusMaternity],
-    checked: CHECKED,
-    uwagi:
-      "Źródło w fixtures (zus.pl · dokumenty) zmieniono na gov.pl · Urlop macierzyński i stronę ZUS o okresie zasiłku. gov.pl nie opisuje wniosku o udzielenie podstawowego urlopu macierzyńskiego po porodzie. Pisze tylko, że urlop zaczyna się najpóźniej w dniu porodu, i opisuje wnioski o rezygnację z części urlopu lub jej przekazanie.",
+    checked: CHECKED_LAW,
   },
 
   "ubezpieczenie-dziecka": {
     paragraphs: [
       "Rejestracja urodzenia w USC nie zgłasza dziecka automatycznie do ubezpieczenia zdrowotnego. Trzeba je zgłosić jako członka rodziny osoby ubezpieczonej.",
       "Masz na to 7 dni od nadania dziecku numeru PESEL.",
-      "Pracownik zgłasza dziecko przez pracodawcę, przedsiębiorca sam na formularzu ZUS ZCNA, a zarejestrowany bezrobotny w urzędzie pracy. Jeśli żaden z rodziców nie jest ubezpieczony, dziecko mogą zgłosić dziadkowie.",
+      "Jako pracownik przekazujesz dane kadrom. Pracodawca składa do ZUS druk ZCNA w ciągu 7 dni od otrzymania informacji. Wystarczy zgłoszenie przez jednego rodzica. Przedsiębiorca składa ZCNA sam, a osoba zarejestrowana jako bezrobotna przekazuje dane urzędowi pracy.",
       "Zgłoszenie nic nie kosztuje. Za członka rodziny nie płaci się dodatkowej składki, a dziecko korzysta z bezpłatnych świadczeń NFZ.",
-      "Dziecko może być zgłoszone do 18. roku życia, a jeśli się uczy, do 26. roku życia.",
+      "Dziecko może być zgłoszone do 18. roku życia, a jeśli się uczy, do 26. roku życia. Przy znacznym stopniu niepełnosprawności lub równoważnym orzeczeniu nie ma limitu wieku.",
     ],
-    sources: [S.nfzInsurance],
-    checked: CHECKED,
+    sources: [S.nfzInsurance, { label: "ZUS · Poradnik ZCNA dla płatnika", url: "https://www.zus.pl/documents/10182/167567/ZUS_ZCNA.pdf" }],
+    checked: CHECKED_LAW,
   },
 
   odpis: {
     paragraphs: [
       "Przy zgłoszeniu urodzenia dostajesz jeden bezpłatny odpis skrócony aktu urodzenia.",
-      "Odpis skrócony zawiera aktualną treść aktu, a odpis zupełny całą treść razem z późniejszymi zmianami. Jest też odpis wielojęzyczny, wydawany tylko na papierze, który w niektórych krajach UE nie wymaga tłumaczenia.",
-      "Odpis możesz dostać papierowo albo elektronicznie, z kwalifikowanym podpisem, na skrzynkę ePUAP.",
-      "Przy zwykłym wniosku o zasiłek macierzyński ZUS prosi o dane dziecka, nie o odpis. Odpis jest wymagany np. przy porodzie za granicą lub przy uzupełniającym urlopie macierzyńskim.",
+      "Odpis skrócony zawiera aktualną treść aktu, a odpis zupełny całą treść razem z późniejszymi zmianami. Wielojęzyczny odpis skrócony urząd wydaje wyłącznie na papierze.",
+      "Wniosek przekaż do dowolnego USC w Polsce osobiście, listownie albo przez gov.pl. Papierowy odpis odbierzesz w urzędzie lub pocztą. Elektroniczny trafi na Twoją skrzynkę do e-Doręczeń.",
+      "Każdy dodatkowy odpis kosztuje zwykle 22 zł za skrócony lub wielojęzyczny i 33 zł za zupełny. Wskaż we wniosku konkretny cel. Między innymi w sprawach ubezpieczenia społecznego i alimentów odpis jest bezpłatny.",
+      "W usłudze gov.pl do przelewu bankowego lub pocztowego dołączasz potwierdzenie. Jeśli wybierzesz płatność online, operator doliczy 0,59 zł za transakcję. W tym wariancie podpisujesz wniosek podpisem zaufanym.",
+      "Przy płatności online i odbiorze na skrzynkę do e-Doręczeń system może automatycznie wydać odpis aktu Twojego dziecka z pieczęcią ministra cyfryzacji po weryfikacji danych w rejestrze. Elektroniczny odpis przekaż odbiorcy jako plik.",
     ],
-    sources: [S.usc, S.odpisInfo, S.zusDocs],
-    checked: CHECKED,
-    uwagi:
-      "Nie potwierdzono treści `why`, że odpis skrócony dołącza się do wniosku o zasiłek macierzyński. Na liście ZUS przy zwykłym urodzeniu są tylko dane dziecka, a odpis pojawia się w sytuacjach szczególnych. gov.pl nie podaje opłaty za kolejne odpisy, więc kwoty nie podano. Dodano źródło gov.pl o odpisach.",
+    sources: [S.usc, S.odpisInfo],
+    checked: "2026-11-22",
   },
 
   "urlop-ojcowski": {
     paragraphs: [
       "Ojciec wychowujący dziecko ma prawo do urlopu ojcowskiego do 2 tygodni. Musi go wykorzystać, zanim dziecko skończy 12 miesięcy.",
       "Urlop można wziąć w całości albo w dwóch częściach, każda co najmniej tydzień.",
-      "Wniosek składa się pracodawcy na papierze lub elektronicznie, co najmniej 7 dni przed rozpoczęciem urlopu. Od tego momentu obowiązuje ochrona przed zwolnieniem.",
+      "Podaj pracodawcy pierwszy i ostatni dzień urlopu. Pismo złóż na papierze lub elektronicznie co najmniej 7 dni wcześniej. Dołącz odpis skrócony aktu urodzenia lub kopię i oświadczenie o wcześniejszym wykorzystaniu urlopu. Dokumentów z akt osobowych nie trzeba składać ponownie.",
+      "Po przysposobieniu dołącz kopię prawomocnego postanowienia sądu. Urlop wykorzystaj w ciągu 12 miesięcy od jego uprawomocnienia, zanim dziecko ukończy 14 lat.",
       "Za urlop ojcowski zasiłek macierzyński wynosi 100% podstawy. To samodzielne prawo ojca, niezależne od uprawnień matki.",
     ],
-    sources: [S.govPaternity, S.zusPaternity],
-    checked: CHECKED,
-    uwagi:
-      "Źródło w fixtures (zus.pl · dokumenty) zmieniono na gov.pl · Urlop ojcowski i stronę ZUS o zasiłku za ten urlop. Strony nie mówią wprost, że urlop ojcowski „nie zużywa puli urlopu rodzicielskiego”. gov.pl nazywa go samodzielnym prawem ojca. ZUS przy urlopie ojcowskim wymaga danych dziecka, nie odpisu aktu urodzenia, więc warto zweryfikować `howTo.zalaczniki`.",
+    sources: [S.govPaternity, S.leaveRequests, S.zusPaternity],
+    checked: CHECKED_LAW,
   },
 
   "800plus": {
@@ -237,22 +305,19 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
     ],
     sources: [S.zus800, S.zus800Term],
     checked: CHECKED,
-    uwagi:
-      "Strona z fixtures (artykuł ZUS o terminie) potwierdza 3 miesiące, ale dotyczy okresu do 31.05.2026. Dodano stałą stronę ZUS o świadczeniu 800 plus.",
+    uwagi: "Wniosek na kolejny okres możesz złożyć od 1 lutego. Informację o przyznaniu świadczenia znajdziesz na swoim koncie eZUS.",
   },
 
   poz: {
     paragraphs: [
-      "Deklarację wyboru lekarza, pielęgniarki lub położnej POZ dla dziecka możesz złożyć na Internetowym Koncie Pacjenta dziecka.",
-      "Automatyczny dostęp do IKP dziecka ma rodzic, który zgłosił je do ubezpieczenia w ZUS lub KRUS. Drugi rodzic może dostać dostęp przez upoważnienie.",
-      "Na koncie dziecka wybierasz w sekcji POZ przychodnię, potem lekarza lub pielęgniarkę i zatwierdzasz wybór. Przychodnia powinna rozpatrzyć deklarację w ciągu 7 dni.",
+      "Wybierasz osobno lekarza, pielęgniarkę lub położną. Podpisany druk możesz złożyć w przychodni. Dokument elektroniczny przekaż drogą uzgodnioną z placówką i podpisz podpisem zaufanym, osobistym albo kwalifikowanym.",
+      "Automatyczny dostęp do IKP dziecka ma rodzic, który zgłosił je do ubezpieczenia w ZUS lub KRUS. Aktualizacja danych może potrwać do 21 dni. Drugi rodzic może dostać dostęp przez upoważnienie.",
+      "W przeglądarce przejdź na konto dziecka w IKP. W sekcji POZ wybierz przychodnię i osobę, prześlij deklarację i sprawdź jej status. W aplikacji mojeIKP znajdziesz dane kontaktowe.",
       "Przychodnia może odrzucić deklarację, np. gdy lekarz ma pełną listę pacjentów. Wtedy skontaktuj się z nią bezpośrednio.",
-      "Bez podawania przyczyny możesz bezpłatnie zmienić lekarza, pielęgniarkę lub położną dwa razy w roku kalendarzowym.",
+      "Pierwsze dwa wybory w roku kalendarzowym są bezpłatne. Następny kosztuje 80 zł, chyba że zachodzi ustawowy wyjątek, np. przeprowadzka lub zaprzestanie udzielania świadczeń.",
     ],
-    sources: [S.poz],
-    checked: CHECKED,
-    uwagi:
-      "Strona opisuje tylko składanie deklaracji przez IKP. Nie opisuje składania jej w przychodni ani nie wiąże tego z nadaniem numeru PESEL, choć dostęp do IKP dziecka zależy od zgłoszenia go do ubezpieczenia.",
+    sources: [S.poz, S.pozDruki, S.pozUstawa, { label: "pacjent.gov.pl · Dostęp do konta dziecka", url: "https://pacjent.gov.pl/aktualnosc/gdzie-moje-dziecko" }],
+    checked: "2026-11-22",
   },
 
   rodzicielski: {
@@ -261,10 +326,21 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "Każdy z rodziców ma 9 tygodni tylko dla siebie i nie może ich przekazać drugiemu.",
       "Wniosek składasz pracodawcy na papierze lub elektronicznie, co najmniej 21 dni przed rozpoczęciem urlopu. Pracodawca musi go uwzględnić. Urlop można podzielić najwyżej na 5 części i wykorzystać do końca roku, w którym dziecko kończy 6 lat.",
       "Zasiłek za urlop rodzicielski wynosi 70% podstawy albo 81,5%, jeśli wniosek o zasiłek za cały okres złożono w ciągu 21 dni po porodzie. Za 9 tygodni drugiego rodzica zawsze wynosi 70%.",
-      "W czasie urlopu możesz pracować u tego samego pracodawcy najwyżej na pół etatu. Zasiłek maleje wtedy proporcjonalnie, a urlop wydłuża się, najdłużej do 82 tygodni (86 przy porodzie mnogim).",
+      "Wskaż dotychczasowe wykorzystanie urlopu lub zasiłku i liczbę części. Przy urodzeniu dziecka dołącz odpis skrócony aktu urodzenia lub kopię i oświadczenie, czy drugi rodzic będzie korzystać równocześnie. Przy dłuższym wymiarze dołącz kopię zaświadczenia „Za życiem”. Dokumenty z akt osobowych możesz pominąć.",
+      "Do łączenia urlopu z pracą służy osobny wniosek. W planie znajdziesz go jako „Łączenie urlopu rodzicielskiego z pracą”.",
     ],
-    sources: [S.govParental, S.zusParental],
-    checked: CHECKED,
+    sources: [S.govParental, S.leaveRequests, S.zusParental],
+    checked: CHECKED_LAW,
+  },
+
+  "rodzicielski-praca": {
+    paragraphs: [
+      "Złóż osobny wniosek u pracodawcy udzielającego urlopu co najmniej 21 dni przed rozpoczęciem pracy. Możesz go przekazać na papierze albo elektronicznie.",
+      "Wskaż daty i wymiar pracy, do połowy pełnego etatu. Oświadcz, czy podczas części powstałej z wydłużenia urlopu też zamierzasz pracować. Jeśli tak, podaj również wymiar tej pracy.",
+      "Pracodawca uwzględnia wniosek, chyba że organizacja lub rodzaj pracy na to nie pozwala. Powód odmowy podaje w ciągu 7 dni od otrzymania wniosku.",
+    ],
+    sources: [S.govParental, S.leaveRequests],
+    checked: CHECKED_LAW,
   },
 
   szczepienia: {
@@ -285,13 +361,13 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "Becikowe to jednorazowe 1000 zł z tytułu urodzenia dziecka. Wnioskuje rodzic, opiekun prawny albo opiekun faktyczny.",
       "Przysługuje, gdy dochód rodziny na osobę nie przekracza 1922 zł netto miesięcznie.",
       "Matka musi być pod opieką lekarza lub położnej od co najmniej 10. tygodnia ciąży do porodu. Potwierdza to zaświadczenie od lekarza lub położnej. Wymóg nie dotyczy opiekunów prawnych, faktycznych ani rodziców adopcyjnych.",
-      "Wniosek składasz w gminie właściwej dla miejsca zamieszkania, np. w urzędzie gminy lub miasta albo w ośrodku pomocy społecznej, w ciągu 12 miesięcy od urodzenia dziecka.",
+      "Złóż SR-2 w gminie lub OPS właściwym dla miejsca zamieszkania, wyślij pocztą albo złóż wniosek elektroniczny przez Emp@tię. Rodzic ma 12 miesięcy od urodzenia, a przy przysposobieniu lub objęciu opieką prawną albo faktyczną termin biegnie od tego zdarzenia, do ukończenia przez dziecko 18 lat.",
+      "Jeśli samotnie wychowujesz dziecko, przygotuj tytuł alimentacyjny albo dokument potwierdzający ustawowy wyjątek, np. akt zgonu drugiego rodzica lub orzeczenie o opiece naprzemiennej.",
       "Wniosek złożony po terminie nie zostanie rozpatrzony. Decyzja zapada zwykle w ciągu miesiąca.",
     ],
     sources: [S.becikowe],
     checked: CHECKED,
-    uwagi:
-      "Według odczytu strony gov.pl opisuje ona i składanie wniosku online przez Emp@tię, i składanie tylko w urzędzie lub pocztą, czyli w dwóch sprzecznych wariantach. Kanału online nie wymieniono, warto potwierdzić.",
+    uwagi: "Gmina oblicza dochód rodziny. Przy wnioskach składanych od listopada 2026 do października 2027 bierze pod uwagę rok 2025 oraz późniejsze uzyskanie lub utratę dochodu.",
   },
 
   "aktywny-rodzic": {

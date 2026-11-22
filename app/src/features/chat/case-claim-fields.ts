@@ -19,7 +19,8 @@ export function documentMoney(text: string) {
   if (Number.isSafeInteger(grosze)) return { kind: "money", currency: "PLN", grosze } as const;
 }
 
-const periodLabel = /^(?:wnioskowany okres(?: zasilku| urlopu)?|okres(?: wnioskowany| zasilku| urlopu)?|wnioskuje za okres)\s*:?\s*(?:od\s+)?(\d{4}-\d{2}-\d{2}|\d{2}\.\d{2}\.\d{4})\s*(?:do|[-–—])\s*(\d{4}-\d{2}-\d{2}|\d{2}\.\d{2}\.\d{4})$/u;
+export const documentDayPattern = "(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[a-z]{3,15}\\s+\\d{4})(?:\\s*r\\.?)?";
+const periodLabel = new RegExp(String.raw`^(?:wnioskowany okres(?: zasilku| urlopu)?|okres(?: wnioskowany| zasilku| urlopu)?|wnioskuje za okres)\s*:?\s*(?:od\s+)?(${documentDayPattern})\s*(?:do|[-–—])\s*(${documentDayPattern})$`, "u");
 // Accept a checkbox group only when exactly one printed option is positively marked.
 function selectedOption(value: string) {
   const options = Array.from(value.matchAll(/(?:\[([ x]?)\]|([☒☑☐]))\s*([^☒☑☐[\]]+)/gu));
@@ -37,11 +38,11 @@ export function claimFields(result: LocalCasePage, id: string, lines: string[]) 
     const match = pattern.exec(line);
     return match ? [{ match, i }] : [];
   });
-  const stated = dates(/^(?:stan (?:na dzien|na)|data poswiadczenia stanu|stan ubezpieczenia na dzien)\s*:\s*(\S+)$/u);
+  const stated = dates(/^(?:stan (?:na dzien|na)|data poswiadczenia stanu|stan ubezpieczenia na dzien)\s*:\s*(.+)$/u);
   const asOf = stated.length === 1 ? documentDay(stated[0].match[1]) : undefined;
-  const delivery = dates(/^data porodu\s*:\s*(\S+)$/u);
+  const delivery = dates(/^data porodu\s*:\s*(.+)$/u);
   const eventDay = delivery.length === 1 ? documentDay(delivery[0].match[1]) : undefined;
-  const filed = dates(/^data zlozenia(?: wniosku)?\s*:\s*(\S+)$/u);
+  const filed = dates(/^data zlozenia(?: wniosku)?\s*:\s*(.+)$/u);
   const filedDay = filed.length === 1 ? documentDay(filed[0].match[1]) : undefined;
   const intervals = dates(periodLabel);
   const period = intervals.length === 1 ? intervals[0] : undefined;
@@ -130,7 +131,7 @@ export function claimFields(result: LocalCasePage, id: string, lines: string[]) 
         const titles: Record<string, string> = { pracownik: "employee", "umowa o prace": "employee", zleceniobiorca: "zleceniobiorca", dzialalnosc: "dzialalnosc" };
         code(i, "insuranceTitle", Object.hasOwn(titles, value) ? titles[value] : undefined);
       }
-      const count = /^(?:liczba (?:osob )?ubezpieczonych)(?: (?:na dzien|na) (\S+))?$/u.exec(label);
+      const count = /^(?:liczba (?:osob )?ubezpieczonych)(?: (?:na dzien|na) (.+))?$/u.exec(label);
       if (count) {
         const day = count[1] ? documentDay(count[1]) : asOf;
         if (day && /^\d{1,8}$/u.test(value)) add(i, "payerInsuredCount", { kind: "count", count: Number(value) }, { asOf: day },

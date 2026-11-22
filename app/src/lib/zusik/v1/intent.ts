@@ -1,5 +1,10 @@
-import { publicQuestion } from "../../rag/public-query";
-import { chatStarters } from "../conversation";
+import { projectPublicPair, publicQuestion } from "../../rag/public-query";
+import { publicClarification } from "../public-clarification";
+import { conversationAge } from "../conversation-age";
+import { opportunityQuestion } from "../../plan/opportunities";
+import { publicContinuation, publicSituation } from "../public-continuation";
+import { resolveFollowUp } from "../retrieval-context";
+import { chatStarters, sourceIntent } from "../conversation";
 import type { EvidenceFact } from "../memory/contract";
 import type { MessageInput } from "./conversation";
 
@@ -38,8 +43,21 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
   const text = question.trim();
   const prior = ctx.lastMessage;
   const privateContext = Boolean(ctx.hasDocuments || ctx.facts.length || ctx.assessmentId ||
-    (prior && prior.input.intent !== "public_question"));
-  const date = /\b\d{4}-\d{2}-\d{2}\b/u.exec(text)?.[0];
+    (prior && !["public_question","note_age","recall_age"].includes(prior.input.intent)));
+  const clarification = publicClarification(text);
+  if (clarification && !privateContext) {
+    if (projectPublicPair(text)?.clarify) return {clarify:clarification.message};
+    return {input:{intent:"public_question",publicQuestion:clarification.question}};
+  }
+  if (clarification?.localInCase) return {clarify:clarification.message};
+  const dates = text.match(/\b\d{4}-\d{2}-\d{2}\b/gu) ?? [];
+  const date = dates[0];
+  if (date) {
+    if (dates.length > 1) return {clarify:"Na który dzień chcesz odczytać dane sprawy?"};
+    const parsed = new Date(date + "T00:00:00Z");
+    if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0,10) !== date)
+      return {clarify:"Podaj poprawną datę w formacie RRRR-MM-DD."};
+  }
   const starter = chatStarters.find(s=>s.prompt===text);
   if (starter && !privateContext) return {input:{intent:"public_question",publicQuestion:starter.prompt}};
   if (/(?:moja siostra|mój brat|moja koleżanka|mój kolega)\s+(?:zarabia|pracuje|ma|dosta)/iu.test(text))
@@ -57,13 +75,24 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
     return {input:{intent:"public_question",publicQuestion:"Chodzi mi o " + topic + ".",replyTo:prior.id}};
   }
   if (/^(?:nie[, ]+)?(?:popraw|sprostuj|korekt|jednak|zmień|pomyli)/iu.test(text) && ctx.facts.length) return {correction:true};
+  const age = conversationAge(text);
+  if (age === "recall") return {input:{intent:"recall_age"}};
+  if (age && !privateContext) return {input:{intent:"note_age",...age}};
   const asksSource = /^(?:a )?(?:skąd(?: to wiesz)?|dlaczego|pokaż źródło|na jakiej podstawie|z której strony(?: dokumentu)?)[?!. ]*$/iu.test(text);
-  if (asksSource) {
+  const source = sourceIntent(text);
+  if (source === "case") {
+    if (prior?.input.intent === "hypothetical" || prior?.input.intent === "read_context")
+      return {input:{intent:"ask_case",topic:"previous_sources",replyTo:prior.id}};
+    if (ctx.assessmentId) return {input:{intent:"explain_result",assessmentId:ctx.assessmentId}};
+    return {clarify:"Którego wyliczenia lub pola w swojej sprawie chcesz sprawdzić podstawę?"};
+  }
+  if (asksSource || source) {
     const assessmentId = prior ? prior.citations.find(c=>c.kind==="assessment")?.ref : ctx.assessmentId;
     if (prior?.input.intent === "public_question")
       return {input:{intent:"public_question",publicQuestion:"Skąd to wiesz?",replyTo:prior.id}};
     if (assessmentId) return {input:{intent:"explain_result",assessmentId}};
     if (prior) return {input:{intent:"ask_case",topic:"previous_sources",replyTo:prior.id}};
+    return {clarify:"W tej sprawie nie ma jeszcze odpowiedzi, której źródło można wskazać."};
   }
   const birth = /urodz(?:ił|iła|enia)|dat[ęay] urodz/iu.test(text) && /kiedy|jak[aą]|data|podaj|ile lat/iu.test(text);
   const topic = birth ? "birthDate" : /(?:stan|status) (?:(?:mojego|naszego|tego) )?wniosku|czy (?:już )?(?:złożył|wysłał|złożono|wysłano)/iu.test(text) ? "submissionStatus" :
@@ -72,7 +101,11 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
     /(?:kto (?:był|jest) (?:moim )?pracodawcą|u kogo (?:pracuję|pracował[ae]m))/iu.test(text) ? "employerRef" :
     /(?:z jakiego|jaki (?:mam|miał[ae]m)) tytuł\p{L}* ubezpieczenia/iu.test(text) ? "insuranceTitle" : undefined;
   const nursery = /żłob|zlob/iu.test(text) && /komu|kto .*(?:dosta|otrzy)|czyje konto|czyj rachunek/iu.test(text);
+  if (topic && !date && /\b(?:19|20)\d{2}\b|w (?:styczniu|lutym|marcu|kwietniu|maju|czerwcu|lipcu|sierpniu|wrześniu|październiku|listopadzie|grudniu)/iu.test(text))
+    return {clarify:"Na który dzień wskazanego okresu chcesz odczytać dane? Podaj datę w formacie RRRR-MM-DD."};
   if (topic) return {input:{intent:"read_context",topic,subjectId:ctx.subjectId || undefined,validAt:date,...(nursery ? {publicTopic:"nursery_recipient" as const} : {})}};
+  if (!privateContext && nursery && /(?:19|20)\d{2}|kiedyś|zeszł|ubiegł/iu.test(text))
+    return {clarify:"Za który okres chcesz ustalić odbiorcę świadczenia? Potrzebna jest podstawa obowiązująca w tym czasie."};
   const generalNursery = /^(?:komu (?:zus )?(?:wypłaca|przekazuje)|na czyje konto (?:zus )?(?:przelewa|wypłaca)) (?:świadczenie )?[„"]?aktywnie w żłobku[”"?!. ]*$/iu.test(text);
   if ((nursery && (!privateContext || generalNursery)) || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto(?: (?:trafia|wpływa) świadczenie)?[?!. ]*$/iu.test(text)))
     return {input:{intent:"public_question",publicQuestion:nursery ? recipient : "Na czyje konto?",replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
@@ -82,6 +115,22 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
     const business = /^(?:na działalności|działalność|własna firma|przedsiębiorca|jako przedsiębiorca)[?!. ]*$/iu.test(text);
     if (employee || business) return {input:{intent:"public_question",publicQuestion:employee ? "Na etacie." : "Przedsiębiorca.",replyTo:prior.id}};
   }
+  if (!privateContext && prior?.input.intent === "public_question") {
+    const previousTopic = prior.publicQuery ?? prior.input.publicQuestion ?? "";
+    const continuation = publicContinuation(text, previousTopic);
+    const context = resolveFollowUp(continuation ?? text, [{
+      question:previousTopic, publicQuery:previousTopic, requestId:prior.id,
+      status:prior.citations.length ? "answered" : "needs_clarification",
+    }]);
+    const query = continuation && continuation !== "Do kiedy?" ? continuation :
+      context?.requestId === prior.id && !context.plan.clarify && !context.plan.uncovered ? context.plan.question : undefined;
+    if (query) return {input:{intent:"public_question",publicQuestion:query,replyTo:prior.id}};
+    if (context?.plan.clarify && !publicQuestion(text)?.question) return {clarify:context.plan.clarify};
+  }
+  const situation = !privateContext && publicSituation(text);
+  if (situation) return {input:{intent:"public_question",publicQuestion:situation}};
+  const opportunity = !privateContext && opportunityQuestion(text);
+  if (opportunity) return {input:{intent:"public_question",publicQuestion:opportunity}};
   const direct = publicQuestion(text, true);
   const explicitlyGeneral = /^(?:ogólnie\b|jakie są ogólne zasady\b|co (?:mówią|stanowią) przepisy\b)/iu.test(text);
   if (direct?.question && !direct.clarify && (!privateContext || explicitlyGeneral || text === direct.question)) {

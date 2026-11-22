@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
+import { ScenarioMenu } from "./scenario-nav";
 import type { CaseName } from "@/lib/zusik/conversation";
 import { CASE_LABEL } from "./case-data";
 import { CaseSteps, type CaseStepsProps } from "./case-steps";
@@ -52,7 +52,7 @@ export function ChatHeader({ label, scenario, fullscreen, onFullscreen, onCollap
         <p className={s.chatName}>Zusik · asystent AI</p>
         <p className={s.chatCase}>{label}</p>
       </div>
-      {scenario !== "ogolna" && <Link className={s.secondaryButton} href="/app/rozmowa">Rozmowa ogólna</Link>}
+      <ScenarioMenu current={scenario} label="Zmień sprawę" />
       {onFullscreen && <button type="button" className={s.iconButton} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
         {fullscreen ? <SplitIcon /> : <ExpandIcon />}
       </button>}

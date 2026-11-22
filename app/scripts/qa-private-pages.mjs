@@ -1,4 +1,5 @@
-// From app/: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis
+// From app/: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis [--next-four] | --work-birth-dates [--whole-check] [--compare-app PATH]
+import { workBirthReferences, compareWorkBirthDates } from "./qa-work-birth-browser.mjs";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -25,10 +26,10 @@ const safeFile = async pathname => {
   assert.ok(!stat.isSymbolicLink() && stat.uid === process.getuid() && !(stat.mode & 0o077));
 };
 
-async function assets() {
-  const compiled = await build({ stdin: { resolveDir: app, contents:
+async function assets(readerApp = app) {
+  const compiled = await build({ stdin: { resolveDir: readerApp, contents:
     'export { readCaseDocuments } from "./src/features/chat/read-case-pdf.ts";export { analyzeCasePage } from "./src/features/chat/case-evidence.ts";' },
-    tsconfig: path.join(app, "tsconfig.json"), bundle: true, write: false, platform: "browser", format: "iife",
+    tsconfig: path.join(readerApp, "tsconfig.json"), bundle: true, write: false, platform: "browser", format: "iife",
     globalName: "qaReader", define: { "process.env.NODE_ENV": '"production"' }, logLevel: "silent" });
   const table = new Map([
     ["/", ["text/html", Buffer.from('<!doctype html><script src="/reader.js"></script>')]],
@@ -36,7 +37,7 @@ async function assets() {
   ]);
   for (const p of ["/pdfjs/pdf.worker.min.mjs", "/ocr/worker.min.js", "/ocr/lang/pol.traineddata.gz",
     "/ocr/core/tesseract-core-lstm.wasm.js", "/ocr/core/tesseract-core-simd-lstm.wasm.js"]) {
-    table.set(p, [p.endsWith(".gz") ? "application/octet-stream" : "text/javascript", await readFile(path.join(app, "public", p))]);
+    table.set(p, [p.endsWith(".gz") ? "application/octet-stream" : "text/javascript", await readFile(path.join(readerApp, "public", p))]);
   }
   return table;
 }
@@ -83,6 +84,9 @@ async function readPages(page, bytes, copies, synthetic = false, diagnose = fals
       problems, signals, roles: pages.map(p => p.role),
       protectedFields: pages.filter(p => p.role === "decision").reduce((n, p) => n + p.candidates.length, 0),
       synthetic: synthetic && {
+        payroll: pages[10]?.candidates.map(c => [c.field, c.value.grosze, c.validFrom, c.validTo, c.locator.page, c.locator.column]),
+        finePrintDate: pages[8]?.candidates.map(c => [c.field, c.value.date, c.locator.page]),
+        finePrintDecision: pages[9]?.status === "excluded" && pages[9]?.candidates.length === 0,
         scanned: /KONTROLA/i.test(pages[2]?.text ?? ""),
         protection: pages[4]?.status === "excluded" && pages[4]?.candidates.length === 0,
         mentioned: pages[3]?.role,
@@ -125,11 +129,37 @@ async function preflight(page) {
   const letter = pdf.addPage();
   ["Prosze o udzielenie mi urlopu ojcowskiego", "od 15.05.2026 do 21.05.2026"].forEach((line, i) =>
     letter.drawText(line, { x: 48, y: 700 - i * 36, size: 14 }));
+  // A4 at 300 dpi, with a roughly five-point date field.
+  for (const decision of [false, true]) {
+    const scan = await page.evaluate(decision => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 2480;
+      canvas.height = 3508;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "black";
+      ctx.font = "bold 48px Arial";
+      ctx.fillText("Odpis skrócony aktu urodzenia", 240, 320);
+      if (decision) ctx.fillText("Decyzja", 240, 220);
+      ctx.font = "22px Arial";
+      ctx.fillText("Data urodzenia dziecka: 17.04.2026", 240, 430);
+      return canvas.toDataURL();
+    }, decision);
+    pdf.addPage([595, 842]).drawImage(await pdf.embedPng(scan), { x: 0, y: 0, width: 595, height: 842 });
+  }
+  const payroll = pdf.addPage();
+  payroll.drawText("Lista plac", { x: 40, y: 720, size: 16 });
+  for (const [x, heading, value] of [[40, "Rok", "2024"], [120, "Miesiac", "2"], [250, "Wynagrodzenie brutto", "4 012,33"]]) {
+    payroll.drawText(heading, { x, y: 665, size: 12 });
+    payroll.drawText(value, { x, y: 635, size: 12 });
+  }
   const result = await readPages(page, Buffer.from(await pdf.save()), 2, true);
   assert.equal(result.leavePages, 1);
-  assert.deepEqual(result.methods, ["pdf_text", "ocr", "ocr", "pdf_text", "ocr", "pdf_text", "pdf_text", "pdf_text"]);
+  assert.deepEqual(result.methods, ["pdf_text", "ocr", "ocr", "pdf_text", "ocr", "pdf_text", "pdf_text", "pdf_text", "ocr", "ocr", "pdf_text"]);
   assert.equal(result.statuses[1], "blank");
-  assert.deepEqual(result.synthetic, { scanned: true, protection: true, mentioned: "other", chosen: true, unmarked: false, leaveOnly: true });
+  assert.deepEqual(result.synthetic, { payroll: [["monthlyGrossPay", 401233, "2024-02-01", "2024-02-29", 11, 3]],
+    finePrintDate: [["birthDate", "2026-04-17", 9]], finePrintDecision: true, scanned: true, protection: true, mentioned: "other", chosen: true, unmarked: false, leaveOnly: true });
 }
 
 function aggregate(records) {
@@ -149,32 +179,28 @@ function aggregate(records) {
   return counts;
 }
 
-async function runEdition(context, table, firstPage, rejected, diagnose) {
+async function runEdition(context, table, firstPage, rejected, diagnose, nextFour) {
   const keyPath = path.join(privateDir, "qa-edition-2026.json");
   await safeFile(privateDir);
   await safeFile(keyPath);
   const key = JSON.parse(await readFile(keyPath, "utf8"));
   const fingerprint = sha(Buffer.concat([await readFile(script), ...[...table.values()].map(([, bytes]) => bytes)]));
-  const cache = path.join(privateDir, "qa-page-results-" + fingerprint + ".jsonl");
-  let records = new Map();
-  try {
-    await safeFile(cache);
-    const data = await readFile(cache, "utf8");
-    records = new Map(data.trim().split("\n").filter(Boolean).map(line => { const r = JSON.parse(line); return [r.digest, r]; }));
-  } catch (error) { if (error.code !== "ENOENT") throw error; }
   const queue = key.cases;
   assert.equal(queue.length, 86);
   assert.equal(queue.reduce((n, c) => n + c.pages, 0), 2008);
   assert.equal(queue.reduce((n, c) => n + c.aliases.length, 0), 87);
   const root = await realpath(source);
   if (diagnose) {
-    const work = queue.filter(c => c.proposedSplit === "work").slice(0, 4);
+    const start = nextFour ? 4 : 0;
+    const work = queue.filter(c => c.proposedSplit === "work").slice(start, start + 4);
     assert.equal(work.length, 4);
-    const exposurePath = path.join(privateDir, "qa-working-diagnosis-" + fingerprint + ".json");
+    const exposurePath = path.join(privateDir, "qa-working-diagnosis-" + fingerprint + (nextFour ? "-next-four" : "") + ".json");
     const receipt = JSON.stringify({ version: 1, purpose: "local_diagnosis", known: work.map(c => c.id) });
     try { await writeFile(exposurePath, receipt, { flag: "wx", mode: 0o600 }); }
     catch (e) { if (e.code !== "EEXIST") throw e; await safeFile(exposurePath); assert.equal(await readFile(exposurePath,"utf8"),receipt); }
-    const total = { workingPackages: work.length, pages: 0, leavePages: 0, fieldPages: 0, problems: {}, signals: {} };
+    const began = performance.now();
+    const total = { workingPackages: work.length, pages: 0, fields: 0, protectedFields: 0, leavePages: 0, fieldPages: 0,
+      statuses: Object.fromEntries(states.map(state => [state, 0])), problems: {}, signals: {} };
     for (const c of work) {
       const file = await realpath(path.resolve(root, c.aliases[0]));
       assert.ok(file.startsWith(root + path.sep));
@@ -184,14 +210,24 @@ async function runEdition(context, table, firstPage, rejected, diagnose) {
       assert.equal(r.pages, c.pages);
       assert.equal(rejected(), 0);
       total.pages += r.pages;
+      total.fields += r.fields;
+      total.protectedFields += r.protectedFields;
+      for (const state of r.statuses) { assert.ok(states.includes(state)); total.statuses[state]++; }
       total.leavePages += r.leavePages;
       total.fieldPages += r.fieldPages;
       for (const metric of ["problems", "signals"]) for (const [key, val] of Object.entries(r[metric]))
         total[metric][key] = (total[metric][key] || 0) + val;
     }
-    console.log(JSON.stringify(total));
+    console.log(JSON.stringify({ ...total, seconds: Math.round((performance.now() - began) / 1000) }));
     return;
   }
+  const cache = path.join(privateDir, "qa-page-results-" + fingerprint + ".jsonl");
+  let records = new Map();
+  try {
+    await safeFile(cache);
+    const data = await readFile(cache, "utf8");
+    records = new Map(data.trim().split("\n").filter(Boolean).map(line => { const r = JSON.parse(line); return [r.digest, r]; }));
+  } catch (error) { if (error.code !== "ENOENT") throw error; }
   const slots = [firstPage, ...await Promise.all(Array.from({ length: 3 }, () => context.newPage()))];
   await Promise.all(slots.slice(1).map(p => p.goto(assetOrigin)));
   const start = performance.now();
@@ -230,7 +266,7 @@ async function runEdition(context, table, firstPage, rejected, diagnose) {
   }
 }
 
-async function main(mode) {
+async function main(mode, nextFour, wholeCheck) {
   // Refuse a forged child environment or a host without enforced IP denial.
   const denied = await new Promise(resolve => {
     const socket = connect(9, "127.0.0.1");
@@ -239,7 +275,10 @@ async function main(mode) {
     socket.on("error", error => resolve(["EPERM", "EACCES"].includes(error.code)));
   });
   assert.ok(denied, "macOS network policy inactive");
-  const table = await assets();
+  const references = mode === "--work-birth-dates" && workBirthReferences();
+  const currentTable = await assets();
+  const baseTable = compareApp && await assets(await realpath(compareApp));
+  let table = currentTable;
   let blocked = 0;
   const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--disable-background-networking"] });
   try {
@@ -254,24 +293,37 @@ async function main(mode) {
     });
     const page = await context.newPage();
     await page.goto(assetOrigin);
+    if (references) {
+      const selectVersion = baseTable && (async version => {
+        table = version === "base" ? baseTable : currentTable;
+        await page.reload();
+      });
+      return await compareWorkBirthDates(page, source, references, () => blocked, wholeCheck, selectVersion);
+    }
     await preflight(page);
     assert.equal(blocked, 0);
-    console.log("offline preflight: text, blank, OCR, duplicate, mixed decision, mentioned heading, marked and empty choices, leave-only request passed");
-    if (mode !== "--self-test") await runEdition(context, table, page, () => blocked, mode === "--work-diagnosis");
+    console.log("offline preflight: text, blank, OCR, duplicate, mixed decision, mentioned heading, marked and empty choices, leave-only request and fine-print scan pair and payroll columns passed");
+    if (mode !== "--self-test") await runEdition(context, table, page, () => blocked, mode === "--work-diagnosis", nextFour);
   } finally { await browser.close(); }
 }
 
-const mode = process.argv[2];
-if (!["--self-test", "--edition", "--work-diagnosis"].includes(mode)) {
-  console.error("Usage: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis");
+const [mode, ...options] = process.argv.slice(2);
+const nextFour = mode === "--work-diagnosis" && options.length === 1 && options[0] === "--next-four";
+const dateOptions = mode === "--work-birth-dates" ? [...options] : [];
+const wholeCheck = dateOptions[0] === "--whole-check";
+if (wholeCheck) dateOptions.shift();
+const compareApp = dateOptions.length === 2 && dateOptions[0] === "--compare-app" && dateOptions[1];
+const validDateOptions = mode === "--work-birth-dates" && (!dateOptions.length || compareApp);
+if (!["--self-test", "--edition", "--work-diagnosis", "--work-birth-dates"].includes(mode) || (options.length && !nextFour && !validDateOptions)) {
+  console.error("Usage: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis [--next-four] | --work-birth-dates [--whole-check] [--compare-app PATH]");
   process.exitCode = 2;
 } else if (!process.env.QA_PAGES_SANDBOX_CHILD) {
   // Playwright uses local pipes. macOS denies outgoing IP traffic for Node, Chrome and their descendants.
   const run = spawnSync("/usr/bin/sandbox-exec", ["-p", '(version 1)(allow default)(deny network-outbound (remote ip "*:*"))',
-    process.execPath, script, mode], { stdio: "inherit", env: { ...process.env, DEBUG: "", PWDEBUG: "", QA_PAGES_SANDBOX_CHILD: "1" } });
+    process.execPath, script, mode, ...options], { stdio: "inherit", env: { ...process.env, DEBUG: "", PWDEBUG: "", QA_PAGES_SANDBOX_CHILD: "1" } });
   process.exitCode = run.status ?? 2;
 } else {
-  try { await main(mode); } catch (error) {
+  try { await main(mode, nextFour, wholeCheck); } catch (error) {
     if (mode === "--self-test") console.error(error.message.slice(0, 1000));
     console.error("Offline reader check failed. No case details were logged.");
     process.exitCode = 1;

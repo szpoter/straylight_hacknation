@@ -28,7 +28,7 @@ export function TurnView({ item, activity, partialText, asking, onRetry }: Props
       )}
       {item.state === "lost" && (
         <div className={s.inlineError} role="alert">
-          <span>Utracono połączenie. Pytanie jest zapisane w tej karcie.</span>
+          <span>{item.answer?.message ?? "Utracono połączenie. Pytanie jest zapisane w tej karcie."}</span>
           <button type="button" className={s.secondaryButton} disabled={asking} onClick={() => onRetry(item.requestId)}>
             Ponów odpowiedź
           </button>

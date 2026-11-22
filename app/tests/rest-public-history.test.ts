@@ -22,3 +22,10 @@ it("reprojects old REST messages and resumes new ones from server-generated publ
   await publicReply("Do kiedy?",{...old,...reply});
   expect(vi.mocked(answerPublicTurn).mock.lastCall?.[2][0].publicQuery).toBe("Publiczny temat z korpusu");
 });
+
+it("keeps only a scoped public turn pointer after small talk", async () => {
+  const previous: Message = {id:"previous-topic",input:{intent:"public_question",publicQuestion:"Dobry Start"},
+    answer:"Odpowiedź",citations:[],state:"completed",caseRevision:1,profileRevision:1};
+  expect(await publicReply("Co umiesz?",previous)).toMatchObject({contextMessageId:previous.id,citations:[]});
+  expect(await publicReply("Co umiesz?",{...previous,input:{intent:"ask_case"}})).not.toHaveProperty("contextMessageId");
+});

@@ -1,14 +1,29 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeftIcon } from "./icons";
+import { ArrowLeftIcon, InfoIcon } from "./icons";
 import styles from "./auth.module.css";
 
-export function AuthShell({ aside, children }: { aside?: ReactNode; children: ReactNode }) {
+type AuthShellProps = {
+  aside?: ReactNode;
+  /** Tekst paska demo zamiast domyślnego, np. podpowiedź, jak przejść dalej na tym ekranie. */
+  demoNote?: ReactNode;
+  /** Stopka pod treścią (ekrany eZUS mają stopkę strony głównej). */
+  footer?: ReactNode;
+  /** Klasa <main> zamiast domyślnej karty na środku, gdy ekran ma własny układ. */
+  mainClassName?: string;
+  className?: string;
+  children: ReactNode;
+};
+
+// Rama ścieżki demo. Na każdym ekranie nazwa przewodnika i stały pasek
+// „Wersja demonstracyjna · nie podawaj prawdziwych danych” (ui/NIKODEM.md, punkt 6).
+export function AuthShell({ aside, demoNote, footer, mainClassName, className, children }: AuthShellProps) {
   return (
-    <div className={styles.shell} data-site>
+    <div className={className ? `${styles.shell} ${className}` : styles.shell} data-site>
       <a className={styles.skip} href="#tresc">
         Przejdź do treści
       </a>
+      <DemoBar>{demoNote}</DemoBar>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="Przewodnik Rodzica, strona główna">
           <BrandMark />
@@ -16,10 +31,27 @@ export function AuthShell({ aside, children }: { aside?: ReactNode; children: Re
         </Link>
         {aside ? <div className={styles.headerAside}>{aside}</div> : null}
       </header>
-      <main id="tresc" className={styles.main}>
+      <main id="tresc" className={mainClassName ?? styles.main}>
         {children}
       </main>
+      {footer}
     </div>
+  );
+}
+
+/** Stały pasek o symulacji. Bez treści pokazuje „Wersja demonstracyjna · nie podawaj prawdziwych danych”. */
+export function DemoBar({ children }: { children?: ReactNode }) {
+  return (
+    <p className={styles.demoBar} role="note">
+      <InfoIcon className={styles.demoBarIcon} />
+      <span>
+        {children ?? (
+          <>
+            Wersja demonstracyjna · <strong>nie podawaj prawdziwych danych</strong>
+          </>
+        )}
+      </span>
+    </p>
   );
 }
 
@@ -47,6 +79,7 @@ export function AuthScreen({ service, title, lead, back, wide, children }: AuthS
         <p className={styles.service}>
           <span className={styles.serviceDot} aria-hidden="true" />
           {service}
+          <span className={styles.serviceDemo}>· symulacja</span>
         </p>
         <h1 id="auth-title" className={styles.title}>
           {title}
@@ -58,7 +91,7 @@ export function AuthScreen({ service, title, lead, back, wide, children }: AuthS
   );
 }
 
-function BrandMark() {
+export function BrandMark() {
   // Ten sam znak co w nagłówku strony głównej: rodzic i dziecko.
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">

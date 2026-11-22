@@ -49,6 +49,9 @@ export function SiteHeader() {
           </nav>
 
           <div className={styles.actions}>
+            <ButtonLink href="/rejestracja" variant="ghost" size="sm" className={styles.register}>
+              Zarejestruj się
+            </ButtonLink>
             <ButtonLink href="/logowanie" variant="primary" size="sm">
               Otwórz profil Oli
             </ButtonLink>

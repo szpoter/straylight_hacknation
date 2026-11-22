@@ -8,8 +8,8 @@ import type { AskAnswer, AskCitation, AskTurn } from "./types";
 const nursery = "zus-aktywnie-w-zlobku";
 type Facet = "care" | "recipient";
 const school = "zus-dobry-start";
-const recipient = /(?:na (?:czyje|jakie) konto|na czyj rachunek|przelew do mnie|do kogo (?:pójdą|trafią|idą) pieniądze|kto (?:dostanie|otrzyma) przelew|komu.{0,35}wypłac|kto.{0,20}(?:dostaje|otrzymuje|otrzyma).{0,12}(?:pieniądze|świadczenie))/iu;
-const recipientOnly = /^(?:a |i )?(?:to )?(?:na (?:czyje|jakie) konto|na czyj rachunek|(?:a )?przelew do mnie|do kogo (?:pójdą|trafią|idą) pieniądze|kto (?:dostanie|otrzyma) przelew)[?!.\s]*$/iu;
+const recipient = /(?:na (?:czyje|jakie) konto|na czyj rachunek|przelew do mnie|do kogo (?:pójdą|trafią|idą) pieniądze|kto (?:dostaje|dostanie|otrzyma|otrzymuje|odbiera) (?:ten )?przelew|komu.{0,35}wypłac|kto.{0,20}(?:dostaje|otrzymuje|otrzyma).{0,12}(?:pieniądze|świadczenie))/iu;
+const recipientOnly = /^(?:a |i )?(?:to )?(?:na (?:czyje|jakie) konto|na czyj rachunek|(?:a )?przelew do mnie|do kogo (?:pójdą|trafią|idą) pieniądze|kto (?:dostaje|dostanie|otrzyma|otrzymuje|odbiera) (?:ten )?przelew)[?!.\s]*$/iu;
 
 const correction = /^(?:nie[, ]+)?(?:chodzi(?:ło)? mi o|chodzi o|pytam o|mam na myśli) (?:program )?/iu;
 
@@ -19,13 +19,18 @@ export function schoolRecipientIntent(text: string, previous?: AskTurn): boolean
   if (named && recipient.test(text) && !/żłob|klub dziecięc/iu.test(text)) return true;
   if (named && correction.test(text) && /^(?:dobry start|300\s*(?:\+|plus))[.!? ]*$/iu.test(text.replace(correction, "")))
     return !!previous?.citations.some(c => /^(?:live-)?zlobek-odbiorca(?:-|$)/u.test(c.fragmentId));
-  return recipientOnly.test(text) && !!previous?.citations.length &&
-    previous.citations.every(c => c.sourceId === school || /\/program-dobry-start(?:$|#)/u.test(c.url));
+  if (!recipientOnly.test(text) || !previous) return false;
+  return previous.citations.length ? previous.citations.every(c => c.sourceId === school || /\/program-dobry-start(?:$|#)/u.test(c.url))
+    : previous.publicQuery === "Dobry Start";
 }
 
 export function nurseryIntent(text: string, previous?: AskTurn): Facet | null {
-  if (recipientOnly.test(text) && previous?.citations.length && previous.citations.every(c => c.sourceId === nursery)) return "recipient";
-  if (!/żłob(?:ek|k)|klub(?:u|ie)? dziecięc/iu.test(text) || /dobr(?:y|ego|ym) start|300\s*(?:\+|plus)/iu.test(text)) return null;
+  if (recipientOnly.test(text) && previous) {
+    const singleProgramme = previous.citations.length ? previous.citations.every(c => c.sourceId === nursery)
+      : previous.publicQuery === "Świadczenie aktywnie w żłobku";
+    return singleProgramme ? "recipient" : null;
+  }
+  if (!/żłob(?:ek|k)|klub(?:u|ie)? dziecięc/iu.test(text) || /dobr(?:y|ego|ym) start|300\s*(?:\+|plus)|wyprawk/iu.test(text)) return null;
   if (correction.test(text) && /^(?:aktywnie w żłobku|żłobek)[.!? ]*$/iu.test(text.replace(correction, "")) &&
       previous?.citations.some(c => /^(?:live-)?of-dobry-1-2(?:-|$)/u.test(c.fragmentId))) return "recipient";
   if (/zamknię|zamknę|likwidac|chory|chorob|opiek[uń]+cz|20\d{2}|kiedyś|wcześniej|zeszł|ubiegł/iu.test(text)) return null;

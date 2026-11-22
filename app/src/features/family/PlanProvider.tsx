@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
 import { DEFAULT_PLAN_ID, getPlan } from "@/lib/demo/fixtures";
 import { applyCalculatorToPlan, type CalcForm } from "@/lib/plan/benefit-form";
+import { refreshSavedLeavePlan } from "@/lib/plan/build";
 import { addDays, daysBetween, formatLong } from "@/lib/demo/dates";
 import type { Plan, Stop } from "@/lib/demo/types";
 
@@ -79,7 +81,7 @@ type PlanContextValue = {
   closeZusik: () => void;
 };
 
-export type ZusikContext = { planId: string; place: string; stopId?: string; field?: string; returnTo?: string; collapsed?: boolean };
+export type ZusikContext = { planId: string; place: string; stopId?: string; field?: string; returnTo?: string; followsPage?: boolean; collapsed?: boolean };
 
 const PlanContext = createContext<PlanContextValue | null>(null);
 
@@ -132,11 +134,16 @@ export function calculatorKey(plan: Pick<Plan, "id" | "family">): string {
 }
 
 function applyStopPatch(stop: Stop, patch: StopPatch): Stop {
+  // Dawny wniosek po porodzie mógł mieć zapisany stan wysyłki; dziś to informacja.
+  if (stop.id.replace(/^e-/, "") === "urlop-macierzynski" && stop.kind === "informacja") {
+    return { ...stop, checked: patch.checked ?? stop.checked };
+  }
   const { doc, ...rest } = patch;
   return { ...stop, ...rest, ...(doc && stop.doc ? { doc: { ...stop.doc, ...doc } } : {}) };
 }
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
+  const schedule = useRuleSchedule();
   const [planId, setPlanId] = useState(DEFAULT_PLAN_ID);
   const [patches, setPatches] = useState<Record<string, Record<string, StopPatch>>>({});
   const [zusik, setZusik] = useState<ZusikContext | null>(null);
@@ -148,8 +155,8 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const plans = useMemo(() => {
     const ola = getPlan(DEFAULT_PLAN_ID);
-    return [applyCalculatorToPlan(ola, calculators[calculatorKey(ola)])];
-  }, [calculators]);
+    return [applyCalculatorToPlan(ola, calculators[calculatorKey(ola)], schedule)];
+  }, [calculators, schedule]);
   const updatePlan = useCallback((id: string, edit: PlanEdit) => setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...edit } })), []);
 
   // Odczyt po hydratacji (serwer nie zna localStorage).
@@ -160,7 +167,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     } catch {
       saved = {};
     }
-    const createdPlans = Array.isArray(saved.created) ? saved.created : [];
+    const createdPlans = Array.isArray(saved.created) ? saved.created.map(refreshSavedLeavePlan) : [];
     /* eslint-disable react-hooks/set-state-in-effect -- odczyt po hydratacji */
     setPatches(saved.patches ?? {});
     setEdits(saved.edits ?? {});

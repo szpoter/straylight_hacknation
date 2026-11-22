@@ -54,10 +54,13 @@ describe("official evidence", () => {
       ["Komu ZUS wypłaca świadczenie aktywnie w żłobku?", "zlobek-odbiorca"],
       ["Nie, chodzi mi o Dobry Start.", "of-dobry-1-2"],
       ["A na czyje konto?", "of-dobry-1-2"],
+      ["A kto otrzymuje ten przelew za żłobek?", "zlobek-odbiorca"],
+      ["Kto dostaje przelew?", "zlobek-odbiorca"],
+      ["Kto dostanie przelew z Dobrego Startu?", "of-dobry-1-2"],
       ["Chodziło mi o żłobek.", "zlobek-odbiorca"],
     ]) {
       const {answer} = await answerPublicTurn(deps,text,history);
-      expect(answer.citations.map(c=>c.fragmentId)).toEqual([id]);
+      expect(answer.citations.map(c=>c.fragmentId), text).toEqual([id]);
       expect(answer.claims[0].text).toBe(corpus.fragments.get(id)?.sourceText);
       history.push({...answer,question:text,requestId:id,createdAt:""});
     }
@@ -67,7 +70,8 @@ describe("official evidence", () => {
   it("distinguishes starting nursery from closure, dates and personal calculations", () => {
     expect(nurseryIntent("Od stycznia syn będzie w żłobku. Co warto sprawdzić?")).toBe("care");
     for (const question of ["na czyje konto?", "Zamknęli żłobek, co mogę zrobić?", "Dziecko zacznie żłobek. Ile dostanę?",
-      "Co mogłam dostać za żłobek w 2021 roku?"]) expect(nurseryIntent(question)).toBeNull();
+      "Co mogłam dostać za żłobek w 2021 roku?", "Kto otrzymuje przelew za żłobek w 2021 roku?",
+      "Wyprawka szkolna czy żłobek: kto otrzymuje przelew?"]) expect(nurseryIntent(question)).toBeNull();
   });
 });
 
@@ -112,4 +116,15 @@ describe("family catalogue discovery", () => {
     const read = officialCatalogueReader(async url => String(url) === FAMILY_CATALOG_URL ? index() : html(sections));
     expect((await read(question, today)).citation?.locator).toBe("Jak złożę wniosek");
   });
+});
+
+it("rechecks the recipient for a single public programme when its earlier card had no verified source", async () => {
+  const prior: AskTurn = {question:"Plan opieki",requestId:"one",status:"insufficient_evidence",
+    createdAt:"",corpusVersion:"current",message:"",citations:[],claims:[],publicQuery:"Świadczenie aktywnie w żłobku"};
+  const corpus = loadCorpus("oferta");
+  const readOfficial = officialEvidenceReader(async () => new Response(html,{headers:{"content-type":"text/html"}}));
+  const result = await answerPublicTurn({corpus,selectCorpus:loadCorpus,readOfficial,
+    search:{search:async () => ({status:"ok",hits:[],ms:1})},generate:vi.fn()},"Na czyje konto?",[prior]);
+  expect(result.answer.citations).toMatchObject([{origin:"official_live",sourceId}]);
+  expect(nurseryIntent("Na czyje konto?",{...prior,publicQuery:"Świadczenie aktywnie w żłobku. Dobry Start"})).toBeNull();
 });

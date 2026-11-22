@@ -52,7 +52,7 @@ export async function openCaseProgress(caseId: string, clientDocumentId: string)
       };
     });
   } catch (error) { db.close(); throw error; }
-  const additionalData = (page: number) => new TextEncoder().encode(JSON.stringify([...path, page]));
+  const additionalData = (page: number) => new TextEncoder().encode(JSON.stringify(["reader-v3", ...path, page]));
   return {
     async save(page: LocalCasePage) {
       const iv = crypto.getRandomValues(new Uint8Array(12));

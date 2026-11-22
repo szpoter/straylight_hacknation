@@ -1,31 +1,35 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
+import { CasePdf } from "@/features/calculator/CasePdf";
 import type { CaseStatus, TestCase } from "@/lib/admin/types";
 import { caseSearchFields, searchItems } from "./search";
 import { Badge, Card, StatTile, cx } from "./ui";
 import s from "./admin.module.css";
 
-type Filter = "wszystkie" | CaseStatus;
+/** "niezgodna" also lists cases moved by a published change (layout L2: four tiles). */
+type Filter = "wszystkie" | Exclude<CaseStatus, "do-aktualizacji">;
 
 const STATUS_LABEL: Record<CaseStatus, string> = {
   zgodna: "Zgodna",
   niezgodna: "Niezgodna",
+  "do-aktualizacji": "Do aktualizacji",
   "brak-danych": "Brak danych",
 };
 
-const STATUS_TONE = { zgodna: "active", niezgodna: "warn", "brak-danych": "historic" } as const;
+const STATUS_TONE = { zgodna: "active", niezgodna: "warn", "do-aktualizacji": "planned", "brak-danych": "historic" } as const;
+
+const inFilter = (status: CaseStatus, filter: Filter) =>
+  filter === "wszystkie" || status === filter || (filter === "niezgodna" && status === "do-aktualizacji");
 
 export function CasesView({ cases }: { cases: TestCase[] }) {
   const [filter, setFilter] = useState<Filter>("wszystkie");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(cases[0]?.id ?? "");
-  const [uploaded, setUploaded] = useState<string | null>(null);
-  const uploadId = useId();
-
-  const count = (status: CaseStatus) => cases.filter((c) => c.status === status).length;
+  const count = (f: Filter) => cases.filter((c) => inFilter(c.status, f)).length;
+  const outdated = cases.filter((c) => c.status === "do-aktualizacji").length;
   const visible = searchItems(
-    cases.filter((c) => filter === "wszystkie" || c.status === filter),
+    cases.filter((c) => inFilter(c.status, filter)),
     query,
     caseSearchFields,
   );
@@ -55,7 +59,7 @@ export function CasesView({ cases }: { cases: TestCase[] }) {
         className={s.span3}
         label="Niezgodne"
         value={count("niezgodna")}
-        note="różnica do sprawdzenia"
+        note={outdated ? `w tym ${outdated} do aktualizacji po opublikowanej zmianie` : "różnica do sprawdzenia"}
         pressed={filter === "niezgodna"}
         onClick={() => toggle("niezgodna")}
       />
@@ -105,19 +109,7 @@ export function CasesView({ cases }: { cases: TestCase[] }) {
         )}
 
         <div className={s.upload}>
-          <label htmlFor={uploadId} className={s.btnSecondary}>
-            Wgraj PDF
-          </label>
-          <input
-            id={uploadId}
-            className={s.visuallyHidden}
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setUploaded(e.target.files?.[0]?.name ?? null)}
-          />
-          <span className={s.hint}>
-            {uploaded ? `Wybrano: ${uploaded}. Odczyt dokumentu pojawi się po podłączeniu OCR.` : "ZAM, Z-3, Z-3a, ZAS-12 i inne dokumenty testowe."}
-          </span>
+          <CasePdf />
         </div>
       </Card>
 
@@ -130,8 +122,9 @@ function CaseDetails({ testCase: c }: { testCase: TestCase }) {
   return (
     <Card title={c.title} id="case-details" meta={`${c.id} · ${c.tag}`}>
       {c.missing ? <p className={s.notice}>{c.missing}</p> : null}
+      {c.outdatedBy ? <p className={s.notice}>{c.outdatedBy}</p> : null}
 
-      <div className={s.twoCol} style={{ marginTop: c.missing ? 24 : 0 }}>
+      <div className={s.twoCol} style={{ marginTop: c.missing || c.outdatedBy ? 24 : 0 }}>
         <div>
           <h3 className={s.subTitle}>Dane wejściowe</h3>
           <dl className={s.dl}>

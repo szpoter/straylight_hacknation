@@ -1,8 +1,10 @@
+import { chatModelOptions, type ChatModelOptions } from "../chat-model";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { z } from "zod";
 import { assessCase, assessCaseVariant, CASE_RULE_VERSION, type AssessmentInput, type DecisionResult } from "../../rules/case-assessment";
 import { factInput, type CaseFile, type EvidenceFact, type MemoryRepository, type Page, type Profile } from "../memory/contract";
+import { ageMessage } from "../conversation-age";
 import { accountAnswer, accountReadInput, accountLinkInput, type AccountReport } from "./account";
 import type { AskAnswer } from "../types";
 import { ApiProblem } from "./http";
@@ -14,7 +16,9 @@ const replyTo = id.optional();
 const lookup = { subjectId: id.optional(), validAt: date.optional(), knownAt: z.iso.datetime({ offset: true }).optional(), replyTo };
 export const messageInput = z.discriminatedUnion("intent", [
   accountReadInput, accountLinkInput,
-  z.strictObject({ intent: z.literal("public_question"), publicQuestion: z.string().trim().min(2).max(500), replyTo }),
+  z.strictObject({intent:z.literal("note_age"), child:z.enum(["daughter","son","child"]),months:z.int().min(0).max(216)}),
+  z.strictObject({intent:z.literal("recall_age")}),
+  z.strictObject({ intent: z.literal("public_question"), modelOptions: chatModelOptions.optional(), publicQuestion: z.string().trim().min(2).max(500), replyTo }),
   z.strictObject({ intent: z.literal("read_context"), topic: id, publicTopic: z.literal("nursery_recipient").optional(), ...lookup }),
   z.strictObject({ intent: z.literal("declare_fact"), fact: factInput, basisProfileRevision: revision, replyTo }),
   z.strictObject({ intent: z.literal("ask_case"), topic: id.optional(), ...lookup }),
@@ -24,7 +28,7 @@ export const messageInput = z.discriminatedUnion("intent", [
 export const assessmentInput = z.strictObject({ subjectId: id, benefit: id, asOf: date, profileRevision: revision, caseRevision: revision });
 export type MessageInput = z.infer<typeof messageInput>;
 type Citation = { kind: "account" | "fact" | "workflow" | "document" | "public_source" | "assessment"; ref: string; version: string; page?: number; publicUrl?: string };
-export type Answer = { answer: string; citations: Citation[]; publicQuery?: string; opportunities?: AskAnswer["opportunities"]; proposalIds?: string[]; account?: AccountReport };
+export type Answer = { contextMessageId?: string; answer: string; citations: Citation[]; publicQuery?: string; opportunities?: AskAnswer["opportunities"]; proposalIds?: string[]; account?: AccountReport };
 export type Message = Answer & { id: string; input: MessageInput; state: "completed"; profileRevision: number; caseRevision: number };
 type Assessment = { id: string; input: AssessmentInput; decisions: DecisionResult[]; ruleVersion: string; stale: boolean };
 export type Context = { repo: MemoryRepository; db: PoolClient; owner: string; file: CaseFile; profile: Profile };
@@ -149,16 +153,24 @@ async function hypothetical(ctx: Context, message: Extract<MessageInput,{intent:
   return {answer:intro + lines.join("\n"),citations:variant.flatMap(d=>d.citations)};
 }
 
-export async function createMessage(ctx: Context, input: MessageInput, publicAnswer: (question: string, previous?: Message) => Promise<Answer>) {
+export async function createMessage(ctx: Context, input: MessageInput, publicAnswer: (question: string, previous?: Message, options?: ChatModelOptions) => Promise<Answer>) {
   let previous: Message | undefined;
   if ("replyTo" in input && input.replyTo) previous = await readTurn(ctx,"message",input.replyTo);
   else previous = (await ctx.db.query("SELECT body FROM zusik.v1_turns WHERE owner_session=$1 AND profile_id=$2 AND case_id=$3 AND kind='message' ORDER BY created_at DESC,id DESC LIMIT 1",
     [ctx.owner,ctx.profile.id,ctx.file.id])).rows[0]?.body;
   let response: Answer;
-  if (input.intent === "read_account" || input.intent === "link_account") {
+  if (input.intent === "note_age" || input.intent === "recall_age") {
+    const note = input.intent === "note_age" ? input : (await ctx.db.query(
+      `SELECT body->'input' AS note FROM zusik.v1_turns WHERE owner_session=$1 AND profile_id=$2 AND case_id=$3
+       AND kind='message' AND body->'input'->>'intent'='note_age' ORDER BY created_at DESC,id DESC LIMIT 1`,
+      [ctx.owner,ctx.profile.id,ctx.file.id])).rows[0]?.note;
+    response = {answer:ageMessage(note),citations:[]};
+  } else if (input.intent === "read_account" || input.intent === "link_account") {
     response = await accountAnswer(ctx,input);
   } else if (input.intent === "public_question") {
-    response = await publicAnswer(input.publicQuestion,previous?.input.intent === "public_question" ? previous : undefined);
+    if (previous?.input.intent === "public_question" && previous.contextMessageId)
+      previous = await readTurn(ctx,"message",previous.contextMessageId);
+    response = await publicAnswer(input.publicQuestion,previous?.input.intent === "public_question" ? previous : undefined, input.modelOptions);
   } else if (input.intent === "ask_case" && input.topic === "previous_sources" && previous) {
     response = {answer: previous.answer,citations:previous.citations};
   } else if (input.intent === "explain_result") {

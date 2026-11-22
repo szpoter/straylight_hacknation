@@ -15,6 +15,7 @@ import {
 } from "@/lib/admin/rule-versions";
 import { clearDraftPreview, clearRuleState, readRuleState, writeRuleState } from "@/lib/admin/rule-store";
 import { requireAdmin } from "@/lib/admin/server";
+import { clearSupportEdits } from "@/lib/admin/support-store";
 
 /**
  * Changing a rule parameter from the admin panel (ZUS task p. 14, SPEC-PANEL §7). Works for every
@@ -112,5 +113,6 @@ export async function withdrawVersion(versionId: string): Promise<ParameterActio
 export async function resetRules(): Promise<ParameterActionResult> {
   await requireAdmin();
   await clearRuleState();
+  await clearSupportEdits();
   return { ok: true, revision: 0 };
 }

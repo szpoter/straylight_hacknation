@@ -3,7 +3,7 @@
 import { createPolishOcrWorker, loadImage, pdfjs } from "@/features/kamil/read-document";
 import { MIN_CONFIDENCE } from "@/lib/ocr/birth-certificate";
 import { wordsFromPdfItems, wordsFromTesseract } from "@/lib/ocr/words";
-import { analyzeCasePage, containsDecision, type LocalCasePage, type LocalCaseDocument, type LocalLocator } from "./case-evidence";
+import { analyzeCasePage, containsDecision, containsRegistryBirthTitle, type LocalCasePage, type LocalCaseDocument, type LocalLocator } from "./case-evidence";
 import { checkScanDimensions } from "./case-image-size";
 import { openCaseProgress } from "./case-read-progress";
 import { pageLines, type PageLine } from "./case-page-layout";
@@ -13,6 +13,11 @@ type ReadOptions = { caseId: string; signal: AbortSignal; onProgress: Progress; 
 type PageRead = { text: string; method: LocalCasePage["method"]; lines?: PageLine[]; confidence?: number; blank?: boolean; protectedDecision?: boolean; highConfidenceText?: () => string };
 type PdfPage = import("pdfjs-dist/types/src/display/api").PDFPageProxy;
 type Worker = Awaited<ReturnType<typeof createPolishOcrWorker>>;
+
+// A4 at 300 dpi preserves small printed digits. Bound square scans and unusually long PDF pages too.
+function scanScale(width: number, height: number, maxScale: number) {
+  return Math.min(maxScale, 3508 / Math.max(width, height), Math.sqrt(9_000_000 / (width * height)));
+}
 
 async function readBytes(file: File) {
   if (!file.size || file.size > 20 * 1024 * 1024) throw new Error("Wybierz PDF lub skan o wielkości do 20 MB.");
@@ -56,8 +61,7 @@ async function abortable<T>(work: Promise<T>, signal: AbortSignal) {
   }
 }
 
-// Text rows give a stronger horizontal projection than vertical text. One rotated retry is enough
-// to recover common upside-down and clockwise scans; weaker results go to manual review.
+// Ink projections distinguish sideways text, but cannot tell left from right.
 function retryRotation(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   const { width, height } = canvas;
   const { data } = ctx.getImageData(0, 0, width, height);
@@ -72,7 +76,7 @@ function retryRotation(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D)
   }
   const horizontal = rows.reduce((sum, v) => sum + v * v, 0) / width;
   const vertical = cols.reduce((sum, v) => sum + v * v, 0) / height;
-  return horizontal >= vertical ? 180 : -90;
+  return horizontal >= vertical ? [180] : [-90, 90];
 }
 
 async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, signal: AbortSignal, getWorker: () => Promise<Worker>): Promise<PageRead> {
@@ -82,23 +86,26 @@ async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, 
   signal.throwIfAborted();
   const recognize = (image: HTMLCanvasElement) => abortable(worker.recognize(image, { rotateAuto: true }, { blocks: true }), signal);
   let { data } = await recognize(canvas);
+  let protectedDecision = containsDecision(data.text);
   let rotation = 0;
   let width = canvas.width, height = canvas.height;
-  if (data.confidence < MIN_CONFIDENCE) {
-    const angle = retryRotation(canvas, ctx);
-    const sideways = angle === -90;
-    const retry = canvasFor(sideways ? height : width, sideways ? width : height);
+  const angles = data.confidence < MIN_CONFIDENCE ? retryRotation(canvas, ctx) : [];
+  for (const angle of angles) {
+    const sideways = Math.abs(angle) === 90;
+    const retry = canvasFor(sideways ? canvas.height : canvas.width, sideways ? canvas.width : canvas.height);
     try {
       retry.ctx.translate(retry.canvas.width / 2, retry.canvas.height / 2);
       retry.ctx.rotate(angle * Math.PI / 180);
-      retry.ctx.drawImage(canvas, -width / 2, -height / 2);
+      retry.ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
       const rotated = await recognize(retry.canvas);
+      protectedDecision ||= containsDecision(rotated.data.text);
       if (rotated.data.confidence > data.confidence) {
         data = rotated.data;
         rotation = angle;
         width = retry.canvas.width; height = retry.canvas.height;
       }
     } finally { retry.canvas.width = retry.canvas.height = 0; }
+    if (data.confidence >= MIN_CONFIDENCE) break;
   }
   const words = data.words ?? data.blocks?.flatMap(b => b.paragraphs.flatMap(p => p.lines.flatMap(l => l.words))) ?? [];
   const positioned = wordsFromTesseract(words, 1, width, height);
@@ -106,16 +113,18 @@ async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, 
   for (const line of lines) {
     const { x, y, w, h } = line.box;
     if (rotation === 180) line.box = { x: 1 - x - w, y: 1 - y - h, w, h };
+    if (rotation === 90) line.box = { x: y, y: 1 - x - w, w: h, h: w };
     if (rotation === -90) line.box = { x: 1 - y - h, y: x, w: h, h: w };
   }
   const text = lines.length ? lines.map(l => l.text).join("\n") : data.text.trim();
-  return { method: "ocr", text, confidence: data.confidence, lines,
+  return { method: "ocr", text, confidence: data.confidence, lines, protectedDecision,
     highConfidenceText: () => pageLines(positioned.map(word => word.confidence >= MIN_CONFIDENCE ? word : { ...word, text: "�" }),
       width, height).map(line => line.text).join("\n") };
 
 }
 
-async function readPage(page: PdfPage, lib: Awaited<ReturnType<typeof pdfjs>>, signal: AbortSignal, progress: Progress, total: number, getWorker: () => Promise<Worker>): Promise<PageRead> {
+async function readPage(page: PdfPage, lib: Awaited<ReturnType<typeof pdfjs>>, signal: AbortSignal, progress: Progress, total: number,
+  getWorker: () => Promise<Worker>, assess: (input: PageRead) => LocalCasePage): Promise<LocalCasePage> {
   const { items } = await page.getTextContent();
   const runs = items.filter(item => "str" in item);
   const raw = runs.map(item => item.str + (item.hasEOL ? "\n" : " ")).join("").trim();
@@ -126,21 +135,34 @@ async function readPage(page: PdfPage, lib: Awaited<ReturnType<typeof pdfjs>>, s
       lib.OPS.paintImageXObjectRepeat, lib.OPS.paintInlineImageXObjectGroup, lib.OPS.paintImageMaskXObjectGroup, lib.OPS.paintImageMaskXObjectRepeat];
     if (!operations.fnArray.some(op => imageOps.includes(op))) {
       const lines = pageLines(wordsFromPdfItems(runs, page.pageNumber, base.width, base.height), base.width, base.height, true);
-      return { method: "pdf_text", text: lines.length ? lines.map(l => l.text).join("\n") : raw, lines, confidence: 100 };
+      return assess({ method: "pdf_text", text: lines.length ? lines.map(l => l.text).join("\n") : raw, lines, confidence: 100, protectedDecision: containsDecision(raw) });
     }
   }
   signal.throwIfAborted();
   progress(`Rozpoznaję skan strony ${page.pageNumber} z ${total}…`);
-  const view = page.getViewport({ scale: 1800 / Math.max(base.width, base.height) });
-  const { canvas, ctx } = canvasFor(view.width, view.height);
-  try {
-    await page.render({ canvasContext: ctx, viewport: view }).promise;
-    const result = await runOcr(canvas, ctx, signal, getWorker);
-    if (!result.text && raw) return { method: "ocr", text: raw, confidence: 0 };
-    return { ...result, protectedDecision: containsDecision(raw) };
-  } finally {
-    canvas.width = canvas.height = 0;
+  async function atScale(scale: number) {
+    const view = page.getViewport({ scale });
+    const { canvas, ctx } = canvasFor(view.width, view.height);
+    try {
+      await page.render({ canvasContext: ctx, viewport: view }).promise;
+      const result = await runOcr(canvas, ctx, signal, getWorker);
+      if (!result.text && raw) { result.text = raw; result.confidence = 0; result.blank = false; }
+      result.protectedDecision ||= containsDecision(raw);
+      return assess(result);
+    } finally { canvas.width = canvas.height = 0; }
   }
+  const scale = scanScale(base.width, base.height, 300 / 72);
+  const first = await atScale(scale);
+  const smaller = 1800 / Math.max(base.width, base.height);
+  if (scale <= smaller || (first.role !== "certificate" && first.role !== "other") || first.candidates.length ||
+      !containsRegistryBirthTitle(first.text)) return first;
+  // Some scans preserve the digits better when downsampled. Both passes must clear the usual decision guard.
+  try {
+    const retry = await atScale(smaller);
+    if (retry.status === "excluded") return retry;
+    if (retry.role === "certificate" && retry.lines?.length && retry.candidates.length === 1 && retry.candidates[0].field === "birthDate") return retry;
+  } catch { signal.throwIfAborted(); }
+  return first;
 }
 
 async function read(file: File, options: ReadOptions, pdfOnly = false, existing: readonly LocalCaseDocument[] = []): Promise<LocalCaseDocument> {
@@ -165,9 +187,9 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
   };
   let worker: Promise<Worker> | undefined;
   const getWorker = () => worker ??= createPolishOcrWorker();
-  function record(input: PageRead, total: number) {
+  function assess(input: PageRead) {
     signal.throwIfAborted();
-    const page = analyzeCasePage(clientDocumentId, pages.length + 1, input.text, input.method, pages.at(-1), input.confidence);
+    const page = analyzeCasePage(clientDocumentId, pages.length + 1, input.text, input.method, pages.at(-1), input.confidence, input.lines);
     if (input.protectedDecision) {
       page.kind = page.role = "decision";
       page.status = "excluded";
@@ -194,6 +216,9 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
         if (page.leaveRequests.length < leaves.length) page.reason = "ambiguous_field";
       }
     }
+    return page;
+  }
+  function record(page: LocalCasePage, total: number) {
     pages.push(page);
     options.onPage?.(page, total);
   }
@@ -224,14 +249,14 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
           }
           onProgress(`Czytam stronę ${n} z ${pdf.numPages}…`);
           signal.throwIfAborted();
-          let result: PageRead;
+          let result: LocalCasePage;
           try {
             const page = await pdf.getPage(n);
-            try { result = await readPage(page, lib, signal, onProgress, pdf.numPages, getWorker); }
+            try { result = await readPage(page, lib, signal, onProgress, pdf.numPages, getWorker, assess); }
             finally { page.cleanup(); }
           } catch {
             signal.throwIfAborted();
-            result = { method: "manual", text: "" };
+            result = assess({ method: "manual", text: "" });
           }
           record(result, pdf.numPages);
           if (checkpoint) {
@@ -248,11 +273,11 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
     } else {
       onProgress("Rozpoznaję skan strony 1 z 1…");
       const img = await loadImage(new Blob([bytes], { type }));
-      const scale = Math.min(1, 1800 / Math.max(img.naturalWidth, img.naturalHeight));
+      const scale = scanScale(img.naturalWidth, img.naturalHeight, 1);
       const { canvas, ctx } = canvasFor(img.naturalWidth * scale, img.naturalHeight * scale);
       try {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        record(await runOcr(canvas, ctx, signal, getWorker), 1);
+        record(assess(await runOcr(canvas, ctx, signal, getWorker)), 1);
       } finally { canvas.width = canvas.height = 0; }
     }
   } finally {

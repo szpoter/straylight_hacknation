@@ -7,7 +7,7 @@ import { assessArrears } from "./arrears";
 import { benefitPayer, countDateFor } from "./payer";
 import type { RuleSchedule } from "./parameters";
 
-export const CASE_RULE_VERSION = "case-2026-11-22.4/" + MATERNITY_RULES_VERSION;
+export const CASE_RULE_VERSION = "case-2026-11-22.5/" + MATERNITY_RULES_VERSION;
 
 export interface AssessmentInput {
   subjectId: string;
@@ -172,8 +172,19 @@ function assessPregnancySickness(result: DecisionResult, from: string, to: strin
   const onset = certs[0]?.fact.validFrom;
   if (!onset || starts.size !== 1 || to > asOf) return review("verify_incapacity_dates");
   const during = (f: Fact) => scoped(f) && applies(f, onset) && applies(f, to);
-  const coverage = read("sicknessCoverage", during, `Dołącz potwierdzenie chorobowego od ${onset} do ${to}.`);
-  read("sicknessCoverage", f => scoped(f) && overlaps(f, onset), "Sprawdź zmiany ubezpieczenia w okresie niezdolności.");
+  const coverageQuestion = `Dołącz potwierdzenie chorobowego od ${onset} do ${to}.`;
+  const coverage = read("sicknessCoverage", f => scoped(f) && overlaps(f, onset), coverageQuestion);
+  const allCoverage = facts.filter(e => e.fact.field === "sicknessCoverage");
+  const intervals = allCoverage.map(e => e.fact).filter(f => scoped(f) && overlaps(f, onset))
+    .map(f => ({ from: f.validFrom ?? f.asOf ?? onset, to: f.validFrom ? f.validTo ?? to : f.asOf ?? onset }))
+    .sort((a,b) => a.from.localeCompare(b.from));
+  let nextDay = onset;
+  for (const interval of intervals) {
+    if (interval.from > nextDay) break;
+    if (interval.to >= to) { nextDay = addDays(to, 1); break; }
+    if (interval.to >= nextDay) nextDay = addDays(interval.to, 1);
+  }
+  if (nextDay <= to) throw new EvidenceIssue("sicknessCoverage", `Dołącz potwierdzenie chorobowego za dzień ${nextDay}.`, false);
   if (coverage === "excluded") {
     const other = read("otherCoverage", f => (!f.titleRef || scoped(f)) && applies(f, onset) && applies(f, to), "Potwierdź wszystkie inne tytuły za okres niezdolności.");
     const prior = read("postInsuranceException", during, "Dołącz historię wykluczającą także prawo po ustaniu wcześniejszego ubezpieczenia.");
@@ -188,10 +199,42 @@ function assessPregnancySickness(result: DecisionResult, from: string, to: strin
   const contractor = title === "contract" || title === "zleceniobiorca";
   if (!employee && !contractor) return review("verify_sickness_title_and_payment_conditions");
   const waiting = employee ? 30 : 90;
-  if (read("sicknessCoverage", f => during(f) && applies(f, addDays(onset, -waiting)),
-    `Dołącz historię na ${waiting} dni wyczekiwania, wcześniejsze zgłoszenia lub dowód zwolnienia z wyczekiwania.`, true) !== "covered") {
-    throw new EvidenceIssue("sicknessCoverage", `Potwierdź ${waiting} dni wyczekiwania albo wyjątek od tego warunku.`, false);
+  const waitingQuestion = `Potwierdź ${waiting} dni wyczekiwania albo wyjątek od tego warunku.`;
+  const sameTitle = (a: Fact, b: Fact) => a.titleRef === b.titleRef && a.payerRef === b.payerRef;
+  const endedTitles = allCoverage.flatMap(row => {
+    const f = row.fact;
+    const day = f.validFrom ?? f.asOf;
+    if (!day || day >= onset || scoped(f) || !f.titleRef || !f.payerRef || valueOf(f) !== "ended") return [];
+    const conflicting = allCoverage.filter(other => sameTitle(f, other.fact) && valueOf(other.fact) === "covered" && applies(other.fact, day));
+    return [{ row, day, conflicting }];
+  });
+  const history = allCoverage.filter(e => scoped(e.fact) || endedTitles.some(end => sameTitle(end.row.fact, e.fact)));
+  let insuredDays = 0;
+  let gap = 0;
+  // Art. 4 ust. 2: shorter breaks connect periods, but the break itself earns no insured days.
+  for (let day = addDays(onset, -1); insuredDays < waiting && gap <= 30; day = addDays(day, -1)) {
+    const rows = history.filter(e => applies(e.fact, day));
+    const usable = rows.filter(e => valueOf(e.fact) === "covered" && (scoped(e.fact) ||
+      endedTitles.some(end => sameTitle(end.row.fact, e.fact) && end.day > day)));
+    if (!usable.length) { gap++; continue; }
+    for (const row of usable) {
+      const matching = rows.filter(e => sameTitle(row.fact, e.fact));
+      cite(result, matching);
+      if (matching.some(e => e.verification === "disputed" || valueOf(e.fact) !== "covered")) {
+        throw new EvidenceIssue("sicknessCoverage", waitingQuestion, true);
+      }
+      if (!scoped(row.fact)) {
+        const ends = endedTitles.filter(end => sameTitle(end.row.fact, row.fact) && end.day > day);
+        cite(result, ends.flatMap(end => [end.row, ...end.conflicting]));
+        if (ends.some(end => end.row.verification === "disputed" || end.conflicting.length)) {
+          throw new EvidenceIssue("sicknessCoverage", waitingQuestion, true);
+        }
+      }
+    }
+    insuredDays++;
+    gap = 0;
   }
+  if (insuredDays < waiting) throw new EvidenceIssue("sicknessCoverage", waitingQuestion, false);
   const investigation = facts.filter(e => e.fact.field === "benefitHistory" && scoped(e.fact) && overlaps(e.fact, onset));
   if (investigation.length) { cite(result, investigation); return review("verify_overlapping_benefit_or_control"); }
   if (daysBetween(onset, to) >= 270) return review("verify_sickness_period_limit");
@@ -201,12 +244,18 @@ function assessPregnancySickness(result: DecisionResult, from: string, to: strin
   if (employee) {
     if (onset.slice(0, 4) !== to.slice(0, 4)) return review("verify_sickness_payment_at_year_boundary");
     const yearStart = onset.slice(0, 4) + "-01-01";
-    const hasEarlierDays = onset !== yearStart;
-    if (hasEarlierDays) {
+    if (onset !== yearStart) {
+      const priorSalary = facts.filter(e => e.fact.field === "benefitHistory" && valueOf(e.fact) === "sickness_salary" &&
+        (e.fact.validFrom ?? e.fact.asOf ?? onset) < onset &&
+        (e.fact.validTo ?? (e.fact.validFrom ? onset : e.fact.asOf) ?? "") >= yearStart);
+      if (priorSalary.length) {
+        cite(result, priorSalary);
+        throw new EvidenceIssue("benefitHistory", "Potwierdź łączną liczbę dni wynagrodzenia chorobowego u wszystkich pracodawców w tym roku.", true);
+      }
       const history = read("benefitHistory", f => scoped(f) && applies(f, yearStart) && applies(f, addDays(onset, -1)),
         "Dołącz historię dni wynagrodzenia chorobowego od początku roku do dnia przed zachorowaniem.");
       if (history !== "no_sickness_days") return review("verify_prior_employer_sick_pay");
-    } else return review("verify_sickness_payment_at_year_boundary");
+    }
     const dob = read("birthDate", f => (!f.titleRef || scoped(f)) && (!f.asOf || f.asOf <= asOf), "Potwierdź datę urodzenia dla limitu wynagrodzenia chorobowego.");
     if (typeof dob !== "string" || !isValidIso(dob) || dob >= onset) return review("invalid_claimant_birth_date");
     const shorterLimit = Number(onset.slice(0, 4)) > Number(dob.slice(0, 4)) + 50;
@@ -275,38 +324,61 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
   try {
     if (!first) throw new EvidenceIssue("benefitRequest", "Dołącz wniosek z okresem świadczenia, tytułem i płatnikiem.", false);
     cite(result, application);
-    const { validFrom: from, validTo: to, asOf: filed, titleRef, payerRef } = first;
+    const { validFrom: from, validTo: to, titleRef, payerRef } = first;
     if (application.some(e => e.verification === "disputed") || new Set(application.map(e => e.fact.asOf)).size > 1) throw new EvidenceIssue("benefitRequest", "Potwierdź okres i treść wniosku.", true);
     if (!from || !to || !isValidIso(from) || !isValidIso(to) || from > to || !titleRef || !payerRef) throw new EvidenceIssue("benefitRequest", "Potwierdź obie daty, tytuł i płatnika we wniosku.", false);
     Object.assign(result, { from, to, titleRef, payerRef });
+    const overlaps = facts.filter(e => e.fact.field === "benefitRequest" && valueOf(e.fact) === input.benefit && scoped(e.fact) &&
+      (!e.fact.asOf || e.fact.asOf <= input.asOf) && e.fact.validFrom && e.fact.validTo &&
+      e.fact.validFrom <= to && e.fact.validTo >= from && (e.fact.validFrom !== from || e.fact.validTo !== to));
+    if (overlaps.length) {
+      cite(result, overlaps);
+      throw new EvidenceIssue("benefitRequest", "Okresy wniosków dla tego samego tytułu nakładają się. Potwierdź aktualny wniosek lub sprostuj jego daty.", true);
+    }
     if (input.benefit === "sickness") return assessPregnancySickness(result, from, to, payerRef, input.asOf, facts, scoped, read, snapshot.schedule);
-    const birth = read("deliveryDate", f => (!f.titleRef || scoped(f)) && (!f.asOf || f.asOf <= input.asOf), "Dołącz potwierdzenie daty porodu wnioskodawczyni.");
+    const personal = (f: Fact) => (!f.titleRef || f.titleRef === titleRef) && (!f.payerRef || f.payerRef === payerRef);
+    const birth = read("deliveryDate", f => personal(f) && (!f.asOf || f.asOf <= input.asOf), "Dołącz potwierdzenie daty porodu wnioskodawczyni.");
     if (typeof birth !== "string" || !isValidIso(birth) || birth > input.asOf) throw new EvidenceIssue("deliveryDate", "Potwierdź faktyczną datę porodu.", true);
     const atBirth = (f: Fact) => scoped(f) && applies(f, birth);
-    const event = (f: Fact) => (!f.titleRef || scoped(f)) && applies(f, birth);
+    const event = (f: Fact) => personal(f) && applies(f, birth);
+    const childcareLeave = from >= birth && facts.some(e => e.fact.field === "insuranceTitle" && atBirth(e.fact) && valueOf(e.fact) === "employee_childcare_leave")
+      && read("insuranceTitle", atBirth, "Potwierdź zatrudnienie i urlop wychowawczy w dniu porodu.") === "employee_childcare_leave";
+    const covered = childcareLeave ? undefined : read("sicknessCoverage", atBirth, `Czy poświadczenie chorobowego dla tego tytułu obejmuje ${birth}?`);
+    if (covered === "excluded" && from >= birth) {
+      const other = read("otherCoverage", event, `Dołącz pełną historię pozostałych tytułów na ${birth}.`);
+      const exception = read("postInsuranceException", event, "Czy dokumenty wykluczają uprawnienie po ustaniu ubezpieczenia?");
+      const alternate = facts.filter(e => !scoped(e.fact) && applies(e.fact, birth) && (
+        (e.fact.field === "sicknessCoverage" && valueOf(e.fact) === "covered") ||
+        (e.fact.field === "insuranceTitle" && valueOf(e.fact) === "employee_childcare_leave")));
+      cite(result, alternate);
+      if (other !== "none" || exception !== "none" || alternate.length) throw new EvidenceIssue("otherCoverage", "Sprawdź inny tytuł lub wyjątek po ustaniu ubezpieczenia.", true);
+      result.citations.push(law("uz-art30"));
+      return { ...result, status: "ineligible", amountStatus: "not_applicable", reasonCode: "excluded_no_other_title_or_exception" } satisfies DecisionResult;
+    }
     const outsideEarlyPeriod = from < birth || to >= addDays(birth, 56);
     const course = read("maternityCourse", event, "Potwierdź historię urlopu za wnioskowany okres (przejęcia, przerwy i zdarzenia wpływające na wymiar).", !outsideEarlyPeriod);
     let children = 1;
-    let prenatalDays = 0;
+    const prenatalDays = read("prenatalLeaveDays", event, "Ile dni urlopu macierzyńskiego wykorzystano przed porodem?", course === undefined) ?? 0;
+    if (typeof prenatalDays !== "number" || prenatalDays < 0 || prenatalDays > 42 || !Number.isInteger(prenatalDays)) {
+      throw new EvidenceIssue("prenatalLeaveDays", "Sprawdź liczbę dni wykorzystanych przed porodem.", true);
+    }
     let deathDates: string[] | undefined;
     if (course !== undefined) {
       if (!["ordinary_uninterrupted", "single_stillbirth", "single_child_death"].includes(String(course))) {
         return { ...result, status: "needs_review", amountStatus: "needs_review", reasonCode: "verify_maternity_period_history" } satisfies DecisionResult;
       }
       const count = read("birthChildCount", event, "Ile dzieci obejmuje ten sam poród?");
-      const before = read("prenatalLeaveDays", event, "Ile dni urlopu macierzyńskiego wykorzystano przed porodem?");
-      if (typeof count !== "number" || count < 1 || !Number.isSafeInteger(count) || typeof before !== "number" || before < 0 || before > 42 || !Number.isInteger(before)) {
-        throw new EvidenceIssue("maternityCourse", "Sprawdź liczbę dzieci i dni urlopu przed porodem.", true);
+      if (typeof count !== "number" || count < 1 || !Number.isSafeInteger(count)) {
+        throw new EvidenceIssue("birthChildCount", "Sprawdź liczbę dzieci urodzonych podczas tego porodu.", true);
       }
       children = count;
-      prenatalDays = before;
       if (course !== "ordinary_uninterrupted") {
         if (count !== 1) throw new EvidenceIssue("birthChildCount", "Ustal zdarzenia i okres opieki osobno dla każdego dziecka.", true);
         const death = course === "single_stillbirth" ? birth : read("childDeathDate", event, "Potwierdź datę zgonu dziecka.");
         if (typeof death !== "string" || !isValidIso(death) || death < birth || death > input.asOf) throw new EvidenceIssue("childDeathDate", "Sprawdź datę zdarzenia.", true);
         deathDates = [death];
       }
-      const window = birthLeaveWindow(birth, count, before, deathDates, snapshot.schedule);
+      const window = birthLeaveWindow(birth, count, prenatalDays, deathDates, snapshot.schedule);
       if (from < window.from || to > window.to) {
         return { ...result, status: "needs_review", amountStatus: "needs_review", reasonCode: "requested_days_outside_entitlement_window" } satisfies DecisionResult;
       }
@@ -314,7 +386,7 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
     if (from < birth && read("sicknessCoverage", f => scoped(f) && applies(f, from), `Potwierdź ubezpieczenie od początku urlopu przed porodem (${from}).`) !== "covered") {
       throw new EvidenceIssue("sicknessCoverage", "Sprawdź tytuł w dniu rozpoczęcia urlopu przed porodem.", true);
     }
-    const covered = read("sicknessCoverage", atBirth, `Czy poświadczenie chorobowego dla tego tytułu obejmuje ${birth}?`);
+    const basisDay = addDays(birth, -prenatalDays);
     if (covered === "ended" && from >= birth) {
       result.citations.push(law("uz-art30-ust1"), law("uz-art61"));
       const ended = facts.filter(e => e.fact.field === "sicknessCoverage" && atBirth(e.fact));
@@ -330,7 +402,7 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
       if (previous !== "covered" || (title !== "employee" && title !== "pracownik")) {
         throw new EvidenceIssue("insuranceTitle", "Sprawdź wcześniejszy tytuł i jego okres ochrony.", true);
       }
-      const pregnancy = read("sicknessCertificate", f => (!f.titleRef || scoped(f)) && applies(f, lastDay),
+      const pregnancy = read("sicknessCertificate", f => personal(f) && applies(f, lastDay),
         `Dołącz zaświadczenie o ciąży w dniu ustania zatrudnienia (${lastDay}).`);
       if (pregnancy !== "pregnancy") throw new EvidenceIssue("sicknessCertificate", "Potwierdź ciążę w dniu ustania zatrudnienia.", true);
       const cause = read("postInsuranceException", f => onLastDay(f) && f.source.kind === "document" && (!f.asOf || f.asOf <= input.asOf),
@@ -341,15 +413,9 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
       return { ...result, status: "eligible", payer: "zus", amountStatus: "needs_review",
         reasonCode: "entitled_after_employment_ended", needed: [{ field: "payrollRegime", request: "Sprawdź podstawę sprzed ustania zatrudnienia w Z-3 byłego pracodawcy." }] } satisfies DecisionResult;
     }
-    if (covered === "excluded") {
-      const personal = (f: Fact) => (!f.titleRef || scoped(f)) && applies(f, birth);
-      const other = read("otherCoverage", personal, `Dołącz pełną historię pozostałych tytułów na ${birth}.`);
-      const exception = read("postInsuranceException", personal, "Czy dokumenty wykluczają uprawnienie po ustaniu ubezpieczenia?");
-      const alternate = facts.filter(e => e.fact.field === "sicknessCoverage" && !scoped(e.fact) && applies(e.fact, birth) && valueOf(e.fact) === "covered");
-      cite(result, alternate);
-      if (other !== "none" || exception !== "none" || alternate.length) throw new EvidenceIssue("otherCoverage", "Sprawdź inny tytuł lub wyjątek po ustaniu ubezpieczenia.", true);
-      result.citations.push(law("uz-art30"));
-      return { ...result, status: "ineligible", amountStatus: "not_applicable", reasonCode: "excluded_no_other_title_or_exception" } satisfies DecisionResult;
+    if (childcareLeave) {
+      return { ...result, status: "eligible", amountStatus: "needs_review", reasonCode: "birth_during_childcare_leave",
+        needed: [{ field: "payrollRegime", request: "Zweryfikuj w Z-3 podstawę zasiłku z uwzględnieniem miesięcy urlopu wychowawczego." }] } satisfies DecisionResult;
     }
     if (covered !== "covered") throw new EvidenceIssue("sicknessCoverage", "Potwierdź objęcie ubezpieczeniem chorobowym.", true);
     const title = read("insuranceTitle", atBirth, "Potwierdź rodzaj tytułu w dniu porodu.");
@@ -372,19 +438,19 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
     result.citations.push(law("uz-art61"));
     if (business) {
       try {
-        const debt = read("accountArrears", f => scoped(f) && f.asOf === birth, `Dołącz saldo składek na ${birth}.`, true);
+        const debt = read("accountArrears", f => scoped(f) && f.asOf === basisDay, `Dołącz saldo składek na ${basisDay}.`, true);
         if (typeof debt !== "number") {
           result.paymentStatus = "needs_information";
-          (result.needed ??= []).push({ field: "accountArrears", request: `Dołącz saldo składek na dzień powstania prawa (${birth}).` });
+          (result.needed ??= []).push({ field: "accountArrears", request: `Dołącz saldo składek na dzień powstania prawa (${basisDay}).` });
         } else {
-          let arrears = assessArrears({ covered: true, arrears: debt / 100, rightArisesOn: birth, today: input.asOf, paidOn: null, schedule: snapshot.schedule });
-          if (arrears.status !== "within_limit" && input.asOf !== birth) {
+          let arrears = assessArrears({ covered: true, arrears: debt / 100, rightArisesOn: basisDay, today: input.asOf, paidOn: null, schedule: snapshot.schedule });
+          if (arrears.status !== "within_limit" && input.asOf !== basisDay) {
             const settlement = read("debtSettlement", f => scoped(f) && applies(f, input.asOf), "Potwierdź pełną spłatę i jej datę lub niespłacone saldo na dzień oceny.", true);
-            if (typeof settlement === "string" && isValidIso(settlement) && settlement >= birth && settlement <= input.asOf) {
-              arrears = assessArrears({ covered: true, arrears: debt / 100, rightArisesOn: birth, today: input.asOf, paidOn: settlement, schedule: snapshot.schedule });
+            if (typeof settlement === "string" && isValidIso(settlement) && settlement >= basisDay && settlement <= input.asOf) {
+              arrears = assessArrears({ covered: true, arrears: debt / 100, rightArisesOn: basisDay, today: input.asOf, paidOn: settlement, schedule: snapshot.schedule });
             } else if (settlement !== "unpaid") {
               result.paymentStatus = "needs_information";
-              (result.needed ??= []).push({ field: "debtSettlement", request: `Czy i kiedy w całości spłacono dług wykazany ${birth}?` });
+              (result.needed ??= []).push({ field: "debtSettlement", request: `Czy i kiedy w całości spłacono dług wykazany ${basisDay}?` });
             }
           }
           if (!result.paymentStatus) result.paymentStatus = arrears.status === "expired" ? "expired" : arrears.status === "withheld_until_paid" ? "withheld" : "payable";
@@ -397,12 +463,29 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
         (result.needed ??= []).push({ field: issue.field, request: issue.question });
       }
     }
-    const variant = course === "single_stillbirth" ? "100-70" : read("maternityPayVariant", f => scoped(f) && applies(f, from), "Potwierdź wybraną stawkę na wniosku oraz datę jego złożenia.");
+    const atStart = (f: Fact) => scoped(f) && applies(f, from);
+    const rateQuestion = "Potwierdź wariant wypłaty za wnioskowany okres.";
+    const choice = course === "single_stillbirth" ? "100-70" : read("maternityPayVariant", atStart, rateQuestion);
+    if (course !== "single_stillbirth") {
+      read("maternityPayVariant", f => scoped(f) && (f.validFrom ? f.validFrom <= to && (!f.validTo || f.validTo >= from) :
+        !!f.asOf && f.asOf >= from && f.asOf <= to), rateQuestion);
+    }
+    if (choice === "815") throw new EvidenceIssue("maternityPayVariant", "Sprawdź, czy wniosek lub deklaracja obejmuje pełny okres macierzyńskiego i należnego rodzicielskiego.", false);
+    const variant = choice === "815_full_election" ? "815" : choice;
     if (course === "single_child_death" && variant === "815") throw new EvidenceIssue("maternityPayVariant", "Potwierdź stawkę po zmianie okresu świadczenia.", true);
-    if (variant !== "100-70" && variant !== "815") throw new EvidenceIssue("maternityPayVariant", "Sprawdź wybór stawki na wniosku.", true);
-    if (variant === "815" && (!filed || !isValidIso(filed) || filed < birth || filed > addDays(birth, maternityParametersOn(snapshot.schedule, birth).averagedRequestDays))) throw new EvidenceIssue("maternityPayVariant", "Sprawdź datę wniosku o stawkę uśrednioną i właściwą stawkę.", true);
-    const basisDay = addDays(birth, -prenatalDays);
-    const months = payrollMonths(basisDay, payerRef, employee, contractor, atBirth, scoped, read);
+    if (variant !== "100-70" && variant !== "815") throw new EvidenceIssue("maternityPayVariant", rateQuestion, true);
+    if (variant === "815") {
+      const coversPeriod = (f: Fact) => atStart(f) && applies(f, to);
+      read("maternityPayVariant", coversPeriod, rateQuestion);
+      const dates = new Set(facts.filter(e => e.fact.field === "maternityPayVariant" && coversPeriod(e.fact)).map(({fact}) =>
+        fact.asOf ?? application.find(e => e.fact.source.referenceId === fact.source.referenceId && e.fact.source.page === fact.source.page)?.fact.asOf));
+      const [filed] = dates;
+      if (dates.size !== 1 || !filed || filed < birth || filed > input.asOf || filed > addDays(birth, maternityParametersOn(snapshot.schedule, birth).averagedRequestDays)) {
+        throw new EvidenceIssue("maternityPayVariant", "Potwierdź datę złożenia wniosku o stawkę uśrednioną.", dates.size > 1 || !!filed);
+      }
+      result.citations.push(law("uz-art30a"));
+    }
+    const months = payrollMonths(basisDay, payerRef, employee, contractor, f => scoped(f) && applies(f, basisDay), scoped, read);
     if (!months) return { ...result, amountStatus: "unsupported", reasonCode: "unsupported_payroll_regime" } satisfies DecisionResult;
     const priced = priceMaternityPeriod({
       event: "birth", date: birth, children, prenatalLeaveDays: prenatalDays, childDeathDates: deathDates, stillbirth: course === "single_stillbirth", zaZyciem: false, variant, parentA: { title: employee ? "pracownik" : business ? "dzialalnosc" : "zleceniobiorca", basis: { kind: "months", months }, fullTime: employee },

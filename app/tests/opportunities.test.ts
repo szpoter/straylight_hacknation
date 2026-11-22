@@ -4,11 +4,38 @@ import { expect, it } from "vitest";
 import release from "../corpus/opportunities.json";
 import forms from "../corpus/forms.json";
 import sources from "../corpus/official-sources.json";
-import { listOpportunities } from "../src/lib/plan/opportunities";
+import { listOpportunities, opportunityQuestion } from "../src/lib/plan/opportunities";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
+import { answerPublicTurn } from "../src/lib/zusik/ask-service";
 
 const asOf = "2026-11-22";
 const corpus = loadCorpus("oferta");
+
+it("retains both care alternatives and sends only catalogue titles through the public route", async () => {
+  const query = opportunityQuestion("Porównaj opcje dla córeczki Testowej: w domu albo w żłobku na ulicy Przykładowej.", asOf);
+  expect(query).toBe("Pokaż możliwości wsparcia: Świadczenie aktywnie w żłobku, Świadczenie aktywnie w domu");
+  const { answer } = await answerPublicTurn({
+    corpus, selectCorpus: () => corpus, asOf: () => asOf,
+    search: { search: async ({ lexical = [] }) => ({ status: "ok", ms: 1, hits: lexical.map(h => ({ ...h, score: 1 })) }) },
+    generate: async () => { throw Error("Unexpected generation for the catalogue"); },
+  }, query ?? "", []);
+  expect(answer.opportunities?.map(c => c.id)).toEqual(["aktywnie-w-zlobku", "aktywnie-w-domu"]);
+  expect(answer.opportunities?.map(card => answer.citations.find(c => card.citationIds.includes(c.id))?.fragmentId))
+    .toEqual(["zlobek-opieka", "of-dom-3-1"]);
+  expect(answer.message).toContain("alternatywy");
+});
+
+it("preserves a recent birth as a current discovery and leaves dated claims and filing questions to the public route", () => {
+  expect(opportunityQuestion("W zeszłym tygodniu urodziła mi się córka.", asOf)).toContain("800+");
+  for (const text of ["Jakie wsparcie na żłobek obowiązywało w 2023 roku?", "Kto dostaje przelew za żłobek?",
+    "Porównaj stawki zasiłku za ojcowski i rodzicielski.", "Córka zacznie szkołę. Jak złożyć wniosek o wyprawkę?"]) {
+    expect(opportunityQuestion(text, asOf)).toBeNull();
+  }
+  expect(listOpportunities({ text: "Po porodzie dziecko zostało w szpitalu.", asOf }).candidates[0]?.id)
+    .toBe("uzupelniajacy-macierzynski");
+  expect(listOpportunities({ text: "Zamknięto żłobek, zostajemy w domu.", asOf }).candidates[0]?.id)
+    .toBe("opieka-zamkniecie");
+});
 
 it("keeps public card, condition, channel, exclusion and form evidence reproducible", () => {
   for (const card of release.cards) {

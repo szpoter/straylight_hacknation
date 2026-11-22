@@ -1,5 +1,6 @@
 "use client";
 
+import { getChatModelOptions } from "./model-selection";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { routeCaseQuestion } from "@/lib/zusik/v1/intent";
 import { chatStarters } from "@/lib/zusik/conversation";
@@ -29,6 +30,8 @@ function messageLabel(input: MessageInput) {
     case "public_question": return input.publicQuestion;
     case "link_account": return "Powiąż symulowane konto z " + input.subjectId;
     case "read_account": return "Odczytaj symulowane konto · " + input.subjectId + " · " + input.from + " – " + input.to;
+    case "note_age": return "Podaję wiek dziecka";
+    case "recall_age": return "Jaki wiek dziecka podano w rozmowie?";
     case "declare_fact": return "Potwierdzam " + labels[input.fact.field] + " · " + valueLabel(input.fact.value);
     case "explain_result": return "Skąd ten wynik?";
     case "hypothetical": return "Wariant symulacji";
@@ -116,7 +119,11 @@ export function ImportConversation() {
         }
       } else {
         setRetry(() => work);
-        setNotice(error instanceof ApiError && error.status === 422 ? "Sprawdź dane. Serwer nie przyjął tej zmiany." : "Nie udało się zakończyć operacji. Możesz ponowić próbę.");
+        if (error instanceof ApiError && error.status === 503 && error.code === "selected_model_unavailable")
+          setNotice("Qwen 3.8 27B (LM Studio) jest niedostępny. Możesz ponowić próbę.");
+        else if (error instanceof ApiError && error.status === 422)
+          setNotice("Sprawdź dane. Serwer nie przyjął tej zmiany.");
+        else setNotice("Nie udało się zakończyć operacji. Możesz ponowić próbę.");
       }
     } finally { locked.current = false; setBusy(false); setInFlightQuestion(""); }
   }, [restore]);
@@ -159,16 +166,20 @@ export function ImportConversation() {
   function send(text: string) {
     const question = text.trim();
     if (!question || locked.current) return;
+    const latest = view?.messages.at(-1);
+    const lastMessage = latest?.contextMessageId ? view?.messages.find(m => m.id === latest.contextMessageId) : latest;
+    const selectedSubject = subject || (view?.profile.subjects.length === 1 ? view.profile.subjects[0] : undefined);
+    const assessmentId = view?.assessments.findLast(a => a.input.subjectId === selectedSubject)?.id;
     const routed = routeCaseQuestion(question, {
-      facts: view?.facts ?? [], subjectId: subject || undefined, lastMessage: view?.messages.at(-1),
-      assessmentId: view?.assessments.at(-1)?.id, hasDocuments: Boolean(view?.documents.length),
+      facts: view?.facts ?? [], subjectId: subject || undefined, lastMessage,
+      assessmentId, hasDocuments: Boolean(view?.documents.length),
     });
     if ("clarify" in routed) { setNotice(routed.clarify); return; }
     if ("correction" in routed) { setNotice("Wybierz „Popraw” przy polu i okresie, którego dotyczy zmiana."); return; }
     const variantSubject = routed.input.intent === "hypothetical" ? routed.input.subjectId : undefined;
     const lastAssessment = view?.assessments.findLast(a => a.input.subjectId === variantSubject);
     const input = routed.input.intent === "hypothetical" && !routed.input.validAt && lastAssessment
-      ? { ...routed.input, validAt: lastAssessment.input.asOf } : routed.input;
+      ? { ...routed.input, validAt: lastAssessment.input.asOf } : routed.input.intent === "public_question" ? { ...routed.input, modelOptions: getChatModelOptions() } : routed.input;
     const key = id();
     sticky.current = true;
     setDraft(question);

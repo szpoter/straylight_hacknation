@@ -7,7 +7,7 @@ import { DEFAULTS, parameterOn, type RuleSchedule } from "./parameters";
  * Code decides; screens and the assistant only explain.
  */
 
-export const PAYER_RULES_VERSION = "payer-art61-2026-11-22";
+export const PAYER_RULES_VERSION = "payer-art61-2026-11-22.2";
 export const DEFAULT_INSURED_THRESHOLD = DEFAULTS["payer.insuredThreshold"][0].value;
 
 /** Insured situations art. 61 ust. 1 pkt 2 lit. b–e sends straight to ZUS. */
@@ -95,6 +95,11 @@ export function benefitPayer(input: PayerInput): PayerResult {
       payerCertificateNeeded: false,
       lawIds: ["uz-61-3"],
     };
+  }
+  if (input.payerInsuredCount === 0) {
+    return { ...base, payer: null, question: "Ile osób płatnik zgłosił do chorobowego w pierwszym miesiącu zgłoszeń?",
+      reason: "Przy braku ubezpieczonych 30 listopada rozstrzyga liczba osób w pierwszym miesiącu zgłoszeń.",
+      ...reference, payerCertificateNeeded: false, lawIds: ["uz-61-2"] };
   }
   if (input.payerInsuredCount === null || !Number.isInteger(input.payerInsuredCount) || input.payerInsuredCount < 0) {
     const day = (countDate ?? "").split("-").reverse().join(".");

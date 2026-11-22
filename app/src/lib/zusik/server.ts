@@ -1,3 +1,4 @@
+import type { ChatModelOptions } from "./chat-model";
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { cookies } from "next/headers";
 import { Pool } from "pg";
@@ -78,10 +79,12 @@ export function assertProviderConfig(): void {
 }
 
 
-export function publicAnswerDeps(deadlineMs?: number): AnswerDeps {
+export function publicAnswerDeps(deadlineMs?: number, options?: ChatModelOptions): AnswerDeps {
   const { pool: db } = runtime();
   return {
     deadlineMs,
+    selectedModel: options?.model,
+    extraVerification: options?.model === "bielik" && options.verification === "extra",
     corpus: loadCorpus("marta"),
     selectCorpus: (name) => loadCorpus(name),
     publicTask: process.env.ZUSIK_PLANNER_MODEL || process.env.ZUSIK_VERIFIER_MODEL
@@ -91,15 +94,16 @@ export function publicAnswerDeps(deadlineMs?: number): AnswerDeps {
     searchCorpus,
     discoverOfficial: discoverOfficialEvidence,
     search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
-    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db, deadlineMs }, activeCorpus, question, evidence),
+    generate: (question, evidence, activeCorpus) => generateAnswer({ hosted: sherlockSettings, selectedModel: options?.model,
+      reasoningEffort: options?.model === "bielik" ? options.effort : undefined, queue: db, deadlineMs }, activeCorpus, question, evidence),
   };
 }
 
 /** Informational answers with citations, saved on the session's thread. */
-export function askService(deadlineMs?: number): AskService {
+export function askService(deadlineMs?: number, options?: ChatModelOptions): AskService {
   const { pool: db } = runtime();
   return new AskService({
-    ...publicAnswerDeps(deadlineMs),
+    ...publicAnswerDeps(deadlineMs, options),
     store: new PgCaseStore(db),
     turns: new PgTurnStore(db),
     readMarta: async (sessionId) => {

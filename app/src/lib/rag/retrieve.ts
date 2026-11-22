@@ -154,7 +154,7 @@ export const MAX_EVIDENCE = 8;
 export function assembleEvidence(
   corpus: Corpus,
   hits: VectorHit[],
-  options: { locatorKeys?: string[]; asOf: string; excludeTopics?: string[] },
+  options: { locatorKeys?: string[]; asOf: string; excludeTopics?: string[]; targetId?: string; requiredIds?: string[] },
 ): Evidence {
   const excluded = new Set(options.excludeTopics ?? []);
   const usable = (f: Fragment | undefined): f is Fragment =>
@@ -181,24 +181,25 @@ export function assembleEvidence(
     }
   }
 
-  const vectorIds: string[] = [];
+  const vectorFragments: Fragment[] = [];
   for (const hit of hits.slice(0, TOP_K)) {
     if (hit.corpusVersion && hit.corpusVersion !== corpus.manifest.corpusVersion) continue;
     const f = corpus.fragments.get(hit.logicalId);
     if (!usable(f) || f.fragmentSha256 !== hit.fragmentSha256) continue;
-    vectorIds.push(f.logicalId);
+    vectorFragments.push(f);
+    add(f, "vector", hit.score);
   }
-  for (const id of vectorIds) {
-    const f = corpus.fragments.get(id)!;
-    const score = hits.find((h) => h.logicalId === id)?.score ?? null;
-    add(f, "vector", score);
+  for (const f of vectorFragments) {
     for (const p of f.primaryIds) add(corpus.fragments.get(p), "primary", null);
+  }
+  for (const f of vectorFragments) {
     for (const r of f.relatedIds) add(corpus.fragments.get(r), "related", null);
   }
 
   const present = new Set(items.map((i) => i.fragment.logicalId));
   const deduped = items.filter(
-    (i) => isPrimary(corpus, i.fragment) || i.fragment.primaryIds.length === 0 || !i.fragment.primaryIds.every((p) => present.has(p)),
+    (i) => i.fragment.logicalId === options.targetId || options.requiredIds?.includes(i.fragment.logicalId) ||
+      isPrimary(corpus, i.fragment) || i.fragment.primaryIds.length === 0 || !i.fragment.primaryIds.every((p) => present.has(p)),
   );
-  return { vectorIds, items: deduped.slice(0, MAX_EVIDENCE) };
+  return { vectorIds: vectorFragments.map(f => f.logicalId), items: deduped.slice(0, MAX_EVIDENCE) };
 }

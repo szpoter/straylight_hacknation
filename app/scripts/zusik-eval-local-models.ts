@@ -18,7 +18,7 @@ import { requireEnv } from "../src/lib/zusik/config";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 
 const endpoint = "http://127.0.0.1:11434/v1";
-const models = Object.values(localModelIds);
+const models = [localModelIds.bielik, localModelIds.pllum];
 const attach = "rozp-2025-322-par15-ust2-pkt1",
   exception = "rozp-2025-322-par22",
   deadline = "kp-art182-1d-par1";

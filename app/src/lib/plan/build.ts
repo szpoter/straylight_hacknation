@@ -30,9 +30,32 @@ const MONTHS_GEN = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca"
 const MONTHS_NOM = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień"];
 
 /** Sprawy tylko dla osoby, która rodzi (dla drugiego rodzica ich nie pokazujemy). */
-const BIRTHING_ONLY = ["badania-prenatalne", "chorobowy-ciaza", "macierzynski-przed", "zasilek-macierzynski", "urlop-macierzynski", "z3", "praca"];
+const BIRTHING_ONLY = [
+  "badania-prenatalne",
+  "chorobowy-ciaza",
+  "zasilek-likwidacja",
+  "swiadczenie-rehabilitacyjne",
+  "macierzynski-przed",
+  "zasilek-macierzynski",
+  "urlop-macierzynski",
+  "z3",
+  "praca",
+];
 /** Sprawy związane z porodem — nie dotyczą adopcji ani pieczy zastępczej. */
-const BIRTH_ONLY = ["badania-prenatalne", "chorobowy-ciaza", "macierzynski-przed", "przesiewowe", "z3", "zglos-urodzenie", "odpis", "praca"];
+const BIRTH_ONLY = [
+  "badania-prenatalne",
+  "chorobowy-ciaza",
+  "zasilek-likwidacja",
+  "swiadczenie-rehabilitacyjne",
+  "macierzynski-przed",
+  "przesiewowe",
+  "urlop-macierzynski",
+  "z3",
+  "zglos-urodzenie",
+  "odpis",
+  "praca",
+];
+const EMPLOYEE_ONLY = ["urlop-macierzynski", "macierzynski-przed", "rodzicielski", "rodzicielski-praca", "zasilek-likwidacja"];
 
 const SECOND = new Set(["drugi-rodzic", "drugi-adopcyjny", "drugi-opiekun"]);
 
@@ -101,7 +124,10 @@ const PARENT_LEVEL = [
   "ubezpieczenie",
   "wysokosc",
   "badania-prenatalne",
+  "ryzyka",
   "chorobowy-ciaza",
+  "zasilek-likwidacja",
+  "swiadczenie-rehabilitacyjne",
   "macierzynski-przed",
   "zaplanuj-urlopy",
   "z3",
@@ -109,6 +135,7 @@ const PARENT_LEVEL = [
   "urlop-macierzynski",
   "urlop-ojcowski",
   "rodzicielski",
+  "rodzicielski-praca",
   "powrot",
   "praca",
 ];
@@ -128,7 +155,10 @@ const CHILDREN_GEN = ["", "jednego dziecka", "dwojga dzieci", "trojga dzieci", "
 /** Świeży stan przystanku: bez postępu z przykładu Oli. Etap, który rodzic ma za sobą → „Za Tobą”. */
 function fresh(stop: Stop, expected: boolean, past: boolean): Stop {
   const isInfo = stop.kind === "informacja" || stop.kind === "program-zdrowotny";
-  const doc = stop.doc && { goal: stop.doc.goal, recipient: stop.doc.recipient, note: stop.condition ?? stop.doc.note, optional: stop.doc.optional };
+  // Notatka szkicu z przykładu („Brakuje numeru PESEL Oli”) nie dotyczy nowego planu — bez szkicu jej nie ma.
+  // Przycisk sprawy wynika ze stanu (CaseCard → rowAction), więc etykieta `action` z przykładu nie przecieka.
+  const note = stop.condition ?? (stop.doc?.hasDraft ? undefined : stop.doc?.note);
+  const doc = stop.doc && { goal: stop.doc.goal, recipient: stop.doc.recipient, note, optional: stop.doc.optional };
   if (past) return { ...stop, state: "minelo", checked: undefined, due: undefined, doc, risk: undefined };
   if (isInfo) return { ...stop, state: undefined, checked: false, doc };
   if (stop.kind === "dzieje-sie-samo") return { ...stop, state: undefined, checked: undefined, doc };
@@ -163,6 +193,44 @@ function labels(situation: BuildSituation, keyDate: string | undefined, today: s
 /** Jeden plan (pierwsze dziecko). Zostawione dla zgodności — onboarding używa `buildPlans`. */
 export function buildPlan(answers: BuildAnswers, id: string, today: string = DEMO_TODAY): Plan {
   return buildPlans(answers, id, today)[0];
+}
+
+/** Starsze plany mają zapisany cały katalog. Uaktualniamy wyłącznie sprawy urlopowe. */
+export function refreshSavedLeavePlan(plan: Plan): Plan {
+  if (!Array.isArray(plan?.stops)) return plan;
+  const plainId = (stop: Stop) => stop.id.replace(/^e-/, "");
+  const parental = plan.stops.find(s => plainId(s) === "rodzicielski");
+  const obsolete = plan.stops.some(s => (plainId(s) === "urlop-macierzynski" && s.kind !== "informacja")
+    || (plainId(s) === "macierzynski-przed" && !s.doc))
+    || (parental && !plan.stops.some(s => plainId(s) === "rodzicielski-praca"));
+  if (!obsolete) return plan;
+  const expected = plan.stops.some(s => s.id.startsWith("e-"));
+  const answers: BuildAnswers = plan.origin ? plan.origin.answers as BuildAnswers : {
+    situation: plan.situation ?? (expected ? "ciaza" : "urodzone"), date: plan.keyDate, name: plan.name,
+  };
+  let catalog: Plan | undefined;
+  try {
+    catalog = buildPlans(answers, plan.origin?.idBase ?? plan.id, plan.origin?.builtOn).find(p => p.id === plan.id);
+  } catch {
+    // Uszkodzony zapis nie powinien uniemożliwić otwarcia pozostałych planów.
+    return plan;
+  }
+  if (!catalog) return plan;
+  const updatedStops = new Map(catalog.stops.map(s => [s.id, s]));
+  const work = catalog.stops.find(s => plainId(s) === "rodzicielski-praca");
+  const addWork = work && !plan.stops.some(s => s.id === work.id);
+  const leaveIds = ["macierzynski-przed", "urlop-macierzynski", "urlop-ojcowski", "rodzicielski", "rodzicielski-praca"];
+  const stops = plan.stops.flatMap(old => {
+    if (!leaveIds.includes(plainId(old))) return [old];
+    const updated = updatedStops.get(old.id);
+    if (!updated) return [];
+    if (!updated.doc) return [{ ...updated, checked: old.checked ?? updated.checked }];
+    const progressed = old.doc && old.state && !["warunek", "aktualna"].includes(old.state);
+    const stop = { ...updated, sharedGroup: old.sharedGroup, ...(progressed && { state: old.state, doc: { ...updated.doc, ...old.doc } }) };
+    return old === parental && addWork
+      ? [stop, { ...work, sharedGroup: old.sharedGroup }] : [stop];
+  });
+  return { ...plan, stops };
 }
 
 /**
@@ -216,8 +284,11 @@ function buildOne(
   let stops = (expected ? CATALOG.expected() : CATALOG.born()).map((s) => fresh(s, expected, STAGES.indexOf(s.stage) < Math.min(stageIndex, expected ? stageIndex : 2)));
   if (second) stops = stops.filter((s) => !BIRTHING_ONLY.includes(baseId(s)));
   if (care) stops = stops.filter((s) => !BIRTH_ONLY.includes(baseId(s)) && s.stage !== "ciaza");
-  // Urlop macierzyński u pracodawcy: tylko przy umowie o pracę.
-  if (answers.employment && answers.employment !== "etat") stops = stops.filter((s) => baseId(s) !== "urlop-macierzynski");
+  if (situation === "piecza") stops = stops.filter(s => baseId(s) !== "urlop-ojcowski");
+  if (answers.employment && answers.employment !== "etat") {
+    // Przy planie matki status zatrudnienia ojca pozostaje nieznany.
+    stops = stops.filter(s => !EMPLOYEE_ONLY.includes(baseId(s)) && !(second && baseId(s) === "urlop-ojcowski"));
+  }
   // Rodzeństwo: sprawy rodzica (urlopy, zasiłek) są w planie każdego dziecka, ale to jedna sprawa —
   // `sharedGroup` każe zapisywać zmianę we wszystkich planach grupy (PlanProvider).
   if (child.count > 1 && child.group) stops = stops.map((s) => (PARENT_LEVEL.includes(baseId(s)) ? { ...s, sharedGroup: child.group } : s));
@@ -242,6 +313,8 @@ function buildOne(
       risk: undefined,
     };
     if (situation === "planuje" && next.state === "aktualna" && s.due) next = { ...next, state: "warunek", condition: "Po zajściu w ciążę" };
+    if (baseId(s) === "macierzynski-przed" && situation === "planuje") next = { ...next, state: "warunek", condition: "Po ustaleniu przewidywanej daty porodu", dueBasis: undefined };
+    if (baseId(s) === "urlop-ojcowski" && second) next = { ...next, institution: "Twój pracodawca", howTo: next.howTo && { ...next.howTo, doKogo: "Twój pracodawca" } };
     if (!expected && baseId(s) === "800plus" && keyDate) next = { ...next, due: addMonths(keyDate, 3), dueBasis: "3 miesiące od urodzenia — wtedy wypłata od dnia urodzenia" };
     if (child.count > 1 && ["zasilek-macierzynski", "urlop-macierzynski", "macierzynski-przed"].includes(baseId(s)) && next.state !== "minelo") {
       const who = CHILDREN_GEN[child.count] ?? "pięciorga i więcej dzieci";
@@ -288,6 +361,15 @@ function buildOne(
     );
   }
 
+  // Dobrowolne ubezpieczenie chorobowe (zadanie ZUS s. 10, pkt H.3): bez niego w dniu porodu
+  // albo przyjęcia dziecka nie ma zasiłku macierzyńskiego. Teksty tylko z Poradnika ZUS i ustawy.
+  const voluntaryRisk = employmentRisk(answers.employment);
+  if (voluntaryRisk) {
+    stops = stops.map((s) =>
+      ["zasilek-macierzynski", "urlop-ojcowski"].includes(baseId(s)) && !s.risk && s.state !== "minelo" ? { ...s, risk: voluntaryRisk } : s,
+    );
+  }
+
   const { shortInfo, keyDateLabel } = labels(situation, keyDate, today, child.count);
   const calculator = expected ? CATALOG.expectedCalculator : CATALOG.bornCalculator;
   return {
@@ -303,6 +385,33 @@ function buildOne(
     stops,
     calculator,
   };
+}
+
+/**
+ * Ostrzeżenie przy działalności albo innej umowie niż o pracę. Źródła: Poradnik ZUS 2026, s. 10
+ * i 14 (dobrowolne ubezpieczenie chorobowe, bez zgłoszenia wstecz); ustawa zasiłkowa art. 29
+ * (urodzenie albo przyjęcie dziecka w okresie ubezpieczenia) i art. 2a (zaległości w składkach).
+ */
+export function employmentRisk(employment: Employment | undefined): Stop["risk"] {
+  if (employment === "dzialalnosc") {
+    return {
+      title: "Dobrowolne ubezpieczenie chorobowe i składki",
+      detail:
+        "Przy własnej firmie ubezpieczenie chorobowe jest dobrowolne. Zasiłek macierzyński przysługuje tylko wtedy, gdy podlegasz temu ubezpieczeniu w dniu porodu albo przyjęcia dziecka. Co do zasady nie można zgłosić się do niego wstecz. Jeśli w dniu powstania prawa do zasiłku zaległość w składkach przekracza 1% minimalnego wynagrodzenia, zasiłek nie przysługuje do spłaty całego długu, a bez spłaty w ciągu 6 miesięcy prawo się przedawnia.",
+      action: "Sprawdź zasady w Poradniku ZUS",
+      sources: [S.poradnikFirma, S.uzArt2a],
+    };
+  }
+  if (employment === "inne") {
+    return {
+      title: "Inna umowa: sprawdź ubezpieczenie chorobowe",
+      detail:
+        "Przy umowie zlecenia ubezpieczenie chorobowe jest dobrowolne, na Twój wniosek. Co do zasady obejmuje Cię najwcześniej od dnia złożenia zgłoszenia w ZUS, nie wstecz. Zasiłek macierzyński przysługuje tylko wtedy, gdy podlegasz temu ubezpieczeniu w dniu porodu albo przyjęcia dziecka.",
+      action: "Sprawdź zasady w Poradniku ZUS",
+      sources: [S.poradnikZlecenie, S.uzArt29],
+    };
+  }
+  return undefined;
 }
 
 /** Liczby na ekran „Twój plan jest gotowy”. */

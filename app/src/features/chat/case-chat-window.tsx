@@ -59,7 +59,8 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   const thread = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
-  const waiting = pdf.active ? !pdf.canAsk : busy || readingPlan || chat.asking || (!localPlan && chat.phase !== "ready");
+  const canUsePlanOffline = localPlan && chat.phase === "error";
+  const waiting = pdf.active ? !pdf.canAsk : busy || readingPlan || chat.asking || (chat.phase !== "ready" && !canUsePlanOffline);
   useEffect(() => {
     const viewport = thread.current;
     if (!viewport || !content.current) return;

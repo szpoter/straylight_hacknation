@@ -62,6 +62,35 @@ describe("Sickness benefit evidence and decision for a period", () => {
       question: expect.stringContaining("okres"),
     });
   });
+  it("requires an identified employer before attributing a denial to that employment", () => {
+    expect(day([{ ...cert, payer: "wszystkie" }, { ...job, payer: "wszystkie" }, history]).status)
+      .toBe("requires_review");
+  });
+  it("accepts consecutive findings for the same excluded title over the entire continuous illness", () => {
+    const first = { ...job, period: { from: "2026-11-01", to: "2026-11-07" } };
+    const second = { ...job, page: 4, period: { from: "2026-11-08", to: "2026-11-20" } };
+    expect(day([cert, second, history, first])).toMatchObject({
+      status: "not_entitled_for_period", period: cert.period,
+      evidenceIds: ["certificate-1", "employment-4", "history-3", "employment-2"],
+    });
+    for (const patch of [
+      { period: { from: "2026-11-09", to: "2026-11-20" } },
+      { payer: "C" }, { value: "covered" as const }, { title: "działalność" },
+    ]) expect(day([cert, first, history, { ...second, ...patch }]).status).toBe("requires_review");
+  });
+  it("does not attribute pregnancy to a certificate that omits code B", () => {
+    const withoutCode = parsePage(cert.text.replace("\nKod: B", ""), cert.page);
+    expect(day([withoutCode, job, history]).reasons.join(" ")).not.toContain("Kod B");
+  });
+  it("keeps a wholly insured period separate from the period after cessation", () => {
+    const insured = { ...history, value: "ended" as const, period: { from: "2026-06-01", to: "2026-11-16" } };
+    expect(day([cert, job, insured]).summary).toContain("cały okres zwolnienia");
+  });
+  it("asks for the missing continuation on the fourteenth day and for late-onset evidence on the fifteenth", () => {
+    const ended = (to: string) => ({ ...history, value: "ended" as const, period: { from: "2026-06-01", to } });
+    expect(day([cert, job, ended("2026-10-19")]).question).toContain("30 dni");
+    expect(day([cert, job, ended("2026-10-18")]).question).toContain("kod E");
+  });
   it("checks prior protection and continuous illness", () => {
     const prior = { ...history, value: "ended" as const, period: { from: "2026-10-01", to: "2026-11-03" } };
     expect(day([cert, job, prior]).summary).toContain("zaczęła się w okresie");

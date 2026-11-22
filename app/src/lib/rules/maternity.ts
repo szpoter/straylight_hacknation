@@ -16,16 +16,16 @@
  * Miejsca, których materiały nie rozstrzygają, mają `assumption` w wyniku — UI pokazuje je jako
  * „do weryfikacji”. Kwoty są brutto; podatek to szacunek (osobno, `estimateNet`).
  */
-import { addDays, addMonths, daysBetween, isValidIso } from "./dates";
+import { addDays, addMonths, daysBetween, isValidIso, monthEnd } from "./dates";
 import { parentalWorkPeriods, type ParentalWork } from "./parental-work";
 import { paternityWindow } from "./paternity";
 import { hospitalLeaveWeeks, type HospitalCertificate } from "./hospital-stays";
 import { maternityParametersOn } from "./maternity-schedule";
-import { rateOn, type RateKind } from "./rates";
+import { parentalMinimumTopUp, rateOn, type RateKind } from "./rates";
 import { MINIMUM_WAGE } from "./arrears";
 import { valueWithDefaults, type RuleSchedule, type ScheduledValue } from "./parameters";
 
-export const MATERNITY_RULES_VERSION = "maternity-2026-11-22.8";
+export const MATERNITY_RULES_VERSION = "maternity-2026-11-22.10";
 
 // ---------- Parametry (do panelu administracyjnego) ----------
 
@@ -443,15 +443,6 @@ const LABEL: Record<LeaveKind, string> = {
   ojcowski: "Urlop ojcowski",
 };
 
-/** Ostatni dzień miesiąca. */
-function monthEnd(iso: string): string {
-  return addDays(addMonths(`${iso.slice(0, 7)}-01`, 1), -1);
-}
-
-function daysInMonth(iso: string): number {
-  return Number(monthEnd(iso).slice(8, 10));
-}
-
 /** Dzieli okres na kawałki w miesiącach kalendarzowych. */
 function splitByMonth(from: string, to: string, changeDays: string[]): Array<{ from: string; to: string; days: number }> {
   const parts: Array<{ from: string; to: string; days: number }> = [];
@@ -686,7 +677,8 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   const stretched = (weeks: number, work: number) => Math.min(Math.floor((7 * weeks) / (1 - work)), capDays);
   function addParental(parent: ParentId, start: string, weeks: number, work: number, rate: RateKind, id: string, note?: string) {
     if (weeks === 0) return 0;
-    if (!isValidIso(start) || start < parentalStart || [...prior.values()].some(p => p.parent === parent && p.to >= start)) {
+    const earliestStart = birth && input.date >= "2023-04-26" ? input.date : parentalStart;
+    if (!isValidIso(start) || start < earliestStart || [...prior.values()].some(p => p.parent === parent && p.to >= start)) {
       errors.push({ text: "Potwierdź początek rodzicielskiego po zakończeniu poprzedzającego urlopu.", source: "kp182-1a" });
       return 0;
     }
@@ -705,15 +697,14 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
         return 0;
       }
     }
-    if (input.parentalStarts?.[parent]) {
-      if (input.placement && !birth && placementDays !== 7 * p.adoptionMinWeeks && input.placement.children.length > 1) {
+    if (!birth && input.parentalStarts?.[parent]) {
+      if (input.placement && placementDays !== 7 * p.adoptionMinWeeks && input.placement.children.length > 1) {
         assumptions.push({text: "Sprawdź wiek każdego dziecka w terminie późniejszej części rodzicielskiego.", source: "kp183"});
       }
-      const childDate = birth ? input.date : input.placement?.children[0]?.birthDate ?? input.childBirthDate;
-      const lastDay = childDate && (birth ? (Number(childDate.slice(0, 4)) + 6) + "-12-31"
-        : addDays(addMonths(childDate, 12 * (input.event === "adoption" ? 14 : input.schoolDeferred ? 10 : 7)), -1));
-      if ((birth || placementDays !== 7 * p.adoptionMinWeeks) && (!lastDay || pieces.some(piece => addDays(piece.from, piece.days - 1) > lastDay))) {
-        errors.push({ text: "Sprawdź granicę wieku dziecka dla wnioskowanych dat rodzicielskiego.", source: birth ? "kp182-1a" : "kp183" });
+      const childDate = input.placement?.children[0]?.birthDate ?? input.childBirthDate;
+      const lastDay = childDate && addDays(addMonths(childDate, 12 * (input.event === "adoption" ? 14 : input.schoolDeferred ? 10 : 7)), -1);
+      if (placementDays !== 7 * p.adoptionMinWeeks && (!lastDay || pieces.some(piece => addDays(piece.from, piece.days - 1) > lastDay))) {
+        errors.push({ text: "Sprawdź granicę wieku dziecka dla wnioskowanych dat rodzicielskiego.", source: "kp183" });
         return 0;
       }
     }
@@ -736,9 +727,13 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       }
     }
   }
-  if (input.paternityDays > 0 && hasB) {
-    const days = Math.min(Math.round(input.paternityDays), p.paternityDays);
-    const start = input.paternityStart ?? input.date;
+  const start = input.paternityStart ?? input.date;
+  const invalidAdoptionDate = input.event === "adoption" && [input.adoptionFinalOn, input.childBirthDate]
+    .some(day => day !== undefined && !isValidIso(day));
+  if (![0, 7, p.paternityDays].includes(input.paternityDays) || (input.paternityDays > 0 && (!isValidIso(start) || invalidAdoptionDate))) {
+    errors.push({ text: "Sprawdź daty oraz wymiar urlopu ojcowskiego (tydzień lub dwa tygodnie).", source: "kp182-3" });
+  } else if (input.paternityDays > 0 && hasB) {
+    const days = input.paternityDays;
     const window = input.event === "adoption" && input.adoptionFinalOn && input.childBirthDate
       ? paternityWindow(input.childBirthDate, input.adoptionFinalOn) : paternityWindow(input.date);
     const deadline = window.to;
@@ -759,10 +754,25 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     }
   }
 
+  const lastParentalDay = (Number(input.date.slice(0, 4)) + 6) + "-12-31";
+  for (const parent of ["A", "B"] as const) {
+    const leaves = raw.filter(r => r.parent === parent && r.days > 0).sort((a, b) => a.from.localeCompare(b.from));
+    let previousEnd = "";
+    for (const leave of leaves) {
+      const end = addDays(leave.from, leave.days - 1);
+      if (leave.from <= previousEnd) {
+        errors.push({ text: "Dwa okresy urlopu tego samego rodzica z tego samego tytułu pokrywają się.", source: leave.kind === "ojcowski" ? "kp182-3" : "kp182-1a" });
+      }
+      if (birth && leave.kind === "rodzicielski" && end > lastParentalDay) {
+        errors.push({ text: "Urlop rodzicielski wykracza poza rok, w którym dziecko kończy sześć lat.", source: "kp182-1a" });
+      }
+      previousEnd = previousEnd > end ? previousEnd : end;
+    }
+  }
+
   // --- Kwoty ---
   const segments: Segment[] = [];
   const periods: Period[] = [];
-  let topUpUsed = false;
   for (const r of raw.filter((x) => x.days > 0)) {
     const to = addDays(r.from, r.days - 1);
     const basis = r.parent === "A" ? basisA : basisB;
@@ -773,21 +783,9 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     ].map(change => change.validFrom).filter(day => day > r.from && day <= to).sort();
     const segs: Segment[] = splitByMonth(r.from, to, changeDays).map((part) => {
       const ratePct = rateOn(r.rate, part.from, input.schedule) / 10;
-      const allowance = maternityParametersOn(input.schedule, part.from.slice(0, 7) + "-01").parentalAllowance;
       const b = basisOn(basis, part.from, input.schedule);
       const daily = dailyAmount(b, ratePct, r.work);
-      let amount = round2(daily * part.days);
-      let topUp = 0;
-      // Podwyższenie do świadczenia rodzicielskiego: nie dotyczy urlopu ojcowskiego (zus.pl); część miesiąca proporcjonalnie.
-      if (r.kind !== "ojcowski" && (b * ratePct * (1 - r.work)) / 100 < allowance) {
-        const floor = round2(round2(allowance / daysInMonth(part.from)) * part.days);
-        if (floor > amount) {
-          topUp = Math.ceil(round2(floor - amount) * 10 - 1e-7) / 10; // ZUS: dopłata zaokrąglana do 10 gr w górę
-          amount = round2(amount + topUp);
-          topUpUsed = true;
-        }
-      }
-      return { periodId: r.id, parent: r.parent, kind: r.kind, month: part.from.slice(0, 7), from: part.from, to: part.to, days: part.days, ratePct, work: r.work, basis: b, daily, amount, topUp };
+      return { periodId: r.id, parent: r.parent, kind: r.kind, month: part.from.slice(0, 7), from: part.from, to: part.to, days: part.days, ratePct, work: r.work, basis: b, daily, amount: round2(daily * part.days), topUp: 0 };
     });
     segments.push(...segs);
     periods.push({
@@ -802,13 +800,34 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       work: r.work,
       daily: segs[0]?.daily ?? 0,
       amount: round2(sum(segs.map((s) => s.amount))),
-      topUp: round2(sum(segs.map((s) => s.topUp))),
+      topUp: 0,
       note: r.note,
     });
   }
-  if (topUpUsed) {
+  const byParentMonth = new Map<string, Segment[]>();
+  for (const segment of segments.filter(s => s.kind !== "ojcowski")) {
+    const key = segment.parent + segment.month;
+    const group = byParentMonth.get(key);
+    if (group) group.push(segment);
+    else byParentMonth.set(key, [segment]);
+  }
+  for (const group of byParentMonth.values()) {
+    const days = sum(group.map(s => s.days));
+    const paidGrosze = sum(group.map(s => Math.round(s.amount * 100)));
+    const firstDay = group.reduce((day, segment) => day < segment.from ? day : segment.from, group[0].from);
+    const { topUpGrosze } = parentalMinimumTopUp({ netGrosze: paidGrosze, firstDay, days, schedule: input.schedule });
+    if (topUpGrosze === 0) continue;
+    const last = group.reduce((a, b) => a.to > b.to ? a : b);
+    last.topUp = topUpGrosze / 100;
+    last.amount = round2(last.amount + last.topUp);
+  }
+  for (const period of periods) {
+    period.topUp = round2(sum(segments.filter(s => s.periodId === period.id).map(s => s.topUp)));
+    period.amount = round2(period.amount + period.topUp);
+  }
+  if (periods.some(p => p.topUp > 0)) {
     assumptions.push({
-      text: `Zasiłek niższy niż ${p.parentalAllowance} zł miesięcznie podwyższamy do tej kwoty. ZUS porównuje kwotę po zaliczce na podatek, ustawa — kwotę zasiłku; liczymy od kwoty brutto, do weryfikacji.`,
+      text: `Zasiłek niższy niż ${p.parentalAllowance} zł miesięcznie podwyższamy do tej kwoty. Podwyższenie oszacowano przy zerowej zaliczce na podatek i jednym tytule ubezpieczenia. Potwierdź zaliczkę i świadczenia z pozostałych tytułów.`,
       source: "uz31",
     });
   }

@@ -131,3 +131,51 @@ describe("written Polish requests", () => {
     expect(page.candidates).toMatchObject([{ field: "birthDate", value: { date: "2026-02-03" }, locator: { page: 7, lineStart: 4, lineEnd: 5 } }]);
   });
 });
+
+describe("Polish form layouts", () => {
+  const read = (text: string) => analyzeCasePage(id, 1, text, "ocr", undefined, 95);
+  it("uses the full Polish date as the date of a certified amount", () => {
+    expect(read("Rozliczenie konta płatnika\nStan na dzień: 3 października 2026 r.\nZadłużenie z tytułu składek: 123,45 zł").candidates)
+      .toMatchObject([{ field: "accountArrears", asOf: "2026-10-03", value: { grosze: 12345 }, locator: { lineStart: 2, lineEnd: 3 } }]);
+  });
+  it("binds a form request to its labeled interval and its written filing date", () => {
+    expect(read("ZAM\nRodzaj świadczenia: zasiłek macierzyński\nWnioskowany okres: od 3/9/2026 do 30 września 2026 r.\nData złożenia: 1 września 2026 r.").candidates)
+      .toMatchObject([{ field: "benefitRequest", asOf: "2026-09-01", validFrom: "2026-09-03", validTo: "2026-09-30", locator: { lineStart: 2, lineEnd: 4 } }]);
+  });
+  const header = "Lista płac\nRok\tMiesiąc\tWynagrodzenie brutto";
+  it("reads separate year and month cells with the exact earned month", () => {
+    const page = read(header + "\n2024\t2\t4 012,33");
+    expect(page.candidates).toMatchObject([{ field: "monthlyGrossPay", validFrom: "2024-02-01", validTo: "2024-02-29",
+      value: { grosze: 401233 }, locator: { lineStart: 3, lineEnd: 3, column: 3 } }]);
+  });
+  it.each(["2024\t13\t4012", "20O4\t2\t4012", "2024\t03.2025\t4012", "2024\t2\t10\t4012"])("declines a damaged or contradictory payroll row %s", row => {
+    expect(read(header + "\n" + row).candidates).toEqual([]);
+  });
+  it("does not interpret the individual Z-3 components as a total", () => {
+    expect(read("Z-3\nRok | Miesiąc | Stałe wynagrodzenie zasadnicze brutto | Premie\n2024 | 2 | 4012 | 11").candidates).toEqual([]);
+  });
+  it.each(["Wzorzec wyniku", "Klucz odpowiedzi", "D E C Y Z J A"])("excludes a protected page bearing the heading %s", heading => {
+    expect(read(heading + "\nLista płac\nMiesiąc | Brutto\n2026-02 | 1234,56")).toMatchObject({ status: "excluded", candidates: [] });
+  });
+});
+
+describe("payroll continuation evidence", () => {
+  const title = "Lista płac", header = "Rok | Miesiąc | Brutto", row = "2024 | 2 | 1234,56";
+  const input = [title, header, row];
+  const lines = input.map((text, i) => ({ text, confidence: i === 1 ? 48 : 96, box: { x: 0, y: i / 8, w: 1, h: 0.1 } }));
+  it("rejects a clear amount under a weak OCR heading and on its continuation page", () => {
+    const page = analyzeCasePage(id, 1, input.join("\n"), "ocr", undefined, 95, lines);
+    const continuation = analyzeCasePage(id, 2, "Ciąg dalszy\n" + row, "pdf_text", page);
+    expect([page.candidates, continuation.candidates]).toEqual([[], []]);
+  });
+  it("carries the separate year and month columns onto an immediately following table row", () => {
+    const page = analyzeCasePage(id, 1, input.join("\n"), "pdf_text");
+    const next = analyzeCasePage(id, 2, "2024 | 3 | 2234,56", "pdf_text", page);
+    expect(next.candidates).toMatchObject([{ validFrom: "2024-03-01", validTo: "2024-03-31", value: { grosze: 223456 } }]);
+  });
+  it("stops using old column meanings after a new table heading", () => {
+    const page = analyzeCasePage(id, 1, title + "\nMiesiąc | Brutto\n2024-02 | 1234", "pdf_text");
+    const next = analyzeCasePage(id, 2, "Ciąg dalszy\nTermin płatności | Składka\n2024-03 | 250", "pdf_text", page);
+    expect(next.candidates).toEqual([]);
+  });
+});

@@ -1,6 +1,8 @@
-import { citationUrl, type Corpus, type Fragment } from "./corpus";
+import { citationUrl, isPrimary, type Corpus, type Fragment } from "./corpus";
 import type { PublicQuestion } from "./public-query";
-import { corpusKeywords } from "./corpus-search";
+import { corpusKeywords, terms } from "./corpus-search";
+import { statutoryListIds } from "./relevance";
+import { TOP_K } from "./retrieve";
 import type { AskAnswer, AskCitation } from "../zusik/types";
 
 /** A citation can be authentic while the answer omits the condition that selected it. */
@@ -15,17 +17,21 @@ export function withSourceException(projected: PublicQuestion, answer: AskAnswer
   const omittedCondition = projected.searchText?.split(" ").some(word =>
     word.length >= 4 && !claimText.includes(word.slice(0, 5).toLocaleLowerCase("pl")));
   if (!hasException && !omittedCondition) return null;
+  const targetCitations = new Set(answer.citations.filter(c => c.fragmentId === fragment.logicalId).map(c => c.id));
+  const otherClaims = answer.claims.filter(claim => claim.citationIds.every(id => !targetCitations.has(id)));
+  const used = new Set(otherClaims.flatMap(claim => claim.citationIds));
   return {
     ...answer,
     message: hasException ? "Podaję pełny fragment, ponieważ przepis przewiduje wyjątek." :
       "Podaję pełny fragment źródła, który uwzględnia szczegóły pytania.",
-    claims: [{ text: fragment.sourceText, citationIds: [citation.id] }],
-    citations: [{ ...citation, quote: fragment.sourceText }],
+    claims: [{ text: fragment.sourceText, citationIds: [citation.id] }, ...otherClaims],
+    citations: [{ ...citation, quote: fragment.sourceText }, ...answer.citations.filter(c => used.has(c.id))],
   };
 }
 
-/** Reviewed legal sources for a projected (public) question. */
-export function reviewedSourceIds(projected: PublicQuestion): string[] {
+const articleQuestion = /^Co stanowi (art\. (\d+[a-z]?)(?: ust\. (\d+[a-z]?))?) ustawy zasiłkowej\?$/u;
+
+function presetSources(projected: PublicQuestion): string[] {
   const reviewed: Array<[boolean, string[]]> = [
     [projected.locators?.includes("program:dobry-start:termin") === true, ["dobry-start-termin"]],
     [projected.locators?.includes("program:dobry-start:kanaly") === true, ["dobry-start-kanaly"]],
@@ -55,23 +61,58 @@ export function reviewedSourceIds(projected: PublicQuestion): string[] {
   return reviewed.find(([applies]) => applies)?.[1] ?? [];
 }
 
-/** Direct quotation is limited to a few reviewed provisions that answer the
- * projected public question without deciding the family's individual case. */
+function reviewedSources(projected: PublicQuestion, corpus?: Corpus) {
+  if (projected.requiredFragmentIds?.length) return { ids: projected.requiredFragmentIds, requireAll: true };
+  if (projected.quoteProvision) return {ids:[projected.quoteProvision], requireAll:true};
+  const article = projected.corpus === "publiczne" && projected.question.match(articleQuestion);
+  const preset = article ? [] : presetSources(projected);
+  if (preset.length) return { ids: preset, requireAll: false };
+
+  const single = projected.locators?.length === 1 ? projected.locators[0] : undefined;
+  const key = article ? ["uz", article[2], article[3]].filter(Boolean).join(":") : single;
+  const ids: string[] = [];
+  if (corpus && projected.corpus === "publiczne" && key) {
+    const seen = new Set<string>();
+    for (const f of corpus.fragments.values()) {
+      if (!f.locatorKeys.includes(key) || !isPrimary(corpus, f) || seen.has(f.fragmentSha256)) continue;
+      // A hand-selected excerpt from one point is insufficient for an entire paragraph.
+      if (article && f.locator !== article[1]) continue;
+      seen.add(f.fragmentSha256);
+      ids.push(f.logicalId);
+    }
+  }
+  return { ids: ids.length <= TOP_K ? ids : [], requireAll: true };
+}
+
+export function reviewedSourceIds(projected: PublicQuestion, corpus?: Corpus): string[] {
+  return reviewedSources(projected, corpus).ids;
+}
+
+function answerSources(projected: PublicQuestion, corpus: Corpus | undefined, rankedIds: string[]) {
+  const target = projected.fragmentId && corpus?.fragments.get(projected.fragmentId);
+  if (!corpus || !target || projected.requiredFragmentIds?.length || !corpusKeywords(projected.question, target))
+    return {...reviewedSources(projected, corpus), listComplete:true};
+  const list = statutoryListIds(corpus, target);
+  // A list item without its introductory clause can change the subject of a rule.
+  const ids = [...new Set([...list, ...target.relatedIds.filter(id => rankedIds.includes(id))])];
+  return {ids, requireAll:true, listComplete:list.every(id => rankedIds.includes(id))};
+}
+
+/** Quote confirmed units together so that an exception in a later chunk travels with the rule. */
 export function extractiveAnswer(
-  corpus: Corpus, projected: PublicQuestion, evidence: Fragment[], vectorIds: string[],
+  corpus: Corpus, projected: PublicQuestion, evidence: Fragment[], confirmedIds: string[], rankedIds = confirmedIds,
 ): AskAnswer | null {
-  const exact = projected.fragmentId && evidence.find(f => f.logicalId === projected.fragmentId);
-  const ids = exact && corpusKeywords(projected.question, exact) ? [exact.logicalId] :
-    reviewedSourceIds(projected);
-  if (!ids.length || !ids.some((id) => vectorIds.includes(id))) return null;
+  const { ids, requireAll, listComplete } = answerSources(projected, corpus, rankedIds);
+  const confirmed = (id: string) => confirmedIds.includes(id);
+  if (!listComplete || !ids.length || !(requireAll ? ids.every(confirmed) : ids.some(confirmed))) return null;
   const citations: AskCitation[] = [];
   for (const id of ids) {
     const fragment = evidence.find((f) => f.logicalId === id);
     const doc = fragment && corpus.documents.get(fragment.documentId);
     if (!fragment || !doc) return null;
     let quote = fragment.sourceText;
-    if (id === "uz-19-1") quote = quote.split(" 2. ")[0];
-    if (id === "dobry-start") quote = quote.split(" Wniosek złożysz")[0];
+    if (id === "uz-19-1" && !articleQuestion.test(projected.question) && !projected.fragmentId && !projected.requiredFragmentIds?.length) quote = quote.split(" 2. ")[0];
+    if (id === "dobry-start" && ids.length === 1 && !projected.fragmentId) quote = quote.split(" Wniosek złożysz")[0];
     citations.push({
       id: "c" + (citations.length + 1), fragmentId: id, title: doc.shortTitle,
       locator: fragment.locator, url: citationUrl(corpus, fragment), quote,
@@ -86,10 +127,41 @@ export function extractiveAnswer(
   };
 }
 
+const month = "stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|września|października|listopada|grudnia";
+const calendarDate = `(?:[1-9]|[12]\\d|3[01]) (?:${month})(?: \\d{4})?`;
+const closedPeriod = new RegExp(`\\bod (?:dnia )?(${calendarDate})(?: r\\.| roku| danego roku)? do (?:dnia )?(${calendarDate})`, "giu");
+
+function omitsPeriodBoundary(question: string, claimText: string, passages: string[]) {
+  if (!/od kiedy.{0,30}do kiedy|(?:począt|zaczyn).{0,40}ko[nń]|granice okresu|przez jaki okres/iu.test(question)) return false;
+  const dates: string[] = claimText.toLowerCase().match(new RegExp(`(?<!\\d)${calendarDate}`, "gu")) ?? [];
+  return passages.some(passage => [...passage.toLowerCase().matchAll(closedPeriod)].some(([, start, end]) => {
+    const at = dates.indexOf(start);
+    return at < 0 || !dates.includes(end, at + 1);
+  }));
+}
+
 /** The current-title rule and the exception after coverage ended are alternatives.
  * Authentic citations alone did not prevent a model from calling the exception mandatory. */
-export function needsStatutoryText(projected: PublicQuestion, answer: AskAnswer): boolean {
+export function needsStatutoryText(projected: PublicQuestion, answer: AskAnswer, corpus?: Corpus, rankedIds: string[] = []): boolean {
+  const {ids: required, listComplete} = answerSources(projected, corpus, rankedIds);
+  if (!listComplete) return true;
+  if (required.length > 1) {
+    const covered = new Set(answer.claims.flatMap(claim => {
+      const cited = answer.citations.filter(c => claim.citationIds.includes(c.id));
+      const source = cited[0]?.fragmentId;
+      if (!source || !cited.every(c => c.fragmentId === source)) return [];
+      // Repeating the same point under a second citation does not explain the second condition.
+      const own = terms(cited.map(c => c.quote).join(" "));
+      const other = terms(answer.citations.filter(c => c.fragmentId !== source).map(c => c.quote).join(" "));
+      const distinct = [...terms(claim.text).keys()].filter(key => own.has(key) && !other.has(key));
+      return distinct.length >= 2 ? [source] : [];
+    }));
+    if (required.some(id => !covered.has(id))) return true;
+  }
   const claims = answer.claims.map(c => c.text).join(" ");
+  if (corpus && omitsPeriodBoundary(projected.question, claims, required.map(id => corpus.fragments.get(id)?.sourceText ?? ""))) return true;
+  if (projected.fragmentId) return !answer.citations.some(c => c.fragmentId === projected.fragmentId);
+  if (projected.corpus === "publiczne" && articleQuestion.test(projected.question)) return true;
   if (projected.locators?.includes("program:dobry-start"))
     return !answer.citations.some(c => c.fragmentId === "dobry-start") || !/300\s*(?:zł|PLN)/iu.test(claims);
   if (projected.locators?.includes("program:dobry-start:termin"))

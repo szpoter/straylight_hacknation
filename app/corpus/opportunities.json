@@ -1,5 +1,5 @@
 {
-  "version": "rodzina-2026-11-22-v1",
+  "version": "rodzina-2026-11-22-v2",
   "reviewedAt": "2026-11-22",
   "questions": {
     "careType": "Czy dziecko będzie chodziło do żłobka lub klubu dziecięcego, korzystało z dziennego opiekuna, czy zostanie w domu?",
@@ -249,7 +249,7 @@
     },
     {
       "id": "uzupelniajacy-macierzynski",
-      "title": "Zasiłek macierzyński za okres uzupełniającego urlopu macierzyńskiego",
+      "title": "Uzupełniający urlop macierzyński i zasiłek za jego okres",
       "issuer": "Płatnik zasiłku określony na podstawie ubezpieczenia",
       "kind": "zasilek_z_ubezpieczenia",
       "status": "active",

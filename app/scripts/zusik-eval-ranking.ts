@@ -1,7 +1,8 @@
 /** Isolated G7 runner with WWW disabled. Both external calls use only projected public inputs. */
 import { readFileSync } from "node:fs";
 import { generateAnswer } from "../src/lib/rag/answer";
-import { answerQuestion } from "../src/lib/zusik/ask-service";
+import { answerPublicTurn, answerQuestion, type AnswerDeps } from "../src/lib/zusik/ask-service";
+import { routeCaseQuestion } from "../src/lib/zusik/v1/intent";
 import { requireEnv } from "../src/lib/zusik/config";
 import { suggestTopic } from "../src/lib/zusik/topic-ranker";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
@@ -10,23 +11,63 @@ import { qdrantKnowledgeSearch } from "../src/lib/rag/retrieve";
 import { ragAssertions } from "./zusik-eval-g7";
 
 type Trial = { id: string; group: string; questions: string[]; requiredEvidence: string[]; facts: string[] };
+
+/** Score the same public turn before and after the browser's privacy projection. */
+async function compareConversation(deps: AnswerDeps, trials: Trial[]) {
+  const probes: Trial[] = JSON.parse(readFileSync("tests/fixtures/public-rag-probes.json","utf8"));
+  for (const entry of ["full", "v1"]) {
+    const groups: Record<string, {total:number; top5:number; evidence:number; passed:number}> = {};
+    for (const trial of [...trials.filter(t => t.group === "rag"), ...probes]) {
+      const group = groups[trial.group] ??= {total:0, top5:0, evidence:0, passed:0};
+      group.total++;
+      const question = trial.questions[0];
+      const route = routeCaseQuestion(question, {facts:[]});
+      const text = entry === "full" ? question :
+        "input" in route && route.input.intent === "public_question" ? route.input.publicQuestion : null;
+      let passed = false;
+      if (text) {
+        const {answer, trace} = await answerPublicTurn(deps, text, []);
+        if (trial.group === "unsupported") {
+          passed = ["needs_clarification","insufficient_evidence"].includes(answer.status) && !answer.citations.length;
+        } else {
+          const turn = {...answer, question, createdAt:"", requestId:trial.id};
+          const checks = ragAssertions(trial, {turn, retrieval:{top:trace.vectorIds, evidence:trace.evidenceIds}});
+          group.top5 += Number(checks.raw);
+          group.evidence += Number(checks.evidence);
+          passed = checks.fact && checks.quoteAspect && checks.action && checks.authentic && checks.citation && checks.noAward;
+        }
+      } else {
+        passed = trial.group === "unsupported" && "clarify" in route;
+      }
+      group.passed += Number(passed);
+      console.log(JSON.stringify({entry, group:trial.group, id:trial.id, passed}));
+    }
+    console.log(JSON.stringify({entry, groups}));
+    if (groups.rag.top5 < 36 || groups.rag.passed < 36 || groups.covered.passed < groups.covered.total ||
+        groups.unsupported.passed < groups.unsupported.total) process.exitCode = 1;
+  }
+}
+
 async function main() {
   const hosted = process.argv.includes("--hosted");
   const collection = requireEnv("QDRANT_KNOWLEDGE_COLLECTION");
   const search = qdrantKnowledgeSearch({url: requireEnv("QDRANT_URL"), collection,
     apiKey: requireEnv("QDRANT_KNOWLEDGE_READ_KEY"), model:process.env.QDRANT_EMBED_MODEL });
   const trials: Trial[] = readFileSync("tests/fixtures/zusik-acceptance/g7.jsonl","utf8").trim().split("\n").map(line => JSON.parse(line));
+  const deps: AnswerDeps = {
+    corpus: loadCorpus("marta"), selectCorpus: loadCorpus, searchCorpus, suggestTopic, search,
+    readOfficial: async () => ({citation:null, fetches:0, unavailable:true}),
+    generate: async (projected, evidence, corpus) => hosted
+      ? generateAnswer({ model:requireEnv("SHERLOCK_MODEL"), apiKey:requireEnv("SHERLOCK_API_KEY"),
+        baseURL:requireEnv("SHERLOCK_BASE_URL") }, corpus, projected, evidence)
+      : { model:"source-only", status:"error", output:null, ms:0 },
+  };
+  if (process.argv.includes("--conversation")) return compareConversation(deps, trials);
   const rows: Array<{ lexical:boolean | null; dense:boolean | null; top5:boolean; evidence:boolean; answer:boolean; search:string; ms:number }> = [];
   for (const trial of trials.filter(t => t.group === "rag")) {
     const question = trial.questions[0];
     const start = performance.now();
-    const { answer, trace } = await answerQuestion({
-      corpus: loadCorpus("marta"), selectCorpus: loadCorpus, searchCorpus, suggestTopic, search,
-      generate: async (projected, evidence, corpus) => hosted
-        ? generateAnswer({ model:requireEnv("SHERLOCK_MODEL"), apiKey:requireEnv("SHERLOCK_API_KEY"),
-          baseURL:requireEnv("SHERLOCK_BASE_URL") }, corpus, projected, evidence)
-        : { model:"source-only", status:"error", output:null, ms:0 },
-    }, question);
+    const { answer, trace } = await answerQuestion(deps, question);
     const turn = { ...answer, question, createdAt:"", requestId:trial.id };
     const assertions = ragAssertions(trial, { turn, retrieval:{ top:trace.vectorIds, evidence:trace.evidenceIds } });
     const ranked = (top: string[]) => ragAssertions(trial, { turn, retrieval:{top} }).raw;
