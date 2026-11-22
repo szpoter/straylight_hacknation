@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useDemoSession } from "@/features/auth/demo-session";
 import { usePlan } from "@/features/family/PlanProvider";
 import { planAnswer, sessionLeaveStatus, type LocalPlan, type PlanAnswer } from "@/lib/zusik/plan-answer";
 import { Babelek } from "@/components/mascot/Babelek";
@@ -22,7 +23,8 @@ type GeneralProps = { controls?: EmbeddedControls; label?: string; introduction?
 
 export function PlanConversation(props: GeneralProps) {
   const { plan, isPatched } = usePlan();
-  return <GeneralConversation key={plan.id} {...props} localPlan={{ plan, isPatched, selectedStopId: props.family?.stopId }} />;
+  const family = useDemoSession()?.family;
+  return <GeneralConversation key={plan.id} {...props} localPlan={{ plan, isPatched, family, selectedStopId: props.family?.stopId }} />;
 }
 
 export function GeneralConversation({ controls, label = "Rozmowa ogólna", introduction, family, localPlan }: GeneralProps & { localPlan?: LocalPlan }) {
@@ -72,7 +74,6 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       <div className={s.userRow}><p className={s.userBubble}>{turn.question}</p></div>
       <div className={s.aiMessage}>
         {turn.answer.lines.map((line, i) => <p key={i}>{line}</p>)}
-        <p className={s.muted}>{turn.answer.source}</p>
         {turn.answer.readLeave && <Link href="/app" className={s.secondaryButton}>Otwórz sprawę urlopu rodzicielskiego</Link>}
       </div>
     </div>,
@@ -108,10 +109,10 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
             try {
               const response = await fetch("/api/zusik/marta", { cache: "no-store", signal: AbortSignal.timeout(3_000) });
               if (!response.ok) throw new Error("Session read failed");
-              const sessionStatus = sessionLeaveStatus((await response.json()).view);
+              const sessionStatus = sessionLeaveStatus((await response.json()).view, localPlan.family);
               if (sessionStatus) {
                 answer.lines.push(sessionStatus);
-                answer.source += " Stan osobnego wniosku pochodzi z zapisu sprawy urlopowej w tej sesji.";
+                answer.sourceExplanation += " Stan osobnego wniosku pochodzi z zapisu sprawy urlopowej w tej sesji.";
               }
             } catch {
               answer.lines.push("Dodatkowy stan wniosku w sprawie urlopu rodzicielskiego jest teraz niedostępny.");
