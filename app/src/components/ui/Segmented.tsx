@@ -9,15 +9,22 @@ export function Segmented<T extends string>({
   value,
   onChange,
   className,
+  fill = false,
 }: {
   label: string;
   options: Array<{ value: T; label: string }>;
   value: T;
   onChange: (value: T) => void;
   className?: string;
+  /** Na całą szerokość, opcje równej szerokości (tekst zawija się w przycisku, nie w rzędy). */
+  fill?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("inline-flex w-fit max-w-full flex-wrap gap-1 rounded-full border border-outline bg-background p-1", className)}>
+    <div role="radiogroup" aria-label={label} className={cn(
+        "max-w-full gap-1 rounded-full border border-outline bg-background p-1",
+        fill ? "flex w-full sm:inline-flex sm:w-fit" : "inline-flex w-fit flex-wrap",
+        className,
+      )}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -29,6 +36,7 @@ export function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             className={cn(
               "min-h-10 rounded-full px-4 text-meta font-medium transition-colors duration-150",
+              fill && "min-w-0 flex-auto px-3 leading-tight sm:flex-none sm:px-4",
               active ? "bg-on-surface text-on-primary" : "text-on-surface hover:bg-surface",
             )}
           >

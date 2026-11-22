@@ -69,11 +69,11 @@ export function ChildSelector({ className }: { className?: string }) {
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 items-center gap-2 rounded-full px-3 py-1 text-left hover:bg-surface"
+        className="flex min-h-11 min-w-0 items-center gap-2 rounded-full px-3 py-1 text-left hover:bg-surface"
       >
-        <span className="flex flex-col leading-tight">
+        <span className="flex min-w-0 items-baseline gap-2 whitespace-nowrap">
           <span className="font-serif text-title leading-none">{displayName}</span>
-          <span className="text-meta text-on-surface-variant">{plan.keyDateLabel}</span>
+          <span className="truncate text-meta text-on-surface-variant">{plan.keyDateLabel}</span>
         </span>
         <ChevronDownIcon size={18} className={cn("transition-transform duration-200", open && "rotate-180")} />
         <span className="sr-only">Zmień dziecko lub plan</span>
