@@ -1,4 +1,5 @@
 import { explicitLocatorKeys } from "./query";
+import type { CorpusCandidate } from "./retrieve";
 
 // Only these prewritten public questions can reach hosted inference. Uploaded
 // documents, identities and free-form explanations stay outside the search prompt.
@@ -7,6 +8,7 @@ export interface PublicQuestion {
   question: string;
   locators?: string[];
   fragmentId?: string;
+  lexical?: CorpusCandidate[];
   /** This catch-all identifies a broad subject and can miss a more specific provision. */
   broad?: boolean;
   /** Source words for vector search, without the generation instruction. */

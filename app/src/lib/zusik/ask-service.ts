@@ -44,6 +44,7 @@ export interface AnswerTrace {
   contextRequestId: string | null;
   expanded: string | null;
   vectorHits: VectorHit[];
+  rankings?: { dense: string[]; lexical: string[] };
   vectorIds: string[];
   evidenceIds: string[];
   search: "ok" | "error" | "skipped";
@@ -120,7 +121,9 @@ export async function answerQuestion(
   trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
-  const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
+  const asOf = (deps.asOf ?? today)();
+  const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version,
+    limit: TOP_K, ...(projected.lexical?.length ? { lexical: projected.lexical, asOf } : {}) });
   trace.search = found.status;
   if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   trace.vectorHits = found.hits;
@@ -128,9 +131,10 @@ export async function answerQuestion(
   const evidence = assembleEvidence(corpus, found.hits, {
     locatorKeys: projected.locators ?? explicitLocatorKeys(question),
     excludeTopics: excludedTopics(question),
-    asOf: (deps.asOf ?? today)(),
+    asOf,
   });
-  trace.vectorIds = evidence.vectorIds;
+  trace.rankings = found.rankings;
+  trace.vectorIds = found.rankings ? found.hits.map(hit => hit.logicalId) : evidence.vectorIds;
   const relevant = relevantFragment(projected, corpus);
   const rawSubjectHit = evidence.vectorIds.some((id) => {
     const fragment = corpus.fragments.get(id);

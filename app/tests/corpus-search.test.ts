@@ -3,6 +3,8 @@ import { searchCorpus } from "../src/lib/rag/corpus-search";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 import { publicQueueEvidence } from "../src/lib/rag/local-queue";
 import { publicQuestion } from "../src/lib/rag/public-query";
+import { qdrantKnowledgeSearch } from "../src/lib/rag/retrieve";
+import { pointId } from "../src/lib/rag/corpus";
 import { AskService, answerQuestion, type AskServiceDeps } from "../src/lib/zusik/ask-service";
 import { MemoryCaseStore, MemoryTurnStore } from "./helpers";
 
@@ -21,6 +23,35 @@ const makeDeps = (): AskServiceDeps => ({
 });
 
 describe("whole public corpus", () => {
+  it("fuses an actual lexical point with dense hits from active releases and drops stale or missing points", async () => {
+    const q = "Czy podczas tymczasowego aresztowania można otrzymywać chorobowe?";
+    const plan = searchCorpus(q, publicQuestion(q));
+    const wanted = plan?.lexical?.[0];
+    expect(wanted?.logicalId).toBe("uz-12-1");
+    if (!wanted || !plan?.lexical) throw new Error("Missing ranked public evidence");
+    const other = loadCorpus("oferta").fragments.get("dobry-start");
+    if (!other) throw new Error("Missing fixture");
+    const remote = (f: typeof wanted) => ({ id: pointId(f.corpusVersion, f.logicalId), score: 0.8,
+      payload: { corpusVersion: f.corpusVersion, logicalId: f.logicalId, fragmentSha256: f.fragmentSha256 } });
+    let found = [remote(wanted)];
+    const request: typeof fetch = async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      if (String(input).endsWith("/query")) {
+        expect(body.query.text).toBe(plan.searchText);
+        expect(body.filter.must[0].match.any).toHaveLength(3);
+        return Response.json({ result: { points: [remote(other)] } });
+      }
+      expect(body.ids).toContain(pointId(wanted.corpusVersion, wanted.logicalId));
+      return Response.json({ result: found });
+    };
+    const reader = qdrantKnowledgeSearch({ url: "https://fixture.invalid", collection: "test", apiKey: "test", fetchImpl: request });
+    const input = { query: plan.searchText ?? "", corpusVersion: corpus.manifest.corpusVersion, expanded: null, limit: 5, lexical: plan.lexical };
+    expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([wanted.logicalId, other.logicalId]);
+    found = [remote({ ...wanted, fragmentSha256: "0".repeat(64) }), remote({ ...wanted, corpusVersion: "obsolete" })];
+    expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([other.logicalId]);
+    found = [];
+    expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([other.logicalId]);
+  });
   it.each([false, true])("finds an unseen test document from its contents only when indexed (present=%s)", async present => {
     vi.resetModules();
     const { loadCorpus: loadIsolatedCorpus } = await import("../src/lib/rag/corpus-fs");

@@ -1,25 +1,29 @@
 import { DEFAULT_EMBED_MODEL } from "../zusik/config";
-import { isPrimary, isValidOn, type Corpus, type Fragment } from "./corpus";
+import { isPrimary, isValidOn, pointId, type Corpus, type Fragment } from "./corpus";
+import { corpusNames, loadCorpus } from "./corpus-fs";
 
 /** Cloud Inference embeds the query; the first call after idle can take several seconds. */
 export const KNOWLEDGE_TIMEOUT_MS = 10_000;
 
 /** One vector hit as returned by Qdrant, before joining with the local corpus. */
 export interface VectorHit {
+  corpusVersion?: string;
   logicalId: string;
   fragmentSha256: string;
   score: number;
 }
+export type CorpusCandidate = Omit<VectorHit, "score" | "corpusVersion"> & { corpusVersion: string };
 
 export interface VectorSearchResult {
   status: "ok" | "error";
   hits: VectorHit[];
+  rankings?: { dense: string[]; lexical: string[] };
   ms: number;
 }
 
 /** External search. Injected so tests and the eval can control it. */
 export interface KnowledgeSearch {
-  search(input: { query: string; expanded: string | null; corpusVersion: string; limit: number }): Promise<VectorSearchResult>;
+  search(input: { query: string; expanded: string | null; corpusVersion: string; limit: number; lexical?: CorpusCandidate[]; asOf?: string }): Promise<VectorSearchResult>;
 }
 
 export interface KnowledgeSettings {
@@ -30,8 +34,18 @@ export interface KnowledgeSettings {
   fetchImpl?: typeof fetch;
 }
 
-interface QueryResponse {
-  result?: { points?: Array<{ id: string | number; score: number; payload?: Record<string, unknown> }> };
+interface RemotePoint { id: string | number; score?: number; payload?: Record<string, unknown> }
+
+function fuseRanks(lexical: VectorHit[], dense: VectorHit[], limit: number) {
+  const scores = new Map<string, VectorHit>();
+  for (const list of [lexical, dense]) {
+    list.forEach((hit, rank) => {
+      const key = hit.corpusVersion + ":" + hit.logicalId;
+      const score = (scores.get(key)?.score ?? 0) + 1 / (rank + 2);
+      scores.set(key, { ...hit, score });
+    });
+  }
+  return [...scores.values()].sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 /**
@@ -42,8 +56,16 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
   const doFetch = settings.fetchImpl ?? fetch;
   const model = settings.model ?? DEFAULT_EMBED_MODEL;
   return {
-    async search({ query, expanded, corpusVersion, limit }) {
+    async search({ query, expanded, corpusVersion, limit, lexical, asOf = new Date().toISOString().slice(0, 10) }) {
       const started = Date.now();
+      const signal = AbortSignal.timeout(KNOWLEDGE_TIMEOUT_MS);
+      const url = settings.url.replace(/\/$/, "") + "/collections/" + encodeURIComponent(settings.collection) + "/points";
+      async function post(path: string, input: object) {
+        const response = await doFetch(url + path, { method: "POST", headers: { "content-type": "application/json", "api-key": settings.apiKey },
+          body: JSON.stringify(input), signal, cache: "no-store" });
+        if (!response.ok) throw new Error("Qdrant HTTP " + response.status);
+        return response.json();
+      }
       const filter = { must: [{ key: "corpusVersion", match: { value: corpusVersion } }] };
       const body = expanded
         ? {
@@ -57,26 +79,38 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
           }
         : { query: { text: query, model }, filter, limit, with_payload: ["logicalId", "fragmentSha256"] };
       try {
-        const res = await doFetch(
-          `${settings.url.replace(/\/$/, "")}/collections/${encodeURIComponent(settings.collection)}/points/query`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json", "api-key": settings.apiKey },
-            body: JSON.stringify(body),
-            signal: AbortSignal.timeout(KNOWLEDGE_TIMEOUT_MS),
-            cache: "no-store",
-          },
-        );
-        if (!res.ok) {
-          console.error(JSON.stringify({ event: "knowledge_qdrant_error", status: res.status }));
-          return { status: "error", hits: [], ms: Date.now() - started };
+        if (lexical?.length) {
+          const active = new Map(corpusNames.map(name => {
+            const corpus = loadCorpus(name);
+            return [corpus.manifest.corpusVersion, corpus];
+          }));
+          const payload = ["logicalId", "fragmentSha256", "corpusVersion"];
+          const ids = lexical.slice(0, 20).map(hit => pointId(hit.corpusVersion, hit.logicalId));
+          const [nearest, confirmed] = await Promise.all([
+            post("/query", { query: { text: query, model }, filter: { must: [{ key: "corpusVersion", match: { any: [...active.keys()] } }] },
+              limit: 20, with_payload: payload }),
+            post("", { ids, with_payload: payload, with_vector: false }),
+          ]);
+          function verified(point: RemotePoint): VectorHit[] {
+            const { logicalId, fragmentSha256, corpusVersion: version } = point.payload ?? {};
+            if (typeof logicalId !== "string" || typeof version !== "string" || typeof fragmentSha256 !== "string") return [];
+            const corpus = active.get(version);
+            const f = corpus?.fragments.get(logicalId);
+            return corpus && f && f.fragmentSha256 === fragmentSha256 && point.id === pointId(version, logicalId) && isValidOn(corpus, f, asOf)
+              ? [{ logicalId, fragmentSha256, corpusVersion: version, score: point.score ?? 0 }] : [];
+          }
+          const received = new Map<string | number, RemotePoint>((confirmed.result as RemotePoint[]).map(p => [p.id, p]));
+          const words = ids.flatMap(id => { const p = received.get(id); return p ? verified(p) : []; });
+          const dense = (nearest.result.points as RemotePoint[]).flatMap(verified);
+          return { status: "ok", hits: fuseRanks(words, dense, limit), ms: Date.now() - started,
+            rankings: { lexical: words.map(f => f.logicalId), dense: dense.map(f => f.logicalId) } };
         }
-        const points = ((await res.json()) as QueryResponse).result?.points ?? [];
+        const points: RemotePoint[] = (await post("/query", body)).result?.points ?? [];
         const hits = points.flatMap((p) => {
           const logicalId = p.payload?.logicalId;
           const hash = p.payload?.fragmentSha256;
           return typeof logicalId === "string" && typeof hash === "string"
-            ? [{ logicalId, fragmentSha256: hash, score: p.score }]
+            ? [{ logicalId, fragmentSha256: hash, score: p.score ?? 0 }]
             : [];
         });
         return { status: "ok", hits, ms: Date.now() - started };
@@ -130,6 +164,7 @@ export function assembleEvidence(
 
   // An empty remote partition (or only stale hashes) cannot substantiate a local anchor.
   if (!hits.some((hit) => {
+    if (hit.corpusVersion && hit.corpusVersion !== corpus.manifest.corpusVersion) return false;
     const fragment = corpus.fragments.get(hit.logicalId);
     return usable(fragment) && fragment.fragmentSha256 === hit.fragmentSha256;
   })) return { vectorIds: [], items: [] };
@@ -143,6 +178,7 @@ export function assembleEvidence(
 
   const vectorIds: string[] = [];
   for (const hit of hits.slice(0, TOP_K)) {
+    if (hit.corpusVersion && hit.corpusVersion !== corpus.manifest.corpusVersion) continue;
     const f = corpus.fragments.get(hit.logicalId);
     if (!usable(f) || f.fragmentSha256 !== hit.fragmentSha256) continue;
     vectorIds.push(f.logicalId);

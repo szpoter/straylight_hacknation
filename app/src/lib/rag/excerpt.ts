@@ -1,5 +1,6 @@
 import { citationUrl, type Corpus, type Fragment } from "./corpus";
 import type { PublicQuestion } from "./public-query";
+import { corpusKeywords } from "./corpus-search";
 import type { AskAnswer, AskCitation } from "../zusik/types";
 
 /** A citation can be authentic while the answer omits the condition that selected it. */
@@ -50,7 +51,9 @@ export function extractiveAnswer(
     [projected.question.startsWith("Czy oboje rodzice mogą"), ["kp-art182-1a-par6"]],
     [/^Co (?:wpisać o drugim rodzicu|oświadczyć we wniosku)/u.test(projected.question), ["rozp-2025-322-par15-ust2-pkt2"]],
   ];
-  const ids = reviewed.find(([applies]) => applies)?.[1] ?? [];
+  const exact = projected.fragmentId && evidence.find(f => f.logicalId === projected.fragmentId);
+  const ids = exact && corpusKeywords(projected.question, exact) ? [exact.logicalId] :
+    reviewed.find(([applies]) => applies)?.[1] ?? [];
   if (!ids.length || !ids.some((id) => vectorIds.includes(id))) return null;
   const citations: AskCitation[] = [];
   for (const id of ids) {
