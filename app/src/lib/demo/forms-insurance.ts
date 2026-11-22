@@ -22,7 +22,7 @@ const hasCertificate = "Dziecko ma orzeczenie o niepełnosprawności";
 const certificateCodes: Record<string, string> = {
   "Orzeczenie dla dziecka poniżej 16 lat": "4", "Stopień lekki": "1", "Stopień umiarkowany": "2", "Stopień znaczny": "3",
 };
-const zamAttachments = "Gdy zasiłek wypłaca pracodawca, dołącz skrócony odpis aktu urodzenia. Gdy płaci ZUS, pracodawca przekazuje Z-3, a ZUS pobiera polski akt z rejestru. W razie wezwania dostarcz odpis.";
+const zamAttachments = "Gdy zasiłek wypłaca pracodawca, dołącz skrócony odpis aktu urodzenia. Gdy płaci ZUS, pracodawca przekazuje Z-3, a ZUS pobiera polski akt z rejestru. Jeśli dostaniesz wezwanie, dostarcz odpis.";
 const deliveryFields = [
   text("email_kadr", "Adres e-mail uzgodniony z kadrami (dla wysyłki e-mailem)", false),
   text("adres_pocztowy", "Adres pocztowy płatnika (dla wysyłki pocztą)", false),
@@ -49,7 +49,7 @@ function deliveryErrors(v: Record<string, string>, channel: Channel): Record<str
 export const insuranceForms: Record<string, FormDef> = {
   "zasilek-macierzynski": {
     name: "Wniosek o zasiłek macierzyński (ZAM)",
-    fidelity: "Druk ZUS z 24.10.2026 r. dla pracownicy po porodzie w Polsce. Gdy płaci pracodawca, przekaż wniosek kadrom. Gdy płaci ZUS, możesz go złożyć za pośrednictwem kadr lub bezpośrednio w ZUS, także przez eZUS lub e-Doręczenia. " + zamAttachments,
+    fidelity: "Druk ZUS z 24.10.2026 r. dla pracownicy po porodzie w Polsce. Gdy płaci pracodawca, przekaż wniosek kadrom. Gdy płaci ZUS, możesz go przekazać kadrom lub złożyć bezpośrednio w ZUS, także przez eZUS lub e-Doręczenia. " + zamAttachments,
     channels: [...workplace, "pue", "zus", "edoreczenia"], pdf: "official",
     recipientFor: recipient,
     validateChannel(v, channel) {
@@ -66,7 +66,7 @@ export const insuranceForms: Record<string, FormDef> = {
         text("ulica", "Ulica (jeśli jest)", false), text("dom", "Numer domu"), text("lokal", "Numer lokalu (jeśli jest)", false),
         text("kod", "Kod pocztowy"), city, text("panstwo", "Państwo (jeśli adres jest za granicą)", false),
         employer, { ...text("nip", "NIP pracodawcy"), hint: "10 cyfr" },
-        { id: "platnik", label: "Kto wypłaca Ci zasiłek?", type: "radio", required: true, options: ["ZUS", "Pracodawca"], hint: "Sprawdź w kadrach. Zwykle płaci ZUS przy najwyżej 20 ubezpieczonych. Jeśli płaci pracodawca, możesz użyć uzgodnionej poczty firmowej lub przekazać skan podpisanego wniosku. Jeśli płaci ZUS, e-mail do kadr służy jako kopia." },
+        { id: "platnik", label: "Kto wypłaca Ci zasiłek?", type: "radio", required: true, options: ["ZUS", "Pracodawca"], hint: "Sprawdź w kadrach. Zwykle płaci ZUS, jeśli pracodawca ma najwyżej 20 ubezpieczonych. Jeśli płaci pracodawca, możesz użyć uzgodnionej poczty firmowej lub przekazać skan podpisanego wniosku. Jeśli płaci ZUS, e-mail do kadr służy jako kopia." },
         ...deliveryFields,
         { ...text("zus_ade", "Adres do e-Doręczeń oddziału ZUS (dla tej drogi wysyłki)", false), showIf: only("platnik", "ZUS"), hint: "Skopiuj adres oddziału ZUS z Bazy Adresów Elektronicznych. Wniosek podpisz elektronicznie." },
       ] },
@@ -89,7 +89,7 @@ export const insuranceForms: Record<string, FormDef> = {
         { ...date("od", "Pierwszy dzień urlopu macierzyńskiego"), prefill: c => c.birthDate },
         { ...date("do", "Ostatni dzień wnioskowanego okresu (jeśli krótszy)"), required: false, hint: "Puste pole oznacza pełny wymiar. Zależnie od liczby dzieci wpiszemy do druku okres 20, 31, 33, 35 lub 37 tygodni od pierwszego dnia urlopu." },
         { ...yesNo("caly_okres", "Czy wybierasz stawkę 81,5% i deklarujesz pełny wymiar urlopu macierzyńskiego i rodzicielskiego, w tym co najmniej jeden dzień rodzicielskiego w pierwszym roku życia dziecka?"),
-          hint: "Wybór 81,5% wymaga złożenia wniosku do 21 dni po porodzie. Jeśli ostatni dzień to sobota lub dzień ustawowo wolny, termin upływa w najbliższym dniu roboczym. Dziewięć tygodni zarezerwowanych dla drugiego rodzica jest płatne w wysokości 70%." },
+          hint: "Wybór 81,5% wymaga złożenia wniosku do 21 dni po porodzie. Jeśli ostatni dzień terminu to sobota lub dzień ustawowo wolny, termin upływa w najbliższym dniu roboczym. Dziewięć tygodni zarezerwowanych dla drugiego rodzica jest płatne w wysokości 70%." },
       ] },
       { id: "wyplata", title: "Wypłata", fields: payout },
     ],
@@ -99,7 +99,7 @@ export const insuranceForms: Record<string, FormDef> = {
         if (v[key] && !familyName.test(v[key].trim())) errors[key] = "Wpisz imię i nazwisko.";
       }
       if (v.nip && !/^\d{10}$/.test(v.nip.replace(/[\s-]/g, ""))) errors.nip = "Wpisz 10 cyfr NIP pracodawcy.";
-      if (v.data_urodzenia > today) errors.data_urodzenia = "Ten wniosek składasz po porodzie.";
+      if (v.data_urodzenia > today) errors.data_urodzenia = "Data urodzenia nie może być w przyszłości. Ten wniosek składasz po porodzie.";
       if (v.caly_okres === "Tak" && isValidIso(v.data_urodzenia) && today > averagedDeadline(v.data_urodzenia)) errors.caly_okres = "Termin wyboru stawki 81,5% minął. Możesz nadal wnioskować o zasiłek według zwykłych stawek.";
       if (v.od && v.data_urodzenia && v.od > v.data_urodzenia) errors.od = "Urlop macierzyński zaczyna się najpóźniej w dniu porodu.";
       const count = parseInt(v.liczba_dzieci, 10);
@@ -116,7 +116,7 @@ export const insuranceForms: Record<string, FormDef> = {
 
   "ubezpieczenie-dziecka": {
     name: "Wniosek do pracodawcy o zgłoszenie dziecka do ubezpieczenia zdrowotnego",
-    fidelity: "Przekaż dane kadrom w ciągu 7 dni od powstania obowiązku zgłoszenia. Dla noworodka pacjent.gov.pl wskazuje 7 dni od nadania PESEL. Wystarczy zgłoszenie przez jedną uprawnioną osobę. Kadry mają 7 dni od otrzymania informacji na złożenie ZCNA. Przy papierowym ZCNA podpisz także jego blok VII. Zgłoszenie sprawdzisz w mZUS w sekcji „Ubezpieczenia i składki” lub w eZUS w panelu ubezpieczonego w danych o ubezpieczeniu zdrowotnym.",
+    fidelity: "Przekaż dane kadrom w ciągu 7 dni od powstania obowiązku zgłoszenia. Dla noworodka pacjent.gov.pl wskazuje 7 dni od nadania PESEL. Wystarczy, że dziecko zgłosi jedna uprawniona osoba. Kadry mają 7 dni od otrzymania informacji na złożenie ZCNA. Przy papierowym ZCNA podpisz także jego blok VII. Zgłoszenie sprawdzisz w mZUS w sekcji „Ubezpieczenia i składki” lub w eZUS w panelu ubezpieczonego w danych o ubezpieczeniu zdrowotnym.",
     channels: [...workplace], pdf: "letter",
     recipientFor: (v, channel) => recipient({ ...v, platnik: "Pracodawca" }, channel), validateChannel: deliveryErrors,
     sections: [
@@ -138,8 +138,8 @@ export const insuranceForms: Record<string, FormDef> = {
     validate(v, today) {
       const errors: Record<string, string> = {};
       if (v.dziecko && !familyName.test(v.dziecko.trim())) errors.dziecko = "Wpisz imię i nazwisko dziecka.";
-      if (v.data_urodzenia > today) errors.data_urodzenia = "Zgłoszenie dotyczy urodzonego dziecka.";
-      if (v.rodzic_data > today) errors.rodzic_data = "Podaj datę urodzenia osoby ubezpieczonej.";
+      if (v.data_urodzenia > today) errors.data_urodzenia = "Data urodzenia nie może być w przyszłości. Zgłoszenie dotyczy urodzonego dziecka.";
+      if (v.rodzic_data > today) errors.rodzic_data = "Data urodzenia osoby ubezpieczonej nie może być w przyszłości.";
       if (v.orzeczenie === hasCertificate && ["1", "2", "3"].includes(certificateCodes[v.rodzaj_orzeczenia]) && isValidIso(v.data_urodzenia) && addMonths(v.data_urodzenia, 16 * 12) > today)
         errors.rodzaj_orzeczenia = "Dla dziecka poniżej 16 lat wybierz orzeczenie bez stopnia niepełnosprawności.";
       if (v.pokrewienstwo === grandchild && v.rodzice_bez_ubezpieczenia === "Nie") errors.rodzice_bez_ubezpieczenia = "Dziadkowie mogą zgłosić wnuka tylko wtedy, gdy oboje rodzice spełniają podane warunki.";

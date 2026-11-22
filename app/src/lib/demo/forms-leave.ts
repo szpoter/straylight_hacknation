@@ -40,7 +40,7 @@ const foster = "Niezawodowa rodzina zastępcza";
 const situation = (options: string[]) => choice("sytuacja", "W jakiej sytuacji wnioskujesz?", options);
 
 const parentsHistory = [
-  { id: "wykorzystane_moje", label: "Ile dni urlopu lub zasiłku rodzicielskiego wykorzystałeś lub wykorzystałaś?", hint: "Wpisz 0, jeśli to pierwszy wniosek. Podaj wykorzystanie z podstawowej puli, bez dni wydłużenia za pracę.", type: "text", required: true },
+  { id: "wykorzystane_moje", label: "Ile dni urlopu lub zasiłku rodzicielskiego wykorzystałeś lub wykorzystałaś?", hint: "Wpisz 0, jeśli to pierwszy wniosek. Licz tylko dni z podstawowej puli, bez dni wydłużenia za pracę.", type: "text", required: true },
   { id: "wykorzystane_drugiego", label: "Ile dni z tej samej puli wykorzystał drugi rodzic?", type: "text", required: true },
   choice("liczba_czesci", "Liczba dotychczas wykorzystanych części urlopu lub wniosków o zasiłek obojga rodziców", ["0", "1", "2", "3", "4", "5"]),
   { id: "poprzednie_okresy", label: "Daty poprzednich części (jeśli były)", hint: "Wpisz okresy od–do oraz rodzica, którego dotyczyły.", type: "textarea" },
@@ -61,16 +61,16 @@ function validateParental(v: Values, today: string): Values {
     const until = v.sytuacja === adoption ? addDays(addMonths(v.data_urodzenia, 14 * 12), -1)
       : v.sytuacja === foster ? addDays(addMonths(v.data_urodzenia, (v.odroczenie === "Tak" ? 10 : 7) * 12), -1)
       : `${Number(v.data_urodzenia.slice(0, 4)) + 6}-12-31`;
-    if (v.do > until) errors.do = `Najpóźniejszy ostatni dzień urlopu w tej sytuacji to ${writtenDate(until)}.`;
+    if (v.do > until) errors.do = `W tej sytuacji ostatni dzień urlopu to najpóźniej ${writtenDate(until)}.`;
   }
   if (v.sytuacja !== births && isValidIso(v.przyjecie) && isValidIso(v.od) && v.od < v.przyjecie) errors.od = "Urlop nie może się zacząć przed przyjęciem dziecka na wychowanie.";
   for (const key of ["wykorzystane_moje", "wykorzystane_drugiego"]) {
-    if (v[key] && !/^\d+$/.test(v[key].trim())) errors[key] = "Wpisz liczbę dni jako nieujemną liczbę całkowitą.";
+    if (v[key] && !/^\d+$/.test(v[key].trim())) errors[key] = "Wpisz liczbę dni cyframi, np. 0 albo 14.";
   }
   const previous = Number(v.wykorzystane_moje) + Number(v.wykorzystane_drugiego);
   if (previous > 0 && !v.poprzednie_okresy?.trim()) errors.poprzednie_okresy = "Wymień wykorzystane okresy urlopu lub zasiłku.";
   if (v.liczba_czesci === "5") errors.liczba_czesci = "Rodzice wykorzystali już wszystkie pięć części.";
-  else if (Number.isFinite(previous) && v.liczba_czesci && (previous > 0) !== (Number(v.liczba_czesci) > 0)) errors.liczba_czesci = "Liczba części powinna odpowiadać dotychczasowemu wykorzystaniu urlopu.";
+  else if (Number.isFinite(previous) && v.liczba_czesci && (previous > 0) !== (Number(v.liczba_czesci) > 0)) errors.liczba_czesci = "Liczba części nie pasuje do wykorzystanych dni. Przy 0 dni wybierz 0, a gdy dni były wykorzystane, co najmniej 1.";
   let concurrent = 0;
   if (v.drugi === "Tak" && isValidIso(v.drugi_od) && isValidIso(v.drugi_do)) {
     concurrent = daysBetween(v.drugi_od, v.drugi_do) + 1;
@@ -81,7 +81,7 @@ function validateParental(v: Values, today: string): Values {
     const request = daysBetween(v.od, v.do) + 1;
     const pool = currentPool(v);
     const personal = (pool - MATERNITY_PARAMETERS.exclusiveWeeks) * 7;
-    if (request + Number(v.wykorzystane_moje) > personal) errors.do = "Ten okres narusza 9 tygodni zarezerwowanych dla drugiego rodzica.";
+    if (request + Number(v.wykorzystane_moje) > personal) errors.do = "Ten okres wchodzi w 9 tygodni zarezerwowanych dla drugiego rodzica.";
     else if (Number(v.wykorzystane_drugiego) + concurrent > personal || previous + request + concurrent > pool * 7) errors.do = `Po uwzględnieniu urlopu drugiego rodzica przekraczasz dostępny wymiar (wspólna pula: ${pool} tyg.).`;
   }
   return errors;
@@ -107,7 +107,7 @@ export const leaveForms: Record<string, FormDef> = {
       const errors: Values = {};
       if (isValidIso(v.termin) && isValidIso(v.od)) {
         const before = daysBetween(v.od, v.termin);
-        if (before < 1 || before > MATERNITY_PARAMETERS.maxWeeksBeforeBirth * 7) errors.od = "Wybierz dzień w ciągu 6 tygodni poprzedzających przewidywaną datę porodu.";
+        if (before < 1 || before > MATERNITY_PARAMETERS.maxWeeksBeforeBirth * 7) errors.od = "Wybierz dzień w ciągu 6 tygodni przed przewidywaną datą porodu.";
         else if (v.od < today) errors.od = "Wybierz dzisiejszą lub przyszłą datę rozpoczęcia urlopu.";
       }
       return errors;
@@ -120,7 +120,7 @@ export const leaveForms: Record<string, FormDef> = {
   "urlop-ojcowski": {
     ...letter,
     name: "Wniosek o udzielenie urlopu ojcowskiego",
-    fidelity: "Złóż wniosek u pracodawcy co najmniej 7 dni przed urlopem. Podajesz jeden okres, którego dotyczy to pismo.",
+    fidelity: "Złóż wniosek u pracodawcy co najmniej 7 dni przed urlopem. W tym piśmie podajesz jeden okres urlopu.",
     sections: [
       { ...sender, fields: [{ ...parent("Imię i nazwisko ojca"), prefill: c => c.secondParentName }, { ...employer, label: "Pracodawca ojca", prefill: undefined }, town] },
       { id: "dziecko", title: "Dziecko", fields: [child, birth, situation([births, adoption]),
@@ -181,7 +181,7 @@ export const leaveForms: Record<string, FormDef> = {
   "rodzicielski-praca": {
     ...letter,
     name: "Wniosek o łączenie urlopu rodzicielskiego z wykonywaniem pracy",
-    fidelity: "Złóż odrębne pismo u pracodawcy udzielającego urlopu co najmniej 21 dni przed rozpoczęciem pracy.",
+    fidelity: "Złóż osobne pismo u pracodawcy udzielającego urlopu co najmniej 21 dni przed rozpoczęciem pracy.",
     sections: [sender, { id: "praca", title: "Praca podczas urlopu", fields: [
       date("od", "Pierwszy dzień łączenia urlopu z pracą"), date("do", "Ostatni dzień łączenia urlopu z pracą (włącznie)"),
       { id: "wymiar", label: "Wymiar pracy (część pełnego etatu)", hint: "Np. 1/5 albo 0,5. Możesz pracować do połowy pełnego etatu.", type: "text", required: true },
@@ -191,7 +191,7 @@ export const leaveForms: Record<string, FormDef> = {
     validate(v, today) {
       const errors = timing(v, today, 21);
       for (const id of v.wydluzenie === "Tak" ? ["wymiar", "wymiar_wydluzenia"] : ["wymiar"]) {
-        if (v[id] && !validWork(v[id])) errors[id] = "Podaj dodatni wymiar do połowy etatu, np. 1/4 albo 0,5.";
+        if (v[id] && !validWork(v[id])) errors[id] = "Podaj wymiar większy od zera i nie większy niż pół etatu, np. 1/4 albo 0,5.";
       }
       return errors;
     },

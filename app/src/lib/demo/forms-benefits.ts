@@ -27,9 +27,9 @@ function contactErrors(v: Values, today: string) {
   const errors: Values = {};
   if (v.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) errors.email = "Wpisz pełny adres e-mail.";
   if (v.telefon?.trim() && !/^\+?[\d ()-]+$/.test(v.telefon.trim())) errors.telefon = "Wpisz numer telefonu z numerem kierunkowym.";
-  if (v.telefon?.trim() && !/^\d{7,15}$/.test(v.telefon.replace(/[+\s()-]/g, ""))) errors.telefon = "Sprawdź liczbę cyfr telefonu.";
+  if (v.telefon?.trim() && !/^\d{7,15}$/.test(v.telefon.replace(/[+\s()-]/g, ""))) errors.telefon = "Numer telefonu powinien mieć od 7 do 15 cyfr.";
   for (const key of ["rodzic_data", "data_urodzenia"]) {
-    if (v[key] && (!isValidIso(v[key]) || v[key] > today)) errors[key] = "Podaj prawidłową datę urodzenia do dzisiejszego dnia.";
+    if (v[key] && (!isValidIso(v[key]) || v[key] > today)) errors[key] = "Podaj prawidłową datę urodzenia, najpóźniej dzisiejszą.";
   }
   return errors;
 }
@@ -43,7 +43,7 @@ function availablePeriods(day: string) {
 
 const swr: FormDef = {
   name: "Wniosek rodzica o świadczenie wychowawcze 800+ (SW-R)",
-  fidelity: "Elektroniczny wniosek matki lub ojca do ZUS. Okres trwa od 1 czerwca do 31 maja. Nowy wniosek można składać od 1 lutego.",
+  fidelity: "Elektroniczny wniosek matki lub ojca do ZUS. Okres świadczeniowy trwa od 1 czerwca do 31 maja. Nowy wniosek można składać od 1 lutego.",
   channels: ["pue", "mzus", "bank", "empatia"], pdf: "none",
   sections: [
     { id: "ty", title: "Rodzic składający wniosek", fields: [
@@ -74,7 +74,7 @@ const swr: FormDef = {
       when(text("swiadczenie_dane", "Państwo, rodzaj i okres świadczenia"), "swiadczenie_zagranica"),
       choice("dziecko_zagraniczne", "Czy dziecko ma wyłącznie obywatelstwo państwa spoza UE, EFTA i Wielkiej Brytanii?"),
       ...foreignFields("dziecko_zagraniczne", "dziecko"),
-      when(text("dziecko_nauka", "Edukacja dziecka", true, "Podaj szkołę/przedszkole lub podstawę zwolnienia, np. wiek dziecka. Przy odroczeniu lub innej formie nauki przygotuj potwierdzenie."), "dziecko_zagraniczne"),
+      when(text("dziecko_nauka", "Edukacja dziecka", true, "Podaj szkołę, przedszkole lub podstawę zwolnienia, np. wiek dziecka. Przy odroczeniu lub innej formie nauki przygotuj potwierdzenie."), "dziecko_zagraniczne"),
       when(text("dziecko_orzeczenie", "Orzeczenie o niepełnosprawności", true, "Podaj numer i stopień, jeśli dotyczy, albo wpisz „brak”."), "dziecko_zagraniczne"),
       list("kolejne_sw", "Kolejne dzieci", "Każde w osobnym wierszu: imię i nazwisko | PESEL | obywatelstwo | data urodzenia (RRRR-MM-DD) | opieka, świadczenia zagraniczne i dokumenty dotyczące tego dziecka."),
       choice("wszystkie", "Potwierdzam wspólne zamieszkanie, utrzymanie wymienionych dzieci oraz brak okoliczności wyłączających prawo.", ["Potwierdzam"]),
@@ -142,7 +142,7 @@ const sr2: FormDef = {
       list("kolejne_dzieci", "Kolejne dzieci objęte wnioskiem", "Każde w osobnym wierszu: imię | nazwisko | PESEL lub dok: seria i numer | data urodzenia RRRR-MM-DD | obywatelstwo."),
     ] },
     { id: "rodzina", title: "Skład rodziny i ubezpieczenie", fields: [
-      list("rodzina", "Pozostali członkowie rodziny", "Wpisz małżonka lub drugiego rodzica i pozostałe osoby zaliczane do rodziny. Siebie i dzieci z wniosku wpisujemy automatycznie (z wyłączeniem dzieci pod opieką prawną). Każdy w osobnym wierszu: imię | nazwisko | PESEL lub dok: seria i numer | pokrewieństwo."),
+      list("rodzina", "Pozostali członkowie rodziny", "Wpisz małżonka lub drugiego rodzica i pozostałe osoby zaliczane do rodziny. Siebie i dzieci z wniosku wpisujemy automatycznie (oprócz dzieci pod opieką prawną). Każdy w osobnym wierszu: imię | nazwisko | PESEL lub dok: seria i numer | pokrewieństwo."),
       choice("skladki", "Organ składek zdrowotnych rodziny", ["ZUS", "KRUS", "ZUS i KRUS", "Inny", "ZUS i inny", "KRUS i inny", "ZUS, KRUS i inny", "Brak"]),
       text("skladki_inny", "Nazwa i adres innego organu składek", false),
     ] },
@@ -168,10 +168,10 @@ const sr2: FormDef = {
   ],
   validate(v, today) {
     const errors = { ...contactErrors(v, today), ...srErrors(v, today) };
-    if (v.skladki?.toLowerCase().includes("inny") && !v.skladki_inny?.trim()) errors.skladki_inny = "Wpisz nazwę i adres jednostki.";
+    if (v.skladki?.toLowerCase().includes("inny") && !v.skladki_inny?.trim()) errors.skladki_inny = "Wpisz nazwę i adres innego organu składek.";
     if (v.rola === "Rodzic biologiczny") {
       const late = (date?: string) => date && isValidIso(date) && today > addMonths(date, 12);
-      if (late(v.data_urodzenia)) errors.data_urodzenia = "Termin wynosi 12 miesięcy od urodzenia dziecka.";
+      if (late(v.data_urodzenia)) errors.data_urodzenia = "Termin minął. Wniosek trzeba złożyć w ciągu 12 miesięcy od urodzenia dziecka.";
       if (srPeople(v).children.slice(1).some(c => late(c.birth))) errors.kolejne_dzieci = "Sprawdź termin 12 miesięcy od urodzenia każdego dziecka.";
     }
     return errors;

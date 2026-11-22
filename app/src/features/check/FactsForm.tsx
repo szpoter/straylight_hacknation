@@ -86,7 +86,7 @@ export function FactsForm({ facts, onChange }: { facts: EligibilityFacts; onChan
       <DateInput label={care ? "Data przyjęcia dziecka" : "Data porodu"} value={facts.eventDate} onChange={(v) => set("eventDate", v)} />
       <DateInput
         label="Początek okresu z wniosku (opcjonalnie)"
-        hint="Np. początek urlopu drugiego rodzica albo okresu po przerwie. Puste = dzień zdarzenia."
+        hint="Np. początek urlopu drugiego rodzica albo okresu po przerwie. Puste pole oznacza dzień zdarzenia."
         value={facts.periodStart}
         onChange={(v) => set("periodStart", v || undefined)}
       />
@@ -128,7 +128,7 @@ export function FactsForm({ facts, onChange }: { facts: EligibilityFacts; onChan
       />
       <Select
         label="Ubezpieczenie chorobowe w dniu, na który ZUS sprawdza prawo"
-        hint="Dzień porodu albo przyjęcia, a gdy podano początek okresu — ten dzień."
+        hint="Dzień porodu albo przyjęcia. Jeśli podano początek okresu, to ten dzień."
         value={facts.insured}
         onChange={(v) => set("insured", v)}
         options={[

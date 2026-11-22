@@ -147,14 +147,14 @@ function HowToTest() {
           <strong>Sprawa z zestawu ZUS:</strong> wybierz jedną z 10 spraw (6 odmów, 4 przyznania). Obok wyniku reguły widać rozstrzygnięcie ZUS z akt i znacznik zgodności.
         </li>
         <li>
-          <strong>Wgraj PDF sprawy:</strong> wybierz plik z folderu „Sprawy” zestawu. Tekst odczytujemy na tym urządzeniu (OCR), plik nie trafia na serwer. Podpowiedzi faktów sprawdź z podglądem strony i popraw w formularzu.
+          <strong>Wgraj PDF sprawy:</strong> wybierz plik z folderu „Sprawy” zestawu. Tekst odczytujemy na tym urządzeniu (OCR). Plik nie trafia na serwer. Podpowiedzi faktów sprawdź z podglądem strony i popraw w formularzu.
         </li>
         <li>
           <strong>Kwoty i okresy:</strong> liczy{" "}
           <a href="/kalkulator" className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
             kalkulator
-          </a>{" "}
-          — wybierz w nim „Sprawa ZUS: …”, żeby porównać wyliczenie z decyzją co do grosza.
+          </a>
+          . Wybierz w nim „Sprawa ZUS: …”, żeby porównać wyliczenie z decyzją co do grosza.
         </li>
         <li>
           <strong>Panel administracyjny:</strong> zmiana płacy minimalnej w{" "}
@@ -228,7 +228,7 @@ function Upload({ onRead, reading }: { onRead: (r: CaseReading & { pages: ReadPa
         <AiTag />
       </div>
       <p className="max-w-prose text-on-surface-variant">
-        PDF albo zdjęcie dokumentów sprawy (ZAM, Z-3, Z-3a, Z-3b, decyzja, poświadczenie ubezpieczenia, odpis aktu urodzenia). Czytamy do {MAX_PAGES} stron. Skan 15–25 stron to zwykle 30–60 sekund.
+        PDF albo zdjęcie dokumentów sprawy (ZAM, Z-3, Z-3a, Z-3b, decyzja, poświadczenie ubezpieczenia, odpis aktu urodzenia). Czytamy do {MAX_PAGES} stron. Odczyt skanu 15–25 stron trwa zwykle 30–60 sekund.
       </p>
       <label htmlFor={id} className={cn("inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full border border-on-surface px-5 font-medium hover:bg-surface", busy && "pointer-events-none opacity-50")}>
         <UploadIcon size={18} /> Wybierz plik

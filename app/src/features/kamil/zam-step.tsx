@@ -110,7 +110,7 @@ export function ZamStep({ view, busy, send }: Props) {
 
       {!view.readyForDraft && !draft && (
         <p>
-          Do zatwierdzenia szkicu potrzebne są potwierdzone dane i wynik „Przysługuje”.
+          Żeby zatwierdzić szkic, potrzebujesz potwierdzonych danych i wyniku „Przysługuje”.
           {view.zamMissing.length > 0 && ` Brakuje: ${view.zamMissing.map((k) => FIELD_LABELS[k].toLowerCase()).join(", ")}.`}
         </p>
       )}

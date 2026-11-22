@@ -77,7 +77,7 @@ export function FormEditor({
 
       {errorList.length > 0 && (
         <div ref={summaryRef} tabIndex={-1} role="alert" className="rounded-sm border-2 border-on-surface p-4 focus:outline-none">
-          <p className="font-medium">Popraw {errorList.length === 1 ? "1 pole" : `${errorList.length} pól`}, żeby sprawdzić wniosek</p>
+          <p className="font-medium">Popraw {fieldCount(errorList.length)}, żeby sprawdzić wniosek</p>
           <ul className="mt-2 flex flex-col gap-1">
             {errorList.map(([id, message]) => (
               <li key={id}>
@@ -115,6 +115,13 @@ export function FormEditor({
       </div>
     </form>
   );
+}
+
+/** „1 pole”, „2 pola”, „5 pól”, „22 pola”. */
+function fieldCount(n: number): string {
+  if (n === 1) return "1 pole";
+  const tens = n % 100;
+  return n % 10 >= 2 && n % 10 <= 4 && (tens < 12 || tens > 14) ? `${n} pola` : `${n} pól`;
 }
 
 function Field({ field, value, error, onChange }: { field: FormField; value: string; error?: string; onChange: (value: string) => void }) {

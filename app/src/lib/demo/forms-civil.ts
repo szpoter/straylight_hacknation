@@ -163,12 +163,12 @@ export const civilForms: Record<string, FormDef> = {
   poz: {
     name: "Deklaracja wyboru przychodni i osoby sprawującej opiekę POZ",
     pdf: "official",
-    fidelity: "Osobną deklarację składasz dla lekarza, pielęgniarki lub położnej. Papierowy druk podpisuje przedstawiciel ustawowy. Przesyłając go elektronicznie do placówki, użyj podpisu zaufanego, osobistego albo kwalifikowanego i uzgodnionego adresu.",
+    fidelity: "Osobną deklarację składasz dla lekarza, pielęgniarki lub położnej. Papierowy druk podpisuje przedstawiciel ustawowy. Jeśli wysyłasz go elektronicznie, podpisz go podpisem zaufanym, osobistym albo kwalifikowanym i wyślij na adres uzgodniony z placówką.",
     channels: ["ikp", "przychodnia", "podpis-elektroniczny"],
     validateChannel(v, channel) {
       const errors: Record<string, string> = {};
-      if (channel === "ikp" && v.dostep_ikp !== "Tak") errors.dostep_ikp = "Do wysłania przez IKP potrzebujesz dostępu do konta dziecka. Zaznacz go lub wybierz złożenie deklaracji w przychodni.";
-      if (channel === "ikp" && v.identyfikator === "Dokument tożsamości") errors.identyfikator = "IKP dziecka wymaga nadanego numeru PESEL. Z dokumentem tożsamości przekaż deklarację bezpośrednio do przychodni.";
+      if (channel === "ikp" && v.dostep_ikp !== "Tak") errors.dostep_ikp = "Do wysłania przez IKP potrzebujesz dostępu do konta dziecka. Zaznacz, że go masz, albo wybierz „W przychodni”.";
+      if (channel === "ikp" && v.identyfikator === "Dokument tożsamości") errors.identyfikator = "IKP dziecka działa tylko z nadanym numerem PESEL. Jeśli podajesz dokument tożsamości, przekaż deklarację bezpośrednio do przychodni.";
       if (channel === "podpis-elektroniczny" && ![TRUSTED, personalSignature, QUALIFIED].includes(v.podpis_poz)) errors.podpis_poz = "Wybierz podpis zaufany, osobisty lub kwalifikowany dla dokumentu do przychodni.";
       return errors;
     },
@@ -208,7 +208,7 @@ export const civilForms: Record<string, FormDef> = {
     ],
     validate(v, today) {
       const errors = futureBirth(v, today);
-      if (v.telefon && !/^\+?\d{1,13}$/.test(v.telefon.replace(/[\s()-]/g, ""))) errors.telefon = "Podaj numer telefonu z opcjonalnym prefiksem kraju.";
+      if (v.telefon && !/^\+?\d{1,13}$/.test(v.telefon.replace(/[\s()-]/g, ""))) errors.telefon = "Wpisz numer telefonu, np. 600 100 200 albo +48 600 100 200.";
       if ((v.telefon ?? "").replace(/[\s()-]/g, "").length > 13) errors.telefon = "W druku jest miejsce na 13 znaków numeru telefonu.";
       if (v.identyfikator === "Dokument tożsamości" && (v.dokument ?? "").replace(/\s/g, "").length > 22) errors.dokument = "Na druku zmieszczą się 22 znaki dokumentu.";
       return errors;

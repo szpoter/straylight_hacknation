@@ -116,7 +116,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
                 answer.sourceExplanation += " Stan osobnego wniosku pochodzi z zapisu sprawy urlopowej w tej sesji.";
               }
             } catch {
-              answer.lines.push("Dodatkowy stan wniosku w sprawie urlopu rodzicielskiego jest teraz niedostępny.");
+              answer.lines.push("Nie mogę teraz odczytać stanu osobnego wniosku o urlop rodzicielski.");
             }
           }
           setPlanTurns(turns => [...turns, { id: newRequestId(), at: new Date().toISOString(), question: message, answer }]);
@@ -129,7 +129,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       }
       if (chat.phase !== "ready") {
         setAskNotice(chat.phase === "error" ? "Brak połączenia ze źródłami publicznymi. Ponów połączenie z czatem."
-          : "Trwa łączenie ze źródłami publicznymi. Spróbuj ponownie po nawiązaniu połączenia.");
+          : "Łączę się ze źródłami publicznymi. Spróbuj ponownie, gdy połączenie będzie gotowe.");
         return;
       }
     }

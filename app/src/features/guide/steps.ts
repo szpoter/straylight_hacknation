@@ -114,7 +114,7 @@ const CALCULATOR: GuideStep[] = [
 const DOCUMENTS: GuideStep[] = [
   {
     title: "Dokumenty i wnioski",
-    body: "Wszystkie wnioski z planu w jednym miejscu. Widzisz, co trzeba złożyć, co już wysłane i jak odpowiedział urząd.",
+    body: "Tu są wszystkie wnioski z planu. Widzisz, co trzeba złożyć, co już wysłane i jak odpowiedział urząd.",
   },
   {
     target: "summons",
@@ -137,17 +137,17 @@ const DOCUMENTS: GuideStep[] = [
 const CASE: GuideStep[] = [
   {
     title: "Sprawa krok po kroku",
-    body: "Na tej stronie wypełnisz wniosek, pobierzesz go jako PDF i śledzisz, co się z nim dzieje. Wysyłka do urzędu to na razie symulacja.",
+    body: "Na tej stronie wypełnisz wniosek, pobierzesz go jako PDF i zobaczysz, co się z nim dzieje. Wysyłka do urzędu to na razie symulacja.",
   },
   {
     target: "case-now",
     title: "Czy mam teraz coś zrobić?",
-    body: "Najważniejsza odpowiedź na górze: co zrobić teraz, do kiedy i jednym przyciskiem dalej.",
+    body: "Na górze widać, co zrobić teraz i do kiedy, a przycisk prowadzi do następnego kroku.",
   },
   {
     target: "case-howto",
     title: "Jak złożyć",
-    body: "Co złożyć, do kogo, do kiedy i jakie załączniki dołączyć. Wszystko w czterech wierszach.",
+    body: "Cztery wiersze: co złożyć, do kogo, do kiedy i jakie załączniki dołączyć.",
   },
   {
     target: "case-form",
@@ -200,7 +200,7 @@ const PROFILE: GuideStep[] = [
   {
     target: "profile-zus",
     title: "Konto w ZUS",
-    body: "Podgląd danych z ZUS: ubezpieczenia, podstawa zasiłku, zwolnienia. Tylko do odczytu, w tej wersji to symulacja eZUS.",
+    body: "Podgląd danych z ZUS: ubezpieczenia, podstawa zasiłku, zwolnienia. Możesz je tylko przeglądać. W tej wersji to symulacja eZUS.",
   },
   {
     target: "profile-ezus",
@@ -274,7 +274,7 @@ const CHECK: GuideStep[] = [
 const TEST_CASE: GuideStep[] = [
   {
     title: "Sprawa testowa",
-    body: "Bezpieczne miejsce do ćwiczeń. Wszystko dzieje się na fikcyjnych danych i nie zmienia Twojego planu.",
+    body: "Tu ćwiczysz na fikcyjnych danych. To, co tu zrobisz, nie zmienia Twojego planu.",
   },
   {
     target: "test-steps",

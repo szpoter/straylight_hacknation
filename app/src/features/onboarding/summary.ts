@@ -10,7 +10,7 @@ export const OFFICIAL_ROWS: ProfileRow[] = PARENT_PROFILE.filter((r) => !r.edita
 
 function dateValue(answers: Answers, key: DateKey): string {
   const value = answers[key];
-  if (!value) return "Bez daty — przybliżymy";
+  if (!value) return "Bez daty (przybliżymy ją)";
   return answers.estimated?.[key] ? `ok. ${formatLong(value)}` : formatLong(value);
 }
 

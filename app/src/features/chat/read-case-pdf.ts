@@ -161,7 +161,7 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
     checkpoint?.close();
     checkpoint = undefined;
     storageUnavailable = true;
-    onProgress("Praca bez zapisu postępu. Po odświeżeniu wybierz plik ponownie.");
+    onProgress("Nie mogę zapisać postępu odczytu. Po odświeżeniu strony wybierz plik ponownie.");
   };
   let worker: Promise<Worker> | undefined;
   const getWorker = () => worker ??= createPolishOcrWorker();

@@ -315,10 +315,10 @@ function buildOne(
     if (situation === "planuje" && next.state === "aktualna" && s.due) next = { ...next, state: "warunek", condition: "Po zajściu w ciążę" };
     if (baseId(s) === "macierzynski-przed" && situation === "planuje") next = { ...next, state: "warunek", condition: "Po ustaleniu przewidywanej daty porodu", dueBasis: undefined };
     if (baseId(s) === "urlop-ojcowski" && second) next = { ...next, institution: "Twój pracodawca", howTo: next.howTo && { ...next.howTo, doKogo: "Twój pracodawca" } };
-    if (!expected && baseId(s) === "800plus" && keyDate) next = { ...next, due: addMonths(keyDate, 3), dueBasis: "3 miesiące od urodzenia — wtedy wypłata od dnia urodzenia" };
+    if (!expected && baseId(s) === "800plus" && keyDate) next = { ...next, due: addMonths(keyDate, 3), dueBasis: "3 miesiące od urodzenia, żeby dostać wypłatę od dnia urodzenia" };
     if (child.count > 1 && ["zasilek-macierzynski", "urlop-macierzynski", "macierzynski-przed"].includes(baseId(s)) && next.state !== "minelo") {
       const who = CHILDREN_GEN[child.count] ?? "pięciorga i więcej dzieci";
-      next = { ...next, notes: [{ text: `Przy urodzeniu ${who} przy jednym porodzie urlop macierzyński trwa ${weeks.maternity} tygodni.`, sources: [S.govMaternity, S.zielonaLinia] }] };
+      next = { ...next, notes: [{ text: `Przy urodzeniu ${who} z jednego porodu urlop macierzyński trwa ${weeks.maternity} tygodni.`, sources: [S.govMaternity, S.zielonaLinia] }] };
     }
     if (child.count > 1 && baseId(s) === "rodzicielski" && next.state !== "minelo") {
       next = { ...next, notes: [{ text: `Przy porodzie mnogim urlop rodzicielski trwa ${weeks.parental} tygodnie (przy jednym dziecku 41).`, sources: [S.govParental] }] };
@@ -397,7 +397,7 @@ export function employmentRisk(employment: Employment | undefined): Stop["risk"]
     return {
       title: "Dobrowolne ubezpieczenie chorobowe i składki",
       detail:
-        "Przy własnej firmie ubezpieczenie chorobowe jest dobrowolne. Zasiłek macierzyński przysługuje tylko wtedy, gdy podlegasz temu ubezpieczeniu w dniu porodu albo przyjęcia dziecka. Co do zasady nie można zgłosić się do niego wstecz. Jeśli w dniu powstania prawa do zasiłku zaległość w składkach przekracza 1% minimalnego wynagrodzenia, zasiłek nie przysługuje do spłaty całego długu, a bez spłaty w ciągu 6 miesięcy prawo się przedawnia.",
+        "Przy własnej firmie ubezpieczenie chorobowe jest dobrowolne. Zasiłek macierzyński przysługuje tylko wtedy, gdy podlegasz temu ubezpieczeniu w dniu porodu albo przyjęcia dziecka. Co do zasady nie można zgłosić się do niego wstecz. Jeśli w dniu powstania prawa do zasiłku zaległość w składkach przekracza 1% minimalnego wynagrodzenia, zasiłek nie przysługuje do spłaty całego długu. Bez spłaty w ciągu 6 miesięcy prawo się przedawnia.",
       action: "Sprawdź zasady w Poradniku ZUS",
       sources: [S.poradnikFirma, S.uzArt2a],
     };

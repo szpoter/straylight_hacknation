@@ -103,7 +103,7 @@ export function SituationSection({ form, update, problems }: { form: CalcForm; u
         )}
         <Check
           label="Zaświadczenie „Za życiem”"
-          hint="Ciężkie i nieodwracalne upośledzenie albo nieuleczalna choroba dziecka — urlop rodzicielski 65 tyg. (67 przy więcej niż jednym dziecku)."
+          hint="Ciężkie i nieodwracalne upośledzenie albo nieuleczalna choroba dziecka. Urlop rodzicielski: 65 tyg. (67 przy więcej niż jednym dziecku)."
           checked={form.zaZyciem}
           onChange={(zaZyciem) => update({ zaZyciem })}
         />
@@ -204,8 +204,8 @@ function ParentBasis({
       />
       {form.mode === "average" && (
         <TextField
-          label={`${amountLabel} — średnio miesięcznie (zł)`}
-          hint={employee ? "Z 12 miesięcy przed miesiącem porodu. Premie kwartalne i roczne — 1/12 kwoty." : "Zadeklarowana podstawa, od której płacisz składkę chorobową, z 12 miesięcy."}
+          label={`${amountLabel}, średnio miesięcznie (zł)`}
+          hint={employee ? "Z 12 miesięcy przed miesiącem porodu. Premie kwartalne i roczne: 1/12 kwoty." : "Zadeklarowana podstawa, od której płacisz składkę chorobową, z 12 miesięcy."}
           inputMode="decimal"
           autoComplete="off"
           value={form.average}
@@ -216,7 +216,7 @@ function ParentBasis({
       {form.mode === "known" && (
         <TextField
           label="Podstawa wymiaru zasiłku (zł)"
-          hint="Z decyzji ZUS, zaświadczenia płatnika Z-3 albo z wcześniejszego zasiłku — jeśli między zasiłkami nie było przerwy dłuższej niż miesiąc, podstawa się nie zmienia."
+          hint="Z decyzji ZUS, zaświadczenia płatnika Z-3 albo z wcześniejszego zasiłku. Jeśli między zasiłkami nie było przerwy dłuższej niż miesiąc, podstawa się nie zmienia."
           inputMode="decimal"
           autoComplete="off"
           value={form.known}
@@ -227,7 +227,7 @@ function ParentBasis({
       {form.mode === "months" && (
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-3 text-meta text-on-surface-variant">
-            {amountLabel} za 12 miesięcy przed miesiącem porodu / przyjęcia dziecka. Puste pole = brak ubezpieczenia w tym miesiącu. Zaznacz miesiące przepracowane w mniej niż połowie — nie liczą się do średniej.
+            {amountLabel} za 12 miesięcy przed miesiącem porodu albo przyjęcia dziecka. Puste pole oznacza brak ubezpieczenia w tym miesiącu. Zaznacz miesiące przepracowane w mniej niż połowie, bo nie liczą się do średniej.
           </legend>
           {problemFor(problems, `${who}.months`) && <FieldError>{problemFor(problems, `${who}.months`)}</FieldError>}
           <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -317,7 +317,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
         <SectionHead n={3} title="Urlop" lead="Urlop macierzyński 8 tygodni po porodzie, zasiłek według stawki macierzyńskiej." />
         <Stepper
           label="Urlop macierzyński wykorzystany przed porodem"
-          hint="Tygodnie przed porodem liczą się osobno — 8 tygodni przysługuje po porodzie."
+          hint="Tygodnie przed porodem liczą się osobno, a 8 tygodni przysługuje po porodzie."
           value={form.weeksBeforeBirth}
           min={0}
           max={P.maxWeeksBeforeBirth}
@@ -329,7 +329,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
   }
   return (
     <Panel className="flex flex-col gap-8">
-      <SectionHead n={3} title="Jak dzielicie urlop" lead="Zmieniaj tygodnie — wynik i oś czasu przeliczają się od razu." />
+      <SectionHead n={3} title="Jak dzielicie urlop" lead="Zmieniaj tygodnie. Wynik i oś czasu przeliczają się od razu." />
 
       <div className="flex flex-col gap-3">
         <p className="text-label font-medium">Sposób wypłaty</p>
@@ -345,7 +345,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
         />
         <p className="text-meta text-on-surface-variant">
           {form.variant === "815"
-            ? `Wniosek o stawkę uśrednioną składa się najpóźniej ${P.averagedRequestDays} dni po ${birth ? "porodzie" : "przyjęciu dziecka"}${deadline ? ` — do ${formatLong(deadline)}` : ""}. Wyłączna część drugiego rodzica jest płatna według stawki rodzicielskiej.`
+            ? `Wniosek o stawkę uśrednioną złóż najpóźniej ${P.averagedRequestDays} dni po ${birth ? "porodzie" : "przyjęciu dziecka"}${deadline ? `, czyli do ${formatLong(deadline)}` : ""}. Wyłączna część drugiego rodzica jest płatna według stawki rodzicielskiej.`
             : "Przy tym wariancie każdy okres jest płatny według swojej stawki."}
         </p>
       </div>
@@ -354,7 +354,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
         {birth && (
           <Stepper
             label="Urlop macierzyński przed porodem"
-            hint="Najwyżej 6 tygodni przed przewidywaną datą porodu — skraca część po porodzie."
+            hint="Najwyżej 6 tygodni przed przewidywaną datą porodu. Skraca to część po porodzie."
             value={form.weeksBeforeBirth}
             min={0}
             max={P.maxWeeksBeforeBirth}
@@ -365,7 +365,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
         {form.hasB && (
           <Stepper
             label="Drugi rodzic przejmuje część urlopu macierzyńskiego"
-            hint={`Po co najmniej 14 tygodniach matki po porodzie — najwyżej ${maxTransfer} tyg.`}
+            hint={`Najwyżej ${maxTransfer} tyg., po co najmniej 14 tygodniach matki po porodzie.`}
             value={form.transferWeeks}
             min={0}
             max={maxTransfer}
@@ -378,7 +378,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
       <div className="flex flex-col gap-5 border-t border-outline pt-8">
         <div className="flex flex-col gap-1">
           <p className="text-label font-medium">Urlop rodzicielski: {l.parentalPoolWeeks} tyg. dla Was obojga</p>
-          <p className="text-meta text-on-surface-variant">Każde z Was ma {l.exclusiveWeeks} tygodni wyłącznie dla siebie — nie można ich przenieść. Jedno może wziąć najwyżej {l.maxParentalOneParent} tyg.</p>
+          <p className="text-meta text-on-surface-variant">Każde z Was ma {l.exclusiveWeeks} tygodni wyłącznie dla siebie. Tych tygodni nie można przenieść. Jedno może wziąć najwyżej {l.maxParentalOneParent} tyg.</p>
         </div>
         <PoolBar pool={l.parentalPoolWeeks} a={form.parentalWeeksA} b={form.hasB ? form.parentalWeeksB : 0} exclusive={l.exclusiveWeeks} hasB={form.hasB} />
         <div className="grid gap-8 md:grid-cols-2">
@@ -447,7 +447,7 @@ export function SplitSection({ form, update }: { form: CalcForm; update: Update 
       <div className="flex flex-col gap-5 border-t border-outline pt-8">
         <p className="text-label font-medium">Kwota na rękę (szacunek)</p>
         <Check label="Złożono PIT-2" hint="Zaliczka na podatek 12% pomniejszona o 300 zł miesięcznie." checked={form.pit2} onChange={(pit2) => update({ pit2 })} />
-        <Check label="Ulga zwalniająca z podatku" hint="Dla młodych, na powrót, 4+, pracujący senior — zasiłek zwolniony do 85 528 zł rocznie." checked={form.pitExempt} onChange={(pitExempt) => update({ pitExempt })} />
+        <Check label="Ulga zwalniająca z podatku" hint="Ulga dla młodych, na powrót, dla rodzin 4+ albo dla pracujących seniorów. Zasiłek jest zwolniony z podatku do 85 528 zł rocznie." checked={form.pitExempt} onChange={(pitExempt) => update({ pitExempt })} />
       </div>
     </Panel>
   );

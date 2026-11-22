@@ -74,7 +74,7 @@ export const BENEFIT_PRESETS: BenefitPreset[] = [
   {
     id: "joanna1",
     title: "Działalność gospodarcza, 81,5%",
-    description: "Przedsiębiorczyni, poród 20.09.2026, podstawa ustalona przy wcześniejszym zasiłku chorobowym (bez przerwy — ta sama podstawa).",
+    description: "Przedsiębiorczyni, poród 20.09.2026, podstawa ustalona przy wcześniejszym zasiłku chorobowym (bez przerwy, więc ta sama podstawa).",
     form: { ...common, event: "birth", date: "2026-09-20", variant: "815", A: { ...parentForm("dzialalnosc"), fullTime: false, mode: "known", known: "4877,11" } },
     checks: [
       { label: "Stawka dzienna", zus: 132.49, pick: daily("mat-A") },
@@ -85,7 +85,7 @@ export const BENEFIT_PRESETS: BenefitPreset[] = [
   {
     id: "pi2",
     title: "Pracownica z pensją poniżej minimalnej podstawy",
-    description: "Pełny etat, przeciętne wynagrodzenie z zaświadczenia płatnika 3 707,67 zł — podstawa podniesiona do płacy minimalnej (4 300 zł od lipca 2024) − 13,71%. Poród 15.10.2024.",
+    description: "Pełny etat, przeciętne wynagrodzenie z zaświadczenia płatnika 3 707,67 zł. Podstawa podniesiona do płacy minimalnej (4 300 zł od lipca 2024) − 13,71%. Poród 15.10.2024.",
     form: { ...common, event: "birth", date: "2024-10-15", variant: "100-70", A: { ...parentForm("pracownik", "3707,67"), fullTime: true } },
     checks: [
       { label: "Stawka dzienna", zus: 123.68, pick: daily("mat-A") },
@@ -120,7 +120,7 @@ export const BENEFIT_PRESETS: BenefitPreset[] = [
     id: "przysposobienie",
     title: "Przysposobienie dziecka, 81,5%",
     description:
-      "Pełny etat, wynagrodzenie 8 532,44 zł, od lipca 2025 r. 8 959,06 zł, w listopadzie premia 760,63 zł (Z-3). Dziecko urodzone 20.04.2024, przyjęte na wychowanie 26.01.2026 po wniosku do sądu z 16.01.2026; zasiłek od 27.01.2026 i ta data jest w kalkulatorze. Wniosek o oba urlopy złożony przed przyjęciem dziecka, więc 81,5%.",
+      "Pełny etat, wynagrodzenie 8 532,44 zł, od lipca 2025 r. 8 959,06 zł, w listopadzie premia 760,63 zł (Z-3). Dziecko urodzone 20.04.2024, przyjęte na wychowanie 26.01.2026 po wniosku do sądu z 16.01.2026. Zasiłek od 27.01.2026 i tę datę wpisano w kalkulatorze. Wniosek o oba urlopy złożony przed przyjęciem dziecka, więc 81,5%.",
     form: {
       ...common,
       event: "adoption",

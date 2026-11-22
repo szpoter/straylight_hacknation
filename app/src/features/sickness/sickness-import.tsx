@@ -57,7 +57,7 @@ export function SicknessImport({ version, onSaved }: { version: number; onSaved:
           fields: p.fact ? fieldsFrom(p.fact) : { ...blankFields },
         })),
       );
-      setMessage("Sprawdź odczyt. Przy nowym układzie dokumentu wskaż ustalenia widoczne na stronie.");
+      setMessage("Sprawdź odczyt. Jeśli dokument ma nowy układ, wskaż ustalenia widoczne na stronie.");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Nie udało się odczytać pliku.");
     } finally {

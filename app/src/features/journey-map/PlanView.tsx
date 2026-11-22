@@ -31,7 +31,7 @@ export function PlanView() {
         )}
         {plan.kind === "test" && (
           <p className="flex items-center gap-2 text-on-surface-variant">
-            <Tag tone="accent">Test</Tag> Sprawa testowa — wszystkie pola można edytować, bez łączenia z Twoimi danymi.
+            <Tag tone="accent">Test</Tag> Sprawa testowa: wszystkie pola możesz edytować. Nie jest połączona z Twoimi danymi.
           </p>
         )}
         <PageTitle>{title}</PageTitle>
@@ -41,7 +41,7 @@ export function PlanView() {
             <p>
               <span className="font-medium">{family.label === "bliźnięta" ? "Bliźnięta" : "Rodzeństwo"}: </span>
               {family.names.join(" i ")}.{" "}
-Urlopy i zasiłek to wspólne sprawy — są w każdym planie i zmieniają się razem.
+Urlopy i zasiłek to wspólne sprawy: są w każdym planie i zmieniają się razem.
             </p>
             <div className="flex flex-wrap gap-2">
               {siblings.map((s) => (
@@ -60,7 +60,7 @@ Urlopy i zasiłek to wspólne sprawy — są w każdym planie i zmieniają się 
         <JourneyMap />
         {/* Wejście do „Wsparcia” z planu (SPEC-PO-LOGOWANIU: dostępne z każdego miejsca planu). */}
         <p className="text-meta text-on-surface-variant">
-          Trudna sytuacja — strata, wcześniak, choroba dziecka?{" "}
+          Trudna sytuacja (strata, wcześniak, choroba dziecka)?{" "}
           <Link href="/wsparcie" data-tour="support" className="font-medium text-on-surface underline underline-offset-4 decoration-outline hover:decoration-on-surface">
             Zobacz wsparcie
           </Link>

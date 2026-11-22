@@ -53,8 +53,8 @@ export function Hero() {
           </h1>
 
           <div className={styles.lead}>
-            <p>Zasiłki, urlopy i{NBSP}terminy.</p>
-            <p>Wszystko w{NBSP}jednym planie.</p>
+            <p>Zasiłki, urlopy i{NBSP}terminy</p>
+            <p>zebrane w{NBSP}jednym planie.</p>
           </div>
 
           <div className={styles.cta}>
@@ -79,7 +79,7 @@ export function Hero() {
 
         <section id="formalnosci" className={styles.features} aria-labelledby="features-title">
           <h2 id="features-title" className={styles.featuresTitle}>
-            Formalności po kolei, bez zgadywania.
+            Formalności po kolei.
           </h2>
           <NotepadLines>
             <ul className={styles.rows}>

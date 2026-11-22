@@ -47,14 +47,14 @@ export function BenefitCalculator() {
       <div className="flex max-w-prose flex-col gap-4">
         <PageTitle>Kalkulator zasiłku macierzyńskiego</PageTitle>
         <p className="text-lead text-on-surface-variant">
-          Wpisz podstawy wynagrodzenia, aby porównać warianty urlopu rodziny Oli i terminy złożenia wniosków.
+          Wpisz podstawy wynagrodzenia, żeby porównać warianty urlopu rodziny Oli i terminy złożenia wniosków.
         </p>
       </div>
 
       <details data-tour="calc-start" className="rounded-lg border border-outline p-gutter-mobile">
         <summary>Sprawdź przykładową sprawę lub dokument PDF</summary>
         <div className="mt-4 grid grid-cols-1 gap-4">
-          <p>Wybór przykładu zastępuje dane formularza na ekranie. Plan rodziny zachowuje zapisane dane.</p>
+          <p>Przykład zastąpi dane w formularzu na ekranie. Dane zapisane w planie rodziny się nie zmienią.</p>
           {BENEFIT_PRESETS.map(preset => <Button key={preset.id} variant="secondary" className="min-h-12 h-auto! whitespace-normal! py-2" onClick={() => { setPresetId(preset.id); update(preset.form); }}>{preset.title}</Button>)}
           {preset && <Button variant="secondary" onClick={() => { setPresetId(null); setDraft(null); setStatus(null); }}>Wróć do mojego planu</Button>}
           <CasePdf onBasis={known => update({ A: { ...form.A, mode: "known", known } })} />
@@ -89,7 +89,7 @@ export function BenefitCalculator() {
                     {family.calculator ? "Zapisz zmiany w planie" : "Zapisz w planie"}
                   </Button>
                   {!preset && !canSave && result.ok && family.plan.keyDate && form.date !== family.plan.keyDate && (
-                    <p className="text-meta text-on-surface-variant">Data różni się od daty w planie — zapis w planie używa daty z planu. Zmień ją w Profilu albo przywróć datę z planu.</p>
+                    <p className="text-meta text-on-surface-variant">Data różni się od daty w planie. Zapis w planie używa daty z planu. Zmień ją w Profilu albo przywróć datę z planu.</p>
                   )}
                   {family.calculator && (
                     <TextButton

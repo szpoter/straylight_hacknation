@@ -153,7 +153,7 @@ export function PlanReady({
           {h.warnings > 0 && (
             <li className="flex items-start gap-2">
               <AlertIcon className="mt-0.5 shrink-0" />
-              {h.warnings === 1 ? "1 ostrzeżenie" : `${h.warnings} ostrzeżenia`} — pokażę je przy właściwej sprawie.
+              {warningCount(h.warnings)}. Pokażę je przy właściwej sprawie.
             </li>
           )}
           {estimatedDate && (
@@ -179,4 +179,11 @@ export function PlanReady({
       </div>
     </div>
   );
+}
+
+/** „1 ostrzeżenie”, „2 ostrzeżenia”, „5 ostrzeżeń”, „22 ostrzeżenia”. */
+function warningCount(n: number): string {
+  if (n === 1) return "1 ostrzeżenie";
+  const tens = n % 100;
+  return n % 10 >= 2 && n % 10 <= 4 && (tens < 12 || tens > 14) ? `${n} ostrzeżenia` : `${n} ostrzeżeń`;
 }

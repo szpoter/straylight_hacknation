@@ -29,7 +29,7 @@ export function Calculator() {
             <h2 id="calc-title" className="font-serif text-title">
               Ile czasu i jaki zasiłek?
             </h2>
-            <p className="mt-1 text-on-surface-variant">Policz urlopy i zasiłek obojga rodziców — wystarczy przewidywana data porodu.</p>
+            <p className="mt-1 text-on-surface-variant">Policz urlopy i zasiłek obojga rodziców. Wystarczy przewidywana data porodu.</p>
           </div>
           <ButtonLink href="/kalkulator" variant="secondary" size="sm">
             Otwórz kalkulator
@@ -53,7 +53,7 @@ export function Calculator() {
               <Tag tone="brand">Zapisane w planie</Tag> <span className="ml-1">Twój podział urlopu i wariant wypłaty.</span>
             </>
           ) : (
-            "Do obliczenia kwot potrzebne są podstawy wynagrodzenia."
+            "Żeby policzyć kwoty, potrzebne są podstawy wynagrodzenia."
           )}
         </p>
       </div>
@@ -66,7 +66,7 @@ export function Calculator() {
             </div>
             {result.span && (
               <p className="text-meta">
-                Z dzieckiem w domu {Math.round(result.span.days / 7)} tyg. — do {formatLong(result.span.to)}
+                Z dzieckiem w domu {Math.round(result.span.days / 7)} tyg., do {formatLong(result.span.to)}
               </p>
             )}
             {next && (
@@ -82,7 +82,7 @@ export function Calculator() {
         </div>
       ) : (
         <Panel className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p>Uzupełnij dane w kalkulatorze, aby obliczyć zasiłek i porównać warianty.</p>
+          <p>Uzupełnij dane w kalkulatorze, żeby obliczyć zasiłek i porównać warianty.</p>
           <ButtonLink href="/kalkulator" size="sm">
             Otwórz kalkulator
           </ButtonLink>

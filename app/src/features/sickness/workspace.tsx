@@ -50,7 +50,7 @@ function sicknessEntries(view: SicknessView | null): CaseChatEntry[] {
     content: <>
       <div className={chat.userRow}><p className={chat.userBubble}>{reply.message}</p></div>
       <div className={chat.aiMessage} data-chat-reply>
-        <p>{reply.evidence.length ? "Do oceny użyłem poniższych dokumentów." : "Na tym etapie brakuje potwierdzonych dokumentów do oceny."}</p>
+        <p>{reply.evidence.length ? "Do oceny użyłem poniższych dokumentów." : "Brakuje jeszcze potwierdzonych dokumentów do oceny."}</p>
         {!!reply.evidence.length && <ul>{reply.evidence.map(doc => <li key={doc.id}>
           {view.evidence.some(current => current.url === doc.url)
             ? <a href={doc.url} target="_blank" rel="noreferrer">{doc.title} · s. {doc.page}</a>

@@ -82,7 +82,7 @@ function basisOf(form: ParentForm, who: string, problems: FormProblem[]): BasisI
   const months = form.months
     .map((m, i) => ({ v: parseAmount(m.amount), raw: m.amount.trim(), underHalf: m.underHalf, i }))
     .filter((m) => m.raw !== "");
-  if (months.some((m) => m.v === null)) problems.push({ field: `${who}.months`, text: "Popraw kwoty w tabeli — tylko cyfry, przecinek i do 2 miejsc po przecinku." });
+  if (months.some((m) => m.v === null)) problems.push({ field: `${who}.months`, text: "Popraw kwoty w tabeli. Wpisz tylko cyfry i przecinek, najwyżej 2 miejsca po przecinku." });
   if (months.length === 0) problems.push({ field: `${who}.months`, text: "Wpisz kwotę co najmniej jednego miesiąca." });
   return { kind: "months", months: months.filter((m) => m.v !== null).map((m) => ({ amount: m.v!, underHalf: m.underHalf })) };
 }
