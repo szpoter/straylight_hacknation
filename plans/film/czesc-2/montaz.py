@@ -69,7 +69,9 @@ for i,(start,z,x,y) in enumerate(camera):
     ty=max(972*(1-z),min(0,486-y*.9*z))
     target=f'{{scale:{z},x:{tx:.2f},y:{ty:.2f}'
     if i==0: js.append(f'tl.set("#camera",{target}}},0);')
-    else: js.append(f'tl.to("#camera",{target},duration:.35,ease:"power2.inOut"}},{start+.10}).to("#camera",{{filter:"blur(0.9px)",duration:.12}},{start+.10}).to("#camera",{{filter:"blur(0px)",duration:.16}},{start+.28});')
+    else:
+        travel = .35 if sample else .95
+        js.append(f'tl.to("#camera",{target},duration:{travel},ease:"sine.inOut"}},{start+.10}).to("#camera",{{filter:"blur(0.55px)",duration:{travel*.28}}},{start+.10}).to("#camera",{{filter:"blur(0px)",duration:{travel*.42}}},{start+.10+travel*.52});')
 if not sample:
     ff("-sseof","-0.035","-i",HERE.parent/"v3-flow/przewodnik-rodzica-B-1080p.mp4","-frames:v","1",out/"wejscie.png")
     tags.append('<img id="handoff" src="wejscie.png">')

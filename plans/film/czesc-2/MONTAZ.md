@@ -19,8 +19,8 @@ python3 montaz.py film
 
 ## Surowe materiały
 
-[Nagrania](surowe/) powstały w Playwright. Pliki 01–04 obejmują jedną sesję rodziny. Plik 05 pochodzi z oddzielnej sesji administratora. Każdy MP4 ma obok plik JSON z momentami i położeniem kursora w pikselach źródłowego obrazu. W ujęciu formularza aplikacja otwiera PDF w osobnej karcie. Formularz wygenerowany w tym przebiegu znajduje się w tym samym katalogu.
+[Nagrania](surowe/) powstały w Playwright. Pliki 01–04 obejmują pierwotną sesję rodziny. Po kliknięciu otwierającym czat obraz przechodzi do dubla 02-odpowiedz, nagranego w poprawionej lokalnej wersji Zusika za pomocą skryptu rozmowa.cjs. Plik 05 pochodzi z oddzielnej sesji administratora. Każdy MP4 ma obok plik JSON z momentami i położeniem kursora w pikselach źródłowego obrazu. W ujęciu formularza aplikacja otwiera PDF w osobnej karcie. Formularz wygenerowany w tym przebiegu znajduje się w tym samym katalogu.
 
-[Dziesięć kwestii lektora](glos/) pochodzi z ElevenLabs. Pliki JSON zawierają czasy wymowy. Numer 04 odnosi się do [rzeczywiście otwartego przypisu](surowe/zrodlo.txt). Zusik odpowiedział osobno na pytanie o kwotę i na pytanie uzupełniające. Wersja aplikacji z kartą importu rodziny ma na landingu przycisk „Otwórz profil Oli”.
+[Dziesięć kwestii lektora](glos/) pochodzi z ElevenLabs. Pliki JSON zawierają czasy wymowy. Numer 04 odnosi się do [rzeczywiście otwartego przypisu](surowe/zrodlo.txt). Bezpośrednia odpowiedź Zusika na pytanie Marty pokazuje 3 423 zł i 4 200 zł brutto za 21 dni. Pierwszy przypis rozwija art. 31 ust. 3. Wersja aplikacji z kartą importu rodziny ma na landingu przycisk „Otwórz profil Oli”.
 
 [Próbka kalkulatora](proba-1080p.mp4) ma odrębny [projekt](projekt-proby/index.html), nagranie i dwie krótkie kwestie. Dane 6000 i 5000 są podstawami zasiłku wpisanymi ręcznie.
