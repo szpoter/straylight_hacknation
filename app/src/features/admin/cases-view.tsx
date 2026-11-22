@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
+import { CasePdf } from "@/features/calculator/CasePdf";
 import type { CaseStatus, TestCase } from "@/lib/admin/types";
 import { caseSearchFields, searchItems } from "./search";
 import { Badge, Card, StatTile, cx } from "./ui";
@@ -25,9 +26,6 @@ export function CasesView({ cases }: { cases: TestCase[] }) {
   const [filter, setFilter] = useState<Filter>("wszystkie");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(cases[0]?.id ?? "");
-  const [uploaded, setUploaded] = useState<string | null>(null);
-  const uploadId = useId();
-
   const count = (f: Filter) => cases.filter((c) => inFilter(c.status, f)).length;
   const outdated = cases.filter((c) => c.status === "do-aktualizacji").length;
   const visible = searchItems(
@@ -111,19 +109,7 @@ export function CasesView({ cases }: { cases: TestCase[] }) {
         )}
 
         <div className={s.upload}>
-          <label htmlFor={uploadId} className={s.btnSecondary}>
-            Wgraj PDF
-          </label>
-          <input
-            id={uploadId}
-            className={s.visuallyHidden}
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setUploaded(e.target.files?.[0]?.name ?? null)}
-          />
-          <span className={s.hint}>
-            {uploaded ? `Wybrano: ${uploaded}. Odczyt dokumentu pojawi się po podłączeniu OCR.` : "ZAM, Z-3, Z-3a, ZAS-12 i inne dokumenty testowe."}
-          </span>
+          <CasePdf />
         </div>
       </Card>
 

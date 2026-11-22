@@ -1,8 +1,14 @@
-import type { CaseState, Stop } from "../demo/types";
+import type { CaseEvent, CaseState, Stop } from "../demo/types";
 
 export const HANDOFF_RECORDED = "Rodzic oznaczył przekazanie";
+export const SIMULATED_HANDOFF = "Symulacja złożenia online";
+export const IN_PERSON_COMPLETED = "Załatwione w urzędzie";
 
-export const isHandoffEntry = (title: string) => title === HANDOFF_RECORDED || title === "Wysłano w symulacji" || title === "Wcześniejszy wpis o przekazaniu";
+export const isHandoffEntry = (title: string) => [HANDOFF_RECORDED, SIMULATED_HANDOFF, IN_PERSON_COMPLETED, "Wysłano w symulacji", "Wcześniejszy wpis o przekazaniu"].includes(title);
+
+export function latestHandoff(events?: CaseEvent[]) {
+  return events?.findLast((event) => isHandoffEntry(event.title));
+}
 
 /** Skrót statusu na ścieżce („Jeden model statusów”). */
 export type PathStatus = "Przed Tobą" | "Do zrobienia" | "W trakcie" | "Wysłane" | "Wymaga uwagi" | "Załatwione" | "Za Tobą";

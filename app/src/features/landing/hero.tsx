@@ -59,7 +59,7 @@ export function Hero() {
 
           <div className={styles.cta}>
             <ButtonLink href="/logowanie" variant="primary" className={styles.button}>
-              Zaloguj się
+              Otwórz profil Oli
               <ArrowRightIcon />
             </ButtonLink>
             <ButtonLink href="/app/rozmowa" variant="secondary">Rozmawiaj z Zusikiem</ButtonLink>

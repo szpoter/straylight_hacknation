@@ -3,7 +3,7 @@ import { importFamilyProfile, type FamilyProfile } from "../family/import-profil
 import { formatLong } from "../demo/dates";
 import type { Plan, Stop } from "../demo/types";
 import type { MartaView } from "../marta/types";
-import { HANDOFF_RECORDED, docStatus, pathStatus } from "../plan/status";
+import { HANDOFF_RECORDED, IN_PERSON_COMPLETED, SIMULATED_HANDOFF, docStatus, latestHandoff, pathStatus } from "../plan/status";
 
 type FamilySnapshot = Record<keyof FamilyProfile, string>;
 export type LocalPlan = { plan: Plan; family?: FamilySnapshot; isPatched: (stopId: string) => boolean; selectedStopId?: string };
@@ -21,7 +21,10 @@ const subjects: [RegExp, string[]][] = [
 
 function mentionedCases(text: string) {
   const ids = subjects.flatMap(([pattern, values]) => pattern.test(text) ? values : []);
-  if (/urlop/.test(text) && !/zasil/.test(text)) return ids.filter(id => id !== "zasilek-macierzynski");
+  if (/urlop/.test(text) && !/zasil/.test(text)) {
+    const beforeBirth = /przed porod|przed urodzen|wnios/.test(text) && !/po porod|po urodzen/.test(text);
+    return ids.filter(id => id !== "zasilek-macierzynski").map(id => id === "urlop-macierzynski" && beforeBirth ? "macierzynski-przed" : id);
+  }
   if (/zasil/.test(text) && !/urlop/.test(text)) return ids.filter(id => id !== "urlop-macierzynski");
   return ids;
 }
@@ -75,8 +78,12 @@ function profile({ plan, family = importFamilyProfile() }: LocalPlan, question: 
 }
 
 function statusLine(stop: Stop) {
-  if (stop.state === "wyslano" && stop.doc?.events?.some(e => e.title === HANDOFF_RECORDED && e.author === "Ty")) {
-    return stop.title + " — " + HANDOFF_RECORDED + ".";
+  const handoff = latestHandoff(stop.doc?.events);
+  if (stop.state === "wyslano" && (handoff?.title === SIMULATED_HANDOFF || (handoff?.title === HANDOFF_RECORDED && handoff.author === "Ty"))) {
+    return stop.title + " — " + handoff.title + ".";
+  }
+  if (stop.state === "zalatwione" && handoff?.title === IN_PERSON_COMPLETED) {
+    return stop.title + " — " + handoff.title + " (wpis rodzica).";
   }
   const label = stop.doc && stop.state ? docStatus(stop.state).label : pathStatus(stop);
   return stop.title + " — " + label + ".";

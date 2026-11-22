@@ -89,52 +89,47 @@ export function CheckAnswers({
   );
 }
 
-/**
- * „Przekaż”: wybór kanału i symulowana wysyłka. Przy „E-mailem jako PDF” pokazujemy plik
- * do pobrania (`pdf`), bo ten kanał rodzic obsługuje sam.
- */
-export function SendStep({
-  channels,
-  recipient,
-  pdf,
-  onSend,
-  onBack,
-}: {
-  channels: Channel[];
+export function SendStep({ def, values, recipient, pdf, onSend, onBack, onEdit }: {
+  def: FormDef;
   recipient: string;
   pdf?: React.ReactNode;
+  values: Values;
+  onEdit: (field: string) => void;
   onSend: (channel: Channel) => void;
   onBack: () => void;
 }) {
-  const [channel, setChannel] = useState<Channel>(channels[0]);
+  const [channel, setChannel] = useState<Channel>(def.channels[0]);
+  const delivery = CHANNEL_LABEL[channel];
+  const destination = def.recipientFor?.(values, channel) ?? recipient;
+  const info = def.channelInfo?.(values, channel);
+  const missing = Object.entries(def.validateChannel?.(values, channel) ?? {});
   return (
     <div className="flex flex-col gap-stack">
       <ChoiceGroup
-        legend={`Jak przekazano wniosek? Odbiorca: ${recipient.replace(/^Do /, "")}`}
-        choices={channels.map((c) => ({ value: c, label: CHANNEL_LABEL[c].label, hint: CHANNEL_LABEL[c].hint }))}
+        legend={`Jak chcesz przekazać wniosek? Odbiorca: ${destination.replace(/^Do /, "")}`}
+        choices={def.channels.map((value) => ({ value, label: CHANNEL_LABEL[value].label, hint: CHANNEL_LABEL[value].hint }))}
         value={channel}
-        onChange={(v) => setChannel(v as Channel)}
+        onChange={(value) => setChannel(value as Channel)}
         columns={2}
       />
-      {channel === "email" && pdf && (
-        <section aria-labelledby="plik-pdf" className="flex max-w-prose flex-col gap-3 rounded-sm border border-outline p-4">
-          <h3 id="plik-pdf" className="font-medium">
-            Wniosek jako PDF
-          </h3>
-          <p className="text-on-surface-variant">Pobierz plik z Twoimi danymi i wyślij go sam(a), np. do kadr. Po wysłaniu kliknij „Potwierdzam samodzielne przekazanie”, żeby zapisać datę w przebiegu sprawy.</p>
-          {pdf}
+      {info && <p className="max-w-prose" aria-live="polite">{info}</p>}
+      {delivery.mode === "online" ? (
+        <p className="max-w-prose">To symulacja. Dane zostaną w Twoim planie. Po zatwierdzeniu zobaczysz przykładowe potwierdzenie.</p>
+      ) : (
+        <section className="flex max-w-prose flex-col gap-3">
+          {delivery.mode === "pdf" && pdf}
+          {(def.bring || delivery.mode === "osobiscie") && <p><strong>Co zabrać lub dołączyć</strong><br />{def.bring ?? delivery.hint}</p>}
+          {delivery.mode === "pdf" && <p>Po samodzielnym przekazaniu dokumentu zapisz ten krok w planie.</p>}
         </section>
       )}
-      <p className="max-w-prose rounded-sm bg-surface p-4 text-on-surface-variant">
-        Najpierw samodzielnie przekaż wniosek odbiorcy. Potem zapisz w planie datę i sposób przekazania. Urzędowe potwierdzenie zachowaj u siebie.
-      </p>
+      {missing.length > 0 && <div role="alert">{missing.map(([id, message]) => (
+        <p key={id}>{message} <button type="button" className="underline" onClick={() => onEdit(id)}>Popraw dane</button></p>
+      ))}</div>}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button className="justify-center" onClick={() => onSend(channel)}>
-          Potwierdzam samodzielne przekazanie
+        <Button className="justify-center" disabled={missing.length > 0} onClick={() => onSend(channel)}>
+          {delivery.mode === "online" ? "Symuluj wysyłkę" : delivery.mode === "osobiscie" ? "Załatwione w urzędzie" : "Potwierdzam samodzielne przekazanie"}
         </Button>
-        <Button variant="secondary" className="justify-center" onClick={onBack}>
-          Wróć do sprawy
-        </Button>
+        <Button variant="secondary" className="justify-center" onClick={onBack}>Wróć do sprawy</Button>
       </div>
     </div>
   );

@@ -22,11 +22,13 @@ describe("current plan in the general chat", () => {
   });
 
   it("uses the selected stop and lets an explicitly named case override it", () => {
-    const inDocument = { ...local, selectedStopId: "urlop-macierzynski" };
+    const inDocument = { ...local, selectedStopId: "macierzynski-przed" };
     expect(planAnswer("Jaki jest status tego wniosku?", inDocument)?.lines).toEqual([
-      "Wniosek o urlop macierzyński — " + docStatus("wyslano").label + ".",
+      "Urlop macierzyński przed porodem — " + docStatus("nie-korzystam").label + ".",
     ]);
     expect(planAnswer("Jaki jest status wniosku o 800+?", inDocument)?.caseIds).toEqual(["800plus"]);
+    expect(planAnswer("Jaki jest status wniosku o urlop macierzyński przed porodem?", local)?.caseIds).toEqual(["macierzynski-przed"]);
+    expect(planAnswer("Jaki jest status urlopu macierzyńskiego po porodzie?", local)?.caseIds).toEqual(["urlop-macierzynski"]);
     expect(planAnswer("Jaki jest status wniosku o dodatek mieszkaniowy?", local)?.caseIds).toEqual([]);
     expect(planAnswer("Które wnioski już wysłałam?", local)?.caseIds).not.toContain("zasilek-macierzynski");
   });

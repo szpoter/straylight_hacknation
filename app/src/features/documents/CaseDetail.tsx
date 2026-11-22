@@ -4,25 +4,26 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AlertIcon, ArrowLeftIcon, Button, ButtonLink, CheckIcon, Page, PageTitle, Panel, SectionTitle, Tag } from "@/components/ui";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
+import { parameterOn } from "@/lib/rules/parameters";
 import { useDemoSession } from "@/features/auth/demo-session";
 import { OLA } from "@/lib/family/ola";
 import { usePlan } from "@/features/family/PlanProvider";
 import { todayInPoland, daysLeftLabel, formatLong } from "@/lib/demo/dates";
-import { formFor, prefillContext, type Channel, type FormDef } from "@/lib/demo/forms";
-import { docStatus, HANDOFF_RECORDED, isHandoffEntry } from "@/lib/plan/status";
+import { CHANNEL_LABEL, formFor, prefillContext, type Channel, type FormDef } from "@/lib/demo/forms";
+import { docStatus, HANDOFF_RECORDED, latestHandoff, SIMULATED_HANDOFF } from "@/lib/plan/status";
 import type { DocCase } from "./model";
 import { GROUP_TONE } from "./model";
 import { Timeline } from "./CaseTimeline";
 import { FormEditor } from "./FormEditor";
 import { CheckAnswers, SendStep } from "./FormReview";
 import { FormPdf } from "./FormPdf";
-import { applicationDoc, pdfFilename } from "./pdf";
 import { canEdit, documentDraft, initialValues, nextState, progress, sendEvents, validate, type Values } from "./flow";
 import { buildTimeline } from "./timeline";
 
 /** Krok sprawy w adresie (`?krok=`), żeby wiersz listy mógł prowadzić prosto do wniosku. */
 export type Step = "wniosek" | "sprawdz" | "przekaz" | "podglad";
-const STEP_TITLE: Record<Step, string> = { wniosek: "Wniosek", sprawdz: "Sprawdź odpowiedzi", przekaz: "Oznacz przekazanie wniosku", podglad: "Zapisany wniosek" };
+const STEP_TITLE: Record<Step, string> = { wniosek: "Wniosek", sprawdz: "Sprawdź odpowiedzi", przekaz: "Przekaż wniosek", podglad: "Zapisany wniosek" };
 const CORRECTION = "_korekta";
 
 function BackLink() {
@@ -43,6 +44,8 @@ export function CaseDetail({ id }: { id: string }) {
   const [focusField, setFocusField] = useState<string | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
   const def = formFor(id);
+  const schedule = useRuleSchedule();
+  const withdrawn = id.replace(/^e-/, "") === "zasilek-macierzynski" && parameterOn(schedule, "form.ZAM", todayInPoland()).value === 0;
   const { key: draftKey, values: saved } = documentDraft(plan.id, id, formValues);
   const family = useDemoSession()?.family ?? OLA;
   const context = prefillContext(plan, {
@@ -77,13 +80,11 @@ export function CaseDetail({ id }: { id: string }) {
   const sentOrLater = stages[0].status === "done";
   const zusik = (field?: string) => openZusik({ planId: plan.id, place: "Dokumenty", stopId: c.id, field, returnTo: `/dokumenty/${c.id}` });
 
-  // PDF z tych samych wartości co ekran, do pobrania od pierwszego zapisu wniosku.
-  // Kopia wysłanego wniosku nosi datę wysyłki; niepełny wniosek jest oznaczony jako szkic.
   const correction = values[CORRECTION] === "1";
-  const sentOn = c.doc.events?.find((e) => isHandoffEntry(e.title))?.date;
-  const pdfDoc = def && applicationDoc(def, values, { recipient: c.doc.recipient, date: step === "podglad" && sentOn ? sentOn : todayInPoland(), correction });
-  const pdf = (label?: string) =>
-    def && pdfDoc && <FormPdf doc={pdfDoc} filename={pdfFilename(def, correction)} label={label ?? (pdfDoc.marks.includes("SZKIC") ? "Pobierz szkic PDF" : "Pobierz wniosek PDF")} />;
+  const pdfDate = step === "podglad" && stages[0].date ? stages[0].date : todayInPoland();
+  const pdf = (label?: string) => def && def.pdf !== "none" &&
+    <FormPdf def={def} values={values} recipient={c.doc.recipient} date={pdfDate}
+      correction={correction || (step === "podglad" && values._przekazanaKorekta === "1")} label={label} />;
 
   // Kroki wniosku: każdy zapisuje wartości i stan sprawy przez wspólny plan, więc ścieżka
   // na „Moim planie” i lista dokumentów zmieniają się razem z nim.
@@ -108,18 +109,28 @@ export function CaseDetail({ id }: { id: string }) {
     go("przekaz");
   };
   const send = (channel: Channel) => {
-    if (c.state !== "zatwierdzony" || !def) return;
+    if (c.state !== "zatwierdzony" || !def?.channels.includes(channel)) return;
     if (Object.keys(validate(def, values)).length) {
       go("wniosek");
       return;
     }
+    const [missing] = Object.keys(def.validateChannel?.(values, channel) ?? {});
+    if (missing) {
+      go("wniosek", missing);
+      return;
+    }
     const today = todayInPoland();
+    const delivery = CHANNEL_LABEL[channel];
+    const recipient = def.recipientFor?.(values, channel) ?? c.doc.recipient;
+    const events = sendEvents(c.doc.events, channel, recipient, today, correction, def.receipts?.[channel]);
+    const lastEvent = events[events.length - 1];
     patchStop(c.id, {
-      state: nextState("zatwierdzony", "send", true),
-      doc: { events: sendEvents(c.doc.events, channel, c.doc.recipient, today, correction), lastEvent: `Oznaczono przekazanie ${formatLong(today)}`, note: undefined, hasDraft: false },
+      state: delivery.mode === "osobiscie" ? "zalatwione" : nextState(c.state, "send", true),
+      doc: { recipient, events, lastEvent: `${lastEvent.title} · ${formatLong(today)}`, note: undefined, hasDraft: false },
     });
-    saveValues({ ...values, [CORRECTION]: "" });
-    setNotice(correction ? "Zapisano Twoją informację o przekazaniu korekty." : "Zapisano Twoją informację o przekazaniu wniosku.");
+    saveValues({ ...values, [CORRECTION]: "", _przekazanaKorekta: correction ? "1" : "" });
+    setNotice(delivery.mode === "online" ? lastEvent.detail
+      : delivery.mode === "osobiscie" ? "Zapisano w planie załatwienie sprawy w urzędzie." : "Zapisano Twoją informację o przekazaniu dokumentu.");
     go();
   };
   const startCorrection = () => {
@@ -127,6 +138,11 @@ export function CaseDetail({ id }: { id: string }) {
     patchStop(c.id, { state: nextState(c.state, "correct", true), doc: { hasDraft: true, note: "Korekta wysłanego wniosku", lastEvent: `Korekta rozpoczęta ${formatLong(todayInPoland())}` } });
     go("wniosek");
   };
+
+  if (withdrawn && step && step !== "podglad") {
+    return <Page><BackLink /><PageTitle>Formularz ZAM został wycofany</PageTitle>
+      <p>Sprawdź aktualny druk w ZUS. Zapisane dane i historia sprawy są dostępne w planie.</p></Page>;
+  }
 
   if (def && step && step !== "podglad" && !(step === "wniosek" ? canEdit(c.state) || c.state === "warunek" : step === "sprawdz" ? canEdit(c.state) : c.state === "zatwierdzony")) {
     // Nieaktualny krok w adresie (np. po wysłaniu) — wracamy do przeglądu.
@@ -184,7 +200,7 @@ export function CaseDetail({ id }: { id: string }) {
               <CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} />
             </>
           )}
-          {step === "przekaz" && <SendStep channels={def.channels} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} />}
+          {step === "przekaz" && <SendStep def={def} values={values} onEdit={(field) => go("wniosek", field)} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} />}
           {step === "podglad" && (
             <>
               {pdf("Pobierz kopię PDF")}
@@ -218,7 +234,8 @@ export function CaseDetail({ id }: { id: string }) {
 
       <Panel className="mt-stack max-w-prose" aria-labelledby="teraz">
         <SectionTitle id="teraz">Czy mam teraz coś zrobić?</SectionTitle>
-        <NowCard
+        {withdrawn ? <div className="mt-3 grid gap-2"><p>Formularz ZAM został wycofany. Sprawdź aktualny druk w ZUS.</p>
+          {(c.doc.hasDraft || sentOrLater) && <Button variant="secondary" onClick={() => go("podglad")}>Podgląd zapisanego wniosku</Button>}</div> : <NowCard
           c={c}
           def={def}
           filled={def ? progress(def, values) : undefined}
@@ -226,7 +243,7 @@ export function CaseDetail({ id }: { id: string }) {
           onZusik={zusik}
           onStep={(s) => go(s)}
           onCorrect={startCorrection}
-        />
+        />}
       </Panel>
 
       {c.howTo && (
@@ -364,7 +381,7 @@ function NowCard({
               {c.state === "aktualna" && <Button onClick={() => onStep("wniosek")}>Rozpocznij wniosek</Button>}
               {c.state === "szkic" && <Button onClick={() => onStep("wniosek")}>Uzupełnij wniosek</Button>}
               {c.state === "wypelniony" && <Button onClick={() => onStep("sprawdz")}>Sprawdź i zatwierdź</Button>}
-              {c.state === "zatwierdzony" && <Button onClick={() => onStep("przekaz")}>Oznacz przekazanie</Button>}
+              {c.state === "zatwierdzony" && <Button onClick={() => onStep("przekaz")}>Przekaż wniosek</Button>}
               {(c.state === "wypelniony" || c.state === "zatwierdzony") && (
                 <Button variant="secondary" onClick={() => onStep("wniosek")}>
                   Edytuj wniosek
@@ -387,12 +404,13 @@ function NowCard({
         </div>
       );
     case "wyslano": {
-      const recorded = c.doc.events?.some(e => e.title === HANDOFF_RECORDED);
+      const event = latestHandoff(c.doc.events);
+      const recorded = event?.title === HANDOFF_RECORDED;
       return (
         <div className="mt-4 flex flex-col gap-4">
           <p className="flex items-start gap-2">
             <CheckIcon className="mt-0.5 shrink-0 text-primary" />
-            {recorded ? "Przekazanie zostało oznaczone przez Ciebie. Status u odbiorcy możesz sprawdzić bezpośrednio u niego." : "Historia planu zawiera wcześniejszy wpis o przekazaniu wniosku. Status możesz sprawdzić u odbiorcy."}
+            {event?.title === SIMULATED_HANDOFF ? event.detail : recorded ? "Przekazanie zostało oznaczone przez Ciebie. Status u odbiorcy możesz sprawdzić bezpośrednio u niego." : "Historia planu zawiera wcześniejszy wpis o przekazaniu wniosku. Status możesz sprawdzić u odbiorcy."}
           </p>
           <Actions>
             <ButtonLink href="#przebieg" variant="secondary">
