@@ -21,6 +21,27 @@ const makeDeps = (): AskServiceDeps => ({
 });
 
 describe("whole public corpus", () => {
+  it.each([false, true])("finds an unseen test document from its contents only when indexed (present=%s)", async present => {
+    vi.resetModules();
+    const { loadCorpus: loadIsolatedCorpus } = await import("../src/lib/rag/corpus-fs");
+    const { fragmentHash } = await import("../src/lib/rag/corpus");
+    const { searchCorpus: find } = await import("../src/lib/rag/corpus-search");
+    const isolated = loadIsolatedCorpus("publiczne");
+    const logicalId = "test-astronomia-fixture";
+    const sourceText = "Wypożyczony zestaw astronomiczny należy oddać do obserwatorium w granatowym futerale.";
+    if (present) {
+      const template = isolated.fragments.values().next().value;
+      if (!template) throw new Error("Expected a public corpus fixture");
+      isolated.fragments.set(logicalId, {
+        ...template, logicalId, sourceText, fragmentSha256: fragmentHash(sourceText),
+      });
+    }
+    for (const question of [
+      "W czym trzeba oddać pożyczony zestaw astronomiczny do obserwatorium?",
+      "Czy wypożyczony sprzęt astronomiczny wraca do obserwatorium w futerale?",
+    ]) expect(find(question)?.fragmentId).toBe(present ? logicalId : undefined);
+  });
+
   it("finds a specific provision beyond the presets and sends only official vocabulary to both providers", async () => {
     const deps = makeDeps();
     const result = await answerQuestion(deps, "Czy nadużycie alkoholu wpływa na chorobowe? Alicja Prywatna, 01020345678.");
