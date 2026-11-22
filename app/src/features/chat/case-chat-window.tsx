@@ -12,7 +12,14 @@ import s from "./zusik.module.css";
 
 export type CaseChatEntry = { id: string; at: string; content: ReactNode };
 
-export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice }: {
+type EmbeddedControls = { fullscreen: boolean; onFullscreen: () => void; onCollapse: () => void };
+
+export function GeneralConversation({ controls }: { controls?: EmbeddedControls }) {
+  return <CaseChatWindow scenario="ogolna" label="Rozmowa ogólna" ready busy={false} entries={[]} documents={null}
+    controls={controls} introduction={<p>O jakie świadczenie albo dokument chcesz zapytać?</p>} />;
+}
+
+export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice, controls }: {
   scenario: Scenario;
   label: string;
   busy: boolean;
@@ -23,6 +30,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   documents: ReactNode;
   onMessage?: (message: string, original: string) => Promise<boolean | "ask">;
   notice?: string | null;
+  controls?: EmbeddedControls;
 }) {
   const chat = useZusikCase(scenario, ready);
   const [askNotice, setAskNotice] = useState<string | null>(null);
@@ -72,12 +80,14 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       setText(current => current.trim() === message ? "" : current);
     }
   };
+  const Container = controls ? "div" : "main";
   return (
-    <main className={s.root} data-zusik-workspace>
+    <Container className={s.root} data-zusik-workspace>
       <div className={s.caseLayout}>
         {!fullscreen && documents && <aside className={s.caseDocuments} aria-label="Dokumenty sprawy">{documents}</aside>}
         <section className={`${s.chat} ${s.caseWindow}`} aria-label="Czat z Zusikiem">
-          <ChatHeader scenario={scenario} label={label} fullscreen={fullscreen} onFullscreen={documents ? () => setFullscreen(value => !value) : undefined} />
+          <ChatHeader scenario={scenario} label={label} fullscreen={controls?.fullscreen ?? fullscreen} onCollapse={controls?.onCollapse}
+            onFullscreen={controls?.onFullscreen ?? (documents ? () => setFullscreen(value => !value) : undefined)} />
           <div ref={thread} className={s.thread} onScroll={event => {
             const viewport = event.currentTarget;
             atBottom.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 32;
@@ -97,6 +107,6 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
           </div>
         </section>
       </div>
-    </main>
+    </Container>
   );
 }
