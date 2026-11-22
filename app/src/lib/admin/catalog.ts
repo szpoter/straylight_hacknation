@@ -3,17 +3,20 @@ import { citationUrl, type Corpus } from "../rag/corpus";
 import { loadCorpus } from "../rag/corpus-fs";
 import { formatShort } from "../rules/dates";
 import { ARREARS_RULES_VERSION, MINIMUM_WAGE } from "../rules/arrears";
-import { RULE_PARAMETERS, valueOn, valueWithDefaults, type RuleSchedule } from "../rules/parameters";
+import { ALWAYS, DEFAULTS, RULE_PARAMETERS, formatValue, parameterOn, type RuleParameterId } from "../rules/parameters";
 import { MAX_PARTS, PATERNITY_RULES_VERSION, TOTAL_DAYS } from "../rules/paternity";
-import { DEFAULT_INSURED_THRESHOLD, PAYER_RULES_VERSION } from "../rules/payer";
+import { PAYER_RULES_VERSION } from "../rules/payer";
+import { RATES_RULES_VERSION } from "../rules/rates";
 import { LAW_IDS, assessedOn } from "../rules/sickness";
+import { CHANGE_SPECS, catalogIdFor } from "./parameter-changes";
 import { EMPTY_STATE, draftFor, labelOf, scheduleOf, type RuleVersionsState } from "./rule-versions";
 import type { HistoryEntry, KnowledgePackage, KnowledgeSource, Parameter, ParameterGroup, ParameterVersion } from "./types";
 
 /**
  * Read-only view of what the parent application applies today, for the admin panel.
  * Values are imported from the rule modules and the knowledge corpus, never copied, so the panel
- * cannot drift from the app. Changing them still needs a code change (see ARCHITECTURE.md).
+ * cannot drift from the app. Registered parameters (lib/admin/parameter-changes.ts) can be changed from
+ * the panel with a date; their published versions come from this demo session.
  *
  * Only public material: legal acts, ZUS pages and the official ZAM form. ZUS competition case files
  * are never read here (task description, p. 11–12).
@@ -31,30 +34,35 @@ function tryCorpus(name: string): Corpus | null {
 
 /* ---------- parameters ---------- */
 
-const days = (n: number) => `${n} dni`;
-
-/** The paternity total with its published versions; the only parameter changeable from the panel so far. */
-function paternityTotal(state: RuleVersionsState, today: string): Pick<Parameter, "value" | "from" | "planned" | "draft" | "history"> {
-  const schedule = scheduleOf(state);
-  const current = valueOn(schedule, "paternity.totalDays", today, TOTAL_DAYS);
-  const published = state.versions
-    .filter((v) => v.parameter === "paternity.totalDays" && v.status === "published")
-    .sort((a, b) => b.validFrom.localeCompare(a.validFrom));
-  const next = [...published].reverse().find((v) => v.validFrom > today);
-  const draft = draftFor(state, "paternity.totalDays");
+/**
+ * Value, planned change, draft and version history of a parameter: the code DEFAULTS plus the
+ * versions published in this demo session (a published value wins over a default with the same day).
+ */
+function versioned(
+  state: RuleVersionsState,
+  id: RuleParameterId,
+  today: string,
+): Pick<Parameter, "value" | "from" | "planned" | "draft" | "history" | "editable"> {
+  const fmt = (v: number) => formatValue(id, v);
+  const day = (iso: string) => (iso === ALWAYS ? "—" : iso);
+  const current = parameterOn(scheduleOf(state), id, today);
+  const byDay = new Map<string, number>();
+  for (const d of DEFAULTS[id]) byDay.set(d.validFrom, d.value);
+  for (const v of state.versions) if (v.parameter === id && v.status === "published") byDay.set(v.validFrom, v.value);
+  const entries = [...byDay.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const next = [...entries].reverse().find(([from]) => from > today);
+  const draft = draftFor(state, id);
   return {
-    value: days(current.value),
-    from: current.validFrom ?? "—",
-    planned: next ? { value: days(next.value), from: next.validFrom } : undefined,
-    draft: draft ? { value: days(draft.value), from: draft.validFrom } : undefined,
-    history: [
-      ...published.map((v) => ({
-        value: days(v.value),
-        from: v.validFrom,
-        state: labelOf(v, state, today) as ParameterVersion["state"],
-      })),
-      { value: days(TOTAL_DAYS), from: "—", state: current.validFrom ? "Historyczna" : "Obowiązuje" },
-    ],
+    value: fmt(current.value),
+    from: current.validFrom ? day(current.validFrom) : "—",
+    planned: next ? { value: fmt(next[1]), from: next[0] } : undefined,
+    draft: draft ? { value: fmt(draft.value), from: draft.validFrom } : undefined,
+    editable: true,
+    history: entries.map(([from, value]) => ({
+      value: fmt(value),
+      from: day(from),
+      state: (from > today ? "Zaplanowana" : from === current.validFrom ? "Obowiązuje" : "Historyczna") as ParameterVersion["state"],
+    })),
   };
 }
 
@@ -75,13 +83,12 @@ function paternityParameters(state: RuleVersionsState, today: string): Parameter
       ...common,
       id: "app-paternity-total",
       name: RULE_PARAMETERS["paternity.totalDays"].label,
-      ...paternityTotal(state, today),
-      editable: true,
+      ...versioned(state, "paternity.totalDays", today),
       source: period.title,
       sourceUrl: period.url,
       quote: period.quote,
       details: [
-        { label: "Wartość w kodzie", value: days(TOTAL_DAYS) },
+        { label: "Wartość w kodzie", value: formatValue("paternity.totalDays", TOTAL_DAYS) },
         { label: "O wartości decyduje", value: RULE_PARAMETERS["paternity.totalDays"].event },
         { label: "Fragment pobrano", value: formatShort(period.fetchedAt) },
       ],
@@ -140,37 +147,83 @@ function sicknessParameters(corpus: Corpus | null): Parameter[] {
   });
 }
 
-function formParameters(): Parameter[] {
-  return [
-    {
-      id: "app-form-zam",
+/** ZAM template used for the printable application, and the forms catalogue with dates (ZUS task p. 12). */
+function formParameters(state: RuleVersionsState, today: string): Parameter[] {
+  const template: Parameter = {
+    id: "app-form-zam",
+    group: "Formularze",
+    name: "ZAM: wzór wniosku do wydruku",
+    value: `wersja z ${formatShort(ZAM_FORM.version)}`,
+    from: ZAM_FORM.version,
+    state: "Obowiązuje",
+    source: "zus.pl, formularz ZAM „pobierz i drukuj”",
+    sourceUrl: ZAM_FORM.sourceUrl,
+    usedIn: "Wypełniony wniosek ZAM do pobrania w sprawie Kamila",
+    origin: "app",
+    appSource: "lib/kamil/sources.ts · ZAM_FORM",
+    details: [
+      { label: "Plik w aplikacji", value: ZAM_FORM.templatePath },
+      { label: "SHA-256", value: ZAM_FORM.sha256 },
+    ],
+    history: [{ value: `wersja z ${formatShort(ZAM_FORM.version)}`, from: ZAM_FORM.version, state: "Obowiązuje" }],
+  };
+  const catalogue = FORM_PARAMETERS.map(
+    (id): Parameter => ({
+      id: catalogIdFor(id),
       group: "Formularze",
-      name: "ZAM: wzór wniosku do wydruku",
-      value: `wersja z ${formatShort(ZAM_FORM.version)}`,
-      from: ZAM_FORM.version,
+      name: RULE_PARAMETERS[id].label,
       state: "Obowiązuje",
-      source: "zus.pl, formularz ZAM „pobierz i drukuj”",
-      sourceUrl: ZAM_FORM.sourceUrl,
-      usedIn: "Wypełniony wniosek ZAM do pobrania w sprawie Kamila",
+      ...versioned(state, id, today),
+      source: "Treść zadania ZUS, s. 12 (wzory na zus.pl, zakładka Wzory formularzy, Zasiłki)",
+      sourceUrl: "https://www.zus.pl/wzory-formularzy/zasilki",
+      usedIn: "Katalog formularzy (lib/rules/parameters.ts). Ekrany dokumentów jeszcze z niego nie korzystają",
+      scope: "Wnioski składane od daty obowiązywania",
       origin: "app",
-      appSource: "lib/kamil/sources.ts · ZAM_FORM",
+      appSource: "lib/rules/parameters.ts · DEFAULTS",
+    }),
+  );
+  return [template, ...catalogue];
+}
+
+const FORM_PARAMETERS = ["form.ZAM", "form.ZUR", "form.ZAO", "form.Z3", "form.Z3a", "form.Z3b", "form.ZAS12", "form.ZAS53"] as const;
+
+/** Rates of the maternity benefit (ZUS task p. 9), computed by lib/rules/rates.ts. */
+function rateParameters(corpus: Corpus | null, state: RuleVersionsState, today: string): Parameter[] {
+  const kinds = [
+    { id: "rate.maternity", unit: "uz-31-1", usedIn: "Kwota zasiłku za urlop macierzyński" },
+    { id: "rate.parental", unit: "uz-31-1", usedIn: "Kwota zasiłku za urlop rodzicielski (przykład +280 zł)" },
+    { id: "rate.averaged", unit: "uz-31-2", usedIn: "Kwota zasiłku przy wniosku matki do 21 dni po porodzie" },
+  ] as const;
+  return kinds.map(
+    ({ id, unit, usedIn }): Parameter => ({
+      id: catalogIdFor(id),
+      group: "Stawki",
+      name: RULE_PARAMETERS[id].label,
+      state: "Obowiązuje",
+      ...versioned(state, id, today),
+      source: "Treść zadania ZUS, s. 9",
+      ...(statute(corpus, unit) ?? {}),
+      usedIn: `${usedIn}. Reguła stawek gotowa dla kalkulatora rodzica`,
+      scope: "Dni zasiłku od daty obowiązywania; okres przecinający datę jest liczony w dwóch częściach",
+      origin: "app",
+      appSource: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
       details: [
-        { label: "Plik w aplikacji", value: ZAM_FORM.templatePath },
-        { label: "SHA-256", value: ZAM_FORM.sha256 },
+        { label: "O wartości decyduje", value: RULE_PARAMETERS[id].event },
+        { label: "Jeszcze nie uwzględnione", value: "podwyższenie do kwoty świadczenia rodzicielskiego (art. 31 ust. 3a)" },
       ],
-      history: [{ value: `wersja z ${formatShort(ZAM_FORM.version)}`, from: ZAM_FORM.version, state: "Obowiązuje" }],
-    },
-  ];
+    }),
+  );
 }
 
 /** Parameters the application applies, read from its code, with versions published in this demo session. */
 export function appParameters(state: RuleVersionsState = EMPTY_STATE, today = new Date().toISOString().slice(0, 10)): Parameter[] {
   const publiczne = tryCorpus("publiczne");
   return [
+    ...rateParameters(publiczne, state, today),
     ...paternityParameters(state, today),
     ...sicknessParameters(publiczne),
-    ...payerAndArrearsParameters(publiczne, scheduleOf(state), today),
-    ...formParameters(),
+    ...payerAndArrearsParameters(publiczne, state, today),
+    ...formParameters(state, today),
   ];
 }
 
@@ -183,18 +236,16 @@ function statute(corpus: Corpus | null, id: string): Pick<Parameter, "source" | 
 }
 
 /** Rules ready for the parent's plan (lib/rules/payer.ts, lib/rules/arrears.ts); screens come later. */
-function payerAndArrearsParameters(corpus: Corpus | null, schedule: RuleSchedule, today: string): Parameter[] {
+function payerAndArrearsParameters(corpus: Corpus | null, state: RuleVersionsState, today: string): Parameter[] {
   const params: Parameter[] = [];
   const art61 = statute(corpus, "uz-61-1");
   if (art61) {
-    const threshold = valueOn(schedule, "payer.insuredThreshold", today, DEFAULT_INSURED_THRESHOLD).value;
     params.push({
       id: "app-payer-threshold",
       group: "Kto wypłaca",
       name: "Płatnik wypłaca zasiłki sam, gdy zgłasza do ubezpieczenia chorobowego ponad",
-      value: `${threshold} ubezp.`,
-      from: "—",
       state: "Obowiązuje",
+      ...versioned(state, "payer.insuredThreshold", today),
       ...art61,
       usedIn: "Reguła „kto wypłaca” dla planu rodzica: płatnik albo ZUS i zaświadczenie płatnika",
       scope: "Pracownicy. Prowadzącym działalność, duchownym i po ustaniu ubezpieczenia zawsze wypłaca ZUS",
@@ -204,44 +255,37 @@ function payerAndArrearsParameters(corpus: Corpus | null, schedule: RuleSchedule
         { label: "Liczbę ubezpieczonych ustala się", value: "na 30 listopada poprzedniego roku (art. 61 ust. 2)" },
         { label: "Zawsze ZUS", value: "działalność i współpraca, duchowni, po ustaniu ubezpieczenia, pracodawca zagraniczny" },
       ],
-      history: [{ value: `${threshold} ubezp.`, from: "—", state: "Obowiązuje" }],
     });
   }
 
-  const wage = valueWithDefaults(schedule, "wage.minimum", today, MINIMUM_WAGE);
-  const nextWage = MINIMUM_WAGE.find((w) => w.validFrom > today);
-  const zl = (v: number) => `${v.toLocaleString("pl-PL", { useGrouping: "always" })} zł`;
+  const wage = parameterOn(scheduleOf(state), "wage.minimum", today);
   params.push({
     id: "app-wage-minimum",
     group: "Podstawa",
     name: "Minimalne wynagrodzenie za pracę",
-    value: zl(wage.value),
-    from: wage.validFrom ?? "—",
     state: "Obowiązuje",
+    ...versioned(state, "wage.minimum", today),
     source: "Rozporządzenie Rady Ministrów z 14.09.2026 (Dz.U. 2026 poz. 1213) dla 2027 r.",
     sourceUrl: "https://eli.gov.pl/eli/DU/2026/1213/ogl",
-    planned: nextWage ? { value: zl(nextWage.value), from: nextWage.validFrom } : undefined,
     usedIn: "Próg zadłużenia składkowego (1%) w regule zadłużenia",
     origin: "app",
-    appSource: `lib/rules/arrears.ts · MINIMUM_WAGE`,
-    details: [{ label: "Wartości w kodzie", value: MINIMUM_WAGE.map((w) => `${w.validFrom.slice(0, 4)}: ${zl(w.value)}`).join(", ") }],
-    history: [...MINIMUM_WAGE]
-      .reverse()
-      .map((w) => ({
-        value: zl(w.value),
-        from: w.validFrom,
-        state: (w.validFrom > today ? "Zaplanowana" : w.validFrom === wage.validFrom ? "Obowiązuje" : "Historyczna") as ParameterVersion["state"],
-      })),
+    appSource: "lib/rules/parameters.ts · DEFAULTS",
+    details: [
+      {
+        label: "Wartości w kodzie",
+        value: MINIMUM_WAGE.map((w) => `${w.validFrom.slice(0, 4)}: ${formatValue("wage.minimum", w.value)}`).join(", "),
+      },
+    ],
   });
 
   const art2a = statute(corpus, "uz-2a-1");
   if (art2a) {
-    const threshold = Math.round(wage.value) / 100;
+    const threshold = (Math.round(wage.value) / 100).toLocaleString("pl-PL", { minimumFractionDigits: 2 });
     params.push({
       id: "app-arrears-threshold",
       group: "Podstawa",
       name: "Zadłużenie składkowe wstrzymujące świadczenie: powyżej 1% minimalnego wynagrodzenia",
-      value: `${threshold.toLocaleString("pl-PL", { minimumFractionDigits: 2 })} zł`,
+      value: `${threshold} zł`,
       from: wage.validFrom ?? "—",
       state: "Obowiązuje",
       ...art2a,
@@ -249,8 +293,11 @@ function payerAndArrearsParameters(corpus: Corpus | null, schedule: RuleSchedule
       scope: "Prowadzący działalność i osoby z nimi współpracujące, duchowni, marynarze (art. 2a ust. 1)",
       origin: "app",
       appSource: `lib/rules/arrears.ts · ${ARREARS_RULES_VERSION}`,
-      details: [{ label: "Bez spłaty w 6 miesięcy", value: "prawo do świadczenia się przedawnia (art. 2a ust. 2)" }],
-      history: [{ value: `${threshold.toLocaleString("pl-PL", { minimumFractionDigits: 2 })} zł`, from: wage.validFrom ?? "—", state: "Obowiązuje" }],
+      details: [
+        { label: "Zmienia się razem z", value: "minimalnym wynagrodzeniem (grupa Podstawa)" },
+        { label: "Bez spłaty w 6 miesięcy", value: "prawo do świadczenia się przedawnia (art. 2a ust. 2)" },
+      ],
+      history: [{ value: `${threshold} zł`, from: wage.validFrom ?? "—", state: "Obowiązuje" }],
     });
   }
   return params;
@@ -268,23 +315,26 @@ export function historyEntries(state: RuleVersionsState, today: string): History
   return state.versions
     .filter((v) => v.status !== "draft" && v.publishedAt)
     .sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""))
-    .map((v) => ({
-      id: v.id.slice(0, 6).toUpperCase(),
-      versionId: v.id,
-      parameterId: "app-paternity-total",
-      scope: "Okresy zasiłku zaczynające się od daty obowiązywania",
-      publishedAt: warsawTime(v.publishedAt!),
-      parameter: RULE_PARAMETERS[v.parameter].label,
-      group: "Wymiary",
-      oldValue: days(v.previousValue),
-      newValue: days(v.value),
-      author: v.author,
-      state: labelOf(v, state, today),
-      from: v.validFrom,
-      reason: v.reason || "—",
-      source: v.source,
-      tests: v.checks ?? "—",
-    }));
+    .map((v) => {
+      const spec = CHANGE_SPECS.find((s) => s.parameter === v.parameter);
+      return {
+        id: v.id.slice(0, 6).toUpperCase(),
+        versionId: v.id,
+        parameterId: spec?.catalogId ?? "",
+        scope: spec?.scope ?? "",
+        publishedAt: warsawTime(v.publishedAt!),
+        parameter: RULE_PARAMETERS[v.parameter].label,
+        group: (spec?.group ?? "Wymiary") as ParameterGroup,
+        oldValue: formatValue(v.parameter, v.previousValue),
+        newValue: formatValue(v.parameter, v.value),
+        author: v.author,
+        state: labelOf(v, state, today),
+        from: v.validFrom,
+        reason: v.reason || "—",
+        source: v.source,
+        tests: v.checks ?? "—",
+      };
+    });
 }
 
 /* ---------- knowledge sources ---------- */
@@ -324,4 +374,4 @@ export function knowledgeSources(): { packages: KnowledgePackage[]; sources: Kno
 
 /* ---------- test cases: see scenarios.ts ---------- */
 
-export { PATERNITY_SCENARIOS, paternityTestCases, scenarioOutcome, type Scenario } from "./scenarios";
+export { PATERNITY_SCENARIOS, allTestCases, paternityTestCases, rateTestCases, scenarioOutcome, type Scenario } from "./scenarios";

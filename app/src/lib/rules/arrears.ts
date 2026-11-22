@@ -1,5 +1,5 @@
 import { addMonths } from "./dates";
-import { valueWithDefaults, type RuleSchedule, type ScheduledValue } from "./parameters";
+import { DEFAULTS, parameterOn, type RuleSchedule, type ScheduledValue } from "./parameters";
 
 /**
  * Contribution arrears of the self-employed on the day the right to a benefit arises.
@@ -10,12 +10,8 @@ import { valueWithDefaults, type RuleSchedule, type ScheduledValue } from "./par
 
 export const ARREARS_RULES_VERSION = "arrears-art2a-2026-11-22";
 
-/** Minimum monthly wage by the day it applies from (gross PLN). */
-export const MINIMUM_WAGE: readonly ScheduledValue[] = [
-  { value: 4666, validFrom: "2025-01-01" }, // minimum wage 2025
-  { value: 4806, validFrom: "2026-01-01" }, // ZUS attachment to the task
-  { value: 4950, validFrom: "2027-01-01" }, // Dz.U. 2026 poz. 1213, § 1
-];
+/** Minimum monthly wage by the day it applies from (gross PLN); values live in parameters.ts. */
+export const MINIMUM_WAGE: readonly ScheduledValue[] = DEFAULTS["wage.minimum"];
 
 export interface ArrearsInput {
   /** Art. 2a applies to the self-employed, people cooperating with them, clerics and seafarers. */
@@ -46,7 +42,7 @@ const pln = (v: number) => `${v.toLocaleString("pl-PL", { minimumFractionDigits:
 const day = (iso: string) => iso.split("-").reverse().join(".");
 
 export function assessArrears(input: ArrearsInput): ArrearsResult {
-  const minimumWage = valueWithDefaults(input.schedule, "wage.minimum", input.rightArisesOn, MINIMUM_WAGE).value;
+  const minimumWage = parameterOn(input.schedule, "wage.minimum", input.rightArisesOn).value;
   const threshold = Math.round(minimumWage) / 100;
   const payBy = addMonths(input.rightArisesOn, 6);
   const base = { minimumWage, threshold, payBy, rulesVersion: ARREARS_RULES_VERSION, lawIds: ["uz-2a-1", "uz-2a-2"] };

@@ -411,9 +411,9 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 | Obszar | Stan | Uwagi |
 | --- | --- | --- |
 | Logowanie (§10, §13 B) | ✅ | Login i hash hasła (scrypt) ze zmiennych `ADMIN_LOGIN` i `ADMIN_PASSWORD_HASH`, nadawanych przez operatora. Sesja 8 h w podpisanym ciasteczku, dostęp sprawdzany po stronie serwera na każdej stronie panelu. `ADMIN_DEMO_PASSWORD` wypełnia formularz w demo. |
-| Reguły świadczeń (§3, §4) | ✅ odczyt | Etykieta „W aplikacji” oznacza wartości czytane z kodu: ojcowski (14 dni, 2 części), cztery przepisy ustawy zasiłkowej z oceny chorobowego (w tym 100% w ciąży, art. 11 ust. 2 pkt 1) i wzór ZAM z 24.10.2026. Pozostałe wartości mają etykietę „Ze specyfikacji”. |
-| Zmiana parametru (§7) | ✅ dla łącznego wymiaru ojcowskiego | Szkic, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty, wpis w historii. Wartość trafia do sprawy Kamila w aplikacji rodzica (sprawdzone na produkcji). „Pokaż oczami rodzica” otwiera sprawę Kamila z wartością ze szkicu i paskiem „Podgląd szkicu” na 30 minut. |
-| Sprawy testowe (§6) | ✅ 8 spraw syntetycznych | Sprawa Kamila w 8 wariantach, liczona na żywo regułą. Oczekiwane wyniki jak w `app/tests/kamil-rules.test.ts`. |
+| Reguły świadczeń (§3, §4) | ✅ | Etykieta „W aplikacji” oznacza wartości czytane z kodu: stawki 100% / 70% / 81,5% (art. 31), ojcowski (14 dni, 2 części), cztery przepisy ustawy zasiłkowej z oceny chorobowego (w tym 100% w ciąży, art. 11 ust. 2 pkt 1), próg płatnika, płaca minimalna z progiem zadłużenia, katalog 8 formularzy z datami (zadanie s. 12) i wzór ZAM z 24.10.2026. Pozostałe wartości mają etykietę „Ze specyfikacji”. |
+| Zmiana parametru (§7) | ✅ 15 parametrów | Jeden mechanizm (`app/src/lib/admin/parameter-changes.ts`) dla: łącznego wymiaru ojcowskiego, trzech stawek, progu płatnika (art. 61), płacy minimalnej i statusów 8 formularzy. Szkic, wpływ „Obecnie / Po zmianie”, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty, wpis w historii. Wymiar ojcowski trafia do sprawy Kamila w aplikacji rodzica (sprawdzone na produkcji), a „Pokaż oczami rodzica” otwiera ją z wartością ze szkicu na 30 minut. Pozostałe parametry zmieniają reguły gotowe dla ekranów rodzica, które jeszcze z nich nie korzystają. |
+| Sprawy testowe (§6) | ✅ 13 spraw syntetycznych | Sprawa Kamila w 8 wariantach (K-01…K-08) i 5 spraw z kwotą zasiłku (R-01…R-05, w tym zaokrąglenie do grosza i brak podstawy), liczone na żywo regułą. Oczekiwane kwoty policzone ręcznie, niezależnie od kodu reguły. |
 | Historia zmian (§8) | ✅ | Publikacje z sesji z autorem, godziną, podstawą i wynikiem sprawdzenia. Wycofanie zaplanowanej zmiany. Wpisy przykładowe są oznaczone. |
 | Treści i źródła (§5) | ✅ | Pakiety wiedzy Zusika z manifestów korpusu i ostrzeżeniem po 6 miesiącach od pobrania. Organizacje wsparcia (zadanie s. 13 pkt i): 6 fundacji z KRS, opisem i kontaktem ze strony organizacji, datą weryfikacji 22.11.2026 i ostrzeżeniem po 6 miesiącach (`app/src/lib/support/organizations.ts`). |
 | Kto wypłaca i zadłużenie (§3.4, §3.5) | ✅ reguły | `lib/rules/payer.ts` (art. 61: płatnik powyżej 20 ubezpieczonych na 30 listopada poprzedniego roku, inaczej ZUS) i `lib/rules/arrears.ts` (art. 2a: zadłużenie powyżej 1% płacy minimalnej wstrzymuje świadczenie do spłaty, przedawnienie po 6 miesiącach). W panelu jako „W aplikacji”. Ekrany rodzica jeszcze z nich nie korzystają. |
@@ -424,7 +424,9 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 - Reguła bierze wartość obowiązującą w pierwszym dniu okresu, za który rodzic wnioskuje (§9). Bez opublikowanej zmiany działa jak dotąd.
 - Wymiar ojcowski można ustawić na 1–4 tygodnie. Aplikacja przyjmuje części po tydzień lub dwa, najwyżej dwie.
 - Zmiana obowiązuje najwcześniej od jutra. Zmian wstecz panel nie przyjmuje.
-- „Sprawdź zmianę” dla limitu: wniosek na limicie, ponad limit, ten sam wniosek dzień przed zmianą, druga część urlopu, sprawy testowe sprzed daty zmiany bez zmian (§12 pkt 2) i uzupełniona podstawa. Sprawy w zakresie zmiany, których wynik się zmienia, panel pokazuje jako informację. Nie blokują one publikacji.
+- „Sprawdź zmianę” zależy od typu parametru (§7). Limit: wniosek na limicie, ponad limit, ten sam wniosek dzień przed zmianą, druga część urlopu. Stawka: sprawa w zakresie, dzień przed zmianą, sprawa spoza zakresu (inny rodzaj zasiłku), okres przecinający datę zmiany liczony w dwóch częściach. Próg płatnika: próg i próg+1 od daty zmiany, próg+1 dzień przed, działalność zawsze ZUS. Płaca minimalna: zadłużenie równe 1% nie wstrzymuje, o grosz wyższe wstrzymuje. Formularz: status w dniu zmiany i dzień wcześniej. Zawsze: sprawy testowe sprzed daty zmiany bez zmian (§12 pkt 2) i uzupełniona podstawa. Sprawy w zakresie zmiany, których wynik się zmienia, panel pokazuje jako informację. Nie blokują one publikacji, ale po publikacji ich oczekiwany wynik trzeba zaktualizować.
+- Stawki liczone w groszach: podstawa dzienna × stawka, zaokrąglenie do grosza, razy liczba dni (`app/src/lib/rules/rates.ts`). Podwyższenia do kwoty świadczenia rodzicielskiego (art. 31 ust. 3a) reguła jeszcze nie uwzględnia.
+- Próg zadłużenia nie ma osobnej wartości: zmienia się razem z płacą minimalną.
 - Wersje parametrów są zapisane w podpisanym ciasteczku sesji. Zmiana jurora nie trafia do innych, a kolejna sesja zaczyna od wartości z kodu (§10). „Przywróć wartości początkowe” w historii robi to od razu. Przy wdrożeniu produkcyjnym ten sam stan trafi do bazy.
 - Akta spraw ZUS (`Materiały hackathonowe/Sprawy`) nie są czytane ani dołączane do aplikacji (ZUS s. 11–12).
 
@@ -432,8 +434,8 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 
 | Warunek | Stan |
 | --- | --- |
-| 1. +280 zł po zmianie stawki | ⏳ Czeka na kalkulator stawek w aplikacji rodzica. |
-| 2. Przypadek spoza zakresu zachowuje wynik | ✅ Dla wymiaru ojcowskiego. |
+| 1. +280 zł po zmianie stawki | ✅ W panelu: stawka rodzicielska 70% → 75% daje +280 zł dla podstawy 200 zł i 28 dni, liczone regułą `rates.ts`. Kalkulator rodzica podłączy tę samą regułę. |
+| 2. Przypadek spoza zakresu zachowuje wynik | ✅ Dla wszystkich zmienianych parametrów. |
 | 3. Limit: na limicie przechodzi, ponad limit pokazuje przyczynę | ✅ |
 | 4. Sprawa ZUS lub wgrany PDF daje wynik zgodny z oczekiwanym | ⏳ Wybór spraw syntetycznych działa. Wgrany PDF nie jest jeszcze odczytywany. |
 | 5. Historia z autorem, datą i podstawą | ✅ |
@@ -441,7 +443,7 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 
 ### Do zrobienia
 
-1. Stawki i przykład +280 zł, gdy aplikacja rodzica dostanie kalkulator.
+1. Kalkulator rodzica (zespół): korzystać z `rates.ts` i harmonogramu z `effectiveSchedule()`, żeby zmiana stawki z panelu była widoczna u rodzica. Wtedy także „Pokaż oczami rodzica” dla stawek.
 2. Parametry urlopu rodzicielskiego (21 dni, 5 części, 287 dni): przenieść wartości z `app/src/lib/marta/case.ts` do `app/src/lib/rules/parameters.ts`.
 3. Odczyt wgranego wniosku w „Sprawach testowych” albo odesłanie do odczytu dokumentów w aplikacji rodzica.
 4. Przy wdrożeniu produkcyjnym: wersje w bazie zamiast ciasteczka oraz role redaktora i zatwierdzającego.

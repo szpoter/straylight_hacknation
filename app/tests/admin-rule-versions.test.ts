@@ -27,7 +27,7 @@ const draftInput = (value: number, validFrom = "2027-01-01") => ({
   reason: "Symulacja zmiany ustawy",
   source: "Projekt ustawy, art. 1",
 });
-const meta = (id: string) => ({ id, now: NOW, author: "admin", fallback: 14 });
+const meta = (id: string) => ({ id, now: NOW, author: "admin" });
 
 function published(value: number, validFrom = "2027-01-01"): RuleVersionsState {
   const draft = saveDraft(EMPTY_STATE, draftInput(value, validFrom), meta("v1"));

@@ -86,7 +86,7 @@ describe("admin catalogue · payer and arrears rules", () => {
   const byId = (id: string) => params.find((p) => p.id === id);
 
   it("shows the art. 61 threshold and the art. 2a arrears threshold from the code", () => {
-    expect(byId("app-payer-threshold")).toMatchObject({ value: "20 ubezp.", group: "Kto wypłaca", origin: "app" });
+    expect(byId("app-payer-threshold")).toMatchObject({ value: "20", group: "Kto wypłaca", origin: "app", editable: true });
     expect(byId("app-payer-threshold")?.sourceUrl).toMatch(/^https:\/\/eli\.gov\.pl\/.+#page=\d+$/);
     expect(byId("app-arrears-threshold")?.value).toBe("48,06 zł");
   });
