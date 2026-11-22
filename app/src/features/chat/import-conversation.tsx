@@ -218,9 +218,7 @@ export function ImportConversation() {
       }
       const pdf = opened;
       const metadata = pdf.read.metadata;
-      const replaced = local.get(metadata.clientDocumentId);
-      if (replaced && replaced.url !== pdf.url) { URL.revokeObjectURL(replaced.url); urls.current.delete(replaced.url); }
-      setLocal(prev => new Map(prev).set(metadata.clientDocumentId, pdf));
+      setProgress("Przygotowuję pola dokumentu do potwierdzenia…");
       existing ??= (await caseApi.documents(file.id)).some(d => d.metadata.clientDocumentId === metadata.clientDocumentId);
       if (!existing) await caseApi.register(file.id, metadata, docKey);
       // Reattaching an existing file for evidence must not append another turn.
@@ -228,7 +226,12 @@ export function ImportConversation() {
         const result = await caseApi.message(file.id, { intent: "ask_case" }, messageKey);
         if (question) rememberOriginal(file.id, result.data, question);
       }
-      setView(await loadCase(file.id)); setProgress(""); setPendingFile(null);
+      const ready = await loadCase(file.id);
+      const replaced = local.get(metadata.clientDocumentId);
+      if (replaced && replaced.url !== pdf.url) { URL.revokeObjectURL(replaced.url); urls.current.delete(replaced.url); }
+      setView(ready);
+      setLocal(prev => new Map(prev).set(metadata.clientDocumentId, pdf));
+      setProgress(""); setPendingFile(null);
       if (question) setDraft(prev => prev.trim() === question ? "" : prev);
     });
   }
