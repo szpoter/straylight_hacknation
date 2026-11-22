@@ -27,7 +27,7 @@ const state = Annotation.Root({
 
 export async function runSectionTurn(
   facet: Facet, corpus: Corpus, search: KnowledgeSearch, asOf: string,
-  live: typeof fetchOfficialEvidence, progress?: (text: string) => void,
+  live: typeof fetchOfficialEvidence, progress?: (text: string) => void, deadlineMs?: number,
 ) {
   const section = getOfficialSection(nursery, facet);
   if (!section) throw new Error("Missing official nursery section");
@@ -35,7 +35,7 @@ export async function runSectionTurn(
   const graph = new StateGraph(state)
     .addNode("searchCorpus", async () => {
       progress?.("Szukam w materiałach ZUS…");
-      const result = await search.search({ query, expanded: null, corpusVersion: corpus.manifest.corpusVersion, limit: TOP_K });
+      const result = await search.search({ query, expanded: null, corpusVersion: corpus.manifest.corpusVersion, limit: TOP_K, deadlineMs });
       const fragment = corpus.fragments.get(section.fragmentId);
       const doc = corpus.documents.get(nursery);
       const matched = result.hits.some(hit => hit.logicalId === fragment?.logicalId && hit.fragmentSha256 === fragment?.fragmentSha256);
@@ -50,7 +50,7 @@ export async function runSectionTurn(
     })
     .addNode("fetchOfficialEvidence", async () => {
       progress?.("Sprawdzam oficjalną stronę ZUS…");
-      return live(nursery, facet);
+      return live(nursery, facet, deadlineMs);
     })
     .addEdge(START, "searchCorpus")
     .addConditionalEdges("searchCorpus", s => s.citation || s.unavailable ? END : "fetchOfficialEvidence")

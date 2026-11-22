@@ -5,6 +5,7 @@ import { CHECKPOINT_SCHEMA, ConfigError, DEFAULT_EMBED_MODEL, requireEnv } from 
 import { SESSION_COOKIE } from "./constants";
 import { generateAnswer } from "../rag/answer";
 import { searchCorpus } from "../rag/corpus-search";
+import { discoverOfficialEvidence } from "../rag/official-fetch";
 import { loadCorpus } from "../rag/corpus-fs";
 import { qdrantKnowledgeSearch } from "../rag/retrieve";
 import { AskService } from "./ask-service";
@@ -69,10 +70,11 @@ export function assertProviderConfig(): void {
 
 
 /** Informational answers with citations, saved on the session's thread. */
-export function askService(): AskService {
+export function askService(deadlineMs?: number): AskService {
   const { pool: db } = runtime();
   const corpus = loadCorpus("marta");
   return new AskService({
+    deadlineMs,
     store: new PgCaseStore(db),
     turns: new PgTurnStore(db),
     readMarta: async (sessionId) => {
@@ -83,8 +85,9 @@ export function askService(): AskService {
     selectCorpus: (name) => loadCorpus(name),
     suggestTopic,
     searchCorpus,
+    discoverOfficial: discoverOfficialEvidence,
     search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
-    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db }, activeCorpus, question, evidence),
+    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db, deadlineMs }, activeCorpus, question, evidence),
   });
 }
 

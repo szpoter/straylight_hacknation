@@ -1,7 +1,7 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { corpusFollowUp } from "../rag/corpus-search";
-import { fetchOfficialEvidence } from "../rag/official-fetch";
+import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
 import { nurseryIntent, runSectionTurn } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
 import { extractiveAnswer, needsStatutoryText, withSourceException } from "../rag/excerpt";
@@ -23,7 +23,9 @@ type Progress = (status: string) => void;
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
 
 export interface AnswerDeps {
+  deadlineMs?: number;
   readOfficial?: typeof fetchOfficialEvidence;
+  discoverOfficial?: typeof discoverOfficialEvidence;
   corpus: Corpus;
   search: KnowledgeSearch;
   /** Local-only fallback mapping the current utterance onto a reviewed public query. */
@@ -99,6 +101,19 @@ export async function answerQuestion(
     citations: [],
     corpusVersion: version,
   });
+  const asOf = (deps.asOf ?? today)();
+  async function missingEvidence(fallback: AskAnswer) {
+    if (!deps.discoverOfficial || !/program|świadczeni|dofinansowan|wsparci|dopłat/iu.test(question) ||
+        /(?<!\d)(?:19|20)\d{2}(?!\d)|zeszł|dawn|kiedyś|ubiegł|przed lat|wtedy/iu.test(question)) return { answer: fallback, trace };
+    onProgress?.("Sprawdzam katalog świadczeń na stronie ZUS…");
+    const live = await deps.discoverOfficial(question, asOf, deps.deadlineMs);
+    trace.officialFetches = live.fetches;
+    const c = live.citation;
+    if (!c) return { answer: live.unavailable ? plain("unavailable", UNAVAILABLE_MESSAGE) : fallback, trace };
+    trace.evidenceIds = [c.fragmentId];
+    return { answer: { ...plain("answered", "Podaję treść aktualnej instrukcji ZUS."), publicQuery: c.title, corpusVersion: c.corpusVersion,
+      citations: [c], claims: [{ text: c.quote, citationIds: [c.id] }] }, trace };
+  }
 
   // The family-program catalogue supports general 800+ information.
   const gate = projected?.corpus === "oferta" && deps.selectCorpus ? null : scopeGate(question);
@@ -111,19 +126,18 @@ export async function answerQuestion(
     return { answer: plain(gate.kind === "amount" ? "insufficient_evidence" : "needs_clarification", gate.message), trace };
   }
 
-  if (projected?.uncovered) return { answer: plain("insufficient_evidence", projected.uncovered), trace };
+  if (projected?.uncovered) return missingEvidence(plain("insufficient_evidence", projected.uncovered));
   if (projected?.clarify) {
     trace.gate = "clarify";
     return { answer: plain("needs_clarification", projected.clarify), trace };
   }
-  if (!projected) return { answer: plain("insufficient_evidence",
-    "Nie rozpoznałem tematu w bazie Zusika. O jakie świadczenie, dokument albo sytuację chcesz zapytać?"), trace };
+  if (!projected) return missingEvidence(plain("insufficient_evidence",
+    "Nie rozpoznałem tematu w bazie Zusika. O jakie świadczenie, dokument albo sytuację chcesz zapytać?"));
   trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
-  const asOf = (deps.asOf ?? today)();
   const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version,
-    limit: TOP_K, ...(projected.lexical?.length ? { lexical: projected.lexical, asOf } : {}) });
+    limit: TOP_K, deadlineMs: deps.deadlineMs, ...(projected.lexical?.length ? { lexical: projected.lexical, asOf } : {}) });
   trace.search = found.status;
   if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   trace.vectorHits = found.hits;
@@ -144,7 +158,7 @@ export async function answerQuestion(
   trace.evidenceIds = fragments.map((f) => f.logicalId);
   if (fragments.length === 0) {
     const { answer } = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
-    return { answer, trace };
+    return missingEvidence(answer);
   }
 
   trace.calls.sherlock += 1;
@@ -217,7 +231,7 @@ export class AskService {
     const demoCase = await this.deps.store.findOrCreate(conversationOwner(sessionId, scenario, family));
     const threadId = demoCase.threadId;
     const hash = questionHash(question);
-    const deadline = Date.now() + (this.deps.pendingWaitMs ?? 45_000);
+    const deadline = Math.min(Date.now() + (this.deps.pendingWaitMs ?? 45_000), this.deps.deadlineMs ?? Infinity);
 
     let token: string | null = null;
     while (!token) {
@@ -252,7 +266,7 @@ export class AskService {
         const section = nurseryIntent(text, previous);
         if (section && this.deps.selectCorpus) {
           const { answer, result: resolved, query } = await runSectionTurn(section, this.deps.selectCorpus("oferta"),
-            this.deps.search, (this.deps.asOf ?? today)(), this.deps.readOfficial ?? fetchOfficialEvidence, onProgress);
+            this.deps.search, (this.deps.asOf ?? today)(), this.deps.readOfficial ?? fetchOfficialEvidence, onProgress, this.deps.deadlineMs);
           const trace = newTrace(query, section === "recipient" && !nurseryIntent(text) ? previous?.requestId ?? null : null);
           trace.calls.qdrant = 1;
           trace.vectorHits = resolved.hits;
@@ -287,9 +301,9 @@ export class AskService {
     }
     try {
       onProgress?.("Zapisuję odpowiedź w rozmowie…");
-      onVerified?.({ ...result.answer, requestId, question, createdAt: (this.deps.now?.() ?? new Date()).toISOString() });
       const saved = await this.deps.turns.complete(threadId, requestId, token, result.answer);
       if (!saved) return { status: 409, turn: null, trace: result.trace };
+      onVerified?.(saved);
       return { status: 200, turn: saved, trace: result.trace };
     } catch (error) {
       await this.deps.turns.release(threadId, requestId, token).catch(() => undefined);

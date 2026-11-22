@@ -143,11 +143,12 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     expect(w.calls).toEqual({ sherlock: 1, qdrant: 1 });
   });
 
-  it("emits progress for work performed and publishes the checked turn before saving", async () => {
+  it("emits progress for work performed and publishes the persisted turn", async () => {
     const w = world();
     const events: string[] = [];
     const res = await w.ask().ask("m", Q_ODPIS, "req-progress", s => events.push(s), turn => {
       expect(turn.citations[0].fragmentId).toBe("rozp-2025-322-par22");
+      expect(turn.completedAt).toBeTruthy();
       events.push("verified");
     });
     expect(events).toEqual(["Sprawdzam kontekst pytania…", "Szukam w źródłach urzędowych…",
@@ -281,7 +282,9 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     it("Neon write failure surfaces as an error and the claim is released", async () => {
       const w = world();
       w.turns.failComplete = true;
-      await expect(w.ask().ask("s", Q_ODPIS, "req-neon-0001")).rejects.toThrow();
+      let shown = false;
+      await expect(w.ask().ask("s", Q_ODPIS, "req-neon-0001", undefined, () => { shown = true; })).rejects.toThrow();
+      expect(shown).toBe(false);
       w.turns.failComplete = false;
       const retry = await w.ask().ask("s", Q_ODPIS, "req-neon-0001");
       expect(retry.status).toBe(200);
