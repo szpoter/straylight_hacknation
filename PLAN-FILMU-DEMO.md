@@ -11,7 +11,7 @@ Marta i Paweł chcą zostać z Olą **razem**. Terminy mają już zaznaczone w p
 | Czas orientacyjny | Co opowiadamy | Po czym widz pozna, że część się skończyła |
 | --- | --- | --- |
 | 0:00–0:38 | Narodziny, kolejka, pomylony druk, powrót na kanapę. Paweł chce wziąć wolne, żeby zawieźć wniosek. | Teczka puszcza. Papier zalewa pokój. Klik i zatrzymanie. |
-| 0:38–1:00 | Zusik odpowiada Marcie. Głos zespołu prowadzi przez porównanie dwóch wariantów i przygotowanie wniosku. | Dwie kreski ze wspólnym początkiem przechodzą w prawdziwy widok porównania. |
+| 0:38–1:00 | Głos zespołu prowadzi Martę od logowania przez mapę Oli i rozmowę z Zusikiem do wniosku z załącznikiem. | Nazwa odbiorcy łączy animację z rzeczywistym szkicem Marty. |
 | 1:00–2:35 | Działające demo. Jedna sprawa rodziny od danych wejściowych przez wybór do skutku i następnego kroku. Krótki dowód gotowości do wdrożenia. | Widz potrafi powiedzieć, co wybrali rodzice, co mają zrobić i skąd wzięła się odpowiedź. |
 | 2:35–2:48 | Powrót do kuchni. Na stole zostaje kartka z decyzją, którą przed chwilą widzieliśmy. Adres działającego demo. | Paweł odkłada teczkę i bierze Olę od Marty. |
 
@@ -42,32 +42,38 @@ Przyjmuję początek realnego nagrania w okolicy **1:00 od początku filmu**. Do
 | 32–34 s | Paweł zdejmuje jeden but. Z drugim w ręce patrzy na kartkę. | **Paweł** „Wezmę jutro wolne.” |
 | 34–36 s | Odkłada but. Sięga po właściwy druk i próbuje przytrzymać resztę łokciem. | **Paweł** „Zawiozę poprawiony wniosek do kadr.” |
 | 36–38 s | Spod łokcia wymyka się kartka, za nią fala formularzy. Przelewa się przez kolana obojga. Klik. Papier zawisa, salon traci ostrość. | Jeden szeroki szelest, suchy klik, cisza. |
-| 38–40 s | Na środku kadru, przed nieruchomą falą, wyostrza się nasz zielony Zusik. Spogląda na Martę. | **Zusik** „Możecie oboje zostać z Olą.” |
-| 40–42 s | Zusik przytrzymuje jeden arkusz. Gdy obraca go ku rodzicom, czysty rewers wypełnia obraz. | **Zusik** „Pokażę wam, ile wtedy dostaniecie.” |
-| 42–44 s | Na papierze pojawia się nazwa produktu. Głos osoby z zespołu zaczyna zdanie bezpośrednio po Zusiku. | **Głos zespołu** „Dlatego zrobiliśmy Przewodnik Rodzica.” |
-| 44–46 s | Dwie kreski, podpisane „Marta” i „Paweł”, ruszają z tego samego miejsca i kończą się razem. | **Głos zespołu** „Cztery tygodnie razem z Olą…” |
-| 46–48 s | Kreska Pawła przesuwa się za kreskę Marty. Obie zachowują długość. | **Głos zespołu** „…albo osiem na zmianę.” |
-| 48–50 s | Zbliżenie na podpisy. Przy Marcie 3 920 zł, przy Pawle 2 940 zł. Wspólny nagłówek „Zasiłek brutto”. | **Głos zespołu** „W ich przypadku suma zasiłków…” |
-| 50–52 s | Odsunięcie kamery odsłania cały okres i sumę „6 860 zł brutto”. Kwota zostaje w miejscu, gdy zmienia się ułożenie kresek. | **Głos zespołu** „…w obu wariantach jest taka sama.” |
-| 52–54 s | Kreski wracają do wspólnego początku. Na papierze pojawia się odręczny okrąg wokół „razem”. | **Głos zespołu** „Marta wybiera wspólny urlop.” |
-| 54–56 s | Brzeg zaznaczenia przechodzi w kontur jednej kartki z nagłówkiem „Wniosek o urlop rodzicielski”. | **Głos zespołu** „Dostaje wniosek do swoich kadr…” |
-| 56–58 s | Przy dokumencie pojawia się konkretna data z wybranego przebiegu. Kartka odsuwa się, znów widać obie kreski. | **Głos zespołu** „…i termin złożenia.” |
-| 58–60 s | Kamera ustawia początek obu kresek dokładnie tam, gdzie zaczynają się w nagraniu. Przy 1:00 cięcie po tym punkcie. | Wybrzmiewa pojedynczy ton. Pierwszy klik kursora należy już do nagrania. |
+| 38–40 s | Fala papieru zastyga. W ostrym planie pojawia się Zusik. Na odwrocie jednej kartki nazwa produktu. | **Głos zespołu** „Po to stworzyliśmy Przewodnik Rodzica.” |
+| 40–42 s | Róg kartki odsłania logowanie przez mObywatel. Czytelny podpis „Logowanie demonstracyjne”. | „Marta loguje się mObywatelem.” |
+| 42–44 s | Zdjęcie z teczki staje się początkiem mapy Oli. Kamera mija sprawę oznaczoną jako załatwiona. | „Na mapie Oli widzi, co już załatwili…” |
+| 44–46 s | Linia mapy zatrzymuje się przy sprawie z najbliższym terminem. | „…i co trzeba zrobić teraz.” |
+| 46–48 s | Obok sprawy pojawia się pytanie Marty z kolejki o wspólny urlop. Zusik odwraca się w jego stronę. | „O wspólny urlop pyta Zusika…” |
+| 48–50 s | Pod odpowiedzią otwiera się fragment źródła. Dyskretny podpis „Agent AI · RAG”. | „…naszego asystenta AI.” |
+| 50–52 s | Podkreślone zdanie z materiałów ZUS zostaje w kadrze do końca kwestii. | „Zusik sięga do materiałów ZUS.” |
+| 52–54 s | Po wyborze wspólnego urlopu zaznaczony okres przechodzi do szkicu Marty. | „Pomaga jej wypełnić wniosek…” |
+| 54–56 s | Z plików Oli wysuwa się kopia odpisu. Ten sam dokument pojawia się przy szkicu. | „…dołączyć odpis aktu urodzenia…” |
+| 56–58 s | Kamera odsuwa się od załącznika. Wniosek, plik i odbiorca mieszczą się w jednym kadrze. | „…i sprawdzić…” |
+| 58–60 s | Zbliżenie na odbiorcę „Pracodawca”. Cięcie w 1:00 na ten sam tekst w rzeczywistym podglądzie. | „…do kogo trafi dokument.” |
 
-**Przejście w 1:00.** Nagranie zaczyna się na rzeczywistym porównaniu wariantów. W pierwszym ruchu kursor wybiera wspólny urlop. Widz widzi konsekwencję gestu, którego zapowiedź dostał w animacji. Korzystamy z kadru tego samego fikcyjnego profilu. [Porównanie wariantów i szkic Marty](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
+**Od 1:00 · głos zespołu nad rzeczywistym nagraniem.** Kursor rusza dopiero po cięciu. Marta sprawdza swój szkic i oznacza przekazanie pracodawcy. Po jej decyzji wracamy na mapę. Osobny przykład Kamila pozwala pokazać wysyłkę do ZUS w symulacji. Tekst do obu przebiegów:
+
+„Ten wniosek Marta składa u swojego pracodawcy. Sprawdza daty, zagląda do załącznika i zatwierdza dokument. Kiedy przekaże go do kadr, zaznacza to w planie. Jej sprawa jest załatwiona. Paweł wciąż ma swoją.”
+
+„U Kamila wygląda to inaczej. Prowadzi firmę, więc jego wniosek trafia do ZUS. Kamil sprawdza odbiorcę i potwierdza wysyłkę. W naszym demie jest ona symulowana. Potwierdzenie zostaje przy sprawie.”
+
+[Przebiegi Marty i Kamila](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
 
 ## Muzyka, efekty i głosy
 
 W kolejce słychać koło wózka i pojedynczy sygnał numerka. Pracownica mówi życzliwie, jak do osób stojących pół metra od niej. Po cięciu na kanapę zostaje bliski, suchy dźwięk pokoju. Paweł mówi „wezmę jutro wolne” rzeczowo, jak człowiek, który właśnie przełożył sobie cały następny dzień.
 
-Fala papieru dostaje jeden narastający szelest po ostatnim słowie Pawła. Klik zatrzymuje go w połowie. Zusik ma spokojny dorosły głos i zwraca się do Marty. Dopiero od nazwy produktu mówi osoba z zespołu. W tle miękkie pianino w tempie 60 BPM, pół taktu na każde ujęcie. Pierwszy dwudźwięk przypada na obrót kartki. Muzyka około 18–22 dB pod głosem, do sprawdzenia na telefonie.
+Fala papieru dostaje jeden narastający szelest po ostatnim słowie Pawła. Klik zatrzymuje go w połowie. Od wejścia Zusika mówi jedna osoba z zespołu. Zusik prowadzi wzrok przez mapę i dokument. W tle miękkie pianino w tempie 60 BPM, pół taktu na każde ujęcie. Pierwszy dwudźwięk przypada na obrót kartki. Muzyka około 18–22 dB pod głosem, do sprawdzenia na telefonie.
 
 **Ciągłość przykładu.** W obu wariantach rodzice biorą po 28 dni. Kwota 6 860 zł brutto to suma ich zasiłków za te okresy. Na potrzeby historii wybieramy w kalkulatorze początek we wtorek 12 stycznia 2027 r. Wizyta przypada wtedy w poniedziałek 21 grudnia, a „do jutra” oznacza wtorek 22 grudnia. Przed nagraniem sprawdzić na tym profilu wynik i termin po przesunięciu domyślnego startu o jeden dzień. [Dane fikcyjnej rodziny](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku) · [Wniosek pracownika o urlop rodzicielski](https://www.gov.pl/web/rodzina/urlop-rodzicielski)
 
 ## Od pierwszej minuty · co ma udowodnić realne demo
 
-1. **Odpowiedzieć Marcie.** Pierwsze zbliżenie powinno pozwolić odczytać wynik dla wybranego wariantu wraz z okresem i jednostką kwoty. Kursor odsuwa się na czas czytania. Jeśli aplikacja pokazuje stawkę lub źródło wyliczenia, rodzic otwiera je jednym rzeczywistym ruchem.
-2. **Doprowadzić sprawę do użytecznego końca.** Widz śledzi jeden wybór i jego skutek. Na końcu powinien zobaczyć właściwy dokument, termin i adresata. W egzemplarzu konkursowym logowanie lub przekazanie do zewnętrznego systemu ma widoczne oznaczenie symulacji. Słowa lektora dopiszemy do faktycznie zarejestrowanych rezultatów.
+1. **Odpowiedzieć Marcie.** Przy porównaniu wariantów zbliżenie powinno pozwolić odczytać wynik dla wybranego wariantu wraz z okresem i jednostką kwoty. Kursor odsuwa się na czas czytania. Jeśli aplikacja pokazuje stawkę lub źródło wyliczenia, rodzic otwiera je jednym rzeczywistym ruchem.
+2. **Doprowadzić sprawę do użytecznego końca.** Widz śledzi jeden wybór i jego skutek. Na końcu powinien zobaczyć właściwy dokument, termin i adresata. W egzemplarzu konkursowym logowanie lub przekazanie do zewnętrznego systemu ma widoczne oznaczenie symulacji. Kwestie lektora sprawdzimy z faktycznie zarejestrowanym przebiegiem.
 3. **Pokazać, co jury może powtórzyć.** Zarezerwować w tej części krótkie ujęcie wyboru lub wczytania własnego, syntetycznego PDF-u i sprawdzenia stanu ubezpieczenia, jeśli przebieg przejdzie próbę. Wyliczenie kalkulatora również musi dać się powtórzyć. Jeśli potrzebna jest inna sprawa niż Marty, podpisujemy ją oddzielnie. Publiczne nagranie korzysta wyłącznie z własnych materiałów demonstracyjnych. Zestawy spraw udostępnione przez ZUS mają ograniczenie kopiowania i rozpowszechniania. [Opis zadania, s. 11–15](<Materiały hackathonowe/ZUS - Pełna treść zadania konkursowego.pdf#page=12>)
 4. **Zamknąć historię.** Po potwierdzeniu wyniku można krótko wrócić do kuchni. Propozycja ostatniej kwestii Marty: „Dobra. Ja biorę wniosek. Ty weź Olę.” Paweł już wyciąga ręce. Na ostatniej planszy zostaje adres demo. Wartość świadczenia i ostateczne zdania o działaniu aplikacji wpiszemy po wyborze rzeczywistego przebiegu.
 
@@ -88,8 +94,8 @@ Wagi pochodzą z opisu zadania. Regulamin w § 2 wskazuje, że jury ocenia proje
 - **Stickman Video Director** do rodziny, poczekalni i krótkich powrotów. Zachować rysunek postaci, proporcje, wygląd teczki i kierunek patrzenia. Szelest papieru narasta najwyżej w trzech rytmach, żeby nie zasłonić dialogu. [Stickman Video Director](https://github.com/kaomei/stickman-video-director)
 - **Motionmaxxing i Bang Motion** do fragmentu od wejścia Zusika do pierwszego ruchu kursora. Motionmaxxing jako odniesienie dla rytmu i prowadzenia wzroku, Bang Motion dla choreografii typografii i przejść. Wspólnym elementem pozostaje kartka. Ma ciężar w poczekalni, staje się linią czasu, a w końcu kadrem aplikacji. [Motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing) · [Bang Motion](https://github.com/bangtutorial/bang-motion)
 - **HyperFrames** proponuję jako jedną oś montażową dla animacji, obrazu aplikacji i nagrania głosu. Własną animację bloba utrwalamy w ciągłym przebiegu, aby zachować jej naturalne falowanie. Hierarchię zapewnią nasze kolory, krój Literata i napisy w Interze. Veo zostaje opcją do późniejszej decyzji, jeżeli wybrane ujęcie będzie go wymagało. [HyperFrames](https://github.com/heygen-com/hyperframes) · [Ruch bloba](maskotka_kod/docs/mascot/02-tech-stack.md) · [Styl projektu](DESIGN.md)
-- **ElevenLabs** do polskich kwestii Marty, Pawła, pracownicy, Zusika i osoby z zespołu. Tekst w tabeli czytamy pełnymi zdaniami. Pauzy i klik montujemy osobno. [ElevenLabs Studio](https://elevenlabs.io/docs/eleven-creative/products/studio)
-- **Trzy wskazane filmy.** W kadrach podglądowych Slacka ludzie pozostają czytelni pośród kolorowych elementów. U nas tę rolę zachowuje rodzina przy wózku. W Notion szczegóły interfejsu sąsiadują z prostą typografią i dużą ilością bieli. Przyda się to po kliknięciu. W ElevenLabs skupiony ciemny punkt kontrastuje z jasną kompozycją przykładów. U nas moment skupienia tworzą zatrzymana kartka, cisza i pierwszy głos Zusika. To wnioski z publicznych kadrów podglądowych, bez pomiaru oryginalnych przejść i miksu. [Slack](https://www.youtube.com/watch?v=EDATYbzYGiE) · [Notion](https://www.youtube.com/watch?v=3HLMH9t1Q-g) · [ElevenLabs](https://www.youtube.com/watch?v=TlclS4wLWgY)
+- **ElevenLabs** do polskich kwestii Marty, Pawła, pracownicy i osoby z zespołu. Tekst w tabeli czytamy pełnymi zdaniami. Pauzy i klik montujemy osobno. [ElevenLabs Studio](https://elevenlabs.io/docs/eleven-creative/products/studio)
+- **Trzy wskazane filmy.** W kadrach podglądowych Slacka ludzie pozostają czytelni pośród kolorowych elementów. U nas tę rolę zachowuje rodzina przy wózku. W Notion szczegóły interfejsu sąsiadują z prostą typografią i dużą ilością bieli. Przyda się to po kliknięciu. W ElevenLabs skupiony ciemny punkt kontrastuje z jasną kompozycją przykładów. U nas moment skupienia tworzą zatrzymana kartka, cisza i wejście głosu zespołu. To wnioski z publicznych kadrów podglądowych, bez pomiaru oryginalnych przejść i miksu. [Slack](https://www.youtube.com/watch?v=EDATYbzYGiE) · [Notion](https://www.youtube.com/watch?v=3HLMH9t1Q-g) · [ElevenLabs](https://www.youtube.com/watch?v=TlclS4wLWgY)
 
 ## Mapa narzędzi do filmu
 
@@ -102,7 +108,7 @@ Wagi pochodzą z opisu zadania. Regulamin w § 2 wskazuje, że jury ocenia proje
 | 0:00–0:06 · narodziny → fotografia w teczce | Stickman Video Director, wzorzec ciągłości ze Skillry, kompozycja w HyperFrames | Ta sama dłoń Oli, skala i położenie palca w ostatnim kadrze w szpitalu i na zdjęciu. Folię teczki zauważamy jako następną. |
 | 0:06–0:28 · kolejka i okienko | Te same wektory postaci, teczki i wózka. Dialog w ElevenLabs. Earshot jako kandydat do sygnału kolejki | Podkreślenia i spojrzenia rodziców kierują wzrok do druku, który obraca pracownica. |
 | 0:28–0:38 · kanapa i fala | Stickman Video Director, warstwy papieru na osi HyperFrames. FFmpeg do odsłuchu | Ruch teczki łączy oba miejsca. Zatrzymanie papieru i urwanie szelestu wypadają na tej samej klatce. |
-| Od 0:38 · Zusik i porównanie | Oryginalny blob, choreografia kresek z Bang Motion, osobne ścieżki głosu | Rodzina traci ostrość. Z Zusika uwaga przechodzi na kartkę, dwie kreski, sumę i dokument. |
+| Od 0:38 · Zusik i mapa Oli | Oryginalny blob, choreografia kresek z Bang Motion, osobne ścieżki głosu | Rodzina traci ostrość. Z Zusika uwaga przechodzi na mapę Oli, źródło odpowiedzi, szkic i odbiorcę. |
 | Od 1:00 · realne demo | Powtarzalny przebieg w Playwright na fikcyjnych danych, zbliżenia w montażu, eksport w HyperFrames | Kursor dociera do faktycznego elementu. Wynik i jednostka kwoty pozostają czytelne na telefonie. |
 
 ### Animacja i grafika
@@ -167,4 +173,4 @@ Wagi pochodzą z opisu zadania. Regulamin w § 2 wskazuje, że jury ocenia proje
 
 Mapa opiera się na publicznych opisach narzędzi i przykładach twórców. Zastosowania do Oli i Zusika to wybory reżyserskie zespołu. Jakość proceduralnego dźwięku i zgodność bibliotek na jednej osi czasu wymagają późniejszej próby produkcyjnej.
 
-**Do następnej rozmowy:** pierwsze sekundy prawdziwego nagrania od porównania obu okresów do wyboru Marty.
+**Do następnej rozmowy:** pierwsze sekundy prawdziwego nagrania od odbiorcy wniosku Marty do sprawdzenia szkicu.
