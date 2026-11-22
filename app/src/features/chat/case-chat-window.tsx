@@ -7,7 +7,7 @@ import { conversationInput, type FamilyChatScope } from "@/lib/zusik/conversatio
 import { useZusikCase } from "./use-zusik-case";
 import { TurnView } from "./turn-view";
 import { Composer } from "./composer";
-import type { Scenario } from "./scenario-nav";
+import { ScenarioShortcuts, type Scenario } from "./scenario-nav";
 import s from "./zusik.module.css";
 
 export type CaseChatEntry = { id: string; at: string; content: ReactNode };
@@ -99,6 +99,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
               <div className={s.marginMascot} aria-hidden="true"><Babelek state={busy ? "searching" : "available"} /></div>
               <div className={s.messages} role="log" aria-label="Przebieg rozmowy" aria-relevant="additions">
                 {introduction}
+                {scenario === "ogolna" && chat.phase === "ready" && timeline.length === 0 && <ScenarioShortcuts />}
                 {timeline.map(entry => <Fragment key={entry.id}>{entry.content}</Fragment>)}
                 {children && <fieldset className={s.caseActions} disabled={busy || chat.asking}>{children}</fieldset>}
               </div>

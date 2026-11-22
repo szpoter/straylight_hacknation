@@ -3,12 +3,22 @@ import s from "./scenario-nav.module.css";
 
 const scenarios = [
   { id: "ogolna", href: "/app/rozmowa", label: "Rozmowa ogólna", detail: "Pytania o świadczenia i dokumenty" },
-  { id: "marta", href: "/app", label: "Marta i Paweł", detail: "Urlop rodzicielski" },
-  { id: "kamil", href: "/app/kamil", label: "Kamil", detail: "Zasiłek za okres ojcowski" },
-  { id: "chorobowe", href: "/app/chorobowe", label: "Chorobowe w ciąży", detail: "Ocena prawa do zasiłku" },
+  { id: "marta", href: "/app", label: "Marta i Paweł", detail: "Urlop rodzicielski", action: "Porównaj warianty urlopu" },
+  { id: "kamil", href: "/app/kamil", label: "Kamil", detail: "Zasiłek za okres ojcowski", action: "Przygotuj wniosek o urlop ojcowski" },
+  { id: "chorobowe", href: "/app/chorobowe", label: "Chorobowe w ciąży", detail: "Ocena prawa do zasiłku", action: "Sprawdź chorobowe w ciąży" },
 ] as const;
 
 export type Scenario = (typeof scenarios)[number]["id"];
+
+export function ScenarioShortcuts() {
+  return (
+    <nav className={s.shortcuts} aria-label="Rozpocznij sprawę">
+      {scenarios.map(scenario => "action" in scenario && (
+        <Link href={scenario.href} key={scenario.id}>{scenario.action}</Link>
+      ))}
+    </nav>
+  );
+}
 
 export function ScenarioNav({ current }: { current: Scenario }) {
   return (

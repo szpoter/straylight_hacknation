@@ -63,3 +63,24 @@
   outline: 3px solid #283754;
   outline-offset: 2px;
 }
+.shortcuts {
+  display: grid;
+  gap: 8px;
+}
+.shortcuts a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #a6d0b8;
+  border-radius: 8px;
+  color: #176343;
+  background: white;
+  font-weight: 600;
+  text-decoration: none;
+}
+.shortcuts a:hover,
+.shortcuts a:focus-visible {
+  background: #e6f3e9;
+  text-decoration: underline;
+}
