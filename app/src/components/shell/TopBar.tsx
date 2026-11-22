@@ -16,12 +16,8 @@ export function TopBar() {
 
   return (
     <header className="sticky top-2 z-40 px-gutter-mobile md:px-gutter-desktop">
-      <div className="mx-auto flex h-14 max-w-page items-center gap-2 rounded-full border border-outline bg-background pl-2 pr-2 md:gap-4 md:pl-5">
-        <Link href="/plan" className="hidden font-serif text-title md:block" aria-label="Zusik — Mój plan">
-          Zusik
-        </Link>
-        <span aria-hidden className="hidden h-6 w-px bg-outline md:block" />
-        <ChildSelector />
+      <div className="mx-auto flex h-14 max-w-page items-center gap-2 rounded-full border border-outline bg-background pl-2 pr-2 md:gap-4 md:pl-3">
+        <ChildSelector className="min-w-0" />
         <nav aria-label="Karty" className="ml-auto hidden md:block">
           <ul className="flex items-center gap-1">
             {NAV_ITEMS.map((item) => {

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CATALOG, DEFAULT_PLAN_ID, PLANS, getPlan } from "@/lib/demo/fixtures";
 import { buildPlans, type BuildAnswers } from "@/lib/plan/build";
-import { applySplit, splitKey, type LeaveSplit } from "@/lib/plan/leave-split";
+import { applyCalculatorToPlan, type CalcForm } from "@/lib/plan/benefit-form";
 import { addDays, daysBetween, formatLong } from "@/lib/demo/dates";
 import type { Plan, Stop } from "@/lib/demo/types";
 
@@ -67,11 +67,11 @@ type PlanContextValue = {
   /** Wartości formularza wniosku w wybranym planie (Dokumenty → edycja). */
   formValues: (stopId: string) => FormValues;
   setFormValues: (stopId: string, values: FormValues) => void;
-  /** Wybrany podział urlopu rodzicielskiego (kalkulator) w wybranym planie; wspólny dla rodzeństwa. */
-  leaveSplit: LeaveSplit | undefined;
-  /** Zapisuje wariant z kalkulatora — termin wniosku trafia na przystanek „Urlop rodzicielski”. */
-  saveLeaveSplit: (split: LeaveSplit) => void;
-  clearLeaveSplit: () => void;
+  /** Zapisany kalkulator zasiłku w wybranym planie (wspólny dla rodzeństwa z jednego porodu). */
+  calculator: CalcForm | undefined;
+  /** Zapisuje kalkulator w planie — terminy wniosków trafiają na przystanki ścieżki. */
+  saveCalculator: (form: CalcForm) => void;
+  clearCalculator: () => void;
   /** Czyści cały zapamiętany stan demo (Profil). */
   resetAll: () => void;
   /** Kontekst do panelu Zusika (zakres Juliana): dziecko, sprawa, pole. */
@@ -97,8 +97,8 @@ type Saved = {
   created: Plan[];
   hidden?: string[];
   forms: Record<string, Record<string, FormValues>>;
-  /** Podział urlopu rodzicielskiego: klucz planu (albo grupy rodzeństwa) → wybór. */
-  splits?: Record<string, LeaveSplit>;
+  /** Kalkulator zasiłku: klucz planu (albo grupy rodzeństwa) → formularz. */
+  calculators?: Record<string, CalcForm>;
 };
 
 function readStorage(key: string): string | null {
@@ -144,6 +144,11 @@ export function hasCreatedPlans(): boolean {
   }
 }
 
+/** Klucz zapisu kalkulatora: rodzeństwo z jednego porodu ma wspólne urlopy, więc jeden kalkulator. */
+export function calculatorKey(plan: Pick<Plan, "id" | "family">): string {
+  return plan.family?.groupId ?? plan.id;
+}
+
 function applyStopPatch(stop: Stop, patch: StopPatch): Stop {
   const { doc, ...rest } = patch;
   return { ...stop, ...rest, ...(doc && stop.doc ? { doc: { ...stop.doc, ...doc } } : {}) };
@@ -157,15 +162,15 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [created, setCreated] = useState<Plan[]>([]);
   const [hidden, setHidden] = useState<string[]>([]);
   const [forms, setForms] = useState<Record<string, Record<string, FormValues>>>({});
-  const [splits, setSplits] = useState<Record<string, LeaveSplit>>({});
+  const [calculators, setCalculators] = useState<Record<string, CalcForm>>({});
   const [loaded, setLoaded] = useState(false);
   // Plany z onboardingu na początku listy — to „prawdziwe” dzieci rodzica.
   const plans = useMemo(
     () =>
       [...created, ...PLANS]
         .filter((p) => !hidden.includes(p.id))
-        .map((p) => applySplit(applyPlanEdit(p, edits[p.id]), splits[splitKey(p)])),
-    [created, edits, hidden, splits],
+        .map((p) => applyCalculatorToPlan(applyPlanEdit(p, edits[p.id]), calculators[calculatorKey(p)])),
+    [created, edits, hidden, calculators],
   );
   const updatePlan = useCallback((id: string, edit: PlanEdit) => setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...edit } })), []);
 
@@ -184,7 +189,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setCreated(createdPlans);
     setHidden(Array.isArray(saved.hidden) ? saved.hidden : []);
     setForms(saved.forms ?? {});
-    setSplits(saved.splits && typeof saved.splits === "object" ? saved.splits : {});
+    setCalculators(saved.calculators && typeof saved.calculators === "object" ? saved.calculators : {});
     const active = readStorage(STORAGE_KEY);
     if (active && [...createdPlans, ...PLANS].some((p) => p.id === active)) setPlanId(active);
     setLoaded(true);
@@ -193,8 +198,8 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loaded) return;
-    writeStorage(STATE_KEY, JSON.stringify({ patches, edits, created, hidden, forms, splits } satisfies Saved));
-  }, [loaded, patches, edits, created, hidden, forms, splits]);
+    writeStorage(STATE_KEY, JSON.stringify({ patches, edits, created, hidden, forms, calculators } satisfies Saved));
+  }, [loaded, patches, edits, created, hidden, forms, calculators]);
 
   const selectPlan = useCallback((id: string) => {
     setPlanId(id);
@@ -307,7 +312,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setCreated([]);
     setHidden([]);
     setForms({});
-    setSplits({});
+    setCalculators({});
     selectPlan(DEFAULT_PLAN_ID);
   }, [selectPlan]);
 
@@ -318,12 +323,12 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     return { ...base, stops: base.stops.map((s) => (planPatches[s.id] ? applyStopPatch(s, planPatches[s.id]) : s)) };
   }, [planId, patches, plans]);
 
-  const currentKey = splitKey(plan);
-  const leaveSplit = splits[currentKey];
-  const saveLeaveSplit = useCallback((split: LeaveSplit) => setSplits((prev) => ({ ...prev, [currentKey]: split })), [currentKey]);
-  const clearLeaveSplit = useCallback(
+  const currentKey = calculatorKey(plan);
+  const calculator = calculators[currentKey];
+  const saveCalculator = useCallback((form: CalcForm) => setCalculators((prev) => ({ ...prev, [currentKey]: form })), [currentKey]);
+  const clearCalculator = useCallback(
     () =>
-      setSplits((prev) => {
+      setCalculators((prev) => {
         const next = { ...prev };
         delete next[currentKey];
         return next;
@@ -345,15 +350,15 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       removePlan,
       formValues,
       setFormValues,
-      leaveSplit,
-      saveLeaveSplit,
-      clearLeaveSplit,
+      calculator,
+      saveCalculator,
+      clearCalculator,
       resetAll,
       zusik,
       openZusik: setZusik,
       closeZusik: () => setZusik(current => current && { ...current, collapsed: true }),
     }),
-    [plans, plan, selectPlan, patchStop, resetStop, isPatched, updatePlan, addPlan, addPlans, removePlan, formValues, setFormValues, leaveSplit, saveLeaveSplit, clearLeaveSplit, resetAll, zusik],
+    [plans, plan, selectPlan, patchStop, resetStop, isPatched, updatePlan, addPlan, addPlans, removePlan, formValues, setFormValues, calculator, saveCalculator, clearCalculator, resetAll, zusik],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;

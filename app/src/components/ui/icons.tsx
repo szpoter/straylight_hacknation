@@ -21,6 +21,7 @@ export const PlusIcon = (p: IconProps) => <Icon {...p}><path d="M12 5v14M5 12h14
 export const CloseIcon = (p: IconProps) => <Icon {...p}><path d="M6 6l12 12M18 6L6 18" /></Icon>;
 export const ListIcon = (p: IconProps) => <Icon {...p}><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></Icon>;
 export const MapIcon = (p: IconProps) => <Icon {...p}><path d="M4 18c3-6 5 2 8-4s5-2 8-8" /><circle cx="4" cy="18" r="1.5" /><circle cx="20" cy="6" r="1.5" /></Icon>;
+export const CalculatorIcon = (p: IconProps) => <Icon {...p}><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8 7h8M8 11.5h.01M12 11.5h.01M16 11.5h.01M8 15.5h.01M12 15.5h.01M16 15.5h.01" /></Icon>;
 export const FileIcon = (p: IconProps) => <Icon {...p}><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></Icon>;
 export const UsersIcon = (p: IconProps) => <Icon {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0113 0" /><path d="M16 4.5a3.5 3.5 0 010 7M18 14a6.5 6.5 0 013.5 6" /></Icon>;
 export const AlertIcon = (p: IconProps) => <Icon {...p}><path d="M12 3l10 18H2z" /><path d="M12 10v4M12 17.5h.01" /></Icon>;

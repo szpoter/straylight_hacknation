@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { usePlan } from "@/features/family/PlanProvider";
 import { countByGroup } from "@/lib/plan/docs";
 import { cn } from "../ui/cn";
-import { FileIcon, MapIcon, UsersIcon } from "../ui/icons";
+import { CalculatorIcon, FileIcon, MapIcon, UsersIcon } from "../ui/icons";
 import { NAV_ITEMS, isActive } from "./nav";
 
-const ICONS = { "/plan": MapIcon, "/dokumenty": FileIcon, "/profil": UsersIcon } as const;
-const SHORT = { "/plan": "Mój plan", "/dokumenty": "Dokumenty", "/profil": "Profil" } as const;
+const ICONS = { "/plan": MapIcon, "/kalkulator": CalculatorIcon, "/dokumenty": FileIcon, "/profil": UsersIcon } as const;
+const SHORT = { "/plan": "Mój plan", "/kalkulator": "Kalkulator", "/dokumenty": "Dokumenty", "/profil": "Profil" } as const;
 
 /** Dolny pasek nawigacji na telefonie (M3 Navigation bar). */
 export function BottomNav() {
@@ -18,7 +18,7 @@ export function BottomNav() {
   const todo = countByGroup(plan.stops)["do-zalatwienia"];
   return (
     <nav aria-label="Karty" className="fixed inset-x-0 bottom-0 z-40 border-t border-outline bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
-      <ul className="grid grid-cols-3">
+      <ul className="grid grid-cols-4">
         {NAV_ITEMS.map((item) => {
           const Icon = ICONS[item.href];
           const active = isActive(pathname, item.href);
