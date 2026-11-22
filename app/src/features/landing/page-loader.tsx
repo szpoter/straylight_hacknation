@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { lockScroll, unlockScroll } from "@/components/scroll/smooth-scroll";
+import { Logo } from "@/components/ui/Logo";
 import styles from "./page-loader.module.css";
 
 // Ekran ładowania strony głównej, wzorowany na referencji (Desktop/index.html): pełny ekran w kolorze
 // marki, logo, cienki pasek postępu, a po załadowaniu kurtyna odjeżdża w górę. U nas kurtyna ma
-// pofalowaną dolną krawędź (jak zielony blok niżej), a w logo małe bursztynowe kółko („dziecko”)
-// wskakuje do dużego. Po zejściu kurtyny wjeżdża treść hero (html[data-intro], hero.module.css).
+// pofalowaną dolną krawędź (jak zielony blok niżej), a białe logo (jak w stopce) wjeżdża od dołu.
+// Po zejściu kurtyny wjeżdża treść hero (html[data-intro], hero.module.css).
 //
 // Czas: co najmniej 1,4 s, najwyżej 2,6 s (jak w referencji), kurtyna 0,85 s. Czekamy na pełne
 // załadowanie strony i na fonty, żeby po zejściu kurtyny nic się nie przestawiało.
@@ -81,13 +82,7 @@ export function PageLoader() {
       aria-label="Ładowanie Przewodnika Rodzica"
     >
       <div className={styles.content}>
-        <div className={styles.mark}>
-          <svg className={styles.logo} viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
-            <circle className={styles.parent} cx="24" cy="24" r="20" />
-            <circle className={styles.child} cx="41" cy="39" r="13" />
-          </svg>
-          <span className={styles.name}>Przewodnik Rodzica</span>
-        </div>
+        <Logo tone="on-primary" className={styles.logo} />
         <div className={styles.track} aria-hidden="true">
           <div className={styles.fill} />
         </div>
