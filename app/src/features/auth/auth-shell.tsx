@@ -1,22 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeftIcon, InfoIcon } from "./icons";
+import { ArrowLeftIcon } from "./icons";
 import styles from "./auth.module.css";
 
-// Rama ścieżki demo. Na każdym ekranie nazwa przewodnika i stały pasek
-// „Wersja demonstracyjna · nie podawaj prawdziwych danych” (ui/NIKODEM.md, punkt 6).
 export function AuthShell({ aside, children }: { aside?: ReactNode; children: ReactNode }) {
   return (
     <div className={styles.shell} data-site>
       <a className={styles.skip} href="#tresc">
         Przejdź do treści
       </a>
-      <p className={styles.demoBar} role="note">
-        <InfoIcon className={styles.demoBarIcon} />
-        <span>
-          Wersja demonstracyjna · <strong>nie podawaj prawdziwych danych</strong>
-        </span>
-      </p>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="Przewodnik Rodzica, strona główna">
           <BrandMark />
@@ -55,7 +47,6 @@ export function AuthScreen({ service, title, lead, back, wide, children }: AuthS
         <p className={styles.service}>
           <span className={styles.serviceDot} aria-hidden="true" />
           {service}
-          <span className={styles.serviceDemo}>· symulacja</span>
         </p>
         <h1 id="auth-title" className={styles.title}>
           {title}

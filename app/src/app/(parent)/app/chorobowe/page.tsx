@@ -1,5 +1,5 @@
-import { SicknessWorkspace } from "@/features/sickness/workspace";
+import { redirect } from "next/navigation";
 
-export default function SicknessPage() {
-  return <SicknessWorkspace />;
+export default function Page() {
+  redirect("/plan");
 }
