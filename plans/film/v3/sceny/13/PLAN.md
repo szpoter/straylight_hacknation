@@ -10,3 +10,9 @@ Autor planu: s13
 4. **48–59.** Pracownica unosi prawy palec i tą samą dłonią bierze długopis leżący tuż obok. Lewy kciuk podpiera arkusz, gdy stalówka zbliża się do pustego wiersza pod datą. Cięcie zachowuje kierunek tego ruchu. [Bang Motion, ciągłość gestu](../../../v2/przyklady/ciagly-ruch.jpg) · [Oryginał](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg)
 
 [Specyfikacja tego ujęcia](SPEC.md)
+
+## Realizacja v3 (autor b13)
+
+Rewizja modeli r1, skala 1,28. Kamera bliska na świat okienka b13 (zoom 1,4 wokół (830,330) świata; świat = kadr 14/48–59). Marta (430,475) s 1,28 u góry po lewej w ¾, Paweł (790,455) z otwartą teczką (grzbiet (640,320), okładka 120°), pracownica siedzi za ladą (1150,545). Druk „ZASIŁEK” stoi na blacie: środek (1005,388), 120×150, −10°. 0–11 palec przy nagłówku, 12–31 zjazd do daty, 32–47 postój przy „11.01.2027”, 48–59 długopis, stalówka 5 px nad pustym wierszem.
+
+Źródła: plansze [kolejka](../../../referencje/kolejka-zus-v1.png) i [kanapa](../../../referencje/kanapa-przed-fala-v1.png), modele r1 (`k.rewizja === "r1"`, [POSTACIE.md](../../POSTACIE.md)), daty z `app/src/features/chat/case-data.ts` („11 stycznia – 7 lutego 2027” → odręcznie 11.01.2027). Usta z obwiedni `media/dialog.flac`, stuki z `media/efekty.flac`. Render: `build.mjs --only 13..18 --out robocze/b13`, `klatki.mjs`, `render.mjs`. Przykład animatora: [ZRODLA.md](../../../v2/przyklady/ZRODLA.md) — Stickman `approved-2026-10-23-motion-sheet.png` (kolejność: podparcie → żebra → głowa → dłoń), Bang Motion `05-continuous-action.jpg` (ruch przez cięcie), Video Shotcraft `card-stack.jpg` (przesunięte krawędzie kart).

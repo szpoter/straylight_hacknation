@@ -35,3 +35,19 @@ Od 14/57 do 15/6 przesunięcie wynosi (+1,+6) px/kl. Zamknięta teczka ma szerok
 2. Cofnąć kl. 5–7 z dźwiękiem i bez niego. Pierwszy kontakt w 6 ma poprzedzać wgniecenie pod biodrami. Na kl. 10/17/20/25/44 wskazać kolejno nacisk Marty, jej najniższą pozę, kontakt Pawła, jego najniższą pozę i końcowe podparcie. Obie pary stóp stoją na tej samej linii podłogi co przed siadem.
 3. Zmniejszyć obraz do szerokości 360 px. Sprawdzić, czy można rozpoznać obie twarze, odczytać kierunek spojrzenia i prześledzić wspólny brzeg spódnicy nad kolanami Marty oraz fałdę koszuli na udzie Pawła. Na kl. 27 i 31 sprawdzić podparcie teczki i odejście kciuka.
 4. Nałożyć 15/59 na 16/0 w skali podglądu, porównać grzbiet, dłonie, fałdy i oba szwy poduszki, następnie odtworzyć początek docisku. [Plan i przykłady](PLAN.md)
+
+## Realizacja v3 (autor b13)
+
+Rewizja modeli r1, skala 1,28. Jedna funkcja `kanapa(g)` dla 840–1079 (plik `15/kanapa.mjs`), więc cięcia 15/16/17/18 są ciągłe. Teczka spada po torze z 14 i rogiem (−75,+90)·obrót dotyka siedziska w kl. 6 (846 = 28,20 s), potem obraca się wokół rogu do −3° i staje na siedzisku (grzbiet ≈ (517,407)). Siad: Marta — miednica 0–10, poduszka 10–17 (dół 18 px), spódnica/kurtka +3 kl.; Paweł — miednica 12–20, poduszka 20–25 (22 px). Koniec: oboje w siadzie, dłonie na udach, buty na stopach, prawa dłoń Marty 8 px od grzbietu.
+
+Źródła: plansze [kolejka](../../../referencje/kolejka-zus-v1.png) i [kanapa](../../../referencje/kanapa-przed-fala-v1.png), modele r1 (`k.rewizja === "r1"`, [POSTACIE.md](../../POSTACIE.md)), daty z `app/src/features/chat/case-data.ts` („11 stycznia – 7 lutego 2027” → odręcznie 11.01.2027). Usta z obwiedni `media/dialog.flac`, stuki z `media/efekty.flac`. Render: `build.mjs --only 13..18 --out robocze/b13`, `klatki.mjs`, `render.mjs`. Przykład animatora: [ZRODLA.md](../../../v2/przyklady/ZRODLA.md) — Stickman `approved-2026-10-23-motion-sheet.png` (kolejność: podparcie → żebra → głowa → dłoń), Bang Motion `05-continuous-action.jpg` (ruch przez cięcie), Video Shotcraft `card-stack.jpg` (przesunięte krawędzie kart).
+
+## Odbiór
+
+Sprawdzone klatki: 0, 4, 6, 10, 17, 20, 22, 25, 27, 31, 40, 59 oraz kafel co 3 kl. z renderu. Róg teczki dotyka siedziska w kl. 6 (846, 28,20 s) w (594,548); stuk w efektach zaczyna się w 847. Obrót wokół rogu do −3° kończy się w 27 (środek (664,2; 454,2), grzbiet (589,3; 458,1)), kciuk odchodzi w 31. Siad: Marta — miednica 0–10 (y 420 → 489), poduszka 10–17 (szew w dół 18 px), lewa dłoń podpiera się o siedzisko 0–30, spódnica jednym obrysem nad kolanami z opóźnieniem ~3 kl.; Paweł — miednica 0–20 (y 424 → 489), poduszka 20–25 (22 px), prawa dłoń na siedzisku 2–40. Stopy obojga w tych samych punktach podłogi przez całe ujęcie. Usta Marty od 44 („Już mi się myli…”).
+
+**15/59 → 16/0:** ten sam stan funkcji `kanapa()`, brak skoku. Prawa dłoń Marty 8 px od górnego końca grzbietu, Paweł dłonie na kolanach, buty na stopach.
+
+**Odstępstwa:** teczka 150 px (połowa otwartej 300 z modelu r1) zamiast 190 i bez skrótu 0,48 — stoi między kolanami, otwarta zgadza się 1:1 z przekazaniem 18/59. Wgniecenia poduszki wracają do zera do 16/30–45, żeby 18/59 = rysunek modelu.
+
+Render: `ujecie-720p.mp4`, `klatki.jpg` (kl. 0/20/40/59), `pozy.jpg` (v2 u góry, v3 u dołu). Czytelność 360 px: `../../robocze/b13/w360.png`.

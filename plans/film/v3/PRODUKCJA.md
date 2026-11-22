@@ -28,7 +28,7 @@ Na prośbę Juliana jeden autor dostaje blok kilku ujęć i odpowiada za cięcia
 | --- | --- | --- | --- |
 | 01–06 | blok b01 | r1 | w realizacji |
 | 07–12 | blok b07 | r1 | w realizacji |
-| 13–18 | blok b13 | r1 | w realizacji |
+| 13–18 | blok b13 | r1 | oddane; prośby do modeli: skłon tułowia z profilu, obrót buta, okładka teczki |
 | 19–23 | blok b19 | r1 | oddane; 20 poprawione (tytuł czytelny od pierwszej litery) |
 | 24–26, 29–30 | blok b24 | r1 (produkt) | oddane; styk 23/24 = 0 po poprawce importu mapy |
 | 27 | s27 | r0 (produkt) | oddane, odbiór autora i koordynatora OK |

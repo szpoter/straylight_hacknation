@@ -1,0 +1,3 @@
+// 14 · b13 block (r1 models). Drawn by the shared block timeline so internal cuts stay continuous.
+import { okienko } from "../13/okienko.mjs";
+export function scene(f, k) { return okienko(780 + f, k); }

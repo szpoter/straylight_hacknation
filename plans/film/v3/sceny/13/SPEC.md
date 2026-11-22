@@ -16,3 +16,19 @@ Autor planu: s13
 **Dźwięk i styk z 14.** Usta pracownicy prowadzi nagranie „A o urlop składacie w pracy”. Rodzice słuchają. Klatka 14/0 przejmuje położenie stalówki, trzy palce obejmujące długopis, stały punkt pod lewym kciukiem i wzrok Marty. Pierwsza kreska „do jutra” pojawia się po dotknięciu papieru w 14. [Polski dialog](../../../v2/media/dialog.flac) · [Następne ujęcie](../14/SPEC.md) · [Okres urlopu w danych rodziny](../../../../../app/src/features/chat/case-data.ts)
 
 **Test do wykonania na renderze.** Odtworzyć z wyciszeniem od 12/56 do 14/4. Po wyrównaniu skali kartki porównać lewy kciuk na 12/59, 13/0, 13/31 i 13/59. Powinien zakrywać ten sam punkt prawego brzegu. Przeklikać klatki 12, 15 i 20, śledząc kolejno opuszkę, oczy i podbródek. W 40 odczytać pełną datę z podglądu o szerokości 360 px oraz prześledzić obie dłonie do ich własnych mankietów. Na styku 13/59 i 14/0 sprawdzić kierunek stalówki oraz pusty wiersz przed kontaktem. Przy powtórce z głosem wskazać mówiącą osobę i miejsce, do którego rodzice mają skierować wniosek o urlop. [Plan i przykłady](PLAN.md)
+
+## Realizacja v3 (autor b13)
+
+Rewizja modeli r1, skala 1,28. Kamera bliska na świat okienka b13 (zoom 1,4 wokół (830,330) świata; świat = kadr 14/48–59). Marta (430,475) s 1,28 u góry po lewej w ¾, Paweł (790,455) z otwartą teczką (grzbiet (640,320), okładka 120°), pracownica siedzi za ladą (1150,545). Druk „ZASIŁEK” stoi na blacie: środek (1005,388), 120×150, −10°. 0–11 palec przy nagłówku, 12–31 zjazd do daty, 32–47 postój przy „11.01.2027”, 48–59 długopis, stalówka 5 px nad pustym wierszem.
+
+Źródła: plansze [kolejka](../../../referencje/kolejka-zus-v1.png) i [kanapa](../../../referencje/kanapa-przed-fala-v1.png), modele r1 (`k.rewizja === "r1"`, [POSTACIE.md](../../POSTACIE.md)), daty z `app/src/features/chat/case-data.ts` („11 stycznia – 7 lutego 2027” → odręcznie 11.01.2027). Usta z obwiedni `media/dialog.flac`, stuki z `media/efekty.flac`. Render: `build.mjs --only 13..18 --out robocze/b13`, `klatki.mjs`, `render.mjs`. Przykład animatora: [ZRODLA.md](../../../v2/przyklady/ZRODLA.md) — Stickman `approved-2026-10-23-motion-sheet.png` (kolejność: podparcie → żebra → głowa → dłoń), Bang Motion `05-continuous-action.jpg` (ruch przez cięcie), Video Shotcraft `card-stack.jpg` (przesunięte krawędzie kart).
+
+## Odbiór
+
+Sprawdzone klatki (podgląd `robocze/b13/podglad.mjs` i `ujecie-720p.mp4`): 0, 7, 15, 25, 32, 40, 50, 59. Palec przy końcu nagłówka w 7–11 (opuszka ok. 9 px za „K”), zjazd 12–31 po wolnym pasie, postój 32–47 ok. 9 px za „7” — cała data „11.01.2027” odsłonięta (wcześniejsza próba zasłaniała ją dłonią; poprawione analitycznym chwytem i przesunięciem pracownicy do x 1178). Długopis: chwyt 54–58, w 59 stalówka 5 px nad początkiem pustego wiersza. Ręka trzymająca prawy brzeg jest za kartką (palce z tyłu), wskazująca przed nią — rękawy się nie krzyżują.
+
+**Styk 12/13.** Ujęcie 12 nie ma jeszcze `scene.mjs`. Poza wejściowa 13/0 w kadrze 13: druk (1005,388) w świecie b13, −10°, kamera 1,4 wokół (805,338) → na ekranie środek kartki ≈ (920,431); kciuk pracownicy na 45 % prawego brzegu, Marta patrzy w prawo (head .45), pracownica na Martę (gaze −.9). Autor 12 powinien zakończyć na tym kadrze albo zgłosić zmianę.
+
+**Uwagi.** Pismo odręczne złożone krojem Domine italic (jedyny szeryfowy krój w media/) — do weryfikacji, czy nie wolimy pisma ręcznego. Kolor atramentu = granat tokenu, oznaczony „do weryfikacji”.
+
+Render: `ujecie-720p.mp4`, `klatki.jpg` (kl. 0/20/40/59), `pozy.jpg` (v2 u góry, v3 u dołu). Czytelność 360 px: `../../robocze/b13/w360.png`.
