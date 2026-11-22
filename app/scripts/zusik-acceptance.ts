@@ -178,8 +178,9 @@ async function evidencePdf(partial:boolean) {
 async function testSickness(page:Page,partial:boolean) {
   await page.goto(origin + "/app");
   const chat = page.getByRole("region", { name: "Czat z Zusikiem" });
-  await chat.getByText("Zmień sprawę", { exact: true }).click();
-  await chat.getByRole("link", { name: /Chorobowe w ciąży/ }).click();
+  const cases = page.getByRole("navigation", { name: "Wybór sprawy demonstracyjnej" });
+  await cases.getByText("Sprawy demo", { exact: true }).click();
+  await cases.getByRole("link", { name: /Chorobowe w ciąży/ }).click();
   await page.waitForURL("**/app/chorobowe");
   await chat.getByText("Chorobowe w ciąży · Ocena prawa do zasiłku", {exact:true}).waitFor();
   await sendCaseMessage<SicknessView>(page, sickPath, "Czy za dni zwolnienia dostanę zasiłek?");
@@ -317,7 +318,9 @@ async function testLoginToChat(page: Page) {
   await page.getByRole("link", {name: /^login\.gov\.pl/i}).click();
   await page.getByRole("link", {name: /^Aplikacja mObywatel/i}).click();
   await page.getByRole("button", {name: "Symuluj zeskanowanie kodu"}).click();
-  await page.waitForURL("**/plan");
+  await page.waitForURL(url => url.pathname === "/start");
+  await page.getByRole("button", {name: /Ola Lis/}).click();
+  await page.waitForURL(url => url.pathname === "/plan");
   await page.goto(origin + "/app/sprawy");
   const open = page.getByRole("button", {name: "Otwórz czat z Zusikiem"});
   await open.click();
@@ -328,17 +331,20 @@ async function testLoginToChat(page: Page) {
   await draft.fill(question);
   await chat.getByRole("button", {name: "Pełny ekran"}).click();
   await chat.getByRole("button", {name: "Podziel ekran"}).click();
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Otwórz czat z Zusikiem");
+  await open.click();
+  assert.ok(await draft.evaluate(el => el === document.activeElement));
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   await page.setViewportSize({width: 390, height: 844});
   await open.click();
   assert.equal(await draft.inputValue(), question);
-  assert.ok(await draft.evaluate(el => el === document.activeElement));
+  assert.ok(await page.getByRole("dialog", {name: "Rozmowa z Zusikiem"}).isVisible());
   const sent = page.waitForRequest(r => r.url().endsWith("/api/zusik/ask") && r.method() === "POST");
   const response = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST");
   const answer = askInChat(page, question);
   await sent;
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   await (await response).finished();
   await open.click();
   const {turn, retrieval} = await answer;
@@ -349,7 +355,7 @@ async function testLoginToChat(page: Page) {
   await chat.getByText(question, {exact: true}).waitFor();
   const general = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=ogolna");
   assert.ok(general.turns.some(saved => saved.requestId === turn.requestId));
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   await page.goto(origin + "/plan");
   await page.waitForURL("**/plan");
   const pawn = page.getByRole("button", {name: /Otwórz czat z Zusikiem$/});
@@ -357,26 +363,26 @@ async function testLoginToChat(page: Page) {
   await pawn.click();
   await chat.getByText(/^Ola · /).waitFor();
   assert.equal(await chat.getByText(question, {exact: true}).count(), 0);
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
 
   await page.getByRole("link", {name: "Zobacz wsparcie"}).click();
   await page.waitForURL("**/wsparcie");
   await open.click();
   await chat.getByText("Ola · Wsparcie", {exact: true}).waitFor();
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   const profileTab = page.locator('a[href="/profil"]:visible').first();
   await profileTab.click();
   await page.waitForURL("**/profil");
   await page.locator('nav a[href="/profil"][aria-current="page"]:visible').waitFor();
   await open.click();
   await chat.getByText("Ola · Profil", {exact: true}).waitFor();
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   await page.locator('a[href="/dokumenty"]:visible').first().click();
   await page.waitForURL("**/dokumenty");
   await page.locator('nav a[href="/dokumenty"][aria-current="page"]:visible').waitFor();
   await open.click();
   await chat.getByText("Ola · Dokumenty", {exact: true}).waitFor();
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
 
   await page.getByRole("link", {name: "Urlop ojcowski", exact: true}).click();
   await page.getByRole("button", {name: "Zapytaj o ten wniosek", exact: true}).click();
@@ -390,7 +396,7 @@ async function testLoginToChat(page: Page) {
   await page.reload();
   await open.click();
   await chat.getByText(contextualQuestion, {exact: true}).waitFor();
-  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
   for (const other of ["planId=oczekiwane&stopId=urlop-ojcowski", "planId=ola", "planId=ola&stopId=rodzicielski"]) {
     const isolated = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=ogolna&" + other);
     assert.ok(!isolated.turns.some(saved => saved.requestId === contextual.turn.requestId), "Conversation isolated: " + other);
@@ -398,8 +404,8 @@ async function testLoginToChat(page: Page) {
   await page.goto(origin + "/app/sprawy");
   await open.click();
   await chat.getByText(question, {exact: true}).waitFor();
-  await chat.getByText("Zmień sprawę", {exact: true}).click();
-  await chat.getByRole("link", {name: /Marta i Paweł/}).click();
+  await chat.getByRole("button", {name: "Zamknij czat"}).click();
+  await page.getByRole("navigation", {name: "Sprawy demonstracyjne"}).getByRole("link", {name: /Marta i Paweł/}).click();
   await page.waitForURL("**/app");
   const view = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=marta");
   assert.ok(!view.turns.some(turn => turn.question === question), "General conversation stays outside Marta's case");
