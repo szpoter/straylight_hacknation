@@ -1,0 +1,7 @@
+# 13 · Palcem do daty
+
+Na słowach „A o urlop składacie w pracy” pracownica pokazuje Marcie odręczną datę na druku. Bliższy kadr obejmuje oczy obu kobiet, ramię pracownicy i kartkę. Paweł trzyma otwartą teczkę i słucha. Układ osób przechodzi z poprzedniego ujęcia. [Storyboard, 24–26 s](../../../../../PLAN-FILMU-DEMO.md) · [Plansza poczekalni](../../../referencje/kolejka-zus-v1.png)
+
+1. Kartka już spoczywa na blacie. Pracownica puszcza jej brzeg, odwraca dłoń i prostuje palec przy ostatniej literze nagłówka „ZASIŁEK”. Marta dostrzega ruch. Jej oczy reagują przed głową, jak w spojrzeniu Mei na telefon. [Stickman, `look`](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/stage.cjs#L25)
+2. Palec przesuwa się po prawej stronie tekstu do odręcznej daty. Pracownica prowadzi ruch łokciem. Marta opuszcza podbródek i podąża za palcem. Zachowujemy odstęp między wskazaniem a literami, jak między wskaźnikiem i nazwą w wyróżnionym wierszu demonstracji. [Video Shotcraft, Cursor Flyover](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/cursor-flyover.jpg) · [Kadr demonstracji](../../przyklady/gest-interfejsu.jpg)
+3. Po zatrzymaniu zostaje czas na odczytanie „11.01.2027”. Wiersz pod datą pozostaje wolny dla długopisu w scenie 14.
