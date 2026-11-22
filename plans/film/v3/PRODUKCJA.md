@@ -20,13 +20,16 @@ Dźwięk: `media/*.flac` to przyjęty miks v2 (dialog, narrator, efekty, otoczen
 | r0 | koordynator | pusty zestaw, oryginalny Zusik w `zestaw.mjs` | zastąpiona |
 | r1 | dyrektor artystyczny | obsada, rekwizyty, plansza obsady, test obrotu; kanapa s=1,28 (zamiast 1,16) | przyjęta do produkcji |
 
-## Autorzy ujęć · etap 1 (dwa klipy próbne)
+## Autorzy ujęć
 
-| Ujęcie | Autor | Rewizja modeli | Stan |
+Na prośbę Juliana jeden autor dostaje blok kilku ujęć i odpowiada za cięcia wewnątrz bloku. Równolegle pracuje najwyżej pięć bloków. Wspólny brief autorów: [BRIEF-BLOKU.md](BRIEF-BLOKU.md).
+
+| Ujęcia | Autor | Rewizja modeli | Stan |
 | --- | --- | --- | --- |
-| 19 | s19 | r1 | czeka na obsadę r1 |
-| 20 | s20 | r1 | czeka na 19 |
+| 01–06 | blok b01 | r1 | w realizacji |
+| 07–12 | blok b07 | r1 | w realizacji |
+| 13–18 | blok b13 | r1 | w realizacji |
+| 19–23 | blok b19 (najpierw 19+20, klip 36–40 s) | r1 | w realizacji |
+| 24–26, 29–30 | blok b24 | r0/r1 (produkt) | w realizacji |
 | 27 | s27 | r0 (produkt) | oddane, odbiór autora i koordynatora OK |
 | 28 | s28 | r0 (produkt) | oddane po poprawce styku z 27 (pole dat zostaje nad plikami) |
-
-Pozostałe ujęcia czekają na ocenę Juliana po klipach 36–40 i 52–56 s.
