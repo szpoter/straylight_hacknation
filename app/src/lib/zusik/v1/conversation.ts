@@ -6,6 +6,8 @@ import { assessCase, assessCaseVariant, CASE_RULE_VERSION, type AssessmentInput,
 import { factInput, type CaseFile, type EvidenceFact, type MemoryRepository, type Page, type Profile } from "../memory/contract";
 import { accountAnswer, accountReadInput, accountLinkInput, type AccountReport } from "./account";
 import type { AskAnswer } from "../types";
+import { birthMonthAnswer } from "../birth-month-answer";
+import { loadCorpus } from "../../rag/corpus-fs";
 import { ApiProblem } from "./http";
 
 const id = z.string().min(1).max(128);
@@ -15,6 +17,7 @@ const replyTo = id.optional();
 const lookup = { subjectId: id.optional(), validAt: date.optional(), knownAt: z.iso.datetime({ offset: true }).optional(), replyTo };
 export const messageInput = z.discriminatedUnion("intent", [
   accountReadInput, accountLinkInput,
+  z.strictObject({ intent: z.literal("compare_birth_month"), date, basis: z.number().positive().max(9999999.99).multipleOf(0.01) }),
   z.strictObject({ intent: z.literal("public_question"), modelOptions: chatModelOptions.optional(), publicQuestion: z.string().trim().min(2).max(500), replyTo }),
   z.strictObject({ intent: z.literal("read_context"), topic: id, publicTopic: z.literal("nursery_recipient").optional(), ...lookup }),
   z.strictObject({ intent: z.literal("declare_fact"), fact: factInput, basisProfileRevision: revision, replyTo }),
@@ -24,7 +27,7 @@ export const messageInput = z.discriminatedUnion("intent", [
 ]);
 export const assessmentInput = z.strictObject({ subjectId: id, benefit: id, asOf: date, profileRevision: revision, caseRevision: revision });
 export type MessageInput = z.infer<typeof messageInput>;
-type Citation = { kind: "account" | "fact" | "workflow" | "document" | "public_source" | "assessment"; ref: string; version: string; page?: number; publicUrl?: string };
+type Citation = { kind: "account" | "fact" | "workflow" | "document" | "public_source" | "assessment"; ref: string; version: string; page?: number; publicUrl?: string; quote?: string; locator?: string };
 export type Answer = { answer: string; citations: Citation[]; publicQuery?: string; opportunities?: AskAnswer["opportunities"]; proposalIds?: string[]; account?: AccountReport };
 export type Message = Answer & { id: string; input: MessageInput; state: "completed"; profileRevision: number; caseRevision: number };
 type Assessment = { id: string; input: AssessmentInput; decisions: DecisionResult[]; ruleVersion: string; stale: boolean };
@@ -158,6 +161,13 @@ export async function createMessage(ctx: Context, input: MessageInput, publicAns
   let response: Answer;
   if (input.intent === "read_account" || input.intent === "link_account") {
     response = await accountAnswer(ctx,input);
+  } else if (input.intent === "compare_birth_month") {
+    const result = birthMonthAnswer(input, loadCorpus("publiczne"));
+    response = result ? {
+      answer: [...result.claims.map(claim => claim.text), result.message].join("\n"),
+      citations: result.citations.map(c => ({ kind: "public_source", ref: c.fragmentId, version: c.corpusVersion,
+        publicUrl: c.url, quote: c.quote, locator: c.locator, page: c.page ?? undefined })),
+    } : { answer: "Brakuje potwierdzonego wyliczenia dla podanej daty i podstawy.", citations: [] };
   } else if (input.intent === "public_question") {
     response = await publicAnswer(input.publicQuestion,previous?.input.intent === "public_question" ? previous : undefined, input.modelOptions);
   } else if (input.intent === "ask_case" && input.topic === "previous_sources" && previous) {

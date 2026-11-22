@@ -1,3 +1,4 @@
+import { birthMonthInputs } from "../birth-month-input";
 import { publicQuestion } from "../../rag/public-query";
 import { chatStarters } from "../conversation";
 import type { EvidenceFact } from "../memory/contract";
@@ -36,6 +37,8 @@ function payVariant(q: string, ctx: Context): Result {
 /** Free-form input is projected locally. Only public vocabulary or typed facts reach HTTP. */
 export function routeCaseQuestion(question: string, ctx: Context): Result {
   const text = question.trim();
+  const birthMonth = birthMonthInputs(text, new Date().toISOString().slice(0, 10));
+  if (birthMonth) return { input: { intent: "compare_birth_month", ...birthMonth } };
   const prior = ctx.lastMessage;
   const privateContext = Boolean(ctx.hasDocuments || ctx.facts.length || ctx.assessmentId ||
     (prior && prior.input.intent !== "public_question"));

@@ -28,6 +28,7 @@ const leaveNames = { maternity: "urlop macierzyński", parental: "urlop rodzicie
 function messageLabel(input: MessageInput) {
   switch (input.intent) {
     case "public_question": return input.publicQuestion;
+    case "compare_birth_month": return "Porównaj wypłaty za miesiąc urodzenia dziecka";
     case "link_account": return "Powiąż symulowane konto z " + input.subjectId;
     case "read_account": return "Odczytaj symulowane konto · " + input.subjectId + " · " + input.from + " – " + input.to;
     case "declare_fact": return "Potwierdzam " + labels[input.fact.field] + " · " + valueLabel(input.fact.value);
@@ -331,7 +332,7 @@ export function ImportConversation() {
           {view?.messages.map(m => <div className={s.messages} key={m.id} data-knowledge-turn>
             <div className={s.userRow}><p className={s.userBubble}>{originals.get(m.id) ?? messageLabel(m.input)}</p></div>
             <div className={s.aiMessage}>{(m.profileRevision < view.profile.revision || m.caseRevision < view.file.revision) && m.input.intent !== "public_question" && <small>Wcześniejsza odpowiedź · wersja profilu {m.profileRevision}</small>}
-              <p>{m.state === "processing" ? "Przygotowuję odpowiedź…" : m.state === "failed" ? "Nie udało się przygotować odpowiedzi." : m.answer}</p>
+              <p className={m.input.intent === "compare_birth_month" ? s.partialAnswer : undefined}>{m.state === "processing" ? "Przygotowuję odpowiedź…" : m.state === "failed" ? "Nie udało się przygotować odpowiedzi." : m.answer}</p>
               {m.input.intent === "ask_case" && originals.has(m.id) && Array.from(local.entries()).flatMap(([key, pdf]) =>
                 findCasePassages(pdf.read.pages.map(p => p.text), originals.get(m.id) ?? "").map(hit =>
                   <details className={s.source} key={key + hit.page}><summary>Zapis w PDF · strona {hit.page}</summary><blockquote>{hit.excerpt}</blockquote>

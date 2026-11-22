@@ -19,6 +19,8 @@ import type { MartaView } from "../marta/types";
 import { caseSources, previousSources, sourceIntent } from "./context-answer";
 
 import { familyTopic } from "./family-chat";
+import { birthMonthInputs } from "./birth-month-input";
+import { birthMonthAnswer } from "./birth-month-answer";
 import { resolveFollowUp } from "./retrieval-context";
 import { conversationInput, conversationOwner, type CaseName, type FamilyChatScope } from "./conversation";
 
@@ -310,6 +312,13 @@ export async function answerPublicTurn(deps: AnswerDeps, text: string, history: 
 }
 
 async function resolvePublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
+  const inputs = birthMonthInputs(text, (deps.asOf ?? today)());
+  const calculation = inputs && birthMonthAnswer(inputs, deps.selectCorpus?.("publiczne") ?? deps.corpus);
+  if (calculation) {
+    const trace = newTrace("", null);
+    trace.evidenceIds = calculation.citations.map(citation => citation.fragmentId);
+    return { answer: calculation, trace };
+  }
   const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
   const section = schoolRecipientIntent(text, previous) ? "schoolRecipient" : nurseryIntent(text, previous);
   if (section && deps.selectCorpus) {

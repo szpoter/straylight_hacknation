@@ -54,6 +54,10 @@ export function Evidence({ citations, documents, local }: { citations: Citation[
     const key = cite.ref + index;
     if (cite.kind === "public_source") {
       const href = publicSourceUrl(cite);
+      if (href && cite.quote) return <details key={key} className={s.source}>
+        <summary>Źródło {index + 1} · {cite.locator}</summary>
+        <blockquote>{cite.quote}</blockquote><a href={href} target="_blank" rel="noreferrer">Otwórz przepis</a>
+      </details>;
       return href ? <a key={key} href={href} target="_blank" rel="noreferrer">Przepis · {cite.version}</a> : null;
     }
     if (cite.kind === "account") return <p key={key}>Źródło: symulowane konto ZUS · {cite.version}</p>;
