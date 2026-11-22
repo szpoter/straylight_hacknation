@@ -25,7 +25,7 @@ import { rateOn, type RateKind } from "./rates";
 import { MINIMUM_WAGE } from "./arrears";
 import { valueWithDefaults, type RuleSchedule, type ScheduledValue } from "./parameters";
 
-export const MATERNITY_RULES_VERSION = "maternity-2026-11-22.2";
+export const MATERNITY_RULES_VERSION = "maternity-2026-11-22.8";
 
 // ---------- Parametry (do panelu administracyjnego) ----------
 
@@ -89,6 +89,7 @@ export type SourceId =
   | "kp182-1f"
   | "kp182-3"
   | "kp183"
+  | "zusDocuments"
   | "zusAmount"
   | "zusBasisEmployee"
   | "zusBasisNonEmployee"
@@ -108,6 +109,7 @@ export const SOURCES: Record<SourceId, { label: string; url?: string }> = {
   "kp182-1f": { label: "Kodeks pracy, art. 182¹e–182¹f (łączenie urlopu rodzicielskiego z pracą)", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" },
   "kp182-3": { label: "Kodeks pracy, art. 182³ (urlop ojcowski 2 tygodnie)", url: "https://www.gov.pl/web/rodzina/urlop-ojcowski" },
   kp183: { label: "Kodeks pracy, art. 183 (adopcja, rodzina zastępcza)", url: "https://www.gov.pl/web/rodzina/urlop-macierzynski" },
+  zusDocuments: { label: "ZUS · Dokumenty i terminy wniosków o zasiłek macierzyński", url: "https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty" },
   zusAmount: { label: "zus.pl · Wysokość zasiłku macierzyńskiego", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/wysokosc" },
   zusBasisEmployee: { label: "zus.pl · Podstawa wymiaru dla pracowników", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/podstawa-wymiaru/dla-pracownikow" },
   zusBasisNonEmployee: {
@@ -160,6 +162,7 @@ export type ScenarioInput = {
   /** Adopcja / rodzina zastępcza: data urodzenia dziecka (limit wieku). */
   childBirthDate?: string;
   adoptionFinalOn?: string;
+  placement?: { children: { birthDate: string; schoolDeferred?: boolean }[]; courtFiledOn?: string; leaveFrom?: string };
   professionalFoster?: boolean;
   /** Rodzina zastępcza: odroczony obowiązek szkolny (limit 10 lat zamiast 7). */
   schoolDeferred?: boolean;
@@ -177,6 +180,10 @@ export type ScenarioInput = {
   childDeathDates?: string[];
   /** Tygodnie macierzyńskiego przejęte przez drugiego rodzica (po min. 14 tygodniach matki). */
   transferWeeks: number;
+  maternityTakeover?: {
+    from: string; to: string; motherLastPaidOn: string; recipientStoppedWorkForCare: boolean;
+  } & ({reason:"resignation"} | {reason:"hospitalization"; hospitalFrom:string; hospitalTo:string}
+    | {reason:"certified_inability"; certifiedFrom:string});
   /** Uzupełniający urlop macierzyński (wcześniak, hospitalizacja). */
   supplementaryWeeks: number;
   /** Dated, complete hospital evidence takes precedence over manually estimated weeks. */
@@ -190,6 +197,8 @@ export type ScenarioInput = {
   workB: number;
   parentalWork?: Partial<Record<ParentId, ParentalWork>>;
   parentalStarts?: Partial<Record<ParentId, string>>;
+  /** Earlier parental requests for this child group, with days charged to the unextended family pool. */
+  priorParentalParts?: { parent: ParentId; from: string; to: string; daysUsed: number }[];
   /** Urlop ojcowski drugiego rodzica: 0, 7 albo 14 dni. */
   paternityDays: number;
   paternityStart?: string;
@@ -262,6 +271,7 @@ export type ScenarioResult = {
   periods: Period[];
   segments: Segment[];
   totals: { A: number; B: number; all: number; topUp: number };
+  parentalDays: { personDays: number; calendarDays: number };
   /** Pierwszy i ostatni dzień urlopów z zasiłkiem (bez urlopu ojcowskiego). */
   span: { from: string; to: string; days: number } | null;
   deadlines: Deadline[];
@@ -406,7 +416,8 @@ export function birthLeaveWindow(birth: string, children: number, prenatalDays: 
     if (death > to) continue;
     const remaining = children - i - 1;
     const remainingEnd = remaining ? ordinaryEnd(remaining) : eightWeeksEnd;
-    const minimumEnd = addDays(death, 6);
+    // ZUS commentary §118 counts the seven days following the date of death.
+    const minimumEnd = addDays(death, 7);
     to = remaining && death <= eightWeeksEnd ? remainingEnd : [remainingEnd, minimumEnd].sort()[1];
   }
   return { from, to, days: daysBetween(from, to) + 1 };
@@ -458,11 +469,10 @@ type RawPeriod = { id: string; parent: ParentId; kind: LeaveKind; from: string; 
 
 export function computeScenario(given: ScenarioInput): ScenarioResult {
   const p = maternityParametersOn(given.schedule, given.date);
-  const exactLoss = given.event === "birth" && given.childDeathDates?.length === given.children && given.children > 0;
-  const stillbirth = (Boolean(given.stillbirth) || exactLoss) && given.event === "birth";
+  const stillbirth = Boolean(given.stillbirth) && given.event === "birth";
   // Martwe urodzenie: tylko urlop macierzyński matki, 100% (Poradnik ZUS 2026, s. 34), bez rodzicielskiego i ojcowskiego.
   const input: ScenarioInput = stillbirth
-    ? { ...given, variant: given.stillbirth ? "100-70" : given.variant, transferWeeks: 0, supplementaryWeeks: 0, parentalWeeksA: 0, parentalWeeksB: 0, workA: 0, workB: 0, paternityDays: 0 }
+    ? { ...given, variant: "100-70", transferWeeks: 0, supplementaryWeeks: 0, parentalWeeksA: 0, parentalWeeksB: 0, workA: 0, workB: 0, paternityDays: 0 }
     : given;
   const errors: Message[] = [];
   const warnings: Message[] = [];
@@ -483,30 +493,61 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       }
     }
   }
-  const limits = limitsFor(input, input.schedule);
+  let placementStart = input.date;
+  let placementEvent = input.date;
+  let placementDays: number | undefined;
+  let eligibleChildren = input.children;
+  if (input.event !== "birth") {
+    const placement = input.placement;
+    const children = placement?.children ?? (input.childBirthDate ? [{birthDate:input.childBirthDate,schoolDeferred:input.schoolDeferred}] : []);
+    if (placement && (children.length !== input.children || !children.length || (input.event === "adoption" && (!placement.courtFiledOn || !isValidIso(placement.courtFiledOn))))) {
+      errors.push({ text: "Potwierdź datę wniosku do sądu i dane każdego dziecka przyjętego jednocześnie.", source: "kp183" });
+    }
+    if (input.event === "adoption" && placement?.courtFiledOn && isValidIso(placement.courtFiledOn)) placementEvent = [input.date, placement.courtFiledOn].sort()[1];
+    placementStart = placement?.leaveFrom ?? placementEvent;
+    if (!isValidIso(placementStart) || placementStart < placementEvent || (input.parentA.title === "pracownik" && placementStart > addDays(placementEvent, 21))) {
+      errors.push({ text: "Sprawdź datę rozpoczęcia urlopu po przyjęciu dziecka i złożeniu wniosku.", source: "kp183" });
+      placementStart = placementEvent;
+    }
+    if (children.length && children.every(c => isValidIso(c.birthDate) && c.birthDate <= input.date)) {
+      const birthdays = children.map(c => addMonths(c.birthDate, 12 * (input.event === "adoption" ? 14 : c.schoolDeferred ? 10 : 7))).filter(d => d > placementEvent).sort();
+      if (!placement && input.children > 1) {
+        assumptions.push({ text: "Potwierdź wiek każdego dziecka przyjętego jednocześnie na wychowanie.", source: "kp183" });
+      } else eligibleChildren = birthdays.length;
+      if (birthdays.length === 0) errors.push({ text: "Dzieci przekroczyły granicę wieku uprawniającą do tego urlopu.", source: "kp183" });
+      else {
+        let days = 7 * p.maternityWeeks[childIndex(eligibleChildren)];
+        for (const [i, birthday] of birthdays.entries()) {
+          const elapsed = daysBetween(placementStart, birthday);
+          if (elapsed >= days) break;
+          const remaining = eligibleChildren - i - 1;
+          const newLimit = remaining > 0 ? 7 * p.maternityWeeks[childIndex(remaining)] : 7 * p.adoptionMinWeeks;
+          days = Math.max(elapsed, newLimit);
+        }
+        placementDays = days;
+      }
+    } else if (children.length) errors.push({ text: "Sprawdź daty urodzenia dzieci względem dnia przyjęcia.", source: "kp183" });
+  }
+  const limits = limitsFor({...input, children:eligibleChildren}, input.schedule);
+  if (placementDays === 7 * p.adoptionMinWeeks) {
+    limits.parentalPoolWeeks = input.zaZyciem ? 62 : 38;
+    limits.maxParentalOneParent = limits.parentalPoolWeeks - limits.exclusiveWeeks;
+    limits.parentalWithWorkMaxWeeks = 2 * limits.parentalPoolWeeks;
+  }
   const birth = input.event === "birth";
   const hasB = input.parentB !== null;
 
-  const basisA = computeBasis(input.parentA, input.date, input.schedule);
-  const basisB = input.parentB ? computeBasis(input.parentB, input.date, input.schedule) : null;
+  const basisStart = birth && input.prenatalLeaveDays !== undefined && Number.isInteger(input.prenatalLeaveDays) && input.prenatalLeaveDays >= 0 && input.prenatalLeaveDays <= 42
+    ? addDays(input.date, -input.prenatalLeaveDays) : input.date;
+  const basisA = computeBasis(input.parentA, birth ? basisStart : placementStart, input.schedule);
+  const secondBasisStart = input.maternityTakeover?.from;
+  if (secondBasisStart && input.paternityDays > 0 && (input.paternityStart ?? input.date) < secondBasisStart) {
+    assumptions.push({text:"Sprawdź podstawę drugiego rodzica osobno dla wcześniejszego ojcowskiego i późniejszego przejęcia.",source:"uz36"});
+  }
+  const basisB = input.parentB ? computeBasis(input.parentB, secondBasisStart && isValidIso(secondBasisStart) ? secondBasisStart : input.date, input.schedule) : null;
 
   // --- Wymiar macierzyńskiego / na warunkach ---
-  let maternityWeeks: number = limits.maternityWeeks;
-  if (!birth && input.childBirthDate) {
-    const years = input.event === "adoption" ? 14 : input.schoolDeferred ? 10 : 7;
-    const limitDay = addMonths(input.childBirthDate, years * 12);
-    const available = Math.floor(daysBetween(input.date, limitDay) / 7);
-    if (input.date >= limitDay || input.childBirthDate > input.date) {
-      errors.push({ text: `Dziecko przekroczyło wiek, do którego przysługuje urlop na warunkach urlopu macierzyńskiego (${years} lat).`, source: "kp183" });
-    } else if (available < maternityWeeks) {
-      maternityWeeks = Math.max(p.adoptionMinWeeks, available);
-      assumptions.push({
-        text: `Urlop przysługuje do ukończenia przez dziecko ${years} lat — liczymy ${maternityWeeks} tyg. (nie mniej niż ${p.adoptionMinWeeks}). Sposób skrócenia do weryfikacji w ZUS.`,
-        source: "kp183",
-      });
-    }
-  }
-
+  let maternityWeeks = placementDays !== undefined ? placementDays / 7 : limits.maternityWeeks;
   if (input.event === "foster" && input.professionalFoster) errors.push({ text: "Zawodowej rodzinie zastępczej nie przysługuje ten urlop z tytułu przyjęcia dziecka.", source: "kp183" });
   const weeksBefore = birth ? Math.min(Math.max(Math.round(input.weeksBeforeBirth), 0), p.maxWeeksBeforeBirth) : 0;
   if (stillbirth && !given.childDeathDates) {
@@ -530,18 +571,37 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   // --- Rodzicielski: pula i 9 tygodni wyłącznie ---
   const weeksA = Math.max(Math.round(input.parentalWeeksA), 0);
   const weeksB = hasB ? Math.max(Math.round(input.parentalWeeksB), 0) : 0;
-  if (weeksA > limits.maxParentalOneParent) {
+  const prior = new Map<string, NonNullable<ScenarioInput["priorParentalParts"]>[number]>();
+  const used = { A: 0, B: 0 };
+  for (const part of input.priorParentalParts ?? []) {
+    const key = [part.parent, part.from, part.to].join("/");
+    const duplicate = prior.get(key);
+    if (duplicate?.daysUsed === part.daysUsed) continue;
+    if (duplicate || !isValidIso(part.from) || !isValidIso(part.to) || part.from < input.date || part.to < part.from ||
+        !Number.isSafeInteger(part.daysUsed) || part.daysUsed < 1 || part.daysUsed > daysBetween(part.from, part.to) + 1 ||
+        [...prior.values()].some(p => p.parent === part.parent && p.from <= part.to && part.from <= p.to)) {
+      errors.push({ text: "Potwierdź okres i liczbę wykorzystanych dni każdej wcześniejszej części rodzicielskiego.", source: "kp182-1a" });
+      continue;
+    }
+    used[part.parent] += part.daysUsed;
+    prior.set(key, part);
+  }
+  if (prior.size + Number(weeksA > 0) + Number(weeksB > 0) > 5) {
+    errors.push({ text: "Rodzice mogą łącznie wykorzystać urlop rodzicielski w najwyżej pięciu częściach.", source: "kp182-1a" });
+  }
+  if (used.A + 7 * weeksA > 7 * limits.maxParentalOneParent) {
     errors.push({ text: `Jeden rodzic może wziąć najwyżej ${limits.maxParentalOneParent} tyg. — ${limits.exclusiveWeeks} tygodni należy wyłącznie do drugiego rodzica.`, source: "kp182-1a" });
   }
-  if (weeksB > limits.maxParentalOneParent) {
+  if (used.B + 7 * weeksB > 7 * limits.maxParentalOneParent) {
     errors.push({ text: `Drugi rodzic może wziąć najwyżej ${limits.maxParentalOneParent} tyg. — ${limits.exclusiveWeeks} tygodni należy wyłącznie do Ciebie.`, source: "kp182-1a" });
   }
-  if (weeksA + weeksB > limits.parentalPoolWeeks) {
-    errors.push({ text: `Razem możecie wykorzystać ${limits.parentalPoolWeeks} tyg. urlopu rodzicielskiego (teraz ${weeksA + weeksB}).`, source: "kp182-1a" });
+  if (used.A + used.B + 7 * (weeksA + weeksB) > 7 * limits.parentalPoolWeeks) {
+    errors.push({ text: `Dostępna pula rodziny to ${limits.parentalPoolWeeks} tyg. Wcześniejsze części i ten wniosek łącznie przekraczają jej wymiar.`, source: "kp182-1a" });
   }
-  if (!stillbirth && hasB && weeksB < limits.exclusiveWeeks) {
+  const remainingExclusiveB = Math.max(0, limits.exclusiveWeeks - used.B / 7);
+  if (!stillbirth && hasB && weeksB < remainingExclusiveB) {
     warnings.push({
-      text: `Drugi rodzic nie wykorzysta ${limits.exclusiveWeeks - weeksB} tyg. swojej wyłącznej części urlopu rodzicielskiego — tych tygodni nie można przenieść, przepadną.`,
+      text: `Drugi rodzic nie wykorzysta ${remainingExclusiveB - weeksB} tyg. swojej wyłącznej części urlopu rodzicielskiego — tych tygodni nie można przenieść, przepadną.`,
       source: "kp182-1a",
     });
   }
@@ -568,23 +628,50 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   if (input.variant === "815" && transfer > 0) {
     assumptions.push({ text: "Przejętą część urlopu macierzyńskiego liczymy drugiemu rodzicowi po 81,5%, tak jak matce — materiały ZUS nie mówią tego wprost.", source: "uz31" });
   }
-  if (input.variant === "815" && weeksB > limits.exclusiveWeeks) {
+  if (input.variant === "815" && weeksB > remainingExclusiveB) {
     assumptions.push({ text: `Tygodnie drugiego rodzica ponad jego wyłączne ${limits.exclusiveWeeks} liczymy po 81,5% (pierwsze ${limits.exclusiveWeeks} zawsze po 70%).`, source: "uz31" });
   }
 
   // --- Oś czasu ---
   const raw: RawPeriod[] = [];
   const kindMat: LeaveKind = birth ? "macierzynski" : "na-warunkach";
-  const exactWindow = birth && (input.prenatalLeaveDays !== undefined || input.childDeathDates !== undefined)
-    ? birthLeaveWindow(input.date, input.children, input.prenatalLeaveDays ?? weeksBefore * 7, input.childDeathDates ?? (input.stillbirth ? [input.date] : []), input.schedule)
-    : undefined;
-  const startA = exactWindow?.from ?? (birth ? addDays(input.date, -7 * weeksBefore) : input.date);
-  const matDaysA = (exactWindow?.days ?? 7 * maternityWeeks) - 7 * transfer;
+  let exactWindow: ReturnType<typeof birthLeaveWindow> | undefined;
+  if (birth && (input.prenatalLeaveDays !== undefined || input.childDeathDates !== undefined)) {
+    try {
+      exactWindow = birthLeaveWindow(input.date, input.children, input.prenatalLeaveDays ?? weeksBefore * 7, input.childDeathDates ?? (input.stillbirth ? [input.date] : []), input.schedule);
+    } catch (issue) {
+      if (!(issue instanceof RangeError)) throw issue;
+      errors.push({text: "Potwierdź liczbę dzieci, dni urlopu przed porodem i daty zdarzeń.", source: "kp180"});
+    }
+  }
+  const startA = exactWindow?.from ?? (birth ? addDays(input.date, -7 * weeksBefore) : placementStart);
+  const matDaysA = (exactWindow?.days ?? placementDays ?? 7 * maternityWeeks) - 7 * transfer;
+  if (exactWindow && transfer > 0 && matDaysA - daysBetween(startA, input.date) < p.motherMinWeeksAfterBirth * 7) {
+    errors.push({text: "Sprawdź wymiar części matki po porodzie przed przekazaniem urlopu.", source: "kp180"});
+  }
   raw.push({ id: "mat-A", parent: "A", kind: kindMat, from: startA, days: matDaysA, rate: rateMat, work: 0, note: weeksBefore ? `w tym ${weeksBefore} tyg. przed porodem` : undefined });
   let next = addDays(startA, matDaysA);
   if (transfer > 0) {
     raw.push({ id: "mat-B", parent: "B", kind: kindMat, from: next, days: 7 * transfer, rate: rateMat, work: 0, note: "przejęta część urlopu macierzyńskiego" });
     next = addDays(next, 7 * transfer);
+  }
+  if (input.maternityTakeover) {
+    const take = input.maternityTakeover;
+    const last = addDays(next, -1);
+    const minimumDays = 7 * (take.reason === "resignation" ? p.motherMinWeeksAfterBirth : 8);
+    const firstAllowed = addDays(birth ? input.date : placementStart, minimumDays);
+    const rangeValid = isValidIso(take.from) && isValidIso(take.to) && firstAllowed <= take.from && take.from <= take.to && take.to <= last;
+    const reasonValid = take.reason === "hospitalization"
+      ? isValidIso(take.hospitalFrom) && isValidIso(take.hospitalTo) && take.hospitalFrom <= take.from && take.to <= take.hospitalTo
+      : take.to === last && (take.reason === "resignation" || (isValidIso(take.certifiedFrom) && take.certifiedFrom < take.from));
+    if (!hasB || transfer || stillbirth || !rangeValid || !reasonValid || !take.recipientStoppedWorkForCare || take.motherLastPaidOn !== addDays(take.from, -1)) {
+      errors.push({text:"Potwierdź przyczynę przejęcia, ostatni dzień matki i okres osobistej opieki ubezpieczonego drugiego rodzica.",source:"kp180"});
+    } else {
+      raw[0].days = daysBetween(startA, take.from);
+      raw.push({id:"mat-B",parent:"B",kind:kindMat,from:take.from,days:daysBetween(take.from,take.to)+1,rate:rateMat,work:0,note:"przejęta część urlopu macierzyńskiego"});
+      if (take.to < last) raw.push({id:"mat-A-resumed",parent:"A",kind:kindMat,from:addDays(take.to,1),days:daysBetween(take.to,last),rate:rateMat,work:0});
+      if (input.variant === "815") assumptions.push({text:"Potwierdź stawkę dla przejętej części macierzyńskiego.",source:"uz31"});
+    }
   }
   if (supplementaryWeeks > 0) {
     if (input.hospitalCertificate && addDays(next, -1) < "2025-03-19") {
@@ -599,7 +686,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   const stretched = (weeks: number, work: number) => Math.min(Math.floor((7 * weeks) / (1 - work)), capDays);
   function addParental(parent: ParentId, start: string, weeks: number, work: number, rate: RateKind, id: string, note?: string) {
     if (weeks === 0) return 0;
-    if (!isValidIso(start) || start < parentalStart) {
+    if (!isValidIso(start) || start < parentalStart || [...prior.values()].some(p => p.parent === parent && p.to >= start)) {
       errors.push({ text: "Potwierdź początek rodzicielskiego po zakończeniu poprzedzającego urlopu.", source: "kp182-1a" });
       return 0;
     }
@@ -619,10 +706,13 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       }
     }
     if (input.parentalStarts?.[parent]) {
-      const childDate = birth ? input.date : input.childBirthDate;
+      if (input.placement && !birth && placementDays !== 7 * p.adoptionMinWeeks && input.placement.children.length > 1) {
+        assumptions.push({text: "Sprawdź wiek każdego dziecka w terminie późniejszej części rodzicielskiego.", source: "kp183"});
+      }
+      const childDate = birth ? input.date : input.placement?.children[0]?.birthDate ?? input.childBirthDate;
       const lastDay = childDate && (birth ? (Number(childDate.slice(0, 4)) + 6) + "-12-31"
         : addDays(addMonths(childDate, 12 * (input.event === "adoption" ? 14 : input.schoolDeferred ? 10 : 7)), -1));
-      if (!lastDay || pieces.some(piece => addDays(piece.from, piece.days - 1) > lastDay)) {
+      if ((birth || placementDays !== 7 * p.adoptionMinWeeks) && (!lastDay || pieces.some(piece => addDays(piece.from, piece.days - 1) > lastDay))) {
         errors.push({ text: "Sprawdź granicę wieku dziecka dla wnioskowanych dat rodzicielskiego.", source: birth ? "kp182-1a" : "kp183" });
         return 0;
       }
@@ -634,12 +724,12 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   const daysA = addParental("A", fromA, weeksA, workA, rateParental, "par-A");
   if (weeksB > 0) {
     const fromB = input.parentalStarts?.B ?? (input.parentalOrder === "together" || daysA === 0 ? parentalStart : addDays(fromA, daysA));
-    if (input.parentalWork?.B && weeksB > limits.exclusiveWeeks && input.variant === "815") {
+    if (input.parentalWork?.B && remainingExclusiveB > 0 && weeksB > remainingExclusiveB && input.variant === "815") {
       errors.push({ text: "Rozdziel pracę podczas części wyłącznej i dodatkowej drugiego rodzica.", source: "kp182-1f" });
-    } else if (input.parentalWork?.B) {
-      addParental("B", fromB, weeksB, workB, "parental", "par-B");
+    } else if (input.parentalWork?.B || !remainingExclusiveB) {
+      addParental("B", fromB, weeksB, workB, remainingExclusiveB ? "parental" : rateParental, "par-B");
     } else {
-      const exclusive = Math.min(weeksB, limits.exclusiveWeeks);
+      const exclusive = Math.min(weeksB, remainingExclusiveB);
       const exclusiveDays = addParental("B", fromB, exclusive, workB, "parental", "par-B", "wyłączna część drugiego rodzica");
       if (weeksB > exclusive && exclusiveDays > 0) {
         raw.push({ id: "par-B2", parent: "B", kind: "rodzicielski", from: addDays(fromB, exclusiveDays), days: stretched(weeksB, workB) - exclusiveDays, rate: rateParental, work: workB });
@@ -660,6 +750,13 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   }
   if (!birth && input.paternityDays > 0 && !(input.event === "adoption" && input.adoptionFinalOn && input.childBirthDate)) {
     assumptions.push({ text: "Przy adopcji urlop ojcowski liczy się od uprawomocnienia postanowienia o przysposobieniu — przyjmujemy datę przyjęcia dziecka.", source: "kp182-3" });
+  }
+
+  if (birth && !stillbirth && input.childDeathDates?.length === input.children && input.children > 0) {
+    const lastDeath = [...input.childDeathDates].sort().at(-1);
+    if (lastDeath && raw.some(r => r.id !== "mat-A" && addDays(r.from, r.days - 1) >= lastDeath)) {
+      errors.push({text: "Okres opieki przypada na datę zgonu lub po niej. Sprawdź należne dni dla tego rodzica.", source: "kp180"});
+    }
   }
 
   // --- Kwoty ---
@@ -720,6 +817,16 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     if (!Number.isFinite(wage)) assumptions.push({ text: "Brak płacy minimalnej dla tej daty — minimalnej podstawy nie sprawdzamy.", source: "uz45" });
   }
 
+  const parental = periods.filter(per => per.kind === "rodzicielski").sort((a,b) => a.from.localeCompare(b.from));
+  const parentalDays = { personDays: sum(parental.map(per => per.days)), calendarDays: 0 };
+  let countedTo: string | undefined;
+  for (const per of parental) {
+    const firstNew = countedTo && countedTo >= per.from ? addDays(countedTo, 1) : per.from;
+    if (firstNew > per.to) continue;
+    parentalDays.calendarDays += daysBetween(firstNew, per.to) + 1;
+    countedTo = per.to;
+  }
+
   const leave = periods.filter((x) => x.kind !== "ojcowski");
   const span = leave.length
     ? (() => {
@@ -733,26 +840,36 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   const deadlines: Deadline[] = [];
   if (input.variant === "815") {
     deadlines.push({
-      date: addDays(input.date, p.averagedRequestDays),
+      date: addDays(birth ? input.date : placementEvent, p.averagedRequestDays),
       label: birth ? "Wniosek o zasiłek 81,5% za cały okres — do 21 dni po porodzie" : "Wniosek o zasiłek 81,5% — do 21 dni po przyjęciu dziecka",
       who: "A",
       source: "uz30a",
     });
   }
+  if (!birth && input.placement && input.parentA.title === "pracownik") {
+    deadlines.push({date: addDays(placementEvent, 7), label: "Wniosek do pracodawcy o urlop na warunkach urlopu macierzyńskiego", who: "A", source: "kp183"});
+  }
   for (const per of periods.filter((x) => x.kind === "rodzicielski" && (x.id === "par-A" || x.id === "par-B"))) {
     const parent = per.parent === "A" ? input.parentA : input.parentB;
     if (parent?.title === "pracownik") {
       deadlines.push({ date: addDays(per.from, -21), label: "Wniosek o urlop rodzicielski do pracodawcy — co najmniej 21 dni przed", who: per.parent, source: "govParental" });
+    } else {
+      deadlines.push({ date: addDays(per.from, -1), label: "Wniosek do płatnika o zasiłek za okres rodzicielski przed jego rozpoczęciem", who: per.parent, source: "zusDocuments" });
     }
   }
   const pat = periods.find((x) => x.kind === "ojcowski");
   if (pat && input.parentB?.title === "pracownik") {
     deadlines.push({ date: addDays(pat.from, -7), label: "Wniosek o urlop ojcowski do pracodawcy — co najmniej 7 dni przed", who: "B", source: "kp182-3" });
+  } else if (pat) {
+    deadlines.push({ date: addDays(pat.from, -1), label: "Wniosek do płatnika o zasiłek za okres ojcowski przed jego rozpoczęciem", who: "B", source: "zusDocuments" });
   }
   const sup = periods.find((x) => x.kind === "uzupelniajacy");
   const matEnd = periods.filter((x) => x.kind === kindMat).reduce<string | null>((a, b) => (a && a > b.to ? a : b.to), null);
   if (sup && matEnd) {
-    deadlines.push({ date: addDays(matEnd, -21), label: "Wniosek o uzupełniający urlop macierzyński — co najmniej 21 dni przed końcem macierzyńskiego", who: sup.parent, source: "kp180-2" });
+    const employee = (sup.parent === "A" ? input.parentA : input.parentB)?.title === "pracownik";
+    deadlines.push(employee
+      ? { date: addDays(matEnd, -21), label: "Wniosek do pracodawcy o uzupełniający urlop macierzyński co najmniej 21 dni przed końcem macierzyńskiego", who: sup.parent, source: "kp180-2" }
+      : { date: addDays(matEnd, -1), label: "Wniosek do płatnika o zasiłek za okres uzupełniający przed zakończeniem okresu macierzyńskiego", who: sup.parent, source: "zusDocuments" });
   }
   deadlines.sort((a, b) => a.date.localeCompare(b.date));
 
@@ -767,6 +884,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     basis: { A: basisA, B: basisB },
     periods,
     segments,
+    parentalDays,
     totals: { A: totalA, B: totalB, all: round2(totalA + totalB), topUp: round2(sum(segments.map((s) => s.topUp))) },
     span,
     deadlines,

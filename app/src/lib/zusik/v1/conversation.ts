@@ -23,7 +23,7 @@ export const messageInput = z.discriminatedUnion("intent", [
 export const assessmentInput = z.strictObject({ subjectId: id, benefit: id, asOf: date, profileRevision: revision, caseRevision: revision });
 export type MessageInput = z.infer<typeof messageInput>;
 type Citation = { kind: "account" | "fact" | "workflow" | "document" | "public_source" | "assessment"; ref: string; version: string; page?: number; publicUrl?: string };
-export type Answer = { answer: string; citations: Citation[]; proposalIds?: string[]; account?: AccountReport };
+export type Answer = { answer: string; citations: Citation[]; publicQuery?: string; proposalIds?: string[]; account?: AccountReport };
 export type Message = Answer & { id: string; input: MessageInput; state: "completed"; profileRevision: number; caseRevision: number };
 type Assessment = { id: string; input: AssessmentInput; decisions: DecisionResult[]; ruleVersion: string; stale: boolean };
 export type Context = { repo: MemoryRepository; db: PoolClient; owner: string; file: CaseFile; profile: Profile };
@@ -102,12 +102,16 @@ function describeDecisions(decisions: DecisionResult[]) {
   const labels = { eligible:"Potwierdzono prawo do świadczenia", ineligible:"Świadczenie nie przysługuje",
     needs_information:"Do ustalenia prawa brakuje danych", needs_review:"Sprawa wymaga wyjaśnienia", unsupported:"Ten wariant wymaga oceny specjalisty" };
   return decisions.map(d => {
+    const benefit = {maternity:"Zasiłek macierzyński",sickness:"Zasiłek chorobowy",sickness_salary:"Wynagrodzenie chorobowe"}[d.benefit];
     const payment = d.grossAmountGrosze === undefined ? "" : ` Kwota brutto: ${money(d.grossAmountGrosze)}.`;
     const trace = d.segments?.map(s => `Podstawa ${money(s.basisGrosze)}, stawka ${s.ratePct}%: ${s.days} dni × ${money(s.dailyGrosze)} = ${money(s.grossAmountGrosze)}.`).join(" ") ?? "";
     const paymentState = d.paymentStatus && {payable:"Wypłata możliwa.",withheld:"Wypłata wstrzymana do rozliczenia zadłużenia.",
       needs_information:"Do ustalenia możliwości wypłaty potrzebny jest stan rozliczeń.",expired:"Upłynął termin rozliczenia zadłużenia."}[d.paymentStatus];
-    const why = d.reasonCode === "excluded_no_other_title_or_exception" ? " Potwierdzono brak ubezpieczenia, innego tytułu i wyjątku na dzień porodu." : "";
-    return [`${labels[d.status]}${d.from && d.to ? " za okres " + d.from + " – " + d.to : ""}.${payment}${why}`,paymentState,trace,...(d.needed ?? []).map(n=>n.request)].filter(Boolean).join(" ");
+    const why = d.reasonCode === "excluded_no_other_title_or_exception" ?
+      " Potwierdzono brak ubezpieczenia, innego tytułu i wyjątku " + (d.benefit === "sickness" ? "za oceniany okres niezdolności do pracy." : "na dzień porodu.") : "";
+    const payer = d.payer === "employer" ? "Wypłaca pracodawca." : d.payer === "zus" ? "Wypłaca ZUS." : "";
+    return [benefit && benefit + ".", `${labels[d.status]}${d.from && d.to ? " za okres " + d.from + " – " + d.to : ""}.${payment}${why}`,
+      payer,paymentState,trace,...(d.needed ?? []).map(n=>n.request)].filter(Boolean).join(" ");
   }).join("\n");
 }
 function describe(result: Assessment): Answer {

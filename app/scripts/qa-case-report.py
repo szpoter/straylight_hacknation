@@ -42,7 +42,7 @@ def compare(case, read, observed):
         eligible = [(branch, row[metric]) for branch, row in expected.items() if row.get(metric) is not None]
         metrics[metric] = dict(correct=sum(actual.get(branch, {}).get(metric) == value for branch, value in eligible),
                                total=len(eligible))
-    complete = bool(expected) and observed is not None and not extra and actual.keys() == expected.keys() and all(
+    complete = case.get("completeReference") is True and bool(expected) and observed is not None and not extra and actual.keys() == expected.keys() and all(
         m["total"] == m["correct"] for m in metrics.values()) and all(row.get("decision") is not None for row in expected.values())
     return dict(blocker=blocker, reviewed=bool(expected), amountReference=bool(metrics["amount"]["total"]),
                 extra=extra, metrics=metrics, full=complete)

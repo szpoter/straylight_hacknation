@@ -181,6 +181,16 @@ describe("sickness in pregnancy with historical evidence", () => {
     expect(assess(older)[1].from).toBe("2026-06-15");
     expect(assess(facts.filter(e => e.fact.field !== "benefitHistory"))[0].needed?.[0].field).toBe("benefitHistory");
   });
+  it("prices the salary and benefit independently and retains both rights after taking February away", () => {
+    const payroll = [...paid.slice(3),entry("payrollRegime",code("full_time_fixed_full_months"),"payroll",{asOf:request.validFrom})];
+    const [salary, benefit] = assess([...facts, ...payroll]);
+    expect(salary).toMatchObject({benefit:"sickness_salary",grossAmountGrosze:569514,segments:[{days:30,dailyGrosze:17258},{days:3,dailyGrosze:17258}]});
+    expect(benefit).toMatchObject({benefit:"sickness",grossAmountGrosze:34516,segments:[{days:2,dailyGrosze:17258}]});
+    for (const item of assess([...facts,...payroll.filter(e=>e.fact.validFrom !== "2026-02-01")])) {
+      expect(item).toMatchObject({status:"eligible",amountStatus:"needs_information",needed:[{field:"monthlyGrossPay",request:expect.stringMatching(/Z-3.*2026-02/)}]});
+      expect(item).not.toHaveProperty("grossAmountGrosze");
+    }
+  });
   it("pays a contractor from the first day and checks the full ninety days and disputed evidence", () => {
     const contractor = facts.filter(e => e.fact.field !== "insuranceTitle").concat(entry("insuranceTitle", code("contract"), "insurance", insurance));
     expect(assess(contractor)).toMatchObject([{benefit:"sickness",status:"eligible",from:"2026-06-01",to:"2026-07-05"}]);

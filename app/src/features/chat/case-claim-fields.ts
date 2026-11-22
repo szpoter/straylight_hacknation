@@ -1,8 +1,14 @@
-import { isValidIso } from "@/lib/rules/dates";
+import { isValidIso, MONTHS_GEN } from "@/lib/rules/dates";
 import type { EvidenceCandidate, LocalCasePage } from "./case-evidence";
 
 export function documentDay(input: string) {
-  const iso = input.replace(/^(\d{2})\.(\d{2})\.(\d{4})$/u, "$3-$2-$1");
+  const text = input.trim().replace(/\s*r\.?$/iu, "").trim();
+  const parts = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/u.exec(text);
+  const words = /^(\d{1,2})\s+([a-ząćęłńóśźż]+)\s+(\d{4})$/iu.exec(text);
+  const fold = (v: string) => v.normalize("NFD").replace(/\p{M}/gu, "").replace(/ł/giu, "l").toLowerCase();
+  const month = words ? MONTHS_GEN.findIndex(m => fold(m) === fold(words[2])) + 1 : 0;
+  const iso = parts ? `${parts[3]}-${parts[2].padStart(2,"0")}-${parts[1].padStart(2,"0")}` :
+    words && month ? `${words[3]}-${String(month).padStart(2,"0")}-${words[1].padStart(2,"0")}` : text;
   return isValidIso(iso) ? iso : undefined;
 }
 

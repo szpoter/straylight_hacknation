@@ -34,8 +34,8 @@ export function Evidence({ citations, documents, local }: { citations: Citation[
     if (cite.kind === "account") return <p key={key}>Źródło: symulowane konto ZUS · {cite.version}</p>;
     const doc = documents.find(d => d.id === cite.ref);
     const pdf = doc && local.get(doc.metadata.clientDocumentId);
-    if (cite.kind === "document") return <p key={key}>{pdf ? <a href={pdf.url + "#page=" + (cite.page ?? 1)} target="_blank" rel="noreferrer">Dowód · strona {cite.page ?? 1} w PDF</a>
-      : <>Dowód · strona {cite.page ?? 1}. Dołącz ponownie ten sam PDF, aby otworzyć stronę.</>}</p>;
+    if (cite.kind === "document") return <p key={key}>{pdf ? <a href={pdf.url + "#page=" + (cite.page ?? 1)} target="_blank" rel="noreferrer">Dowód · strona {cite.page ?? 1} {pdf.read.mediaType?.startsWith("image/") ? "na skanie" : "w PDF"}</a>
+      : <>Dowód · strona {cite.page ?? 1}. Dołącz ponownie ten sam PDF lub skan, aby otworzyć stronę.</>}</p>;
     return <p key={key}>{cite.kind === "fact" ? "Fakt" : cite.kind === "assessment" ? "Ocena" : "Zapis sprawy"} · {cite.ref} · wersja {cite.version}</p>;
   });
 }

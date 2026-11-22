@@ -531,6 +531,10 @@
   min-width: 0;
 }
 
+.threadInner > .messages:only-child {
+  grid-column: 1 / -1;
+}
+
 /* Zusik sits on the margin of the latest message and stays in view while the parent scrolls up */
 .marginMascot {
   align-self: end;

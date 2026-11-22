@@ -16,6 +16,7 @@ import { usePhone, useVisualViewport } from "./use-chat-viewport";
 import s from "./zusik.module.css";
 
 const id = () => crypto.randomUUID();
+const leaveNames = { maternity: "urlop macierzyński", parental: "urlop rodzicielski", paternity: "urlop ojcowski" };
 function messageLabel(input: MessageInput) {
   switch (input.intent) {
     case "public_question": return input.publicQuestion;
@@ -156,7 +157,6 @@ export function ImportConversation() {
   }
   function attach(selected: File, fresh = false) {
     if (locked.current) return;
-    if (selected.type && selected.type !== "application/pdf") { setNotice("Wybierz dokument PDF."); return; }
     const startKey = id(), docKey = id(), messageKey = id();
     const question = draft.trim();
     let file: CaseFile | null = null;
@@ -180,14 +180,14 @@ export function ImportConversation() {
           const signal = lifecycle.current?.signal;
           if (!signal || signal.aborted) return;
           const read = await readCaseDocument(selected, { caseId: file.id, signal: AbortSignal.any([signal, readAbort.signal]), onProgress: setProgress });
-          const url = URL.createObjectURL(selected.slice(0, selected.size, "application/pdf")); urls.current.add(url);
+          const url = URL.createObjectURL(selected.slice(0, selected.size, read.mediaType ?? "application/pdf")); urls.current.add(url);
           opened = { url, name: selected.name, read };
         } catch {
           if (readAbort.signal.aborted) {
             await clearCaseReadProgress(file.id).catch(() => undefined);
             setProgress(""); setPendingFile(null); setNotice("Anulowano odczyt pliku."); return;
           }
-          setProgress("Nie udało się odczytać PDF. Wybierz czytelny plik do 20 MB, bez hasła."); setPendingFile(null); return;
+          setProgress("Nie udało się odczytać dokumentu. Wybierz PDF bez hasła albo skan JPG lub PNG, do 20 MB."); setPendingFile(null); return;
         } finally { readController.current = null; setReading(false); }
       }
       const pdf = opened;
@@ -317,19 +317,28 @@ export function ImportConversation() {
           {view && <fieldset disabled={busy || !!retry} className={s.caseActions}>
             {view.documents.map(doc => {
               const pdf = local.get(doc.metadata.clientDocumentId);
+              const leaveRequests = pdf?.read.pages.flatMap(page => page.leaveRequests ?? []) ?? [];
               return <section key={doc.id} className={s.aiMessage}><strong>{pdf?.name ?? "Dokument sprawy"}</strong>
                 <p>Liczba stron: {doc.metadata.pages}.</p>
-                {pdf ? <><a href={pdf.url} target="_blank" rel="noreferrer">Otwórz własny PDF</a>
+                {pdf ? <><a href={pdf.url} target="_blank" rel="noreferrer">{pdf.read.mediaType?.startsWith("image/") ? "Otwórz własny skan" : "Otwórz własny PDF"}</a>
+                  {leaveRequests.map(({ kind, validFrom, validTo, locator }) =>
+                    <p key={[locator.page, locator.lineStart, kind, validFrom, validTo].join("-")}>
+                      Wniosek do pracodawcy o {leaveNames[kind]} od {validFrom} do {validTo}.{" "}
+                      <a href={pdf.url + "#page=" + locator.page} target="_blank" rel="noreferrer">Wniosek urlopowy · strona {locator.page}</a>
+                    </p>)}
+                  {leaveRequests.some(leave => !pdf.read.pages.some(page => page.candidates.some(c =>
+                    c.field === "benefitRequest" && c.validFrom === leave.validFrom && c.validTo === leave.validTo))) &&
+                    <p>Czy masz także wniosek o wypłatę zasiłku? Możesz dołączyć go spinaczem do tej sprawy.</p>}
                   {pdf.read.pages.every(page => !page.candidates.length) && <p>Brak automatycznie rozpoznanych pól. Otwórz stronę i potwierdź widoczny na niej zapis.</p>}
                   {pdf.read.pages.map(page => <details key={page.page} className={s.source}><summary>Strona {page.page}{page.status === "excluded" ? " · poza obliczeniem" : page.status === "manual" ? " · sprawdź ręcznie" : ""}</summary>
-                    <p className={s.sourceQuote}>{page.text || "Sprawdź obraz strony w oryginale."}</p><a href={pdf.url + "#page=" + page.page} target="_blank" rel="noreferrer">Otwórz stronę {page.page} w PDF</a>
+                    <p className={s.sourceQuote}>{page.text || "Sprawdź obraz strony w oryginale."}</p><a href={pdf.url + "#page=" + page.page} target="_blank" rel="noreferrer">Otwórz stronę {page.page} {pdf.read.mediaType?.startsWith("image/") ? "na skanie" : "w PDF"}</a>
                     {page.status !== "excluded" && page.status !== "blank" && page.kind !== "decision" && <button className={s.secondaryButton} type="button" onClick={() =>
                       setForm({ manual: { referenceId: doc.id, page: page.page, url: pdf.url, kind: page.kind } })}>Przepisz pole ze strony {page.page}</button>}</details>)}
                   <DocumentReview pdf={pdf} document={doc} date={view.assessments.at(-1)?.input.asOf} onConfirm={confirmDocument} />
                   {pdf.read.pages.flatMap(page => page.candidates.map((c, i) =>
                     <button type="button" key={page.page + "-" + i} className={s.secondaryButton} onClick={() => setForm({ choice: { document: pdf.read, registered: doc, candidate: c }, fact: { subjectId: c.field === "birthDate" ? "child-A" : "person-A", field: c.field, value: c.value, validFrom: c.validFrom, asOf: c.asOf ?? (c.value.kind === "date" ? c.value.date : undefined), validTo: c.validTo,
                       source: { kind: "document", referenceId: doc.id, page: page.page } } })}>{labels[c.field]} · {valueLabel(c.value)} · sprawdź stronę {page.page}</button>))}
-                </> : <p>Dołącz ponownie ten sam PDF, aby otworzyć wskazaną stronę.</p>}
+                </> : <p>Dołącz ponownie ten sam PDF lub skan, aby otworzyć wskazaną stronę.</p>}
               </section>;
             })}
             {view.facts.map(f => <div key={f.factId} className={s.aiMessage}><strong>{labels[f.fact.field]} · {valueLabel(f.fact.value)}</strong>
@@ -359,8 +368,8 @@ export function ImportConversation() {
         {pendingFile && !busy && <div className={s.row8}><button className={s.secondaryButton} onClick={() => attach(pendingFile)}>Uzupełnij tę sprawę</button>
           <button className={s.secondaryButton} onClick={() => attach(pendingFile, true)}>Rozpocznij osobną sprawę</button><button onClick={() => setPendingFile(null)}>Anuluj</button></div>}
         <Composer text={draft} textareaRef={textarea} onText={setDraft} onSend={() => send(draft)} busy={busy || !!retry} notice={notice || progress || null}
-          fileControl={<><input ref={picker} type="file" hidden accept=".pdf,application/pdf" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) pick(f); }} />
-            <button className={s.secondaryButton} disabled={busy || !!retry} onClick={() => picker.current?.click()}>Dołącz PDF sprawy</button></>} />
+          fileControl={<><input ref={picker} type="file" hidden accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) pick(f); }} />
+            <button className={s.secondaryButton} disabled={busy || !!retry} onClick={() => picker.current?.click()}>Dołącz PDF sprawy lub skan</button></>} />
       </div>
     </section>
   </main>;

@@ -3,7 +3,7 @@ import { chatStarters } from "../conversation";
 import type { EvidenceFact } from "../memory/contract";
 import type { MessageInput } from "./conversation";
 
-type History = { id: string; input: {intent:string}; citations: {kind:string;ref:string}[] };
+type History = { id: string; input: {intent:string;topic?:string;subjectId?:string;knownAt?:string}; citations: {kind:string;ref:string}[] };
 type Context = { facts: EvidenceFact[]; subjectId?: string; lastMessage?: History; assessmentId?: string; hasDocuments?: boolean };
 type Result = {input:MessageInput} | {clarify:string} | {correction:true};
 const recipient = "Komu ZUS wypłaca świadczenie aktywnie w żłobku?";
@@ -42,28 +42,39 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
   const date = /\b\d{4}-\d{2}-\d{2}\b/u.exec(text)?.[0];
   const starter = chatStarters.find(s=>s.prompt===text);
   if (starter && !privateContext) return {input:{intent:"public_question",publicQuestion:starter.prompt}};
+  if (/(?:moja siostra|mój brat|moja koleżanka|mój kolega)\s+(?:zarabia|pracuje|ma|dosta)/iu.test(text))
+    return {clarify:"Której osoby dotyczy pytanie? Wybierz ją w sprawie, aby sprawdzić jej dane."};
+  if (date && prior?.input.intent === "read_context" && prior.input.topic &&
+      /^(?:(?:a |i )?(?:na dzień |na |w dniu |dnia )?)\d{4}-\d{2}-\d{2}[?!. ]*$/iu.test(text))
+    return {input:{intent:"read_context",topic:prior.input.topic,subjectId:ctx.subjectId || prior.input.subjectId,
+      validAt:date,knownAt:prior.input.knownAt,replyTo:prior.id}};
   if (/gdyby|hipotetycz|co jeśli|co by było/iu.test(text)) return payVariant(text,ctx);
+  if (prior?.input.intent === "hypothetical" && /^(?:a |i )?(?:ile(?: (?:więcej|mniej))?|za jaki okres|za ile dni|jaka (?:byłaby )?różnica|o ile (?:więcej|mniej))[?!. ]*$/iu.test(text))
+    return {input:{intent:"ask_case",topic:"previous_sources",replyTo:prior.id}};
   const changeTopic = /^(?:nie[, ]+)?(?:chodzi(?:ło)? mi o|chodzi o|pytam o|mam na myśli) (?:program )?(dobry start|300\s*(?:plus|\+)|aktywnie w żłobku|żłobek)[?!. ]*$/iu.exec(text);
   if (changeTopic && prior?.input.intent === "public_question") {
     const topic = /żłob/iu.test(changeTopic[1]) ? "Aktywnie w żłobku" : "Dobry Start";
     return {input:{intent:"public_question",publicQuestion:"Chodzi mi o " + topic + ".",replyTo:prior.id}};
   }
   if (/^(?:nie[, ]+)?(?:popraw|sprostuj|korekt|jednak|zmień|pomyli)/iu.test(text) && ctx.facts.length) return {correction:true};
-  if (/skąd|dlaczego|pokaż źródło|na jakiej podstawie/iu.test(text)) {
+  const asksSource = /^(?:a )?(?:skąd(?: to wiesz)?|dlaczego|pokaż źródło|na jakiej podstawie|z której strony(?: dokumentu)?)[?!. ]*$/iu.test(text);
+  if (asksSource) {
     const assessmentId = prior ? prior.citations.find(c=>c.kind==="assessment")?.ref : ctx.assessmentId;
-    if (prior?.input.intent === "public_question" && (!privateContext || /^(?:skąd to wiesz|dlaczego|pokaż źródło|na jakiej podstawie)[?!. ]*$/iu.test(text)))
+    if (prior?.input.intent === "public_question")
       return {input:{intent:"public_question",publicQuestion:"Skąd to wiesz?",replyTo:prior.id}};
     if (assessmentId) return {input:{intent:"explain_result",assessmentId}};
     if (prior) return {input:{intent:"ask_case",topic:"previous_sources",replyTo:prior.id}};
   }
   const birth = /urodz(?:ił|iła|enia)|dat[ęay] urodz/iu.test(text) && /kiedy|jak[aą]|data|podaj|ile lat/iu.test(text);
-  const topic = birth ? "birthDate" : /stan wniosku|status wniosku|czy (?:już )?(?:złożył|wysłał|złożono|wysłano)/iu.test(text) ? "submissionStatus" :
+  const topic = birth ? "birthDate" : /(?:stan|status) (?:(?:mojego|naszego|tego) )?wniosku|czy (?:już )?(?:złożył|wysłał|złożono|wysłano)/iu.test(text) ? "submissionStatus" :
     /(?:ile|jakie|moj[ea]|podaj|pokaż).*(?:zarabia|zarob|pensj|wynagrodz)|(?:moja pensja|moje wynagrodzenie)/iu.test(text) ? "monthlyGrossPay" :
-    /czy (?:mam|miał[ae]m|był[ae]m).{0,15}ubezpiecz/iu.test(text) ? "sicknessCoverage" : undefined;
+    /czy (?:mam|miał[ae]m|był[ae]m).{0,15}ubezpiecz/iu.test(text) ? "sicknessCoverage" :
+    /(?:kto (?:był|jest) (?:moim )?pracodawcą|u kogo (?:pracuję|pracował[ae]m))/iu.test(text) ? "employerRef" :
+    /(?:z jakiego|jaki (?:mam|miał[ae]m)) tytuł\p{L}* ubezpieczenia/iu.test(text) ? "insuranceTitle" : undefined;
   const nursery = /żłob|zlob/iu.test(text) && /komu|kto .*(?:dosta|otrzy)|czyje konto|czyj rachunek/iu.test(text);
   if (topic) return {input:{intent:"read_context",topic,subjectId:ctx.subjectId || undefined,validAt:date,...(nursery ? {publicTopic:"nursery_recipient" as const} : {})}};
   const generalNursery = /^(?:komu (?:zus )?(?:wypłaca|przekazuje)|na czyje konto (?:zus )?(?:przelewa|wypłaca)) (?:świadczenie )?[„"]?aktywnie w żłobku[”"?!. ]*$/iu.test(text);
-  if ((nursery && (!privateContext || generalNursery)) || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto[?!. ]*$/iu.test(text)))
+  if ((nursery && (!privateContext || generalNursery)) || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto(?: (?:trafia|wpływa) świadczenie)?[?!. ]*$/iu.test(text)))
     return {input:{intent:"public_question",publicQuestion:nursery ? recipient : "Na czyje konto?",replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
   if (/^(?:hej|cześć|co umiesz|jak możesz mi pomóc)[?!. ]*$/iu.test(text)) return {input:{intent:"public_question",publicQuestion:"Co umiesz?"}};
   const direct = publicQuestion(text);

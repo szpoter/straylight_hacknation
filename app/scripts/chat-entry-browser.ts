@@ -14,9 +14,9 @@ async function run() {
   const buffer = Buffer.from(await pdf.save());
   const browser = await chromium.launch({ channel: "chrome" });
   try {
-    for (const width of [390, 1280]) {
+    for (const width of [390, 402, 1280]) {
       for (const entry of [...chatStarters, { label: "Tekst", prompt: question }, { label: "PDF", prompt: "" }]) {
-        const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: "reduce" });
+        const context = await browser.newContext({ viewport: { width, height: width === 402 ? 874 : 844 }, reducedMotion: "reduce" });
         try {
           const page = await context.newPage();
           page.setDefaultTimeout(15000);
@@ -37,6 +37,8 @@ async function run() {
           const chat = page.getByRole("region", { name: "Czat z Zusikiem" });
           const starters = chat.getByRole("group", { name: "Zacznij od pytania" });
           await starters.waitFor();
+          const log = chat.getByRole("log");
+          assert.ok(((await log.boundingBox())?.width ?? 0) >= Math.min(300, width * 0.75));
           assert.equal(await starters.getByRole("button").count(), 3);
           const input = chat.getByRole("textbox", { name: "Wiadomość do Zusika" });
           assert.ok(await input.isEditable());
@@ -57,6 +59,11 @@ async function run() {
             }
             assert.ok((await posted).ok());
             await chat.getByRole("log").getByText(entry.prompt, { exact: true }).waitFor();
+            if (!fixture) {
+              const reply = log.locator("[data-knowledge-turn] > :last-child p").last();
+              await reply.waitFor();
+              assert.ok(((await reply.boundingBox())?.width ?? 0) >= Math.min(300, width * 0.75));
+            }
             assert.deepEqual(sent, [entry.prompt]);
           }
           assert.equal(new URL(page.url()).pathname, "/app/rozmowa");

@@ -1,5 +1,5 @@
 // From app/, with DATABASE_URL pointing to the tester's Unix-socket Postgres.
-// node scripts/qa-juror-local.mjs --preflight | --draw
+// node scripts/qa-juror-local.mjs --preflight|--draw [local-built-app-directory]
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, createHmac, randomBytes } from "node:crypto";
@@ -32,6 +32,8 @@ async function freePort() {
   return port;
 }
 async function start() {
+  const builtApp = process.argv[3] ? await realpath(process.argv[3]) : app;
+  assert.ok((await lstat(path.join(builtApp,".next/BUILD_ID"))).isFile());
   const db = new URL(process.env.DATABASE_URL);
   const socket = db.searchParams.get("host");
   assert.ok(db.protocol === "postgresql:" && db.hostname === "localhost" && socket?.startsWith("/"));
@@ -40,7 +42,7 @@ async function start() {
   const port = await freePort();
   const origin = "http://127.0.0.1:" + port;
   const server = spawn(sandbox, ["-p", noIP, process.execPath, "node_modules/next/dist/bin/next",
-    "start", "-H", "127.0.0.1", "-p", String(port)], {cwd:app, stdio:["ignore","pipe","ignore"],
+    "start", "-H", "127.0.0.1", "-p", String(port)], {cwd:builtApp, stdio:["ignore","pipe","ignore"],
     env: { PATH:process.env.PATH, HOME:homedir(), NODE_ENV:"production", ZUSIK_CHAT_V1:"1",
       NEXT_TELEMETRY_DISABLED:"1", SESSION_SIGNING_SECRET:randomBytes(32).toString("hex"),
       DATABASE_URL:db.href, ZUSIK_APP_ORIGIN:origin }});
@@ -165,6 +167,16 @@ async function exercise(browser, origin, buffer, real) {
     const decisionCard = await cards.count() > 0;
     const candidateFields = await page.getByRole("button",{name:/sprawdź stronę/i}).count();
     const hasCorrection = await page.getByRole("button",{name:"Popraw",exact:true}).count() > 0;
+    let manualReviewOpened = false;
+    const manual = page.getByRole("button",{name:/^Przepisz pole ze strony /,includeHidden:true}).first();
+    if (!hasCorrection && await manual.count()) {
+      const details = manual.locator("xpath=ancestor::details[1]");
+      if (await details.getAttribute("open") === null) await details.locator("summary").click();
+      await manual.click();
+      const reference = await page.getByRole("link",{name:/Sprawdź oryginał · strona/}).getAttribute("href");
+      manualReviewOpened = /^blob:.+#page=\d+$/.test(reference);
+      await page.getByRole("button",{name:"Anuluj",exact:true}).click();
+    }
     if (!hasCorrection) await ask("Co mam uzupełnić, żeby poprawić wynik?");
     // A correction requires a reviewed fact and its source. Never invent one for a private packet.
     stage = "reload";
@@ -173,7 +185,7 @@ async function exercise(browser, origin, buffer, real) {
     stage = "boundary";
     assert.equal(blocked,0);
     console.log(JSON.stringify({stage:real ? "local_draw":"synthetic_preflight", hasPage, followedEvidence, decisionCard,
-      candidatesAvailable:candidateFields>0, correctionAvailable:hasCorrection, restoredMetadata:true, requests, blocked, workers}));
+      candidatesAvailable:candidateFields>0, correctionAvailable:hasCorrection, manualReviewOpened, restoredMetadata:true, requests, blocked, workers}));
     return {hasPage, decisionCard, hasCorrection};
   } finally { await context.close(); }
 }

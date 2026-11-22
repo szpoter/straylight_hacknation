@@ -1,4 +1,5 @@
-import { parse } from "next/dist/compiled/node-html-parser";
+// The explicit compiled entry keeps Next webpack from bundling its entity decoder a second time.
+import { parse } from "next/dist/compiled/node-html-parser/index.js";
 import sources from "../../../corpus/official-sources.json";
 import { normalizeSpaces } from "./corpus";
 

@@ -3,7 +3,7 @@ import type { OcrWord } from "@/lib/ocr/birth-certificate";
 export type PageLine = { text: string; confidence: number; box: OcrWord["box"] };
 
 // Both readers supply top-left normalized boxes. Group by physical baseline before finding columns.
-export function pageLines(words: OcrWord[], width: number, height: number): PageLine[] {
+export function pageLines(words: OcrWord[], width: number, height: number, joinPdfRuns = false): PageLine[] {
   const ordered = [...words].sort((a, b) => a.box.y + a.box.h / 2 - b.box.y - b.box.h / 2);
   const rows: OcrWord[][] = [];
   for (const word of ordered) {
@@ -19,7 +19,12 @@ export function pageLines(words: OcrWord[], width: number, height: number): Page
     let top = 1, bottom = 0, confidence = 100;
     for (const word of row) {
       const { x, y, w, h } = word.box;
-      if (text) text += (x - right) * width > h * height * 1.35 ? "\t" : " ";
+      if (text) {
+        const gap = (x - right) * width;
+        // Polish glyphs often use a separate embedded font in ZUS forms and touch the adjacent run.
+        if (gap > h * height * 1.35) text += "\t";
+        else if (!joinPdfRuns || gap > h * height * 0.09) text += " ";
+      }
       text += word.text;
       top = Math.min(top, y);
       bottom = Math.max(bottom, y + h);

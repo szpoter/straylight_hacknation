@@ -93,3 +93,41 @@ describe("extended v1 evidence", () => {
     expect(confirmed("Rozliczenie konta płatnika\nStan spłaty zadłużenia: niespłacone")).toEqual([]);
   });
 });
+
+describe("written Polish requests", () => {
+  const read = (text: string) => analyzeCasePage(id, 7, text, "ocr", undefined, 93);
+  it("locates a parent's written leave request without inferring an application for payment", () => {
+    const page = read("Wniosek\nZwracam się z uprzejmą prośbą o udzielenie mi\nurlopu ojcowskiego w okresie\nod 4 października 2026 r. do 17 października 2026 r.");
+    expect(page.candidates).toEqual([]);
+    expect(page.leaveRequests).toEqual([{ kind: "paternity", validFrom: "2026-10-04", validTo: "2026-10-17",
+      locator: { clientDocumentId: id, page: 7, lineStart: 2, lineEnd: 4 } }]);
+  });
+  it("ties repeated letter headings to the date in the actual request", () => {
+    const letter = read("Wniosek o udzielenie urlopu macierzyńskiego\nW związku z urodzeniem dziecka proszę o udzielenie mi urlopu macierzyńskiego,\npocząwszy od 1 lutego 2026 do 20 czerwca 2026");
+    expect(letter.leaveRequests).toMatchObject([{ kind: "maternity", validFrom: "2026-02-01", validTo: "2026-06-20", locator: { lineStart: 1, lineEnd: 3 } }]);
+    expect(letter.candidates).toEqual([]);
+  });
+  it("locates the explicit request for payment and its own range", () => {
+    const page = read("Wnoszę o wypłatę zasiłku macierzyńskiego\nza okres od 2.3.2026 do 3.5.2026");
+    expect(page.candidates).toMatchObject([{ field: "benefitRequest", validFrom: "2026-03-02", validTo: "2026-05-03",
+      locator: { page: 7, lineStart: 1, lineEnd: 2 } }]);
+  });
+  it.each(["Wniosek o zasiłek macierzyński\nOkres zatrudnienia", "Wniosek o urlop rodzicielski\nWcześniej korzystałam",
+    "Wniosek o zasiłek macierzyński\n☐ urlop ojcowski", "Proszę o zestawienie wypłat zasiłku macierzyńskiego",
+    "Decyzja\nWnoszę o wypłatę zasiłku macierzyńskiego", "Wniosek o urlop macierzyński albo urlop rodzicielski"])(
+    "skips instructions, other dates and ambiguous requests (%s)", heading => {
+      const page = read(heading + "\nod 02.03.2026 do 03.05.2026");
+      expect(page.candidates).toEqual([]);
+      expect(page.leaveRequests ?? []).toEqual([]);
+    });
+  it("requires a selected maternity row in the ZAM period group", () => {
+    const form = (mark: string) => read("Wnioskuję o zasiłek macierzyński za okres:\n" + mark + " urlopu macierzyńskiego\nod 2.3.2026 do 3.5.2026");
+    expect(form("☒").candidates).toMatchObject([{ field: "benefitRequest", validFrom: "2026-03-02", validTo: "2026-05-03" }]);
+    expect(form("☐").candidates).toEqual([]);
+    expect(form("").candidates).toEqual([]);
+  });
+  it("reads numbered civil register sections and excludes parental dates", () => {
+    const page = read("Odpis skrócony\naktu urodzenia\n1. Dane dziecka\nData urodzenia\n3 lutego 2026 r.\n2. Dane rodziców\nData urodzenia 12.02.1991");
+    expect(page.candidates).toMatchObject([{ field: "birthDate", value: { date: "2026-02-03" }, locator: { page: 7, lineStart: 4, lineEnd: 5 } }]);
+  });
+});

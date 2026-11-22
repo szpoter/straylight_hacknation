@@ -3,7 +3,7 @@
 import { createPolishOcrWorker, loadImage, pdfjs } from "@/features/kamil/read-document";
 import { MIN_CONFIDENCE } from "@/lib/ocr/birth-certificate";
 import { wordsFromPdfItems, wordsFromTesseract } from "@/lib/ocr/words";
-import { analyzeCasePage, containsDecision, type LocalCasePage, type LocalCaseDocument } from "./case-evidence";
+import { analyzeCasePage, containsDecision, type LocalCasePage, type LocalCaseDocument, type LocalLocator } from "./case-evidence";
 import { checkScanDimensions } from "./case-image-size";
 import { openCaseProgress } from "./case-read-progress";
 import { pageLines, type PageLine } from "./case-page-layout";
@@ -122,7 +122,7 @@ async function readPage(page: PdfPage, lib: Awaited<ReturnType<typeof pdfjs>>, s
     const imageOps = [lib.OPS.paintImageXObject, lib.OPS.paintInlineImageXObject, lib.OPS.paintImageMaskXObject,
       lib.OPS.paintImageXObjectRepeat, lib.OPS.paintInlineImageXObjectGroup, lib.OPS.paintImageMaskXObjectGroup, lib.OPS.paintImageMaskXObjectRepeat];
     if (!operations.fnArray.some(op => imageOps.includes(op))) {
-      const lines = pageLines(wordsFromPdfItems(runs, page.pageNumber, base.width, base.height), base.width, base.height);
+      const lines = pageLines(wordsFromPdfItems(runs, page.pageNumber, base.width, base.height), base.width, base.height, true);
       return { method: "pdf_text", text: lines.length ? lines.map(l => l.text).join("\n") : raw, lines, confidence: 100 };
     }
   }
@@ -170,15 +170,18 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
       page.status = "excluded";
       page.reason = "decision";
       page.candidates = [];
+      delete page.leaveRequests;
     } else if (input.blank) { page.status = "blank"; page.reason = undefined; }
     const lines = input.lines;
     if (lines?.length) {
       page.lines = lines;
-      page.candidates = page.candidates.filter(c => {
+      const reliable = (c: { locator: LocalLocator }) => {
         if (lines.slice(c.locator.lineStart - 1, c.locator.lineEnd).every(line => line.confidence >= MIN_CONFIDENCE)) return true;
         page.reason = "ambiguous_field";
         return false;
-      });
+      };
+      page.candidates = page.candidates.filter(reliable);
+      if (page.leaveRequests) page.leaveRequests = page.leaveRequests.filter(reliable);
     }
     pages.push(page);
     options.onPage?.(page, total);

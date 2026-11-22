@@ -1495,6 +1495,9 @@ components:
           - failed
         answer:
           type: string
+        publicQuery:
+          type: string
+          description: Publiczne zapytanie utworzone przez serwer do wznowienia tematu.
         citations:
           type: array
           items:

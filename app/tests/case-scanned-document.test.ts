@@ -66,3 +66,22 @@ it("reads payroll cells with Polish OCR from PNG, mixed PDF and 90°/180° JPEG 
     }));
   }
 }, 60_000);
+
+it("reads a signed-letter layout and keeps its cited leave period local", async () => {
+  vi.stubGlobal("document", { createElement: () => createCanvas(1, 1) });
+  const canvas = createCanvas(1500, 650);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "black";
+  ctx.font = "42px Arial";
+  ["Wniosek", "Proszę o udzielenie mi urlopu ojcowskiego", "od 2 marca 2026 do 15 marca 2026"].forEach((line, index) =>
+    ctx.fillText(line, 75, 120 + index * 105));
+  const scan = Uint8Array.from(canvas.toBuffer("image/png"));
+  const [doc] = await readCaseDocuments([new File([scan], "pismo.bin")], {
+    caseId: "leave-synthetic", signal: AbortSignal.timeout(20_000), onProgress() {},
+  });
+  expect(doc.pages[0].candidates).toEqual([]);
+  expect(doc.pages[0].leaveRequests).toEqual([{ kind: "paternity", validFrom: "2026-03-02", validTo: "2026-03-15",
+    locator: { clientDocumentId: doc.metadata.clientDocumentId, page: 1, lineStart: 2, lineEnd: 3 } }]);
+}, 25_000);

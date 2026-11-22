@@ -1,6 +1,7 @@
 import { factInput, type CaseDocument, type DocInput, type FactInput } from "@/lib/zusik/memory/contract";
 
 import { claimFields, documentDay, documentMoney } from "./case-claim-fields";
+import { writtenRequests, type LeaveRequest } from "./case-written-request";
 import type { PageLine } from "./case-page-layout";
 
 export type DocumentKind = DocInput["kind"];
@@ -20,6 +21,7 @@ export type LocalCasePage = {
   confidence?: number;
   lines?: PageLine[];
   table?: Column[];
+  leaveRequests?: LeaveRequest[];
   candidates: EvidenceCandidate[];
 };
 export type LocalCaseDocument = { caseId: string; mediaType?: "application/pdf" | "image/jpeg" | "image/png"; storageUnavailable?: boolean; metadata: DocInput; pages: LocalCasePage[] };
@@ -34,12 +36,16 @@ export function containsDecision(text: string) {
 
 function classify(text: string): PageRole | undefined {
   if (containsDecision(text)) return "decision";
+  if (/^poswiadczenie\b/mu.test(text) && /ubezpiecz|skladk/u.test(text)) return "insurance";
   if (/^(?:odpis (?:skrocony |zupelny )?aktu urodzenia|akt urodzenia|zaswiadczenie szpitalne|zaswiadczenie o porodzie|akt zgonu|karta urodzenia|postanowienie o (?:przysposobieniu|ustanowieniu pieczy))\b/mu.test(text)) return "certificate";
   if (/^(?:z[- ]?3[ab]?|zaswiadczenie platnika|zestawienie wynagrodzen|tabela wynagrodzen|lista plac)\b/mu.test(text)) return "payroll";
   if (/^(?:e[- ]?zla|zaswiadczenie lekarskie)\b/mu.test(text)) return "medical_leave";
   if (/^(?:(?:potwierdzenie|poswiadczenie|zaswiadczenie) (?:o )?(?:podlegani[au] |okresach )?ubezpiecz|zaswiadczenie o stanie (?:konta platnika|zadluzenia)|rozliczenie konta platnika)/mu.test(text)) return "insurance";
   if (/^(?:zam|wniosek o (?:wyplate |udzielenie )?(?:zasilek|zasilku|urlop|urlopu))\b/mu.test(text)) return "application";
   if (/^historia (?:wyplat|urlopow|zatrudnienia|zadluzenia)\b/mu.test(text)) return "history";
+  const joined = text.replace(/[\t \n]+/gu, " ");
+  if (/(?:^|\n)(?:wniosek\b|wnosze o|wnioskuje o|prosze o|zwracam sie z (?:uprzejma )?prosba o)/u.test(text) &&
+      /(?:zasil(?:ek|ku) macierzynski|urlopu? (?:macierzynski|rodzicielski|ojcowski))/u.test(joined)) return "application";
 }
 
 function columns(line: string) {
@@ -57,7 +63,7 @@ function monthScope(value: string) {
 
 export function analyzeCasePage(clientDocumentId: string, page: number, text: string, method: LocalCasePage["method"], previous?: LocalCasePage, confidence?: number): LocalCasePage {
   const folded = foldLabel(text);
-  const identified = classify(folded);
+  const identified = classify(folded.replace(/^[ \t]*(?:\d+[.)]\s*)?/gmu, "").replace(/(odpis (?:skrocony|zupelny)|aktu)\s*\n\s*/gu, "$1 "));
   const continued = /(?:ciag dalszy|kontynuacja|c\.d\.)/u.test(folded) ||
     (previous?.role === "payroll" && /^(?:\d{4}-\d{2}|\d{2}[./]\d{4})[ |;\t]/mu.test(folded));
   const role = identified ?? (previous?.role === "decision" || continued ? previous?.role : undefined) ?? "other";
@@ -69,12 +75,26 @@ export function analyzeCasePage(clientDocumentId: string, page: number, text: st
 
   const lines = text.split(/\r?\n/u).map(foldLabel);
   claimFields(result, clientDocumentId, lines);
+  if (kind === "application") {
+    const { claims, leaves } = writtenRequests(lines, clientDocumentId, page);
+    if (!result.candidates.some(c => c.field === "benefitRequest")) result.candidates.push(...claims);
+    if (leaves.length) result.leaveRequests = leaves;
+  }
   let table = continued && !identified ? previous?.table : undefined;
+  let childSection = /(?:akt(?:u)?|karta)\s+urodzenia/u.test(folded);
   for (const [index, label] of lines.entries()) {
+    if (/\bdane (?:rodzicow|matki|ojca|wnioskodawcy)|\b(?:dane osoby skladajacej|dane wnioskodawczyni)\b/u.test(label)) childSection = false;
+    if (/\bdane (?:dziecka|urodzonego dziecka)\b/u.test(label)) childSection = true;
     const locator = { clientDocumentId, page, lineStart: index + 1, lineEnd: index + 1 };
-    if (kind === "certificate" && /^data urodzenia(?: dziecka)?\s*:/u.test(label)) {
-      const date = documentDay(label.slice(label.indexOf(":") + 1).trim());
-      if (date) result.candidates.push({ field: "birthDate", value: { kind: "date", date }, locator });
+    const birth = /^(?:\d+[.)]\s*)?data( i miejsce)? urodzenia( dziecka)?(?:\s*[:|]\s*|\s+|$)(.*)$/u.exec(label.replace(/\s+/gu, " "));
+    if (birth && (birth[2] || (kind === "certificate" && childSection))) {
+      // The label and filled value can be separate PDF text runs, or two successive scan lines.
+      const below = !birth[3];
+      const raw = below ? lines[index + 1] ?? "" : birth[3];
+      const value = (birth[1] ? raw.split(/,/u, 1)[0] : raw).replace(/^[|\s]+|[|\s]+$/gu, "");
+      const date = documentDay(value);
+      if (date) result.candidates.push({ field: "birthDate", value: { kind: "date", date },
+        locator: { ...locator, lineEnd: index + (below ? 2 : 1) } });
       else result.reason = "ambiguous_field";
     }
     if (kind !== "payroll") continue;

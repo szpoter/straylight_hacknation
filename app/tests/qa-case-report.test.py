@@ -14,6 +14,12 @@ class Scores(unittest.TestCase):
         self.assertEqual(result["extra"], 1)
         self.assertFalse(result["full"])
 
+    def test_decision_only_is_never_a_fully_verified_package(self):
+        one = {"branch": "a", "decision": "eligible"}
+        actual = compare({"expected": [one], "review": "verified"}, {"fields": 2}, [one])
+        self.assertEqual(actual["metrics"]["decision"]["correct"], 1)
+        self.assertFalse(actual["full"])
+
     def test_absent_output_does_not_remove_a_verified_amount_from_denominator(self):
         key = {"expected": [{"branch": "a", "decision": "eligible", "amount": {"grosze": 0, "unit": "total-gross"}}], "review": "verified"}
         result = compare(key, {"fields": 0}, None)

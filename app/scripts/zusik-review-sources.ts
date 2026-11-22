@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile, rename } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { parse } from "next/dist/compiled/node-html-parser";
+import { parse } from "next/dist/compiled/node-html-parser/index.js";
 import { normalizeSpaces, sha256 } from "../src/lib/rag/corpus";
 import { FAMILY_CATALOG_URL, familyProgramUrl } from "../src/lib/rag/official-sections";
 
