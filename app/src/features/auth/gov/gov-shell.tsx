@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import promoPhoto from "../../../../assets/login-promo.jpg";
 import { BrandMark, DemoBar } from "../auth-shell";
-import { GlobeIcon } from "../service-icons";
 import authStyles from "../auth.module.css";
 import styles from "./gov.module.css";
 
@@ -29,11 +28,6 @@ export function GovShell({ demoNote, children }: { demoNote?: ReactNode; childre
               </span>
               <span className={styles.brandName}>Przewodnik Rodzica</span>
             </Link>
-            <span className={styles.language} aria-disabled="true" title="Niedostępne w wersji demonstracyjnej">
-              <GlobeIcon className={styles.languageIcon} />
-              <span lang="uk">українська</span>
-              <span className="visually-hidden"> (niedostępne w wersji demonstracyjnej)</span>
-            </span>
           </header>
 
           <main id="tresc" className={styles.main}>

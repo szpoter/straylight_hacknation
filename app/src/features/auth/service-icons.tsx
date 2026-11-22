@@ -57,16 +57,6 @@ export function TimerIcon({ className }: IconProps) {
   );
 }
 
-export function GlobeIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.6" />
-      <ellipse cx="12" cy="12" rx="4.3" ry="10" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M2.5 8.6h19M2.5 15.4h19" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
 export function LockIcon({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 16 18" fill="none" aria-hidden="true">
