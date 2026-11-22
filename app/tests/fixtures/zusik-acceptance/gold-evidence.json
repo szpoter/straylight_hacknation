@@ -1,0 +1,192 @@
+{
+  "800-plus": {
+    "locator": "Świadczenie wychowawcze 800+",
+    "sha256": "ee678961fb6208fed0c309ddb35b8a548d8fb7da6a19e62886b2d1aa5295cd80",
+    "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin"
+  },
+  "aktywny-rodzic": {
+    "locator": "Program Aktywny Rodzic",
+    "sha256": "8d54992ac76fdf5310a8296ee9d761dac05cf5013aacb85183dc715406d43e8e",
+    "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin"
+  },
+  "dobry-start": {
+    "locator": "Program Dobry Start 300+",
+    "sha256": "11c269052efb6522b37771c19a0f5393b6146be4b9a87b6655b601c6d7e77001",
+    "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin"
+  },
+  "dobry-start-kanaly": {
+    "locator": "Jak złożę wniosek",
+    "sha256": "3bed137268b587544b124df11f997952cf35cbe97654e5d92c94ac7b899b89a1",
+    "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/program-dobry-start"
+  },
+  "dobry-start-termin": {
+    "locator": "Co zrobić, aby otrzymać wsparcie",
+    "sha256": "911c7953c056d023b5cf13eba7a5ddc4ef29f0940f419c552fa2a1fd3f1a3f36",
+    "url": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/program-dobry-start"
+  },
+  "kp-art182-1a-par1": {
+    "locator": "art. 182¹a § 1",
+    "sha256": "c005cf8d8b31e34db7496fd7e1f980a725c33e579f2629a327ebe7bb763c91b8",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf"
+  },
+  "kp-art182-1a-par3": {
+    "locator": "art. 182¹a § 3",
+    "sha256": "82fa508d72ca89a3ac3411a344c42beb88d9b3bdcf3b4f42ccae1ded9991a79b",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf"
+  },
+  "kp-art182-1a-par4": {
+    "locator": "art. 182¹a § 4",
+    "sha256": "2384b9e03ec1ae4a9a04202271ef13f977a96cd369c6a64aaa875aa0285d9ccb",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf"
+  },
+  "kp-art182-1c": {
+    "locator": "art. 182¹c",
+    "sha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf"
+  },
+  "kp-art182-1d-par1": {
+    "locator": "art. 182¹d § 1",
+    "sha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf"
+  },
+  "kp-ojcowski": {
+    "locator": "art. 182³ § 1 i § 1¹",
+    "sha256": "e9cdd5fed4af18cda4b3ab7810a293e7b9fa78956f1a6ad43973adc2a12c0730",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf"
+  },
+  "rozp-2025-322-par15-ust2-pkt3": {
+    "locator": "§ 15 ust. 2 pkt 3",
+    "sha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+    "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf"
+  },
+  "rozp-2025-322-par22": {
+    "locator": "§ 22",
+    "sha256": "a23f6a3ab6cdbce2226edb584bd270fb1184ee7b44ded0f49d258323b3857ce6",
+    "url": "https://eli.gov.pl/api/acts/DU/2025/322/text.pdf"
+  },
+  "rz-par33-ust1": {
+    "locator": "§ 33 ust. 1",
+    "sha256": "c3c4cef7bce7ce1c7d868c1cdd9ff97f8c8bfa3d6f400a9328d3dbf1f7b7ed90",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/1316/text.pdf"
+  },
+  "uz-11-1": {
+    "locator": "art. 11",
+    "sha256": "902d3d0d8c7d4b5da25231afc18011a7026ab369a2179a4a4e7d6b47671257c2",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-12-1": {
+    "locator": "art. 12",
+    "sha256": "569df3c3e25057a96cb454702c3011caa020c3757aaed460c1f47d61e0552c2c",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-14-1": {
+    "locator": "art. 14",
+    "sha256": "6018f239a38aeed41be60e5c3751f61bbadeb3138a235499acc14f43c8a39140",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-15-1": {
+    "locator": "art. 15",
+    "sha256": "6e24630b8d872951fbb92fe996b69aea1118996a5860114247835227c7d2382e",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-16-1": {
+    "locator": "art. 16",
+    "sha256": "cf26b5d81ff143ca4379f3b2b8dc8e205766963e0a126a43afc72cd16b3bd9b6",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-17-1": {
+    "locator": "art. 17",
+    "sha256": "6b37f732ef7fb7726ab557a1c2d64d0fbc505858c325676dde0c1c65ee964c27",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-18-1": {
+    "locator": "art. 18",
+    "sha256": "5f309b3a4e90cc8ad3a2f195e9e0a4ef1efbf9d8f354c6f9dc629d42284cd5f0",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-19-1": {
+    "locator": "art. 19",
+    "sha256": "5882862e8460211f2baea192c39d24fbbc403b3d0a15ee35b98af6237776e32f",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-31-1": {
+    "locator": "art. 31",
+    "sha256": "7c4e231bd72e72aed019e1c87f864642952ec14c2bd52af07dc9d45a78dd6926",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-36-1": {
+    "locator": "art. 36",
+    "sha256": "c569b2179cf957f2732e008c6cdf01b50f880e9cc065ab7ab777154093151d33",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-37-1": {
+    "locator": "art. 37",
+    "sha256": "c1427fdbb247580c8e810c5b603aadbc9741ed7349c9c009bc84baa009bbadba",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-4-1": {
+    "locator": "art. 4",
+    "sha256": "4357dfa490475bfea9728ca294cb6ba0b79bf70f1ed523da9815ee0ee68aeda1",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-53-2": {
+    "locator": "art. 53",
+    "sha256": "e661ee3a2f3da8404e7069e0cee7b5a5447b981f05baee0fb14a93c43cad5fb5",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-6-1": {
+    "locator": "art. 6",
+    "sha256": "ec66aa5eb34e96025a10018185f2b5b9905ae01bc9f346be4888ab952e9921ee",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-61-1": {
+    "locator": "art. 61",
+    "sha256": "eae13d557a41ed01eb37028eab7eab1639ea134dea41cb4d9df62078884b3352",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-63-1": {
+    "locator": "art. 63",
+    "sha256": "900667411d228922ebfea7f72b31a74890b936a427d1ff03067e99dba3b3f46a",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-64-1": {
+    "locator": "art. 64",
+    "sha256": "a826ea812bb346b07979f58ccc55a9f6432f2390638eb7aab8bb2f91dd208aa8",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-65-1": {
+    "locator": "art. 65",
+    "sha256": "a873cad935f84fb93c4fdd99479234731a8f15fc2c2d651730cf1dfb024e4df6",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-67-1": {
+    "locator": "art. 67",
+    "sha256": "4bcd0e3c7cf9847fc237ac2030fae5eeb100057243e2a8cde590aaf2db7c4a8c",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-67-2": {
+    "locator": "art. 67",
+    "sha256": "4cfbab02e68c83aaf751f0d9a55bbd32316cda6be90192eacaa263ae68b6e22b",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-7-1": {
+    "locator": "art. 7",
+    "sha256": "88f20c5617c7302460ddf17a255fb30f05ced0965c69f4d25365a4fcad5f9d91",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-8-1": {
+    "locator": "art. 8",
+    "sha256": "aa1b5bd4837c1c48b592528462cdfb32ea1c18280da7eed0af4122187881e74a",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "uz-8-2": {
+    "locator": "art. 8",
+    "sha256": "e769eb477cef9cac9900621dccfffd1372185c686b8c2c2eb0be967478f98145",
+    "url": "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf"
+  },
+  "zlobek-odbiorca": {
+    "locator": "Komu wypłacamy świadczenie aktywnie w żłobku",
+    "sha256": "5d7c209924dbe5e4c5f567d3764287385edb31473c816065e2dbdab05134d387",
+    "url": "https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku"
+  }
+}

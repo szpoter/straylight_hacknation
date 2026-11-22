@@ -1,0 +1,1017 @@
+{
+  "applicationSha": "c230d946e4278ff394f5a13ff8c41b5a8f11374c",
+  "collection": "zusik_test_family_20261122_v4",
+  "generation": "disabled",
+  "public": {
+    "evaluatedAt": "2026-11-22T01:28:28.175Z",
+    "collection": "zusik_test_family_20261122_v4",
+    "passed": 11,
+    "total": 11,
+    "rows": [
+      {
+        "id": "paternity-date",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "zus-ojcowski-termin",
+          "rz-par33-ust1",
+          "rz-33-1",
+          "rz-zal3-3",
+          "uz-30a-1"
+        ],
+        "evidence": [
+          "rz-par33-ust1",
+          "rz-33-1"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "paternity-parts",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "kp-ojcowski",
+          "kp-1823-1",
+          "kp-183-3",
+          "kp-1823-2",
+          "rw-17-1"
+        ],
+        "evidence": [
+          "kp-ojcowski",
+          "kp-1823-1",
+          "kp-1823-2"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "paternity-attachments",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "rz-par33-ust1",
+          "zus-ojcowski-termin",
+          "rz-33-1",
+          "rz-16-1",
+          "rz-zal6-3"
+        ],
+        "evidence": [
+          "rz-par33-ust1",
+          "rz-33-1"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "sickness-current",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "zus-chorobowy-po",
+          "uz-art6-ust1",
+          "zus-chorobowy-trwanie",
+          "poradnik-25-3",
+          "uz-8-1"
+        ],
+        "evidence": [
+          "uz-7-1",
+          "uz-art6-ust1",
+          "uz-art7"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "sickness-prior",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "uz-art13-ust1",
+          "zus-chorobowy-po",
+          "uz-12-1",
+          "uz-7-1",
+          "uz-art6-ust1"
+        ],
+        "evidence": [
+          "uz-7-1",
+          "uz-art7",
+          "uz-art13-ust1"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "sickness-rate",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "uz-art11-ust2-pkt1",
+          "uz-11-1",
+          "poradnik-25-2",
+          "poradnik-28-3",
+          "poradnik-26-1"
+        ],
+        "evidence": [
+          "uz-art6-ust1",
+          "uz-art11-ust2-pkt1",
+          "uz-11-1"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "rehabilitation",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "rodzina-2026-11-v1",
+        "status": "not_measured",
+        "top5": [
+          "uz-18-1",
+          "rz-11-1",
+          "poradnik-25-1",
+          "uz-18-3",
+          "rz-11-2"
+        ],
+        "evidence": [
+          "uz-18-1",
+          "uz-18-2",
+          "uz-18-3",
+          "uz-18-4"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "family-800",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "programy-2026-11-v4",
+        "status": "not_measured",
+        "top5": [
+          "800-plus",
+          "of-800-9-1",
+          "of-800-1-1",
+          "of-800-6-3",
+          "of-800-6-5"
+        ],
+        "evidence": [
+          "800-plus"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "family-school",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": false,
+        "evidenceHit": true,
+        "version": "programy-2026-11-v4",
+        "status": "not_measured",
+        "top5": [
+          "of-dobry-1-1",
+          "of-dobry-2-2",
+          "dobry-start-termin",
+          "of-dobry-1-3",
+          "of-zerowka-1-5"
+        ],
+        "evidence": [
+          "dobry-start",
+          "dobry-start-termin",
+          "dobry-start-kanaly"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "family-care",
+        "mode": "retrieval",
+        "pass": true,
+        "rawHit": true,
+        "evidenceHit": true,
+        "version": "programy-2026-11-v4",
+        "status": "not_measured",
+        "top5": [
+          "aktywny-rodzic",
+          "of-aktywny-1-2",
+          "of-faq-22-1",
+          "of-aktywny-2-1",
+          "of-aktywny-1-3"
+        ],
+        "evidence": [
+          "aktywny-rodzic"
+        ],
+        "citations": [],
+        "claims": []
+      },
+      {
+        "id": "outside",
+        "mode": "abstention",
+        "pass": true,
+        "rawHit": false,
+        "evidenceHit": false,
+        "version": "marta-v1",
+        "status": "insufficient_evidence",
+        "top5": [],
+        "evidence": [],
+        "citations": [],
+        "claims": []
+      }
+    ]
+  },
+  "marta": [
+    {
+      "id": "q01",
+      "top": [
+        {
+          "logicalId": "kp-art182-1a-par6",
+          "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+          "score": 1
+        },
+        {
+          "logicalId": "mrpips-dzielenie-jednoczesnie",
+          "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+          "score": 0.5833334
+        },
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 0.4166667
+        },
+        {
+          "logicalId": "mrpips-nieprzenoszalna",
+          "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+          "score": 0.34285715
+        }
+      ],
+      "evidence": [
+        "kp-art182-1a-par6",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par7",
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par5"
+      ]
+    },
+    {
+      "id": "q02",
+      "top": [
+        {
+          "logicalId": "kp-art182-1d-par1",
+          "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.39285713
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.36666667
+        },
+        {
+          "logicalId": "kp-art182-1e-par2",
+          "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
+          "score": 0.3611111
+        }
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22"
+      ]
+    },
+    {
+      "id": "q03",
+      "top": [
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.75
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.75
+        },
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "kp-art182-1a-par6",
+          "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "mrpips-dzielenie-jednoczesnie",
+          "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+          "score": 0.30952382
+        }
+      ],
+      "evidence": [
+        "kp-art182-1a-par7",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par6"
+      ]
+    },
+    {
+      "id": "q04",
+      "top": [
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+          "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+          "score": 1
+        },
+        {
+          "logicalId": "rozp-2025-322-par22",
+          "fragmentSha256": "a23f6a3ab6cdbce2226edb584bd270fb1184ee7b44ded0f49d258323b3857ce6",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+          "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.5
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.33333334
+        }
+      ],
+      "evidence": [
+        "rozp-2025-322-par15-ust2-pkt1",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust2-pkt3",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par15-ust1"
+      ]
+    },
+    {
+      "id": "q05",
+      "top": [
+        {
+          "logicalId": "kp-art182-1a-par6",
+          "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+          "score": 1
+        },
+        {
+          "logicalId": "mrpips-dzielenie-jednoczesnie",
+          "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+          "score": 0.5833334
+        },
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 0.4166667
+        },
+        {
+          "logicalId": "mrpips-nieprzenoszalna",
+          "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+          "score": 0.34285715
+        }
+      ],
+      "evidence": [
+        "kp-art182-1a-par6",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par7",
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par5"
+      ]
+    },
+    {
+      "id": "q06",
+      "top": [
+        {
+          "logicalId": "kp-art182-1d-par1",
+          "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.39285713
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.36666667
+        },
+        {
+          "logicalId": "kp-art182-1e-par2",
+          "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
+          "score": 0.3611111
+        }
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22"
+      ]
+    },
+    {
+      "id": "q07",
+      "top": [
+        {
+          "logicalId": "kp-art182-1d-par1",
+          "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "kp-art182-1e-par2",
+          "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
+          "score": 0.5
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.36666667
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.34285715
+        }
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust1"
+      ]
+    },
+    {
+      "id": "q08",
+      "top": [
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.75
+        },
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.75
+        },
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "kp-art182-1a-par6",
+          "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "mrpips-dzielenie-jednoczesnie",
+          "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+          "score": 0.30952382
+        }
+      ],
+      "evidence": [
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22",
+        "kp-art182-1a-par7",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par6"
+      ]
+    },
+    {
+      "id": "q09",
+      "top": [
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 1
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+          "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+          "score": 0.5
+        },
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.5
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+          "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+          "score": 0.3
+        }
+      ],
+      "evidence": [
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt3",
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust2-pkt1"
+      ]
+    },
+    {
+      "id": "q10",
+      "top": [
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+          "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+          "score": 1
+        },
+        {
+          "logicalId": "rozp-2025-322-par22",
+          "fragmentSha256": "a23f6a3ab6cdbce2226edb584bd270fb1184ee7b44ded0f49d258323b3857ce6",
+          "score": 0.5833334
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+          "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.45
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.33333334
+        }
+      ],
+      "evidence": [
+        "rozp-2025-322-par15-ust2-pkt1",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust2-pkt3",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par15-ust1"
+      ]
+    },
+    {
+      "id": "q11",
+      "top": [
+        {
+          "logicalId": "kp-art182-1a-par4",
+          "fragmentSha256": "2384b9e03ec1ae4a9a04202271ef13f977a96cd369c6a64aaa875aa0285d9ccb",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-nieprzenoszalna",
+          "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.45
+        },
+        {
+          "logicalId": "zus-czas-trwania-9-tygodni",
+          "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
+          "score": 0.4166667
+        },
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 0.36666667
+        }
+      ],
+      "evidence": [
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par5",
+        "kp-art182-1a-par7",
+        "kp-art182-1a-par1"
+      ]
+    },
+    {
+      "id": "q12",
+      "top": [
+        {
+          "logicalId": "mrpips-korzystanie-czesci",
+          "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
+          "score": 0.9062608
+        },
+        {
+          "logicalId": "kp-art182-1a-par3",
+          "fragmentSha256": "82fa508d72ca89a3ac3411a344c42beb88d9b3bdcf3b4f42ccae1ded9991a79b",
+          "score": 0.89995825
+        },
+        {
+          "logicalId": "kp-art182-1a-par6",
+          "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+          "score": 0.8972362
+        },
+        {
+          "logicalId": "kp-art182-1c",
+          "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+          "score": 0.8969826
+        },
+        {
+          "logicalId": "kp-art182-1a-par1",
+          "fragmentSha256": "c005cf8d8b31e34db7496fd7e1f980a725c33e579f2629a327ebe7bb763c91b8",
+          "score": 0.8967245
+        }
+      ],
+      "evidence": [
+        "kp-art182-1c",
+        "kp-art182-1a-par3",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par6",
+        "kp-art182-1d-par2"
+      ]
+    },
+    {
+      "id": "q13",
+      "top": [
+        {
+          "logicalId": "mrpips-korzystanie-czesci",
+          "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
+          "score": 1
+        },
+        {
+          "logicalId": "kp-art182-1c",
+          "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+          "score": 0.6666667
+        },
+        {
+          "logicalId": "kp-art182-1d-par2",
+          "fragmentSha256": "377d583407d491165ab22acb209feac97788be2816c8cbc4e528ee6ee88a48a0",
+          "score": 0.45
+        },
+        {
+          "logicalId": "mrpips-nieprzenoszalna",
+          "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+          "score": 0.36666667
+        },
+        {
+          "logicalId": "kp-art182-1a-par5",
+          "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
+          "score": 0.3611111
+        }
+      ],
+      "evidence": [
+        "kp-art182-1c",
+        "kp-art182-1d-par2",
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par5"
+      ]
+    },
+    {
+      "id": "q14",
+      "top": [
+        {
+          "logicalId": "mrpips-korzystanie-czesci",
+          "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
+          "score": 0.9061314
+        },
+        {
+          "logicalId": "kp-art182-1c",
+          "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+          "score": 0.9029319
+        },
+        {
+          "logicalId": "kp-art182-1a-par5",
+          "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
+          "score": 0.8976768
+        },
+        {
+          "logicalId": "kp-art182-1a-par1",
+          "fragmentSha256": "c005cf8d8b31e34db7496fd7e1f980a725c33e579f2629a327ebe7bb763c91b8",
+          "score": 0.89187765
+        },
+        {
+          "logicalId": "mrpips-nieprzenoszalna",
+          "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+          "score": 0.89186597
+        }
+      ],
+      "evidence": [
+        "kp-art182-1c",
+        "kp-art182-1d-par2",
+        "kp-art182-1a-par5",
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par3"
+      ]
+    },
+    {
+      "id": "q15",
+      "top": [
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.75
+        },
+        {
+          "logicalId": "kp-art182-1e-par2",
+          "fragmentSha256": "aef4a8bfb144018c7769ab5d81a3350959c65ca4f863aeb227d3644d6c3a8374",
+          "score": 0.75
+        },
+        {
+          "logicalId": "kp-art182-1d-par1",
+          "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+          "score": 0.6666667
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.34285715
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt3",
+          "fragmentSha256": "0713b7110c8c0e7ea2a4878cba28f07a538f15ffa9e145a8b48b8e222c26baca",
+          "score": 0.325
+        }
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust2-pkt3"
+      ]
+    },
+    {
+      "id": "q16",
+      "top": [
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.9072661
+        },
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.9043155
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.9041987
+        },
+        {
+          "logicalId": "kp-art182-1d-par1",
+          "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+          "score": 0.90344673
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+          "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+          "score": 0.9012573
+        }
+      ],
+      "evidence": [
+        "rozp-2025-322-par15-ust1",
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust2-pkt2",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust2-pkt1"
+      ]
+    },
+    {
+      "id": "q17",
+      "top": [
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.89778453
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt1",
+          "fragmentSha256": "38f282f94f493c50f9534a284ab5ab887ad1966b9173175779834cf1e8103c30",
+          "score": 0.8924469
+        },
+        {
+          "logicalId": "kp-art182-1d-par1",
+          "fragmentSha256": "d52ac04bc3b8551b463ded8efd2fedae12c9e6461e8a27e1cb11e55cd8c34b1f",
+          "score": 0.8920662
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust1",
+          "fragmentSha256": "f24a2388ed7598eddd5a51e5334a1a99222af1e05074c4591005a03884ed5925",
+          "score": 0.891369
+        },
+        {
+          "logicalId": "rozp-2025-322-par15-ust2-pkt2",
+          "fragmentSha256": "4307ffeae5dd2655d4d71c85b2169125be07289719ff884807c7184843b877a9",
+          "score": 0.88414055
+        }
+      ],
+      "evidence": [
+        "kp-art182-1d-par1",
+        "rozp-2025-322-par15-ust2-pkt1",
+        "rozp-2025-322-par22",
+        "rozp-2025-322-par15-ust1",
+        "rozp-2025-322-par15-ust2-pkt2"
+      ]
+    },
+    {
+      "id": "q18",
+      "top": [
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 1
+        },
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.6666667
+        },
+        {
+          "logicalId": "zus-czas-trwania-9-tygodni",
+          "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
+          "score": 0.5
+        },
+        {
+          "logicalId": "kp-art182-1a-par6",
+          "fragmentSha256": "11a59e70cbf977bc04e861be8e637536ff4e917e21849c7b72a20bb1012347e6",
+          "score": 0.4
+        },
+        {
+          "logicalId": "mrpips-dzielenie-jednoczesnie",
+          "fragmentSha256": "900ed4f6498ea3ed09f100b69147f2db4c9a57d004176d859af2350f6ca25a56",
+          "score": 0.33333334
+        }
+      ],
+      "evidence": [
+        "kp-art182-1a-par7",
+        "kp-art182-1a-par1",
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par6"
+      ]
+    },
+    {
+      "id": "q19",
+      "top": [
+        {
+          "logicalId": "kp-art182-1a-par4",
+          "fragmentSha256": "2384b9e03ec1ae4a9a04202271ef13f977a96cd369c6a64aaa875aa0285d9ccb",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-nieprzenoszalna",
+          "fragmentSha256": "9e5676b4b1d2ec78fb6abd297a58dc200a51537818af9241e93a43e3887ad227",
+          "score": 0.8333334
+        },
+        {
+          "logicalId": "mrpips-dzielenie-zasilek",
+          "fragmentSha256": "60b966fa52368293b860e73583f147b76e862e2a0278c98810dd1243c8b95bad",
+          "score": 0.45
+        },
+        {
+          "logicalId": "zus-czas-trwania-9-tygodni",
+          "fragmentSha256": "dcc9a6182cd5da2c0acef5b41242b79248122e88e2f020efc5e2fb56a2bd38b1",
+          "score": 0.4166667
+        },
+        {
+          "logicalId": "kp-art182-1a-par7",
+          "fragmentSha256": "b00777f49825705425cc12c1e5c884f893044766b37595a9fdae8d5b18176eb2",
+          "score": 0.36666667
+        }
+      ],
+      "evidence": [
+        "kp-art182-1a-par4",
+        "kp-art182-1a-par5",
+        "kp-art182-1a-par7",
+        "kp-art182-1a-par1"
+      ]
+    },
+    {
+      "id": "q20",
+      "top": [
+        {
+          "logicalId": "mrpips-korzystanie-czesci",
+          "fragmentSha256": "c26c31ecf080ad4a9b4178b0bd4deca5e648c3d9b02551a3997bd17ed97ed7a2",
+          "score": 1
+        },
+        {
+          "logicalId": "kp-art182-1a-par5",
+          "fragmentSha256": "8e226c7826baec3b6d533911af38d855f9baea95d67b46ae3de47ca24fd2704c",
+          "score": 0.5833334
+        },
+        {
+          "logicalId": "kp-art182-1d-par2",
+          "fragmentSha256": "377d583407d491165ab22acb209feac97788be2816c8cbc4e528ee6ee88a48a0",
+          "score": 0.53333336
+        },
+        {
+          "logicalId": "kp-art182-1c",
+          "fragmentSha256": "264b85256fb7fd6a9f3585e4c4090582c9f24a2eea34b9fd6bddf62a256a677e",
+          "score": 0.45
+        },
+        {
+          "logicalId": "mrpips-korzystanie-wniosek",
+          "fragmentSha256": "ec7e29274bdd71b03da27caac41bbc854de70fff01c6cc2fcac940060aba8d18",
+          "score": 0.2916667
+        }
+      ],
+      "evidence": [
+        "kp-art182-1c",
+        "kp-art182-1a-par5",
+        "kp-art182-1a-par4",
+        "kp-art182-1d-par2",
+        "kp-art182-1d-par1"
+      ]
+    },
+    {
+      "id": "n01",
+      "top": [],
+      "evidence": []
+    },
+    {
+      "id": "n02",
+      "top": [],
+      "evidence": []
+    },
+    {
+      "id": "n03",
+      "top": [],
+      "evidence": []
+    },
+    {
+      "id": "n04",
+      "top": [],
+      "evidence": []
+    },
+    {
+      "id": "n05",
+      "top": [],
+      "evidence": []
+    },
+    {
+      "id": "n06",
+      "top": [],
+      "evidence": []
+    }
+  ]
+}

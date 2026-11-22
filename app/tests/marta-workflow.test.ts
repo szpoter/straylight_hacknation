@@ -18,16 +18,23 @@ it("keeps a missing rate unknown, verifies a copy, and exports only confirmed da
   const compared = applyMarta(null, commandSchema.parse({ ...base, secondDaily: null })).view;
   expect(compared?.variants.together.total).toBeNull();
   const chosen = applyMarta(compared, { type: "choose", version: 1, variant: "sequential" }).view!;
-  expect(applyMarta(chosen, { type: "submit", version: 2 }).status).toBe(422);
+  expect(applyMarta(chosen, { type: "record_handoff", version: 2 }).status).toBe(422);
   const confirmation = { type: "confirm" as const, version: 2, employerHasCopy: false, otherParentConfirmed: true as const, previousDays: 0, previousParts: 0 };
   expect(applyMarta(chosen, confirmation).status).toBe(422);
   const ready = applyMarta(chosen, { ...confirmation, employerHasCopy: true }).view!;
   expect(ready.attachmentName).toBeNull();
   const bytes = await martaPdf(ready);
   expect(Buffer.from(bytes.subarray(0, 5)).toString()).toBe("%PDF-");
-  const sent = applyMarta(ready, { type: "submit", version: 3 }).view!;
-  expect(sent.submitted).toBe(true);
-  expect(applyMarta(sent, { type: "submit", version: 3 }).view).toEqual(sent);
+  const sent = applyMarta(ready, { type: "record_handoff", version: 3 }).view!;
+  expect(sent.handoffRecordedByParent).toBe(true);
+  const old = { ...ready, version: 4, submitted: true, handoffRecordedByParent: undefined, attachmentVersion: undefined, submittedAt: "2026-03-01T00:00:00.000Z" };
+  const now = new Date("2026-11-22T23:05:01Z");
+  const updated = applyMarta(old, { type: "record_handoff", version: old.version }, now).view!;
+  expect(updated.submittedAt).toBe(now.toISOString());
+  expect(updated.previousPlanEntryAt).toBe(old.submittedAt);
+  expect(updated.attachmentVersion).toBe(ready.version);
+  expect(commandSchema.safeParse({ type: "submit", version: ready.version }).success).toBe(false);
+  expect(applyMarta(sent, { type: "record_handoff", version: 3 }).view).toEqual(sent);
 });
 
 it("sends tunnel credentials only to the configured HTTPS origin", () => {

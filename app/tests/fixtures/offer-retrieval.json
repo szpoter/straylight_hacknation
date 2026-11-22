@@ -1,0 +1,18 @@
+{
+  "development": [
+    ["Czy świadczenie Aktywnie w domu podlega egzekucji komorniczej?", "of-dom-4-6"],
+    ["Co wpisać w Aktywni rodzice w pracy, gdy orzeczenie figuruje w systemie EKSMOoN?", "of-praca-4-2"],
+    ["Jak dzieli się 800+ przy opiece naprzemiennej orzeczonej przez sąd?", "of-800-5-3", "of-800-2-2"],
+    ["Czy w programie Aktywnie w domu da się wybrać kwotę świadczenia?", "of-dom-5-1"]
+  ],
+  "regression": [
+    ["Co się dzieje z kontem eZUS, jeśli wniosek o 800+ poszedł przez bank lub Emp@tię?", "of-800-6-4"],
+    ["Jak udokumentować opiekę naprzemienną we wniosku o Aktywnie w domu?", "of-dom-8-1"],
+    ["Czy pobieranie świadczenia rodzinnego w państwie EFTA wpływa na polskie 800+?", "of-800-5-4"],
+    ["Czy Aktywnie w domu jest przekazywane na rachunek bankowy podany we wniosku?", "of-dom-13-1"],
+    ["Czy w Aktywni rodzice w pracy można wskazać małżonka jako osobę wspólnie wychowującą dziecko?", "of-praca-8-1"],
+    ["Co z wnioskiem o Aktywnie w domu złożonym w formie papierowej?", "of-dom-7-3"],
+    ["Ile wniosków o 800+ składa rodzic na kilkoro dzieci przy takiej samej formie opieki?", "of-800-6-5"],
+    ["Czy w Aktywnie w domu trzeba przedstawić dokument potwierdzający legalny pobyt i dostęp do rynku pracy?", "of-dom-9-1"]
+  ]
+}

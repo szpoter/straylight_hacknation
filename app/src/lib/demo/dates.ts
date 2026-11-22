@@ -3,6 +3,10 @@ export const DEMO_TODAY = "2026-11-21";
 
 const MONTHS_GEN = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia"];
 
+export function todayInPoland(date = new Date()): string {
+  return date.toLocaleDateString("sv-SE", { timeZone: "Europe/Warsaw" });
+}
+
 function parse(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d));
@@ -37,7 +41,7 @@ export function formatShort(iso: string, withYear = false): string {
 }
 
 /** „zostało 10 dni”, „zostało 1 dzień”, „termin minął”. */
-export function daysLeftLabel(dueIso: string, today = DEMO_TODAY): string {
+export function daysLeftLabel(dueIso: string, today = todayInPoland()): string {
   const n = daysBetween(today, dueIso);
   if (n < 0) return "termin minął";
   if (n === 0) return "termin dziś";

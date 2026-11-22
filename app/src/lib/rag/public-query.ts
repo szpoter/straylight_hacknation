@@ -1,4 +1,5 @@
 import { explicitLocatorKeys } from "./query";
+import type { CorpusCandidate } from "./retrieve";
 
 // Only these prewritten public questions can reach hosted inference. Uploaded
 // documents, identities and free-form explanations stay outside the search prompt.
@@ -7,6 +8,7 @@ export interface PublicQuestion {
   question: string;
   locators?: string[];
   fragmentId?: string;
+  lexical?: CorpusCandidate[];
   /** This catch-all identifies a broad subject and can miss a more specific provision. */
   broad?: boolean;
   /** Source words for vector search, without the generation instruction. */
@@ -143,14 +145,43 @@ const OTHER_TOPICS: ReadonlyArray<readonly [RegExp, string]> = [
 export function asksAboutOwnEligibility(input: string): boolean {
   return /czy (?:mi |nam )(?:przysługuje|należy się)|czy (?:przysługuje|należy się) (?:mi|nam)\b|czy dostanę|czy mam prawo/iu.test(input);
 }
-export function publicQuestion(input: string): PublicQuestion | null {
+export const offerDocuments = [
+  [/800\s*(?:\+|plus)|świadczeni\p{L}* wychowawcz\p{L}*/iu, "zus-800", "800+"],
+  [/aktywni rodzice w pracy/iu, "zus-praca", "Aktywni rodzice w pracy"],
+  [/aktywnie w domu/iu, "zus-dom", "Aktywnie w domu"],
+  [/aktywnie w żłobku/iu, "zus-aktywnie-w-zlobku", "Aktywnie w żłobku"],
+  [/dobr(?:y|ego|ym) start|300\s*(?:\+|plus)/iu, "zus-dobry-start", "Dobry Start"],
+] as const;
+
+// Emitted words are constants from official programme publications. Matching never copies a user's spelling.
+const offerTerms = ("adopcyjnego alimenty bezgotówkowej cudzoziemcach dochodowy efta egzekucji eksmoon emerytalne ezus " +
+  "gospodarczą granicą instytucji karta kilkoro klubu komorniczej konto krus legalny małżonka macierzyński " +
+  "minimalnego naprzemienną narodzone niepełnosprawności nieodpłatne ochrony ojciec orzeczenie ośrodka odwołanie " +
+  "oświadczenie papierowej partnera pieczy płatniczego pobyt podatek przedszkola przychodów prawomocne polsce " +
+  "podzieli pozbawiono połowie pracownikiem rachunek rozłączeniu rozpatrzy rolniczych samodzielnie sądu separacji " +
+  "składek szkoły tytułu ubezpieczenia ucznia uczęszczać umowy usamodzielniana wynagrodzenia wyżywienie załącznik " +
+  "zastępczej zlecenia bank systemu numer opiekę wyboru kwotę dokument formie wspólnie wniosku").split(" ");
+
+export function offerDetail(input: string, topic: PublicQuestion) {
+  if (!["program:800-plus", "program:aktywny-rodzic", "program:dobry-start"].includes(topic.locators?.[0] ?? "")) return topic;
+  const matches = offerDocuments.filter(([pattern]) => pattern.test(input));
+  if (matches.length !== 1) return topic;
+  const [pattern, , name] = matches[0];
+  const words = input.replace(pattern, "").toLocaleLowerCase("pl").match(/\p{L}+/gu) ?? [];
+  const terms = offerTerms.filter(term => words.some(word => word.startsWith(term.slice(0, term.length <= 4 ? term.length : Math.min(5, term.length - 1))) ||
+    (term === "wyboru" && /^wyb(?:ra|ór|ie)/u.test(word)))).slice(0, 8);
+  if (terms.length < 2) return topic;
+  return { ...topic, question: name + ". " + terms.join(", ") + "?" };
+}
+
+export function publicQuestion(input: string, includeOfferDetail = false): PublicQuestion | null {
   const topic = routeTopic(input);
   const limited = (clarify: string): PublicQuestion => ({ corpus: topic?.corpus ?? "publiczne", question: "", clarify });
   if (/(?:\d{1,2}[./-]){2}\d{2,4}|20\d{2}-\d{2}-\d{2}|\b(?:19|20)\d{2}\b|(?:w|od|do|za)\s+(?:stycz|lut|marc|kwiet|maj|czerwc|lipc|sierp|wrześ|paździer|listop|grud)/iu.test(input)) {
-    return limited("Czy chodzi Ci o ocenę konkretnego okresu? Wybierz sprawę w panelu, aby sprawdzić daty i dokumenty.");
+    return limited("Czy chodzi Ci o ocenę konkretnego okresu? Podaj rodzaj świadczenia i okres, który chcesz sprawdzić.");
   }
   if (/(?:moje dziecko|mój syn|moja córka|dziecko ma).{0,32}\d+\s*(?:miesię|lat|rok)/iu.test(input) && topic) {
-    return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Wybierz sprawę i potwierdź datę urodzenia.");
+    return limited("Czy chcesz sprawdzić wiek dziecka dla konkretnego okresu? Podaj datę urodzenia oraz okres, którego dotyczy pytanie.");
   }
   if (asksAboutOwnEligibility(input) &&
       !/800|300|aktywny rodzic/u.test(input) && topic?.corpus === "publiczne") {
@@ -164,5 +195,5 @@ export function publicQuestion(input: string): PublicQuestion | null {
     const intent = /termin|kiedy|do kiedy/iu.test(input) ? "termin" : /dokument|dołącz|wniosek/iu.test(input) ? "potrzebne dokumenty" : "warunki i zasady";
     return { corpus: "publiczne", question: `Co przewidują źródła w tej sytuacji: ${[context, ...terms, intent].filter(Boolean).join(", ")}?` };
   }
-  return topic;
+  return includeOfferDetail && topic?.corpus === "oferta" ? offerDetail(input, topic) : topic;
 }

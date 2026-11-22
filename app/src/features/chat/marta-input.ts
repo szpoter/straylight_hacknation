@@ -1,3 +1,4 @@
+import { OLA } from "@/lib/family/ola";
 import { findDates } from "@/lib/kamil/interpret";
 import { isValidIso } from "@/lib/rules/dates";
 import type { Command, MartaView } from "@/lib/marta/types";
@@ -7,9 +8,9 @@ export const DEMO_INPUTS = {
   days: 28,
   firstDaily: 140,
   secondDaily: 105,
-  firstName: "Marta Lis",
-  secondName: "Paweł Lis",
-  childName: "Ola Lis",
+  firstName: OLA.mother,
+  secondName: OLA.father,
+  childName: OLA.child,
 };
 
 type Intent = { action: Command } | { notice: string } | null;
@@ -25,7 +26,7 @@ export function martaInput(text: string, view: MartaView | null, today: string):
       value,
     );
   if (variantMatch) {
-    if (view?.submitted) return { notice: "Ten wniosek został już przekazany w symulacji." };
+    if (view?.submitted) return { notice: "Ten wniosek ma już wpis o przekazaniu w historii planu." };
     if (!view) return { notice: "Podaj najpierw datę początku urlopu, żebym mógł porównać warianty." };
     const variant = /kolejno|jeden po drugim/.test(variantMatch[1]) ? "sequential" : "together";
     if (view.selected === variant) return { notice: "Ten wariant jest już zapisany w szkicu." };
@@ -40,7 +41,7 @@ export function martaInput(text: string, view: MartaView | null, today: string):
   const raw = match[1];
   const iso = isValidIso(raw) ? raw : findDates(raw, today, "future")[0]?.iso;
   if (!iso) return { notice: "Sprawdź datę początku urlopu. Możesz wpisać na przykład „Od 18 stycznia 2027”." };
-  if (view?.submitted) return { notice: "Ten wniosek został już przekazany w symulacji." };
+  if (view?.submitted) return { notice: "Ten wniosek ma już wpis o przekazaniu w historii planu." };
   if (view?.inputs.firstStart === iso) return { notice: "Ta data początku jest już uwzględniona w porównaniu." };
   return {
     action: {
@@ -48,9 +49,6 @@ export function martaInput(text: string, view: MartaView | null, today: string):
       version: view?.version ?? 0,
       ...DEMO_INPUTS,
       ...view?.inputs,
-      firstName: view?.firstName ?? DEMO_INPUTS.firstName,
-      secondName: view?.secondName ?? DEMO_INPUTS.secondName,
-      childName: view?.childName ?? DEMO_INPUTS.childName,
       firstStart: iso,
     },
   };

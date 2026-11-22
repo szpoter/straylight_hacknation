@@ -3,6 +3,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import { runtime } from "../zusik/server";
 import { PgCaseStore } from "../zusik/case-store";
+import { OLA } from "../family/ola";
 import { applyMarta } from "./case";
 import type { Command, MartaView } from "./types";
 
@@ -16,7 +17,7 @@ export async function readMarta(session: string, command?: Command) {
   const { graph, store } = service();
   const record = command ? await store.findOrCreate(session) : await store.findBySession(session);
   if (!record) return { status: 200, view: null };
-  const config = { configurable: { thread_id: record.threadId + ":marta" }, durability: "sync" as const };
+  const configFor = (suffix: string) => ({ configurable: { thread_id: record.threadId + suffix }, durability: "sync" as const });
   const token = randomUUID();
   if (command) {
     const limit = Date.now() + 3000;
@@ -26,7 +27,18 @@ export async function readMarta(session: string, command?: Command) {
     }
   }
   try {
-    const snapshot = await graph.getState(config);
+    let config = configFor(":marta:ola");
+    let snapshot = await graph.getState(config);
+    if (!snapshot.values.view) {
+      const previousConfig = configFor(":marta");
+      const previous = await graph.getState(previousConfig);
+      const family = previous.values.view as MartaView | undefined;
+      if (family?.firstName === OLA.mother && family.secondName === OLA.father && family.childName === OLA.child
+        && (!family.childBirthDate || family.childBirthDate === OLA.birthDate)) {
+        config = previousConfig;
+        snapshot = previous;
+      }
+    }
     const view: MartaView | null = snapshot.values.view ?? null;
     if (!command) return { status: 200, view, savedAt: snapshot.createdAt };
     const result = applyMarta(view, command);

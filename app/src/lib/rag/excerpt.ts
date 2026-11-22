@@ -1,5 +1,6 @@
 import { citationUrl, type Corpus, type Fragment } from "./corpus";
 import type { PublicQuestion } from "./public-query";
+import { corpusKeywords } from "./corpus-search";
 import type { AskAnswer, AskCitation } from "../zusik/types";
 
 /** A citation can be authentic while the answer omits the condition that selected it. */
@@ -23,11 +24,8 @@ export function withSourceException(projected: PublicQuestion, answer: AskAnswer
   };
 }
 
-/** Direct quotation is limited to a few reviewed provisions that answer the
- * projected public question without deciding the family's individual case. */
-export function extractiveAnswer(
-  corpus: Corpus, projected: PublicQuestion, evidence: Fragment[], vectorIds: string[],
-): AskAnswer | null {
+/** Reviewed legal sources for a projected (public) question. */
+export function reviewedSourceIds(projected: PublicQuestion): string[] {
   const reviewed: Array<[boolean, string[]]> = [
     [projected.locators?.includes("program:dobry-start:termin") === true, ["dobry-start-termin"]],
     [projected.locators?.includes("program:dobry-start:kanaly") === true, ["dobry-start-kanaly"]],
@@ -45,12 +43,26 @@ export function extractiveAnswer(
     [projected.question.startsWith("Jakie informacje należy zawrzeć"), ["rozp-2025-322-par15-ust1"]],
     [projected.question.startsWith("Skąd wiadomo, ile części"), ["kp-art182-1d-par2"]],
     [projected.question.startsWith("Kadry mają już odpis"), ["rozp-2025-322-par22", "rozp-2025-322-par15-ust2-pkt1"]],
+    [projected.question.startsWith("Czy 9 tygodni urlopu rodzicielskiego"), ["kp-art182-1a-par4"]],
+    [projected.question.startsWith("Na ile części można podzielić urlop rodzicielski"), ["kp-art182-1c"]],
+    [projected.question.startsWith("Czy wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie"), ["kp-art182-1d-par1"]],
+    [projected.question.startsWith("Jak połączyć pracę na pół etatu z urlopem rodzicielskim"), ["kp-art182-1e-par2"]],
     [projected.question.startsWith("Ile wcześniej i do kogo"), ["kp-art182-1d-par1"]],
     [projected.locators?.includes("art182^1a§7") === true, ["kp-art182-1a-par7"]],
     [projected.question.startsWith("Czy oboje rodzice mogą"), ["kp-art182-1a-par6"]],
     [/^Co (?:wpisać o drugim rodzicu|oświadczyć we wniosku)/u.test(projected.question), ["rozp-2025-322-par15-ust2-pkt2"]],
   ];
-  const ids = reviewed.find(([applies]) => applies)?.[1] ?? [];
+  return reviewed.find(([applies]) => applies)?.[1] ?? [];
+}
+
+/** Direct quotation is limited to a few reviewed provisions that answer the
+ * projected public question without deciding the family's individual case. */
+export function extractiveAnswer(
+  corpus: Corpus, projected: PublicQuestion, evidence: Fragment[], vectorIds: string[],
+): AskAnswer | null {
+  const exact = projected.fragmentId && evidence.find(f => f.logicalId === projected.fragmentId);
+  const ids = exact && corpusKeywords(projected.question, exact) ? [exact.logicalId] :
+    reviewedSourceIds(projected);
   if (!ids.length || !ids.some((id) => vectorIds.includes(id))) return null;
   const citations: AskCitation[] = [];
   for (const id of ids) {

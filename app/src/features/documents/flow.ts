@@ -1,10 +1,10 @@
 /**
  * Przebieg wniosku w „Dokumentach”: wartości pól, walidacja i przejścia stanów
  * (aktualna → szkic/wypełniony → zatwierdzony → wysłano → korekta). Czyste funkcje — testy w
- * tests/documents-flow.test.ts. Wysyłka i potwierdzenie wpływu są symulacją.
- * TODO(backend): przejścia stanów i zdarzenia zapisywane w sprawie, prawdziwa wysyłka.
+ * tests/documents-flow.test.ts. Przekazanie potwierdza rodzic.
  */
-import { PARENT_PROFILE } from "@/lib/demo/fixtures";
+import { OLA } from "@/lib/family/ola";
+import { HANDOFF_RECORDED, isHandoffEntry } from "@/lib/plan/status";
 import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/forms";
 import { formatLong } from "@/lib/demo/dates";
 import type { CaseEvent, CaseState } from "@/lib/demo/types";
@@ -12,10 +12,33 @@ import type { CaseEvent, CaseState } from "@/lib/demo/types";
 export type Values = Record<string, string>;
 export type Errors = Record<string, string>;
 
-/** Dane rodzica z profilu demonstracyjnego (Profil → Moje dane). */
 export function demoProfile(): { parentName: string; employer: string } {
-  const find = (label: string) => PARENT_PROFILE.find((r) => r.label === label)?.value ?? "";
-  return { parentName: find("Imię i nazwisko"), employer: find("Pracodawca").split(" · ")[0] };
+  return { parentName: OLA.mother, employer: OLA.employer };
+}
+
+/** Keep the original autosaved draft intact when updating the former Ola profile. */
+export function documentDraft(planId: string, stopId: string, read: (id: string) => Values) {
+  const original = read(stopId);
+  const customParent = original.rodzic && !["Anna Przykładowa", OLA.mother, OLA.father].includes(original.rodzic);
+  const previous = planId === "ola" && !customParent && (
+    original.rodzic === "Anna Przykładowa" || original.pracodawca === "Kwiatek sp. z o.o." || original.dziecko === "Ola"
+  );
+  if (!previous) return { key: stopId, values: original };
+  const key = `${stopId}:ola-lis`;
+  const updated = read(key);
+  if (Object.keys(updated).length) return { key, values: updated };
+
+  const values = { ...original };
+  if (values.rodzic === "Anna Przykładowa" && stopId !== "urlop-ojcowski") {
+    values.rodzic = OLA.mother;
+    for (const field of ["rodzic_pesel", "rachunek", "adres"]) delete values[field];
+  }
+  if (values.pracodawca === "Kwiatek sp. z o.o." && values.rodzic === OLA.mother) values.pracodawca = OLA.employer;
+  if (values.dziecko === "Ola") {
+    values.dziecko = OLA.child;
+    delete values.dziecko_pesel;
+  }
+  return { key, values };
 }
 
 export function allFields(def: FormDef): FormField[] {
@@ -140,24 +163,13 @@ export function canEdit(state: CaseState): boolean {
   return state === "aktualna" || state === "szkic" || state === "wypelniony" || state === "zatwierdzony" || state === "wezwanie";
 }
 
-/** Zdarzenia symulowanej wysyłki. Tytuły są te same, które czyta przebieg sprawy (timeline.ts). */
+/** Ręczny wpis o przekazaniu poza aplikacją. */
 export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false): CaseEvent[] {
-  const via = CHANNEL_LABEL[channel].label.toLowerCase();
-  const sent: CaseEvent = {
-    date: today,
-    title: "Wysłano w symulacji",
-    detail: `${correction ? "Korekta wniosku" : "Wniosek"} przekazany ${via}. To symulacja — nic nie trafiło do urzędu.`,
-    author: "Ty",
-  };
-  const received: CaseEvent = {
-    date: today,
-    title: "Potwierdzenie wpływu",
-    detail: `${recipient.replace(/^Do /, "")} potwierdza wpływ (symulacja).`,
-    author: recipient.replace(/^Do /, ""),
-  };
-  // Przy korekcie poprzednia wysyłka zostaje w historii jako zwykły wpis.
-  const history = existing.map((e) =>
-    e.title === "Wysłano w symulacji" || e.title === "Potwierdzenie wpływu" ? { ...e, title: e.title === "Wysłano w symulacji" ? "Wysłano poprzednią wersję" : "Potwierdzono poprzednią wersję" } : e,
-  );
-  return [...history, sent, received];
+  const history = existing.map(e => isHandoffEntry(e.title)
+    ? { ...e, title: "Poprzedni wpis o przekazaniu", detail: "Wpis dotyczący wcześniejszej wersji wniosku." }
+    : e);
+  return [...history, {
+    date: today, title: HANDOFF_RECORDED, author: "Ty",
+    detail: `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${CHANNEL_LABEL[channel].label}.`,
+  }];
 }

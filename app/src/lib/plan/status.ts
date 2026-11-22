@@ -1,5 +1,9 @@
 import type { CaseState, Stop } from "../demo/types";
 
+export const HANDOFF_RECORDED = "Rodzic oznaczył przekazanie";
+
+export const isHandoffEntry = (title: string) => title === HANDOFF_RECORDED || title === "Wysłano w symulacji" || title === "Wcześniejszy wpis o przekazaniu";
+
 /** Skrót statusu na ścieżce („Jeden model statusów”). */
 export type PathStatus = "Przed Tobą" | "Do zrobienia" | "W trakcie" | "Wysłane" | "Wymaga uwagi" | "Załatwione" | "Za Tobą";
 
@@ -32,7 +36,7 @@ const DOC: Record<CaseState, { group: DocGroup; label: string }> = {
   szkic: { group: "do-zalatwienia", label: "Szkic" },
   wypelniony: { group: "do-zalatwienia", label: "Wypełniony · do sprawdzenia" },
   zatwierdzony: { group: "do-zalatwienia", label: "Zatwierdzony · do przekazania" },
-  wyslano: { group: "wyslane", label: "Wysłano w symulacji" },
+  wyslano: { group: "wyslane", label: "Przekazanie w planie" },
   wezwanie: { group: "do-zalatwienia", label: "Do uzupełnienia po wezwaniu" },
   "odmowa-w-terminie": { group: "zakonczone", label: "Odmowa · wymaga uwagi" },
   zalatwione: { group: "zakonczone", label: "Zakończone" },

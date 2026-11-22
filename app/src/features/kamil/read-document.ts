@@ -31,15 +31,19 @@ export async function pdfjs() {
   return lib;
 }
 
-export async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progress): Promise<OcrWord[]> {
-  progress("Rozpoznaję tekst na skanie (OCR)…");
+export async function createPolishOcrWorker() {
   const { createWorker } = await import("tesseract.js");
-  const worker = await createWorker("pol", 1, {
+  return createWorker("pol", 1, {
     workerPath: "/ocr/worker.min.js",
     corePath: "/ocr/core",
     langPath: "/ocr/lang",
     gzip: true,
   });
+}
+
+export async function ocrImage(source: HTMLCanvasElement, page: number, progress: Progress): Promise<OcrWord[]> {
+  progress("Rozpoznaję tekst na skanie (OCR)…");
+  const worker = await createPolishOcrWorker();
   try {
     const { data } = await worker.recognize(source, {}, { blocks: true });
     const words: TesseractWord[] = [];

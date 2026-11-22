@@ -45,8 +45,8 @@ async function testMarta(page: Page, missingRate: boolean) {
   await page.goto(origin + "/app");
   await page.getByRole("button",{name:"Porównaj warianty"}).waitFor();
   await page.waitForFunction(()=>!!Array.from(document.querySelectorAll("button")).find(b=>b.textContent==="Porównaj warianty" && !b.disabled));
-  const firstName = missingRate ? "Łucja Paprotka" : "Lidia Brzoza";
-  let v = await update<MartaView>(page,martaPath,{type:"compare",firstName, secondName:"Olaf Brzoza",childName:"Ewa Brzoza",
+  const firstName = "Marta Lis";
+  let v = await update<MartaView>(page,martaPath,{type:"compare",firstName, secondName:"Paweł Lis",childName:"Ola Lis",
     firstStart:"2027-01-18",days:28,firstDaily:150,secondDaily:missingRate ? null : 110});
   assert.equal(v.variants.sequential.total,missingRate ? null : 7280);
   assert.equal(v.variants.together.calendarDays,28);
@@ -59,7 +59,7 @@ async function testMarta(page: Page, missingRate: boolean) {
   assert.equal((await page.request.get(origin+martaPath+"/pdf",{headers:await browserHeaders(page)})).status(),404);
   await page.locator('input[name="statement"]').check();
   await page.getByLabel("Czy pracodawca ma już odpis aktu urodzenia?").selectOption(missingRate ? "yes" : "no");
-  const certificate=await makeCertificatePdf({...kamilCertificate(), childFirstName:"EWA", childLastName:"BRZOZA"});
+  const certificate=await makeCertificatePdf({...kamilCertificate(), childFirstName:"OLA", childLastName:"LIS"});
   if(!missingRate) await page.locator('input[name="attachment"]').setInputFiles({
     name:"kopia-fikcyjna.pdf",mimeType:"application/pdf",buffer:Buffer.from(certificate)});
   const confirmation=page.waitForResponse(r=>r.url().endsWith(martaPath) && r.request().method()==="POST" &&
@@ -80,16 +80,20 @@ async function testMarta(page: Page, missingRate: boolean) {
   assert.ok(v.confirmed,"Confirmed state was persisted before PDF download");
   assert.equal(pdf.status(),200,"Confirmed PDF returns HTTP 200");
   const text = await pdfText(await pdf.body());
-  assert.ok(text.includes(firstName) && text.includes("15.02.2027") && text.includes(missingRate ? "aktach osobowych" : "kopia-fikcyjna.pdf"));
+  assert.ok(text.includes(firstName) && text.includes("10.11.2026") && text.includes("15.02.2027") && text.includes(missingRate ? "aktach osobowych" : "kopia-fikcyjna.pdf"));
   const preview = page.locator('iframe[title*="Wniosek"]');
   await preview.first().waitFor();
   const previewBlob = await preview.first().getAttribute("src");
   const downloadedBlob = await page.getByRole("link",{name:"Pobierz wniosek PDF",exact:true}).first().getAttribute("href");
   assert.equal(previewBlob?.split("#")[0], downloadedBlob);
   const previousVersion=v.version;
-  v=await update(page,martaPath,{type:"submit",version:previousVersion});
-  assert.ok(v.submittedAt);
-  const repeat=await page.request.post(origin+martaPath,{data:{type:"submit",version:previousVersion},headers:await browserHeaders(page)});
+  const handoff = page.waitForResponse(response => response.url().endsWith(martaPath) && response.request().method() === "POST"
+    && response.request().postDataJSON()?.type === "record_handoff");
+  await page.getByRole("button", {name: "Potwierdzam samodzielne przekazanie pracodawcy"}).click();
+  assert.equal((await handoff).status(),200);
+  v=await read<MartaView>(page,martaPath);
+  assert.ok(v.submittedAt && v.handoffRecordedByParent);
+  const repeat=await page.request.post(origin+martaPath,{data:{type:"record_handoff",version:previousVersion},headers:await browserHeaders(page)});
   assert.equal(repeat.status(),409);
   await page.reload();
   assert.equal((await read<MartaView>(page,martaPath)).submittedAt,v.submittedAt);
@@ -385,11 +389,10 @@ async function testLoginToChat(page: Page) {
     assert.ok(!isolated.turns.some(saved => saved.requestId === contextual.turn.requestId), "Conversation isolated: " + other);
   }
   await page.goto(origin + "/app/sprawy");
-  await open.click();
+  await page.waitForURL("**/app/rozmowa");
   await chat.getByText(question, {exact: true}).waitFor();
-  await chat.getByText("Zmień sprawę", {exact: true}).click();
-  await chat.getByRole("link", {name: /Marta i Paweł/}).click();
-  await page.waitForURL("**/app");
+  assert.equal(await chat.getByText("Zmień sprawę", {exact: true}).count(), 0);
+  await page.goto(origin + "/app");
   const view = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=marta");
   assert.ok(!view.turns.some(turn => turn.question === question), "General conversation stays outside Marta's case");
 }

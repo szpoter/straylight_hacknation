@@ -12,9 +12,13 @@
  * 6. reads everything back and compares ids + hashes with the local digest.
  * Re-running with the same version is idempotent: same ids, same hashes.
  */
+import { readFileSync } from "node:fs";
+import { auditCollection } from "./zusik-audit-collection";
+import sources from "../corpus/official-sources.json";
 import { DEFAULT_EMBED_MODEL } from "../src/lib/zusik/config";
-import { corpusDigest, embeddingText, pointId } from "../src/lib/rag/corpus";
+import { corpusDigest, embeddingText, pointId, sha256, withoutFragments } from "../src/lib/rag/corpus";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
+import { extractOfficialParagraph } from "../src/lib/rag/official-sections";
 
 // Explicit destination is useful when a deployment has its own collection-scoped reader.
 const corpusName = process.argv.find((arg) => arg.startsWith("--corpus="))?.slice(9) ?? "marta";
@@ -44,7 +48,35 @@ type ScrollResponse = {
 };
 
 async function main() {
-  const corpus = loadCorpus(corpusName);
+  if (process.argv.includes("--audit")) {
+    const report = await auditCollection(collectionOverride || env("QDRANT_KNOWLEDGE_COLLECTION"));
+    console.log(JSON.stringify(report));
+    if (!report.ok) process.exitCode = 1;
+    return;
+  }
+  const complete = loadCorpus(corpusName);
+  for (const source of sources.filter((s) => complete.documents.has(s.sourceId))) {
+    const snapshot = readFileSync(`corpus/${source.snapshot}`, "utf8");
+    if (sha256(snapshot) !== source.snapshotSha256) throw new Error(`Snapshot digest mismatch: ${source.sourceId}`);
+    for (const { heading, fragmentId, paragraphStarts } of source.sections) {
+      const expected = complete.fragments.get(fragmentId)?.sourceText;
+      const matchingSections = source.snapshot.endsWith(".json")
+        ? (JSON.parse(snapshot) as Array<{headingPath:string[]; blocks:string[]}>).filter(s => s.headingPath.at(-1) === heading)
+        : null;
+      const valid = matchingSections ? matchingSections.length === 1 && !!expected && matchingSections[0].blocks.includes(expected)
+        : extractOfficialParagraph(snapshot, heading, paragraphStarts) === expected;
+      if (!expected || !valid) {
+        throw new Error(`Snapshot paragraph mismatch: ${fragmentId}`);
+      }
+    }
+  }
+  const omitted = process.argv.find((arg) => arg.startsWith("--omit-test-fragment="))?.split("=")[1];
+  if (omitted && (!collectionOverride?.startsWith("zusik_test_") ||
+      [process.env.QDRANT_COLLECTION, process.env.QDRANT_KNOWLEDGE_COLLECTION].includes(collectionOverride) ||
+      !complete.fragments.has(omitted))) {
+    throw new Error("Omitting a fragment requires a known ID and an isolated zusik_test_ collection");
+  }
+  const corpus = omitted ? withoutFragments(complete, [omitted]) : complete;
   const version = corpus.manifest.corpusVersion;
   console.log(`${OP}: manifest ${version} OK · ${corpus.documents.size} documents · ${corpus.fragments.size} units · digest ${corpusDigest(corpus).slice(0, 16)}`);
 
@@ -54,7 +86,6 @@ async function main() {
   const model = env("QDRANT_EMBED_MODEL", DEFAULT_EMBED_MODEL);
   const headers = { "content-type": "application/json", "api-key": writeKey };
   const base = `${url}/collections/${encodeURIComponent(collection)}`;
-  const versionFilter = { must: [{ key: "corpusVersion", match: { value: version } }] };
 
   // 2. collection
   const existing = await fetch(base, { headers });
@@ -89,7 +120,7 @@ async function main() {
   }
 
   // 4. never silently change an imported version
-  const before = await readVersion(base, headers, versionFilter);
+  const before = await readVersion(base, headers, version);
   const local = new Map([...corpus.fragments.values()].map((f) => [f.logicalId, f.fragmentSha256]));
   const changed = [...before].filter(([id, hash]) => local.get(id) !== hash).map(([id]) => id);
   if (changed.length) {
@@ -131,7 +162,7 @@ async function main() {
   console.log(`${OP}: upserted ${points.length} new points in ${Date.now() - started} ms`);
 
   // 6. read back and compare
-  const after = await readVersion(base, headers, versionFilter);
+  const after = await readVersion(base, headers, version);
   const missing = [...local.keys()].filter((id) => after.get(id) !== local.get(id));
   const extra = [...after.keys()].filter((id) => !local.has(id));
   if (missing.length || extra.length) throw new Error(`read-back mismatch · missing/changed: ${missing.join(", ")} · extra: ${extra.join(", ")}`);
@@ -142,7 +173,8 @@ async function main() {
   console.log(`${OP}: OK · ${version} in ${collection}`);
 }
 
-async function readVersion(base: string, headers: Record<string, string>, filter: unknown): Promise<Map<string, string>> {
+async function readVersion(base: string, headers: Record<string, string>, version: string): Promise<Map<string, string>> {
+  const filter = { must: [{ key: "corpusVersion", match: { value: version } }] };
   const found = new Map<string, string>();
   let offset: string | null | undefined;
   do {
@@ -154,7 +186,11 @@ async function readVersion(base: string, headers: Record<string, string>, filter
     if (!res.ok) throw new Error(`scroll HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const body = (await res.json()) as ScrollResponse;
     for (const p of body.result?.points ?? []) {
-      if (p.payload?.logicalId && p.payload.fragmentSha256) found.set(p.payload.logicalId, p.payload.fragmentSha256);
+      const { logicalId, fragmentSha256 } = p.payload ?? {};
+      if (!logicalId || !fragmentSha256 || p.id !== pointId(version, logicalId) || found.has(logicalId)) {
+        throw new Error(`Invalid or duplicate point ID in ${version}: ${p.id}`);
+      }
+      found.set(logicalId, fragmentSha256);
     }
     offset = body.result?.next_page_offset;
   } while (offset);

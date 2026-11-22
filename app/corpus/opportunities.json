@@ -1,0 +1,475 @@
+{
+  "version": "rodzina-2026-11-22-v1",
+  "reviewedAt": "2026-11-22",
+  "questions": {
+    "careType": "Czy dziecko będzie chodziło do żłobka lub klubu dziecięcego, korzystało z dziennego opiekuna, czy zostanie w domu?",
+    "registeredCare": "Czy placówka jest w rejestrze żłobków i klubów dziecięcych albo opiekun w wykazie dziennych opiekunów?",
+    "childAgeMonths": "Ile miesięcy będzie miało dziecko na koniec miesiąca, o który pytasz?",
+    "activityThresholdMet": "Czy spełniacie warunki aktywności zawodowej, w tym wymaganej podstawy składek?",
+    "livesWithGuardian": "Czy dziecko mieszka z Tobą i jest na Twoim utrzymaniu?",
+    "schoolLevel": "Czy dziecko rozpoczyna naukę w szkole, czy chodzi do zerówki?",
+    "childDateOfBirth": "W którym roku urodziło się dziecko?",
+    "hospitalisedNewborn": "Czy dziecko przebywało w szpitalu po urodzeniu?",
+    "hospitalDates": "Od kiedy do kiedy trwał pobyt dziecka w szpitalu?",
+    "pregnant": "Czy niezdolność do pracy przypada w okresie ciąży?",
+    "coveredBySicknessInsurance": "Czy w dniu zdarzenia podlegasz ubezpieczeniu chorobowemu?",
+    "facilityClosed": "Czy zamknięto placówkę, do której uczęszcza dziecko?",
+    "noticeDays": "Na ile dni przed zamknięciem placówki Cię o tym powiadomiono?",
+    "unavailableOtherCarer": "Czy inny domownik może w tym czasie zapewnić opiekę?",
+    "birthOrAdoption": "Czy pytasz o urodzenie, czy o przyjęcie dziecka na wychowanie?",
+    "parentalAuthority": "Czy masz władzę rodzicielską albo sprawujesz opiekę jako opiekun faktyczny?",
+    "otherRkoExhausted": "Czy na to dziecko wypłacono już pełne 12 tys. zł rodzinnego kapitału opiekuńczego?"
+  },
+  "cards": [
+    {
+      "id": "aktywnie-w-zlobku",
+      "title": "Świadczenie aktywnie w żłobku",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "kind": "program_zus",
+      "status": "active",
+      "validFrom": "2024-10-01",
+      "validTo": null,
+      "dateEvidence": "of-aktywny-1-1",
+      "familyEvent": "żłob",
+      "terms": [
+        "żłob",
+        "żłób",
+        "klub dziecięc",
+        "dzienny opiekun",
+        "dziennego opiekuna"
+      ],
+      "reason": "Możliwość dofinansowania opieki w placówce lub u dziennego opiekuna.",
+      "evidence": "zlobek-opieka",
+      "conditions": [
+        {
+          "fact": "careType",
+          "equals": "nursery",
+          "evidence": "zlobek-opieka"
+        },
+        {
+          "fact": "registeredCare",
+          "equals": true,
+          "evidence": "zlobek-opieka"
+        }
+      ],
+      "exclusions": [
+        "of-zlobek-8-1",
+        "zlobek-prog"
+      ],
+      "exclusiveGroup": "aktywny-rodzic-dziecko-miesiac",
+      "conflictEvidence": "of-aktywny-1-3",
+      "channel": "of-zlobek-9-1",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "aktywni-rodzice-w-pracy",
+      "title": "Świadczenie aktywni rodzice w pracy",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "kind": "program_zus",
+      "status": "active",
+      "validFrom": "2024-10-01",
+      "validTo": null,
+      "dateEvidence": "of-aktywny-1-1",
+      "familyEvent": "babci",
+      "terms": [
+        "babci",
+        "dziad",
+        "niani",
+        "opiekunk",
+        "wracam do pracy",
+        "wracamy do pracy",
+        "pracujemy",
+        "rodzice w pracy"
+      ],
+      "reason": "Warto sprawdzić ten wariant, gdy dziecko ma opiekę poza placówką, a rodzic spełnia wymagania dotyczące aktywności.",
+      "evidence": "of-praca-3-3",
+      "conditions": [
+        {
+          "fact": "careType",
+          "equals": "home",
+          "evidence": "of-praca-3-3"
+        },
+        {
+          "fact": "childAgeMonths",
+          "min": 12,
+          "max": 35,
+          "evidence": "of-praca-3-2"
+        },
+        {
+          "fact": "activityThresholdMet",
+          "equals": true,
+          "evidence": "of-praca-7-1"
+        }
+      ],
+      "exclusions": [
+        "of-praca-13-1"
+      ],
+      "exclusiveGroup": "aktywny-rodzic-dziecko-miesiac",
+      "conflictEvidence": "of-aktywny-1-3",
+      "channel": "of-praca-14-1",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "aktywnie-w-domu",
+      "title": "Świadczenie aktywnie w domu",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "kind": "program_zus",
+      "status": "active",
+      "validFrom": "2024-10-01",
+      "validTo": null,
+      "dateEvidence": "of-aktywny-1-1",
+      "familyEvent": "w domu",
+      "terms": [
+        "w domu",
+        "domow",
+        "babci",
+        "dziad",
+        "opiekuję się",
+        "opiekuje się",
+        "bez pracy"
+      ],
+      "reason": "Warto sprawdzić wiek dziecka oraz wcześniej wypłacony rodzinny kapitał opiekuńczy.",
+      "evidence": "of-dom-3-1",
+      "conditions": [
+        {
+          "fact": "childAgeMonths",
+          "min": 12,
+          "max": 35,
+          "evidence": "of-dom-3-2"
+        },
+        {
+          "fact": "parentalAuthority",
+          "equals": true,
+          "evidence": "of-dom-1-1"
+        },
+        {
+          "fact": "otherRkoExhausted",
+          "equals": false,
+          "evidence": "of-dom-6-2"
+        }
+      ],
+      "exclusions": [
+        "of-dom-6-1",
+        "of-dom-6-2"
+      ],
+      "exclusiveGroup": "aktywny-rodzic-dziecko-miesiac",
+      "conflictEvidence": "of-aktywny-1-3",
+      "channel": "of-dom-7-1",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "800-plus",
+      "title": "Świadczenie wychowawcze 800+",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "kind": "program_zus",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "800",
+      "terms": [
+        "800",
+        "osiemset",
+        "urodził",
+        "urodzeni",
+        "narodzin",
+        "noworodek",
+        "adopc",
+        "przysposob",
+        "naprzemien"
+      ],
+      "reason": "Przy urodzeniu lub objęciu dziecka opieką data wniosku wpływa na początek wypłat.",
+      "evidence": "of-800-2-1",
+      "conditions": [
+        {
+          "fact": "childAgeMonths",
+          "min": 0,
+          "max": 215,
+          "evidence": "of-800-2-1"
+        },
+        {
+          "fact": "birthOrAdoption",
+          "evidence": "of-800-4-5"
+        }
+      ],
+      "exclusions": [
+        "of-800-3-1"
+      ],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "of-800-6-1",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "dobry-start",
+      "title": "Dobry Start",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "kind": "program_zus",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "szkoł",
+      "terms": [
+        "szkoł",
+        "szkol",
+        "pierwsz",
+        "wyprawk",
+        "uczn",
+        "nauk",
+        "zerów",
+        "300",
+        "podstawów"
+      ],
+      "reason": "Wyprawka dotyczy ucznia rozpoczynającego rok szkolny.",
+      "evidence": "of-dobry-1-1",
+      "conditions": [
+        {
+          "fact": "schoolLevel",
+          "equals": "school",
+          "evidence": "of-zerowka-1-2"
+        },
+        {
+          "fact": "childDateOfBirth",
+          "evidence": "of-zerowka-1-2"
+        }
+      ],
+      "exclusions": [
+        "of-zerowka-1-2"
+      ],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "dobry-start-kanaly",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "uzupelniajacy-macierzynski",
+      "title": "Zasiłek macierzyński za okres uzupełniającego urlopu macierzyńskiego",
+      "issuer": "Płatnik zasiłku określony na podstawie ubezpieczenia",
+      "kind": "zasilek_z_ubezpieczenia",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "szpital",
+      "terms": [
+        "szpital",
+        "hospitaliz",
+        "wcześniak",
+        "inkubator",
+        "neonatolog",
+        "przedwcześ",
+        "urodził się wcześniej"
+      ],
+      "reason": "Pobyt dziecka w szpitalu po porodzie może uzasadniać dodatkowy okres zasiłku.",
+      "evidence": "of-szpital-1-1",
+      "conditions": [
+        {
+          "fact": "hospitalisedNewborn",
+          "equals": true,
+          "evidence": "of-szpital-1-1"
+        },
+        {
+          "fact": "hospitalDates",
+          "evidence": "of-szpital-4-1"
+        }
+      ],
+      "exclusions": [],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "of-szpital-5-1",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "opieka-zamkniecie",
+      "title": "Zasiłek opiekuńczy przy zamknięciu placówki",
+      "issuer": "Płatnik zasiłku określony na podstawie ubezpieczenia",
+      "kind": "zasilek_z_ubezpieczenia",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "zamknię",
+      "terms": [
+        "zamknię",
+        "zamknę",
+        "zamknie",
+        "zamkli",
+        "nieczyn",
+        "zamyk"
+      ],
+      "reason": "Przy nieprzewidzianym zamknięciu placówki znaczenie mają wiek dziecka i termin zawiadomienia.",
+      "evidence": "of-opieka-1-1",
+      "conditions": [
+        {
+          "fact": "facilityClosed",
+          "equals": true,
+          "evidence": "of-opieka-1-1"
+        },
+        {
+          "fact": "childAgeMonths",
+          "min": 0,
+          "max": 95,
+          "evidence": "of-opieka-1-1"
+        },
+        {
+          "fact": "noticeDays",
+          "min": 0,
+          "max": 6,
+          "evidence": "of-opieka-1-2"
+        },
+        {
+          "fact": "unavailableOtherCarer",
+          "equals": true,
+          "evidence": "of-opieka-1-2"
+        }
+      ],
+      "exclusions": [
+        "of-opieka-3-1"
+      ],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "z15-wersja",
+      "ruleId": null,
+      "formId": "Z-15"
+    },
+    {
+      "id": "chorobowe-ciaza",
+      "title": "Zasiłek chorobowy w okresie ciąży",
+      "issuer": "Płatnik zasiłku określony na podstawie ubezpieczenia",
+      "kind": "zasilek_z_ubezpieczenia",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "ciąż",
+      "terms": [
+        "ciąż",
+        "ciąży",
+        "chorobow",
+        "zwolnieni",
+        "l4"
+      ],
+      "reason": "Ciąża ma znaczenie dla wysokości zasiłku chorobowego.",
+      "evidence": "of-ch-kwota-1-1",
+      "conditions": [
+        {
+          "fact": "pregnant",
+          "equals": true,
+          "evidence": "of-ch-kwota-1-1"
+        },
+        {
+          "fact": "coveredBySicknessInsurance",
+          "evidence": "of-ch-prawo-1-1"
+        }
+      ],
+      "exclusions": [
+        "of-ch-prawo-6-4"
+      ],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "of-ch-dok-1-1",
+      "ruleId": "sickness",
+      "formId": null
+    },
+    {
+      "id": "ojcowski",
+      "title": "Zasiłek macierzyński za okres urlopu ojcowskiego",
+      "issuer": "Płatnik zasiłku określony na podstawie ubezpieczenia",
+      "kind": "zasilek_z_ubezpieczenia",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "ojcowsk",
+      "terms": [
+        "ojcowsk",
+        "tacierzyń",
+        "tata",
+        "ojcem"
+      ],
+      "reason": "Przy wyborze terminu znaczenie ma urodzenie albo przyjęcie dziecka na wychowanie.",
+      "evidence": "of-ojcowski-1-1",
+      "conditions": [
+        {
+          "fact": "birthOrAdoption",
+          "evidence": "of-ojcowski-1-1"
+        },
+        {
+          "fact": "coveredBySicknessInsurance",
+          "evidence": "of-macierzynski-1-1"
+        }
+      ],
+      "exclusions": [
+        "of-ojcowski-2-1"
+      ],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "of-macierzynski-dokumenty-17-1",
+      "ruleId": "paternity",
+      "formId": "ZAM"
+    },
+    {
+      "id": "rodzicielski",
+      "title": "Zasiłek macierzyński za okres urlopu rodzicielskiego",
+      "issuer": "Płatnik zasiłku określony na podstawie ubezpieczenia",
+      "kind": "zasilek_z_ubezpieczenia",
+      "status": "active",
+      "validFrom": null,
+      "validTo": null,
+      "dateEvidence": null,
+      "familyEvent": "rodzicielsk",
+      "terms": [
+        "rodzicielsk",
+        "dzielić urlop",
+        "podział urlop",
+        "podzielić urlop",
+        "przyjęcie na wychowanie"
+      ],
+      "reason": "Okres zasiłku zależy między innymi od urodzenia lub przyjęcia dziecka na wychowanie.",
+      "evidence": "of-rodzicielski-2-1",
+      "conditions": [
+        {
+          "fact": "birthOrAdoption",
+          "evidence": "of-rodzicielski-2-1"
+        }
+      ],
+      "exclusions": [],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "of-rodzicielski-5-1",
+      "ruleId": null,
+      "formId": null
+    },
+    {
+      "id": "rko",
+      "title": "Rodzinny kapitał opiekuńczy",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "kind": "program_zus",
+      "status": "archived",
+      "validFrom": null,
+      "validTo": "2024-09-30",
+      "dateEvidence": null,
+      "familyEvent": "rko",
+      "terms": [
+        "rko",
+        "kapitał opiekuńczy"
+      ],
+      "reason": "Program archiwalny dla nowych wniosków.",
+      "evidence": "of-rko-1-2",
+      "conditions": [],
+      "exclusions": [],
+      "exclusiveGroup": null,
+      "conflictEvidence": null,
+      "channel": "of-rko-1-2",
+      "ruleId": null,
+      "formId": null
+    }
+  ]
+}

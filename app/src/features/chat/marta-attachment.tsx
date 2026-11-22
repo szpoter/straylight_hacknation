@@ -31,13 +31,13 @@ export async function checkedCopy(file: File): Promise<File> {
   return new File([file], file.name, { type, lastModified: file.lastModified });
 }
 
-export async function storeCopy(scope: string, version: number, file: File) {
+export async function storeCopy(scope: string, version: number, file: File, family: "ola" | "legacy" = "ola") {
   if (!validScope(scope)) throw Error("Nie udało się potwierdzić sesji.");
   const db = await openDb();
   try {
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).put(file, [scope, version, file.name]);
+      tx.objectStore(STORE).put(file, family === "ola" ? [scope, "ola", version, file.name] : [scope, version, file.name]);
       tx.oncomplete = () => resolve();
       tx.onabort = tx.onerror = () => reject(tx.error);
     });
@@ -47,12 +47,12 @@ export async function storeCopy(scope: string, version: number, file: File) {
   }
 }
 
-async function loadCopy(scope: string, version: number, name: string): Promise<File | null> {
+async function loadCopy(scope: string, version: number, name: string, family: "ola" | "legacy"): Promise<File | null> {
   if (!validScope(scope)) return null;
   const db = await openDb();
   try {
     return await new Promise<File | null>((resolve, reject) => {
-      const req = db.transaction(STORE).objectStore(STORE).get([scope, version, name]);
+      const req = db.transaction(STORE).objectStore(STORE).get(family === "ola" ? [scope, "ola", version, name] : [scope, version, name]);
       req.onsuccess = () => resolve(req.result instanceof File && req.result.name === name ? req.result : null);
       req.onerror = () => reject(req.error);
     });
@@ -86,13 +86,13 @@ export function SavedAttachment({ view, scope }: { view: MartaView; scope: strin
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const name = view.attachmentName;
-  // Submission is the single state transition after confirmation. Edits create a fresh revision.
-  const revision = view.version - (view.submitted ? 1 : 0);
+  const family = view.attachmentFamily ?? "legacy";
+  const revision = view.attachmentVersion ?? view.version - (view.submitted ? 1 : 0);
   useEffect(() => {
     if (!name) return;
     let active = true;
     const restore = () => {
-      void loadCopy(scope, revision, name)
+      void loadCopy(scope, revision, name, family)
         .then((cached) => {
           if (active) setFile(cached);
         })
@@ -106,7 +106,7 @@ export function SavedAttachment({ view, scope }: { view: MartaView; scope: strin
       active = false;
       window.removeEventListener(CHANGED, restore);
     };
-  }, [scope, name, revision]);
+  }, [scope, name, revision, family]);
   if (!name) return null;
   return (
     <section aria-label="Lokalna kopia odpisu">
@@ -131,7 +131,7 @@ export function SavedAttachment({ view, scope }: { view: MartaView; scope: strin
               }
               try {
                 const copy = await checkedCopy(selected);
-                await storeCopy(scope, revision, copy);
+                await storeCopy(scope, revision, copy, family);
                 setFile(copy);
                 setError("");
               } catch {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allFields, demoProfile, displayValue, initialValues, nextState, progress, sendEvents, validPesel, validate } from "@/features/documents/flow";
+import { allFields, demoProfile, documentDraft, displayValue, initialValues, nextState, progress, sendEvents, validPesel, validate } from "@/features/documents/flow";
 import { buildTimeline } from "@/features/documents/timeline";
 import { childFiles, type DocCase } from "@/features/documents/model";
 import { FORMS, formFor, prefillContext } from "@/lib/demo/forms";
@@ -27,11 +27,25 @@ describe("formularze wniosków", () => {
 describe("podstawianie danych", () => {
   it("z planu Oli: imię dziecka, data urodzenia, rodzic i pracodawca z profilu", () => {
     const v = initialValues(FORMS["zasilek-macierzynski"], ctx);
-    expect(v.dziecko).toBe("Ola");
+    expect(v.dziecko).toBe("Ola Lis");
     expect(v.data_urodzenia).toBe("2026-11-10");
-    expect(v.rodzic).toBe("Anna Przykładowa");
-    expect(v.pracodawca).toBe("Kwiatek sp. z o.o.");
+    expect(v.rodzic).toBe("Marta Lis");
+    expect(v.pracodawca).toBe("Studio Lipa");
     expect(v.dziecko_pesel).toBeUndefined();
+  });
+  it("preserves the original draft, keeps deliberate edits and separates identifiers", () => {
+    const id = "zasilek-macierzynski";
+    const original = { rodzic: "Anna Przykładowa", pracodawca: "Kwiatek sp. z o.o.", dziecko: "Ola", rodzic_pesel: "old-parent", dziecko_pesel: "old-child", rachunek: "old-account", adres: "old-address", caly_okres: "Tak" };
+    const store: Record<string, Record<string, string>> = { [id]: { ...original } };
+    const read = (key: string) => store[key] ?? {};
+    const migrated = documentDraft("ola", id, read);
+    expect(migrated.values).toEqual({ rodzic: "Marta Lis", pracodawca: "Studio Lipa", dziecko: "Ola Lis", caly_okres: "Tak" });
+    store[migrated.key] = { ...migrated.values, rodzic: "Paweł Lis", rodzic_pesel: "confirmed" };
+    expect(documentDraft("ola", id, read).values.rodzic_pesel).toBe("confirmed");
+    expect(store[id]).toEqual(original);
+    const custom = { rodzic: "Inna osoba", dziecko: "Ola", dziecko_pesel: "deliberate", rachunek: "chosen" };
+    expect(documentDraft("ola", id, () => custom).values).toEqual(custom);
+    expect(documentDraft("inne", id, read).values).toEqual(original);
   });
   it("wartości wpisane przez rodzica wygrywają z podstawionymi", () => {
     expect(initialValues(FORMS["zasilek-macierzynski"], ctx, { dziecko: "Aleksandra" }).dziecko).toBe("Aleksandra");
@@ -107,13 +121,14 @@ describe("przejścia stanów", () => {
     const sent = { ...stop, state: "wyslano" as const, doc: { ...stop.doc!, events } } as DocCase;
     const timeline = buildTimeline(sent);
     expect(timeline[0].status).toBe("done");
-    expect(timeline[1].status).toBe("done");
-    expect(childFiles([sent]).map((f) => f.type)).toEqual(expect.arrayContaining(["Kopia wniosku", "Potwierdzenie"]));
+    expect(timeline[1].status).toBe("current");
+    expect(events.at(-1)).toMatchObject({ author: "Ty", date: "2026-11-21" });
+    expect(childFiles([sent]).map((f) => f.type)).toEqual(["Kopia wniosku"]);
   });
   it("korekta zachowuje poprzednią wysyłkę jako zwykły wpis", () => {
     const first = sendEvents([], "pue", "ZUS", "2026-11-21");
     const second = sendEvents(first, "pue", "ZUS", "2026-11-22", true);
-    expect(second.filter((e) => e.title === "Wysłano w symulacji")).toHaveLength(1);
-    expect(second.map((e) => e.title)).toContain("Wysłano poprzednią wersję");
+    expect(second.filter((e) => e.title === "Rodzic oznaczył przekazanie")).toHaveLength(1);
+    expect(second.map((e) => e.title)).toContain("Poprzedni wpis o przekazaniu");
   });
 });

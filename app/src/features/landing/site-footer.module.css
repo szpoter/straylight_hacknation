@@ -54,14 +54,6 @@
   line-height: 1.5;
 }
 
-.demo {
-  max-width: 40ch;
-  margin-top: 16px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
 .columns {
   display: grid;
   gap: 32px;

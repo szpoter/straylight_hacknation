@@ -29,7 +29,7 @@ export function DocumentsList() {
       <p className="text-meta text-on-surface-variant">{plan.name}</p>
       <PageTitle>Dokumenty i wnioski</PageTitle>
       <p className="mt-3 max-w-prose text-lead text-on-surface-variant">
-        Wszystkie wnioski i pisma z planu w jednym miejscu: co trzeba złożyć, co już wysłane i jak urząd odpowiedział. Kliknij sprawę, żeby zobaczyć jej przebieg, pliki i następny krok.
+        Wybierz sprawę, żeby zobaczyć jej przebieg, dokumenty i następny krok.
       </p>
 
       {summons?.doc.summons && (
@@ -95,7 +95,7 @@ export function DocumentsList() {
         </div>
       ) : (
         <div className="mt-stack flex flex-col gap-stack pb-section-mobile md:mt-section-mobile md:gap-section-mobile md:pb-section">
-          {files.length === 0 && <EmptyState text="Nie ma jeszcze plików dziecka. Pojawią się po wysłaniu pierwszego wniosku." />}
+          {files.length === 0 && <EmptyState text="Nie ma jeszcze plików dziecka. Kopia wniosku pojawi się po oznaczeniu przekazania." />}
           {GOAL_ORDER.map((goal) => {
             const inGoal = files.filter((f) => f.goal === goal);
             if (inGoal.length === 0) return null;

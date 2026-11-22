@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { CATALOG, DEFAULT_PLAN_ID, PLANS, getPlan } from "@/lib/demo/fixtures";
-import { buildPlans, type BuildAnswers } from "@/lib/plan/build";
+import { DEFAULT_PLAN_ID, getPlan } from "@/lib/demo/fixtures";
 import { applyCalculatorToPlan, type CalcForm } from "@/lib/plan/benefit-form";
 import { addDays, daysBetween, formatLong } from "@/lib/demo/dates";
 import type { Plan, Stop } from "@/lib/demo/types";
@@ -117,23 +116,6 @@ function writeStorage(key: string, value: string) {
   }
 }
 
-/**
- * Zapisany plan z onboardingu → aktualna wersja: odbudowa z zapisanych odpowiedzi (nowy katalog,
- * nazwy etapów, źródła), z zachowaniem id, nazwy i rodzeństwa. Starsze plany bez `origin`
- * dostają przynajmniej aktualne nazwy etapów.
- */
-function refreshPlan(saved: Plan): Plan {
-  try {
-    if (saved.origin) {
-      const rebuilt = buildPlans(saved.origin.answers as BuildAnswers, saved.origin.idBase, saved.origin.builtOn).find((p) => p.id === saved.id);
-      if (rebuilt) return { ...rebuilt, name: saved.name };
-    }
-  } catch {
-    // Uszkodzony zapis — zostawiamy plan jak był.
-  }
-  return { ...saved, stages: CATALOG.stages() };
-}
-
 /** Czy rodzic ma już plany dodane w onboardingu (odczyt zapisu poza Reactem, np. przed wczytaniem stanu). */
 export function hasCreatedPlans(): boolean {
   try {
@@ -164,14 +146,10 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [forms, setForms] = useState<Record<string, Record<string, FormValues>>>({});
   const [calculators, setCalculators] = useState<Record<string, CalcForm>>({});
   const [loaded, setLoaded] = useState(false);
-  // Plany z onboardingu na początku listy — to „prawdziwe” dzieci rodzica.
-  const plans = useMemo(
-    () =>
-      [...created, ...PLANS]
-        .filter((p) => !hidden.includes(p.id))
-        .map((p) => applyCalculatorToPlan(applyPlanEdit(p, edits[p.id]), calculators[calculatorKey(p)])),
-    [created, edits, hidden, calculators],
-  );
+  const plans = useMemo(() => {
+    const ola = getPlan(DEFAULT_PLAN_ID);
+    return [applyCalculatorToPlan(ola, calculators[calculatorKey(ola)])];
+  }, [calculators]);
   const updatePlan = useCallback((id: string, edit: PlanEdit) => setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...edit } })), []);
 
   // Odczyt po hydratacji (serwer nie zna localStorage).
@@ -182,7 +160,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     } catch {
       saved = {};
     }
-    const createdPlans = Array.isArray(saved.created) ? saved.created.map(refreshPlan) : [];
+    const createdPlans = Array.isArray(saved.created) ? saved.created : [];
     /* eslint-disable react-hooks/set-state-in-effect -- odczyt po hydratacji */
     setPatches(saved.patches ?? {});
     setEdits(saved.edits ?? {});
@@ -190,8 +168,6 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setHidden(Array.isArray(saved.hidden) ? saved.hidden : []);
     setForms(saved.forms ?? {});
     setCalculators(saved.calculators && typeof saved.calculators === "object" ? saved.calculators : {});
-    const active = readStorage(STORAGE_KEY);
-    if (active && [...createdPlans, ...PLANS].some((p) => p.id === active)) setPlanId(active);
     setLoaded(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
@@ -202,6 +178,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   }, [loaded, patches, edits, created, hidden, forms, calculators]);
 
   const selectPlan = useCallback((id: string) => {
+    if (id !== DEFAULT_PLAN_ID) return;
     setPlanId(id);
     setZusik(null);
     writeStorage(STORAGE_KEY, id);

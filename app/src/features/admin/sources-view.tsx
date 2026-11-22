@@ -1,5 +1,6 @@
 "use client";
 
+import review from "../../../corpus/source-review.json";
 import { useState } from "react";
 import type { SupportRow } from "@/lib/admin/support-edits";
 import type { KnowledgePackage, KnowledgeSource } from "@/lib/admin/types";
@@ -60,7 +61,21 @@ export function SourcesView({
         note={stale ? `${stale} źródeł starszych niż 6 miesięcy` : "wszystkie źródła aktualne"}
       />
 
-      <Card className={s.span12} title="Źródła wiedzy" id="sources" meta="Odpowiedzi Zusika cytują wyłącznie te dokumenty">
+      {review.changes.length > 0 && (
+        <Card className={s.span12} title="Publikacje ZUS do sprawdzenia" id="source-review">
+          <ul className={s.list}>
+            {review.changes.map(change => (
+              <li key={change.url} className={s.listItem}>
+                <SourceLink label={change.title} url={change.url} />
+                <span className={s.small}>{change.kind === "new" ? "Nowa w katalogu" :
+                  change.kind === "changed" ? "Zmieniona treść" : "Usunięta z katalogu"}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Card className={s.span12} title="Źródła wiedzy" id="sources" meta="Dokumenty w aktywnych pakietach wiedzy">
         <div className={s.tabs} role="group" aria-label="Pakiet wiedzy">
           {filters.map((f) => (
             <button key={f} type="button" className={s.tab} aria-pressed={pkg === f} onClick={() => setPkg(f)}>

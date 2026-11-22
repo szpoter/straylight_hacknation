@@ -1,0 +1,1887 @@
+---
+openapi: 3.1.1
+info:
+  title: ZUSik · REST API
+  version: 1.0.0
+  description: Synchroniczne operacje v1 dla podpisanej sesji demo. Surowe PDF i pełny OCR pozostają lokalne. Zasady semantyczne i migracja w 11-rest-api.md.
+servers:
+- url: "/api/v1"
+security:
+- demoSession: []
+paths:
+  "/sessions":
+    post:
+      operationId: openSession
+      summary: Otwórz lub wznów tę samą sesję demo
+      tags:
+      - session
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Session"
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Podpisane sesyjne cookie HttpOnly, Secure na HTTPS.
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '503':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      security: []
+  "/profiles":
+    post:
+      operationId: createProfile
+      summary: Utwórz izolowany profil
+      tags:
+      - profile
+      responses:
+        '201':
+          description: Utworzono zasób.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Profile"
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Silny walidator bieżącej reprezentacji.
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '409':
+          "$ref": "#/components/responses/Problem"
+        '413':
+          "$ref": "#/components/responses/Problem"
+        '415':
+          "$ref": "#/components/responses/Problem"
+        '422':
+          "$ref": "#/components/responses/Problem"
+        '429':
+          "$ref": "#/components/responses/Problem"
+        '503':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/key"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ProfileInput"
+    get:
+      operationId: listProfiles
+      summary: Lista zasobów dla właściciela
+      tags:
+      - profile
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProfileList"
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/cursor"
+      - "$ref": "#/components/parameters/limit"
+  "/profiles/{profileId}":
+    parameters:
+    - name: profileId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: getProfile
+      summary: Odczyt zasobu właściciela
+      tags:
+      - profile
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Profile"
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Silny walidator bieżącej reprezentacji.
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+    patch:
+      operationId: changeProfile
+      summary: Zatwierdź zmiany atomowo względem wersji profilu
+      tags:
+      - profile
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Profile"
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Silny walidator bieżącej reprezentacji.
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '409':
+          "$ref": "#/components/responses/Problem"
+        '412':
+          "$ref": "#/components/responses/Problem"
+        '415':
+          "$ref": "#/components/responses/Problem"
+        '422':
+          "$ref": "#/components/responses/Problem"
+        '428':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/match"
+      - "$ref": "#/components/parameters/key"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Patch"
+    delete:
+      operationId: eraseProfile
+      summary: Usuń profil wraz z zależnymi danymi
+      tags:
+      - profile
+      responses:
+        '204':
+          description: Zakończono.
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '412':
+          "$ref": "#/components/responses/Problem"
+        '428':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/match"
+  "/profiles/{profileId}/facts":
+    parameters:
+    - name: profileId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: listFacts
+      summary: Lista zasobów dla właściciela
+      tags:
+      - profile
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/FactVersionList"
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/cursor"
+      - "$ref": "#/components/parameters/limit"
+      - name: validAt
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: knownAt
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: subjectId
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+  "/profiles/{profileId}/proposals":
+    parameters:
+    - name: profileId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: listProposals
+      summary: Lista zasobów dla właściciela
+      tags:
+      - profile
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProposalList"
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/cursor"
+      - "$ref": "#/components/parameters/limit"
+  "/cases":
+    post:
+      operationId: createCase
+      summary: Utwórz sprawę w profilu
+      tags:
+      - case
+      responses:
+        '201':
+          description: Utworzono zasób.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Case"
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Silny walidator bieżącej reprezentacji.
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '409':
+          "$ref": "#/components/responses/Problem"
+        '413':
+          "$ref": "#/components/responses/Problem"
+        '415':
+          "$ref": "#/components/responses/Problem"
+        '422':
+          "$ref": "#/components/responses/Problem"
+        '429':
+          "$ref": "#/components/responses/Problem"
+        '503':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/key"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CaseInput"
+    get:
+      operationId: listCases
+      summary: Lista zasobów dla właściciela
+      tags:
+      - case
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CaseList"
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/cursor"
+      - "$ref": "#/components/parameters/limit"
+  "/cases/{caseId}":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: getCase
+      summary: Odczyt zasobu właściciela
+      tags:
+      - case
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Case"
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Silny walidator bieżącej reprezentacji.
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+    delete:
+      operationId: eraseCase
+      summary: Usuń sprawę i jej zależności
+      tags:
+      - case
+      responses:
+        '204':
+          description: Zakończono.
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '412':
+          "$ref": "#/components/responses/Problem"
+        '428':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/match"
+  "/cases/{caseId}/documents":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    post:
+      operationId: addDocument
+      summary: Zarejestruj metadane lokalnego dokumentu
+      tags:
+      - case
+      responses:
+        '201':
+          description: Utworzono zasób.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Document"
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '409':
+          "$ref": "#/components/responses/Problem"
+        '413':
+          "$ref": "#/components/responses/Problem"
+        '415':
+          "$ref": "#/components/responses/Problem"
+        '422':
+          "$ref": "#/components/responses/Problem"
+        '429':
+          "$ref": "#/components/responses/Problem"
+        '503':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/key"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/DocInput"
+    get:
+      operationId: listDocuments
+      summary: Lista zasobów dla właściciela
+      tags:
+      - case
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/DocumentList"
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/cursor"
+      - "$ref": "#/components/parameters/limit"
+  "/cases/{caseId}/documents/{documentId}":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    - name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: getDocument
+      summary: Odczyt zasobu właściciela
+      tags:
+      - case
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Document"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+  "/cases/{caseId}/messages":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    post:
+      operationId: createMessage
+      summary: Zapisz ukończoną turę rozmowy
+      tags:
+      - chat
+      responses:
+        '201':
+          description: Utworzono zasób.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '409':
+          "$ref": "#/components/responses/Problem"
+        '413':
+          "$ref": "#/components/responses/Problem"
+        '415':
+          "$ref": "#/components/responses/Problem"
+        '422':
+          "$ref": "#/components/responses/Problem"
+        '429':
+          "$ref": "#/components/responses/Problem"
+        '503':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/key"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/MessageInput"
+    get:
+      operationId: listMessages
+      summary: Lista zasobów dla właściciela
+      tags:
+      - chat
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/MessageList"
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/cursor"
+      - "$ref": "#/components/parameters/limit"
+  "/cases/{caseId}/messages/{messageId}":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    - name: messageId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: getMessage
+      summary: Odczyt zasobu właściciela
+      tags:
+      - chat
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+  "/cases/{caseId}/assessments":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    post:
+      operationId: assess
+      summary: Oceń sprawę dla wskazanych rewizji
+      tags:
+      - assessment
+      responses:
+        '201':
+          description: Utworzono zasób.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Assessment"
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+        '400':
+          "$ref": "#/components/responses/Problem"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '403':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        '409':
+          "$ref": "#/components/responses/Problem"
+        '413':
+          "$ref": "#/components/responses/Problem"
+        '415':
+          "$ref": "#/components/responses/Problem"
+        '422':
+          "$ref": "#/components/responses/Problem"
+        '429':
+          "$ref": "#/components/responses/Problem"
+        '503':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+      parameters:
+      - "$ref": "#/components/parameters/key"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AssessmentInput"
+  "/cases/{caseId}/assessments/{assessmentId}":
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    - name: assessmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    get:
+      operationId: getAssessment
+      summary: Odczyt zasobu właściciela
+      tags:
+      - assessment
+      responses:
+        '200':
+          description: Wynik lub odtworzenie operacji.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Assessment"
+        '401':
+          "$ref": "#/components/responses/Problem"
+        '404':
+          "$ref": "#/components/responses/Problem"
+        default:
+          "$ref": "#/components/responses/Problem"
+components:
+  securitySchemes:
+    demoSession:
+      type: apiKey
+      in: cookie
+      name: zusik_demo_session
+  parameters:
+    match:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        type: string
+      description: 'Silny walidator w formacie "<id>.<revision>". Oba pola pochodzą z tej samej odczytanej wersji profilu lub sprawy. Po kompresji odpowiedzi pośrednik może zwrócić słaby ETag. Klient odtwarza wówczas silny walidator z pól obiektu.'
+    key:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+      description: Klucz jednej operacji, powtarzany bez zmian przy ponowieniu. Sesja może zapisać 120 nowych operacji na minutę. Ponowienie zapisanego wyniku nie zużywa limitu.
+    cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+  responses:
+    Problem:
+      description: Błąd z kodem do obsługi przez klienta.
+      content:
+        application/problem+json:
+          schema:
+            "$ref": "#/components/schemas/Problem"
+  schemas:
+    FactField:
+      type: string
+      enum:
+      - birthDate
+      - insuranceTitle
+      - employerRef
+      - monthlyGrossPay
+      - monthlyContributionBasis
+      - submissionStatus
+      - deliveryDate
+      - benefitRequest
+      - sicknessCoverage
+      - otherCoverage
+      - postInsuranceException
+      - maternityPayVariant
+      - payrollRegime
+      - monthlyEmployeeDeduction
+      - monthlyPayAfterDeduction
+      - payerInsuredCount
+      - accountArrears
+      - sicknessCertificate
+      - benefitHistory
+      - birthChildCount
+      - prenatalLeaveDays
+      - maternityCourse
+      - childDeathDate
+      - debtSettlement
+    Value:
+      oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          kind:
+            const: date
+          date:
+            type: string
+            format: date
+        required:
+        - kind
+        - date
+      - type: object
+        additionalProperties: false
+        properties:
+          kind:
+            const: money
+          grosze:
+            type: integer
+            minimum: 0
+          currency:
+            const: PLN
+        required:
+        - kind
+        - grosze
+        - currency
+      - type: object
+        additionalProperties: false
+        properties:
+          kind:
+            const: code
+          code:
+            type: string
+            minLength: 1
+            maxLength: 128
+        required:
+        - kind
+        - code
+      - type: object
+        additionalProperties: false
+        properties:
+          kind:
+            const: count
+          count:
+            type: integer
+            minimum: 0
+        required: [kind, count]
+    Source:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - declaration
+          - simulated_zus
+          - document
+          - workflow
+        referenceId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        page:
+          type: integer
+          minimum: 1
+      required:
+      - kind
+      - referenceId
+    FactInput:
+      type: object
+      additionalProperties: false
+      properties:
+        subjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        field:
+          "$ref": "#/components/schemas/FactField"
+        value:
+          "$ref": "#/components/schemas/Value"
+        validFrom:
+          type: string
+          format: date
+        validTo:
+          type: string
+          format: date
+          description: Ostatni dzień obowiązywania, włącznie.
+        asOf:
+          type: string
+          format: date
+        payerRef:
+          type: string
+          minLength: 1
+          maxLength: 128
+        titleRef:
+          type: string
+          minLength: 1
+          maxLength: 128
+        source:
+          "$ref": "#/components/schemas/Source"
+      required:
+      - subjectId
+      - field
+      - value
+      - source
+      anyOf:
+      - required:
+        - validFrom
+      - required:
+        - asOf
+      dependentRequired:
+        validTo:
+        - validFrom
+      allOf:
+      - if:
+          properties:
+            field:
+              enum:
+              - birthDate
+              - deliveryDate
+              - childDeathDate
+          required:
+          - field
+        then:
+          properties:
+            value:
+              properties:
+                kind:
+                  const: date
+      - if:
+          properties:
+            field:
+              enum:
+              - monthlyGrossPay
+              - monthlyContributionBasis
+              - monthlyEmployeeDeduction
+              - monthlyPayAfterDeduction
+              - accountArrears
+          required:
+          - field
+        then:
+          properties:
+            value:
+              properties:
+                kind:
+                  const: money
+      - if:
+          properties:
+            field:
+              enum:
+              - insuranceTitle
+              - employerRef
+              - submissionStatus
+              - benefitRequest
+              - sicknessCoverage
+              - otherCoverage
+              - postInsuranceException
+              - maternityPayVariant
+              - payrollRegime
+              - benefitHistory
+              - sicknessCertificate
+              - maternityCourse
+              - debtSettlement
+          required:
+          - field
+        then:
+          properties:
+            value:
+              properties:
+                kind:
+                  const: code
+      - if:
+          properties:
+            field: {enum: [payerInsuredCount, birthChildCount, prenatalLeaveDays]}
+        then:
+          properties:
+            value:
+              properties:
+                kind: {const: count}
+    FactVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        factId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        version:
+          type: integer
+          minimum: 1
+        fact:
+          "$ref": "#/components/schemas/FactInput"
+        verification:
+          type: string
+          enum:
+          - declared
+          - confirmed
+          - disputed
+          - withdrawn
+        recordedAt:
+          type: string
+          format: date-time
+        supersedes:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - factId
+      - version
+      - fact
+      - verification
+      - recordedAt
+    ProfileInput:
+      type: object
+      additionalProperties: false
+      properties:
+        mode:
+          type: string
+          enum:
+          - family
+          - case_import
+      required:
+      - mode
+    Profile:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        mode:
+          type: string
+          enum:
+          - family
+          - case_import
+        revision:
+          type: integer
+          minimum: 1
+        subjects:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+      required:
+      - id
+      - mode
+      - revision
+      - subjects
+    Change:
+      oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          action:
+            type: string
+            enum:
+            - add_subject
+          subjectId:
+            type: string
+            minLength: 1
+            maxLength: 128
+          role:
+            type: string
+            enum:
+            - parent
+            - child
+            - other
+        required:
+        - action
+        - subjectId
+        - role
+      - type: object
+        additionalProperties: false
+        properties:
+          action:
+            type: string
+            enum:
+            - add_fact
+          fact:
+            "$ref": "#/components/schemas/FactInput"
+        required:
+        - action
+        - fact
+      - type: object
+        additionalProperties: false
+        properties:
+          action:
+            type: string
+            enum:
+            - correct_fact
+            - change_from
+          previousFactId:
+            type: string
+            minLength: 1
+            maxLength: 128
+          fact:
+            "$ref": "#/components/schemas/FactInput"
+        required:
+        - action
+        - previousFactId
+        - fact
+      - type: object
+        additionalProperties: false
+        properties:
+          action:
+            type: string
+            enum:
+            - withdraw_fact
+          previousFactId:
+            type: string
+            minLength: 1
+            maxLength: 128
+        required:
+        - action
+        - previousFactId
+      - type: object
+        additionalProperties: false
+        properties:
+          action:
+            type: string
+            enum:
+            - accept_proposal
+            - dismiss_proposal
+          proposalId:
+            type: string
+            minLength: 1
+            maxLength: 128
+        required:
+        - action
+        - proposalId
+    Patch:
+      type: object
+      additionalProperties: false
+      properties:
+        changes:
+          type: array
+          minItems: 1
+          maxItems: 25
+          items:
+            "$ref": "#/components/schemas/Change"
+      required:
+      - changes
+    Proposal:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        fact:
+          "$ref": "#/components/schemas/FactInput"
+        basisRevision:
+          type: integer
+          minimum: 1
+        reasonCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - dismissed
+          - obsolete
+      required:
+      - id
+      - fact
+      - basisRevision
+      - reasonCode
+      - status
+    CaseInput:
+      type: object
+      additionalProperties: false
+      properties:
+        profileId:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - profileId
+    Case:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        profileId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        revision:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - profileId
+      - revision
+      - createdAt
+    DocInput:
+      type: object
+      additionalProperties: false
+      properties:
+        clientDocumentId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        kind:
+          type: string
+          enum:
+          - application
+          - insurance
+          - payroll
+          - certificate
+          - decision
+          - other
+        pageKinds:
+          type: array
+          description: Rodzaj każdej kolejnej strony. Serwer wymaga dokładnie pages elementów.
+          items:
+            type: string
+            enum: [application, insurance, payroll, certificate, decision, other]
+        pages:
+          type: integer
+          minimum: 1
+      required:
+      - clientDocumentId
+      - kind
+      - pages
+    Document:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        metadata:
+          "$ref": "#/components/schemas/DocInput"
+      required:
+      - id
+      - metadata
+    MessageInput:
+      type: object
+      additionalProperties: false
+      properties:
+        intent:
+          type: string
+          enum:
+          - link_account
+          - read_account
+          - public_question
+          - read_context
+          - declare_fact
+          - ask_case
+          - explain_result
+          - hypothetical
+        basisCaseRevision: {type: integer, minimum: 1}
+        scenario: {type: string, enum: [employment-transition, business-settlement, unavailable]}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        areas:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: {type: string, enum: [insurance, contributions, e_zla, balance, benefits]}
+        titleRef: {type: string, minLength: 1, maxLength: 128}
+        payerRef: {type: string, minLength: 1, maxLength: 128}
+        publicTopic:
+          type: string
+          enum: [nursery_recipient]
+        publicQuestion:
+          type: string
+          minLength: 2
+          maxLength: 500
+        subjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        topic:
+          type: string
+          minLength: 1
+          maxLength: 128
+        fact:
+          "$ref": "#/components/schemas/FactInput"
+        replyTo:
+          type: string
+          minLength: 1
+          maxLength: 128
+        assessmentId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        basisProfileRevision:
+          type: integer
+          minimum: 1
+          description: Wymagana do zapisu deklaracji w transakcji z turą. Zdezaktualizowana rewizja daje 409.
+        validAt:
+          type: string
+          format: date
+        knownAt:
+          type: string
+          format: date-time
+        variant:
+          type: array
+          minItems: 1
+          maxItems: 12
+          items:
+            "$ref": "#/components/schemas/FactInput"
+      required:
+      - intent
+      allOf:
+      - if:
+          properties:
+            intent:
+              enum:
+              - public_question
+          required:
+          - intent
+        then:
+          required:
+          - publicQuestion
+      - if:
+          properties:
+            intent:
+              enum:
+              - read_context
+          required:
+          - intent
+        then:
+          required:
+          - topic
+      - if:
+          properties:
+            intent:
+              enum:
+              - declare_fact
+          required:
+          - intent
+        then:
+          required:
+          - fact
+          - basisProfileRevision
+      - if:
+          properties:
+            intent:
+              enum:
+              - explain_result
+          required:
+          - intent
+        then:
+          required:
+          - assessmentId
+      - if:
+          properties:
+            intent:
+              enum:
+              - hypothetical
+          required:
+          - intent
+        then:
+          required:
+          - variant
+      - if:
+          properties:
+            intent: {const: public_question}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, publicQuestion]
+      - if:
+          properties:
+            intent: {const: read_context}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, topic, subjectId, validAt, knownAt, publicTopic]
+      - if:
+          properties:
+            intent: {const: declare_fact}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, fact, basisProfileRevision]
+      - if:
+          properties:
+            intent: {const: ask_case}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, topic, subjectId, validAt, knownAt]
+      - if:
+          properties:
+            intent: {const: explain_result}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, assessmentId]
+      - if:
+          properties:
+            intent: {const: hypothetical}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, variant, subjectId, validAt, knownAt]
+      - if:
+          properties:
+            intent: {const: link_account}
+        then:
+          required: [subjectId, scenario, basisCaseRevision]
+          propertyNames: {enum: [intent, subjectId, scenario, basisCaseRevision]}
+      - if:
+          properties:
+            intent: {const: read_account}
+        then:
+          required: [subjectId, from, to, areas]
+          propertyNames: {enum: [intent, subjectId, from, to, areas, titleRef, payerRef]}
+      description: >-
+        Jedna intencja na operację. Serwer akceptuje tylko pola mające znaczenie dla tej intencji i nigdy nie wykorzystuje parametrów
+        wariantu do zmiany profilu.
+    Citation:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - account
+          - public_source
+          - fact
+          - document
+          - workflow
+          - assessment
+        ref:
+          type: string
+          minLength: 1
+          maxLength: 128
+        version:
+          type: string
+          minLength: 1
+          maxLength: 128
+        page:
+          type: integer
+          minimum: 1
+        publicUrl:
+          type: string
+          format: uri
+          description: Tylko zweryfikowany adres źródła urzędowego dla cytatu publicznego.
+      required:
+      - kind
+      - ref
+      - version
+      allOf:
+      - if:
+          properties:
+            kind:
+              const: public_source
+        then:
+          required:
+          - publicUrl
+        else:
+          not:
+            required:
+            - publicUrl
+    Message:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        state:
+          type: string
+          enum:
+          - processing
+          - completed
+          - failed
+        answer:
+          type: string
+        publicQuery:
+          type: string
+          description: Publiczne zapytanie utworzone przez serwer do wznowienia tematu.
+        opportunities:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, title, citationIds, missingFacts, exclusiveGroup]
+            properties:
+              id: {type: string}
+              title: {type: string}
+              citationIds: {type: array, minItems: 1, items: {type: string}}
+              missingFacts: {type: array, items: {type: string}}
+              exclusiveGroup: {type: [string, 'null']}
+        citations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Citation"
+        proposalIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+        profileRevision:
+          type: integer
+          minimum: 1
+        caseRevision:
+          type: integer
+          minimum: 1
+        errorCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+        account:
+          type: object
+          additionalProperties: false
+          required: [sourceVersion, readAt, facts, coverage]
+          properties:
+            sourceVersion: {type: string}
+            readAt: {type: string, format: date-time}
+            facts:
+              type: array
+              items: {"$ref": "#/components/schemas/FactInput"}
+            coverage:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [area, status, spans]
+                properties:
+                  area: {type: string, enum: [insurance, contributions, e_zla, balance, benefits]}
+                  status: {type: string, enum: [no_register, unavailable, partial, unknown, complete]}
+                  spans:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [from, to]
+                      properties:
+                        from: {type: string, format: date}
+                        to: {type: string, format: date}
+        input:
+          "$ref": "#/components/schemas/MessageInput"
+          description: Zweryfikowana, zminimalizowana postać tury użytkownika do wznowienia kontekstu.
+      required:
+      - id
+      - state
+      - citations
+      - proposalIds
+      - profileRevision
+      - caseRevision
+      - input
+    AssessmentInput:
+      type: object
+      additionalProperties: false
+      properties:
+        subjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        asOf:
+          type: string
+          format: date
+        caseRevision:
+          type: integer
+          minimum: 1
+        profileRevision:
+          type: integer
+          minimum: 1
+        benefit:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - subjectId
+      - asOf
+      - caseRevision
+      - profileRevision
+      - benefit
+    Decision:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+          - eligible
+          - ineligible
+          - needs_information
+          - needs_review
+          - unsupported
+        benefit:
+          type: string
+          minLength: 1
+          maxLength: 128
+        subjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        titleRef: {type: string}
+        payerRef: {type: string}
+        payer: {type: string, enum: [zus, employer]}
+        paymentStatus: {type: string, enum: [payable, withheld, needs_information, expired]}
+        segments:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [from, to, days, ratePct, basisGrosze, dailyGrosze, grossAmountGrosze]
+            properties:
+              from: {type: string, format: date}
+              to: {type: string, format: date}
+              days: {type: integer, minimum: 1}
+              ratePct: {type: number, minimum: 0}
+              basisGrosze: {type: integer, minimum: 0}
+              dailyGrosze: {type: integer, minimum: 0}
+              grossAmountGrosze: {type: integer, minimum: 0}
+        grossAmountGrosze:
+          type: integer
+          minimum: 0
+        reasonCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+        amountStatus:
+          type: string
+          enum:
+          - calculated
+          - needs_information
+          - needs_review
+          - not_applicable
+          - unsupported
+        amountPeriod:
+          type: string
+          enum:
+          - total
+          - daily
+          - monthly
+        citations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Citation"
+        needed:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MissingEvidence"
+      required:
+      - status
+      - benefit
+      - subjectId
+      - reasonCode
+      - amountStatus
+      - citations
+      allOf:
+      - if:
+          properties:
+            amountStatus:
+              enum:
+              - calculated
+          required:
+          - amountStatus
+        then:
+          required:
+          - grossAmountGrosze
+          - amountPeriod
+      - if:
+          properties:
+            amountStatus:
+              enum:
+              - needs_information
+              - needs_review
+              - not_applicable
+              - unsupported
+          required:
+          - amountStatus
+        then:
+          not:
+            required:
+            - grossAmountGrosze
+      - if:
+          anyOf:
+          - properties:
+              status:
+                const: needs_information
+          - properties:
+              amountStatus:
+                const: needs_information
+        then:
+          required:
+          - needed
+          properties:
+            needed:
+              minItems: 1
+    Assessment:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        input:
+          "$ref": "#/components/schemas/AssessmentInput"
+        ruleVersion:
+          type: string
+          minLength: 1
+          maxLength: 128
+        decisions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Decision"
+        stale:
+          type: boolean
+      required:
+      - id
+      - input
+      - ruleVersion
+      - decisions
+      - stale
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - code
+      - requestId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+    ProfileList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Profile"
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+      - nextCursor
+    FactVersionList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FactVersion"
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+      - nextCursor
+    ProposalList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Proposal"
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+      - nextCursor
+    CaseList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Case"
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+      - nextCursor
+    DocumentList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Document"
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+      - nextCursor
+    MessageList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Message"
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+      - nextCursor
+    Session:
+      type: object
+      additionalProperties: false
+      properties:
+        state:
+          type: string
+          enum:
+          - created
+          - existing
+      required:
+      - state
+    MissingEvidence:
+      type: object
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        request:
+          type: string
+          minLength: 1
+      required:
+      - field
+      - request

@@ -531,6 +531,10 @@
   min-width: 0;
 }
 
+.threadInner > .messages:only-child {
+  grid-column: 1 / -1;
+}
+
 /* Zusik sits on the margin of the latest message and stays in view while the parent scrolls up */
 .marginMascot {
   align-self: end;
@@ -781,6 +785,7 @@
 .sourceMeta {
   color: var(--ink-variant);
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 /* ---- bottom: composer ---------------------------------------------------------- */
@@ -1011,3 +1016,12 @@
   .caseLayout { flex-direction: column; }
   .caseDocuments { flex: 0 1 auto; max-height: 32%; border-bottom: 1px solid var(--outline); }
 }
+
+.reviewForm { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--outline); border-radius: var(--rounded-sm); }
+.reviewForm label { display: grid; gap: 2px; }
+.reviewForm input, .reviewForm select { max-width: 100%; min-width: 0; min-height: 44px; padding: 4px 8px; border: 1px solid var(--outline); border-radius: 6px; }
+.caseHistory { padding: 4px var(--gutter); }
+.caseHistory a { display: block; padding: 4px; }
+.caseHistory[open] { max-height: 25dvh; overflow: auto; }
+.reviewForm label.reviewCheck { display: flex; align-items: center; gap: .5rem; }
+.reviewCheck input { flex-shrink: 0; }

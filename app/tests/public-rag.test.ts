@@ -9,6 +9,29 @@ import { answerQuestion } from "@/lib/zusik/ask-service";
 const corpus = loadCorpus("publiczne");
 
 describe("public knowledge partitions", () => {
+  it("quotes the confirmed non-transferable leave provision when generation is offline", async () => {
+    const corpus = loadCorpus("marta");
+    const result = await answerQuestion({ corpus, search: { search: async ({lexical}) => {
+      expect(lexical?.map(f => f.logicalId)).toEqual(["kp-art182-1a-par4"]);
+      return {status:"ok", ms:0, hits:(lexical ?? []).map(hit => ({...hit, score:1}))};
+    } }, generate:async () => ({model:"offline",ms:0,status:"error",output:null}) },
+    "Czy mogę przekazać partnerce moje dziewięć tygodni rodzicielskiego?");
+    expect(result.answer.status).toBe("answered");
+    expect(result.answer.claims[0].text).toContain("Prawa tego nie można przenieść");
+    expect(result.answer.citations[0].fragmentId).toBe("kp-art182-1a-par4");
+  });
+
+  it("withholds the exception if its point is absent from the confirmed public release", async () => {
+    const corpus = loadCorpus("marta");
+    const result = await answerQuestion({ corpus, search: { search: async ({lexical}) => {
+      const present = (lexical ?? []).filter(f => f.logicalId !== "rozp-2025-322-par22");
+      expect(present).toHaveLength(1);
+      return {status:"ok",ms:0,hits:present.map(hit => ({...hit,score:1})),
+        rankings:{lexical:present.map(f=>f.logicalId),dense:[]}};
+    } }, generate:async () => { throw new Error("Incomplete evidence reached the generator"); } }, "Kadry mają już odpis aktu urodzenia w teczce. Czy mam przynieść drugi?");
+    expect(result.answer.citations).toHaveLength(0);
+  });
+
   it("shows the applicable clause when the model cites the right article but gives only its introduction", async () => {
     const fragment = corpus.fragments.get("uz-6-1")!;
     const quote = "Zasiłek chorobowy przysługuje ubezpieczonemu";

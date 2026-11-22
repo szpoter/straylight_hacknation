@@ -3,6 +3,8 @@
  * Ola urodzona 10.11.2026, etap „Narodziny”. Wyłącznie dane fikcyjne.
  * TODO(backend): zastąpić danymi z API, zachowując typy z `types.ts`.
  */
+import { OLA } from "../family/ola";
+import { formatLong } from "./dates";
 import { S } from "./stop-details";
 import type { CalculatorPlan, Plan, ProfileRow, StageId, Stop } from "./types";
 
@@ -55,7 +57,7 @@ function olaStops(): Stop[] {
       checked: true,
       institution: "ZUS",
       forWhom: "Dla Ciebie",
-      why: "Szacunek z Twoich podstaw składek w ZUS. Przy umowie o pracę składniki wynagrodzenia poda pracodawca w Z-3.",
+      why: "Do obliczeń w kalkulatorze wpisz podstawę z dokumentów dotyczących Twojego wynagrodzenia.",
       source: SRC.zusAmount,
       action: { label: "Jak ZUS liczy zasiłek" },
     },
@@ -171,7 +173,7 @@ function olaStops(): Stop[] {
     {
       id: "z3",
       stage: "narodziny",
-      title: "Pracodawca przekaże Z-3 do ZUS",
+      title: "Zaświadczenie Z-3 od pracodawcy",
       kind: "dzieje-sie-samo",
       institution: "Pracodawca",
       forWhom: "Dla Ciebie",
@@ -218,7 +220,7 @@ function olaStops(): Stop[] {
       prepare: ["Dane Oli: imię, nazwisko, PESEL, data i miejsce urodzenia (po zgłoszeniu urodzenia)", "Dane pracodawcy"],
       howTo: {
         co: "Wniosek o zasiłek macierzyński w wysokości 81,5%",
-        doKogo: "Pracodawca · zatrudnia do 20 osób, więc przekaże wniosek i Z-3 do ZUS",
+        doKogo: OLA.employer,
         doKiedy: "1 grudnia 2026 · 21 dni od porodu",
         zalaczniki: "Brak — we wniosku podajesz dane Oli",
       },
@@ -246,8 +248,8 @@ function olaStops(): Stop[] {
       doc: {
         goal: "urlopy",
         recipient: "Do pracodawcy",
-        lastEvent: "Przekazano 12 listopada 2026",
-        events: [{ date: "2026-11-12", title: "Wysłano w symulacji", detail: "Przekazano pracodawcy przez e-mail kadr." }],
+        lastEvent: "Wpis planu o przekazaniu z 12 listopada 2026",
+        events: [{ date: "2026-11-12", title: "Wcześniejszy wpis o przekazaniu", detail: "Wpis planu dotyczący wniosku do pracodawcy." }],
       },
     },
     {
@@ -321,10 +323,10 @@ function olaStops(): Stop[] {
       doc: {
         goal: "swiadczenia",
         recipient: "Do ZUS",
-        lastEvent: "Potwierdzono wpływ 15 listopada 2026",
+        lastEvent: "Wpis planu o przekazaniu z 15 listopada 2026",
         events: [
-          { date: "2026-11-15", title: "Wysłano w symulacji", detail: "Wniosek SW-R przez eZUS." },
-          { date: "2026-11-15", title: "Potwierdzenie wpływu", detail: "UPP z eZUS." },
+          { date: "2026-11-15", title: "Wcześniejszy wpis o przekazaniu", detail: "Wpis planu dotyczący wniosku SW-R." },
+          { date: "2026-11-15", title: "Wcześniejszy wpis planu o wpływie" },
         ],
       },
     },
@@ -486,7 +488,7 @@ function testStops(): Stop[] {
           from: "ZUS",
           due: "2026-12-05",
           text: "Prosimy o dołączenie zaświadczenia ze szpitala potwierdzającego datę urodzenia dziecka.",
-          tasks: ["Dołącz zaświadczenie ze szpitala wskazane w piśmie", "Sprawdź adresata i załączniki", "Wyślij uzupełnienie w symulacji"],
+          tasks: ["Dołącz zaświadczenie ze szpitala wskazane w piśmie", "Sprawdź adresata i załączniki", "Przekaż uzupełnienie odbiorcy"],
         },
         events: [
           ...(stop.doc!.events ?? []),
@@ -559,9 +561,9 @@ export const PLANS: Plan[] = [
     id: "ola",
     name: "Ola",
     kind: "rejestr",
-    shortInfo: "11 dni",
-    keyDateLabel: "Urodzona 10 listopada",
-    keyDate: "2026-11-10",
+    shortInfo: "Ola Lis",
+    keyDateLabel: `ur. ${formatLong(OLA.birthDate)}`,
+    keyDate: OLA.birthDate,
     stage: "narodziny",
     stages: birthStages(),
     stops: olaStops(),
@@ -612,28 +614,20 @@ export function getPlan(id: string): Plan {
 
 export const STAGE_IDS: StageId[] = ["przed", "ciaza", "narodziny", "po"];
 
-/**
- * Fikcyjny rodzic z symulacji logowania. Imię, ubezpieczenie i jego początek jak w profilu demo
- * logowania (`features/auth/demo-session.ts`, DEMO_PROFILE) i w SPEC.md „Dane z ZUS · przykład”
- * — test `tests/profile-consistency.test.ts` pilnuje zgodności. Pracodawca: tylko w tej symulacji.
- */
 export const PARENT_PROFILE: ProfileRow[] = [
-  { label: "Imię i nazwisko", value: "Anna Przykładowa", source: "login", editable: false },
-  { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "zus", editable: false },
-  { label: "Ubezpieczenie chorobowe", value: "Aktywne", source: "zus", editable: false },
-  { label: "Początek okresu ubezpieczenia", value: "1 marca 2025 r.", source: "zus", editable: false },
-  { label: "Pracodawca", value: "Kwiatek sp. z o.o. · do 20 ubezpieczonych", source: "zus", editable: false },
-  { label: "Rola w planie", value: "Urodziłam dziecko", source: "rodzic", editable: true, options: ["Urodziłam dziecko", "Jestem drugim rodzicem"] },
-  { label: "Zmiana pracy przed porodem", value: "Nie", source: "rodzic", editable: true, options: ["Tak", "Nie", "Nie wiem"] },
+  { label: "Imię i nazwisko", value: OLA.mother, source: "rodzic", editable: false },
+  { label: "Drugi rodzic", value: OLA.father, source: "rodzic", editable: false },
+  { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "rodzic", editable: false },
+  { label: "Pracodawca", value: OLA.employer, source: "rodzic", editable: false },
 ];
 
 export const SOURCE_LABEL: Record<ProfileRow["source"], string> = {
-  zus: "ZUS · symulacja",
-  rejestr: "Rejestr",
-  rodzic: "Podane przez Ciebie",
-  demo: "Profil demonstracyjny",
+  zus: "Dokumenty rodziny",
+  rejestr: "Profil rodziny",
+  rodzic: "Podane przez rodzinę",
+  demo: "Profil rodziny",
   zalozenie: "Moje założenie",
-  login: "mObywatel · login.gov.pl",
+  login: "Profil rodziny",
 };
 
 /**

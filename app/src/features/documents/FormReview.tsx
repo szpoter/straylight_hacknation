@@ -110,7 +110,7 @@ export function SendStep({
   return (
     <div className="flex flex-col gap-stack">
       <ChoiceGroup
-        legend={`Jak przekazać wniosek? Odbiorca: ${recipient.replace(/^Do /, "")}`}
+        legend={`Jak przekazano wniosek? Odbiorca: ${recipient.replace(/^Do /, "")}`}
         choices={channels.map((c) => ({ value: c, label: CHANNEL_LABEL[c].label, hint: CHANNEL_LABEL[c].hint }))}
         value={channel}
         onChange={(v) => setChannel(v as Channel)}
@@ -121,16 +121,16 @@ export function SendStep({
           <h3 id="plik-pdf" className="font-medium">
             Wniosek jako PDF
           </h3>
-          <p className="text-on-surface-variant">Pobierz plik z Twoimi danymi i wyślij go sam(a), np. do kadr. Potem kliknij „Przekaż wniosek”, żeby zapisać wysyłkę w przebiegu sprawy.</p>
+          <p className="text-on-surface-variant">Pobierz plik z Twoimi danymi i wyślij go sam(a), np. do kadr. Po wysłaniu kliknij „Potwierdzam samodzielne przekazanie”, żeby zapisać datę w przebiegu sprawy.</p>
           {pdf}
         </section>
       )}
       <p className="max-w-prose rounded-sm bg-surface p-4 text-on-surface-variant">
-        To wersja demonstracyjna: wysyłka jest symulacją. Wniosek nie trafi do urzędu ani pracodawcy — w przebiegu sprawy zobaczysz, jak wyglądałoby potwierdzenie.
+        Najpierw samodzielnie przekaż wniosek odbiorcy. Potem zapisz w planie datę i sposób przekazania. Urzędowe potwierdzenie zachowaj u siebie.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button className="justify-center" onClick={() => onSend(channel)}>
-          Przekaż wniosek
+          Potwierdzam samodzielne przekazanie
         </Button>
         <Button variant="secondary" className="justify-center" onClick={onBack}>
           Wróć do sprawy

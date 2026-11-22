@@ -2,12 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import { relevantFragment } from "./relevance";
-import { isValidOn, type Corpus, type Fragment } from "./corpus";
-import { loadCorpus } from "./corpus-fs";
-import { asksAboutOwnEligibility, type PublicQuestion } from "./public-query";
+import { isPrimary, isValidOn, type Corpus, type Fragment } from "./corpus";
+import { corpusNames, loadCorpus } from "./corpus-fs";
+import { asksAboutOwnEligibility, offerDocuments, type PublicQuestion } from "./public-query";
 import type { AskTurn } from "../zusik/types";
 
-const packages = ["marta", "publiczne", "oferta"] as const;
 const stop = new Set(("gdzie kiedy dlaczego dlaczego jakiego jakich jakie jaki jaka jakim jeśli jeżeli przez można mogę może wtedy takiej takiego " +
   "jakieś mnie moje moja moim jest było będzie mogą muszę musi wiem chodzi pytam skutki oznacza zasady przypadku sytuacji " +
   "pytanie osoba osoby według tego jakie miesięcy oraz albo który która które których którym która państwo proszę wtedy przecież teraz tylko zanim komu można jaki czyj działa dzieje razie wpływa konsekwencje temat").split(" "));
@@ -33,6 +32,7 @@ function terms(text: string) {
 
 const intents = {
   info: "Jakie ogólne zasady wynikają ze źródła?",
+  entitlement: "Jaka zasada określa prawo do świadczenia w tej sytuacji?",
   duration: "Przez jaki okres obowiązuje ta zasada?",
   deadline: "Jaki termin wynika ze źródła?",
   documents: "Jakie dokumenty są wymagane?",
@@ -52,10 +52,12 @@ function intent(text: string): Intent {
   if (/do kiedy|ile czasu na|termin|kiedy najpóźniej/iu.test(text)) return "deadline";
   if (/dokument|załącz|dołącz|papiery/iu.test(text)) return "documents";
   if (/kto.{0,20}(?:płaci|wypłac)/iu.test(text)) return "payer";
+  if (/można (?:otrzym|pobier)|przysługuje|(?:zachowuje|traci|ma) prawo do/iu.test(text)) return "entitlement";
   return "info";
 }
 
 const facetEvidence: Record<Exclude<Intent,"info">, RegExp> = {
+  entitlement: /przysług|(?:prawo|prawa) do|uprawnion/iu,
   duration: /dni|dnia|dzień|tygodni|miesię|miesią|przez|okres|lat\b|rok/iu,
   deadline: /termin|do dnia|w ciągu|najpóźniej|wcześniej/iu,
   payer: /wypłac|płatni/iu,
@@ -78,11 +80,11 @@ export function corpusKeywords(question: string, fragment: Fragment): string[] |
   return allowed.join(", ") === keywords && question === instruction + separator + keywords ? allowed : null;
 }
 
-type Entry = { name: typeof packages[number]; corpus: Corpus; fragment: Fragment; words: Map<string, string> };
+type Entry = { name: typeof corpusNames[number]; corpus: Corpus; fragment: Fragment; words: Map<string, string> };
 function buildIndex() {
   const entries: Entry[] = [];
   const frequency = new Map<string, number>();
-  for (const name of packages) {
+  for (const name of corpusNames) {
     const corpus = loadCorpus(name);
     for (const fragment of corpus.fragments.values()) {
       const words = terms(fragment.sourceText);
@@ -96,7 +98,10 @@ let cached: ReturnType<typeof buildIndex> | undefined;
 
 export function searchCorpus(text: string, direct?: PublicQuestion | null, kind = intent(text)): PublicQuestion | null {
   const {entries, frequency} = cached ??= buildIndex();
-  const raw = terms(text);
+  const scopes = direct?.corpus === "oferta" ? offerDocuments.filter(([name]) => name.test(text)) : [];
+  const scope = scopes.length === 1 ? scopes[0] : undefined;
+  if (direct?.corpus === "oferta" && !scope) return null;
+  const raw = terms(scope ? text.replace(scope[0], "") : text);
   const input = [...raw.keys()];
   const variants = input.map(key => {
     const word = lemma(raw.get(key)!);
@@ -115,6 +120,7 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     : null;
   const day = new Date().toISOString().slice(0, 10);
   const ranked = entries.flatMap(entry => {
+    if (scope && entry.fragment.documentId !== scope[1]) return [];
     if (!isValidOn(entry.corpus, entry.fragment, day) || (kind !== "info" && !facetEvidence[kind].test(entry.fragment.sourceText))) return [];
     const weights = new Map<string, number>();
     for (let i = 0; i < variants.length; i++) {
@@ -126,7 +132,9 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     if (matches.length < 2 || !exact.length || !matches.some(key => idf(key) > 3.3)) return [];
     const positions = [...entry.words.keys()].flatMap((key, index) => matches.includes(key) && idf(key) > 2 ? [index] : []);
     const adjacent = positions.some((at,i) => i > 0 && at - positions[i-1] <= 4);
-    const score = matches.reduce((sum,key) => sum + idf(key) * weights.get(key)!, 0) * (adjacent ? 1.25 : 1) / (1 + 0.18 * Math.log(1 + entry.words.size));
+    // For legal conditions, prefer the provision over a form or guide which restates its vocabulary.
+    const legalWeight = ["entitlement", "rate", "proof"].includes(kind) && isPrimary(entry.corpus, entry.fragment) ? 1.15 : 1;
+    const score = matches.reduce((sum,key) => sum + idf(key) * weights.get(key)!, 0) * (adjacent ? 1.25 : 1) * legalWeight / (1 + 0.18 * Math.log(1 + entry.words.size));
     return [{entry, matches, score}];
   }).sort((a,b) => b.score-a.score);
   const best = ranked[0];
@@ -154,7 +162,10 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
   const strongest = best.matches.sort((a,b) => idf(b)-idf(a)).slice(0, 8);
   const publicWords = [...best.entry.words].filter(([key]) => strongest.includes(key)).map(([,word]) => word);
   if (asksAboutOwnEligibility(text)) return {corpus:best.entry.name, question:"", clarify:"Czy chcesz poznać ogólną zasadę, czy sprawdzić uprawnienie na podstawie dokumentów swojej sprawy?"};
-  return {corpus:best.entry.name, question:query(kind, publicWords), searchText:publicWords.join(" "), fragmentId:best.entry.fragment.logicalId};
+  const lexical = ranked.slice(0, 20).map(({ entry: { fragment } }) => ({
+    corpusVersion: fragment.corpusVersion, logicalId: fragment.logicalId, fragmentSha256: fragment.fragmentSha256,
+  }));
+  return {corpus:best.entry.name, question:query(kind, publicWords), searchText:publicWords.join(" "), fragmentId:best.entry.fragment.logicalId, lexical};
 }
 
 // Resolve a topic-free facet only against the previous cited, still active public passage.
@@ -166,7 +177,7 @@ export function corpusFollowUp(text: string, previous: AskTurn | undefined): Pub
   const reference = /^(?:a|i|czy|to|ten|tę|tej|tego|tym|taki|taką|takie|takim|muszę|mam|się|jest|ma|są|być|kto|co|od|do|jak|jaki|jakie|który|na|w|z|za|przez|ile|dni|wtedy|dokładnie|czym|czego|długo|potrwa|trwa|musi|mi|może|można|kiedy|gdzie|zrobić|potrzebne|otrzymać|przedstawić|zebrać|złożyć|wykazać)$/u;
   const hasNewSubject = kind === "info" || remaining.some(word => !reference.test(word) &&
     !/^(?:okres|okolicznoś|sytuacj|świadczeni|stwierdz|potwierdz|poświadcz|zaświadcz|dowod|dowód|udowod|płac|wypłac|obowiąz|termin|dokument|przygotow|prawomoc|lekarz|lekars|ubezpiec|pracodawc)/u.test(word));
-  for (const name of packages) {
+  for (const name of corpusNames) {
     const corpus = loadCorpus(name);
     if (corpus.manifest.corpusVersion !== previous.corpusVersion) continue;
     for (const citation of previous.citations) {
