@@ -70,6 +70,13 @@ Przykładowy zapis jednego pomiaru: identyfikator próby, SHA, identyfikator pop
 
 ## Etap 5 · Wydanie i powrót do przypadku rodzica
 
+Zacznij powtórkę z poprzedniego wydania od osobnej sesji ogólnej. Poniższy zestaw ćwiczy sześć tur przez rzeczywisty endpoint bez klucza operatora. Ocenia surowy wynik Qdrant, końcowy cytat, fakt oraz zachowanie przy braku podstawy. Pytania z tego pliku są teraz jawne, więc dla kolejnego wydania dobierz również nowy ukryty zestaw.
+
+```sh
+cd app
+node --import tsx scripts/zusik-eval-conversations.ts https://straylight-hacknation.vercel.app
+```
+
 Z katalogu `app/` odtwórz zależności, uruchom `npm run typecheck`, `npm run lint`, `npm test` i `npm run build`. Uruchom istniejące evale zgodnie z `app/corpus/README.md` z lokalnymi kluczami. Raport generowany przez skrypt oznacz datą, SHA kodu i wersją korpusu. Zrób próbę na lokalnym produkcyjnym buildzie. Importuj nową wersję wiedzy przed przełączeniem aplikacji i zweryfikuj odczyt dokładnie tym zakresem uprawnień, którego używa Vercel. Poprzednią wersję zachowaj do wycofania.
 
 Scal z najnowszym `main` bez force push. Zobacz logi konkretnego SHA w GitHub Actions, potem sprawdź publiczny alias Vercela. Uruchom `npm run zusik:acceptance -- https://straylight-hacknation.vercel.app`. Ręcznie przejdź od landingu do czatu, zadaj nieujawnione wcześniej pytanie, odśwież czat, dopytaj bez nazwy tematu, otwórz cytat. Zachowaj publiczne ID fragmentu, stronę lub nagłówek i wynik próby kontrolnej w pustej sprawie. Przy regresji ogranicz nową ścieżkę lub wróć do znanej pary wersji aplikacji i korpusu. Zadbaj o odczyt starszych rozmów i formularzy. Zakończ raportem z działającym adresem, wynikami z mianownikami, rozbieżnościami i jednym przykładem, który Julian może wkleić.
