@@ -1,0 +1,625 @@
+{
+  "runnerSha": "e47b1b495b7e3ffd139ae975247e3540ddd3d46f",
+  "models": [
+    {
+      "name": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "modified_at": "2026-11-21T22:43:54.189097875+01:00",
+      "size": 7477207604,
+      "digest": "b1b4215950c0fa3160c69816910ce5e1b937ba6a23bb959da478bce9ef5ac587",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "llama",
+        "families": [
+          "llama"
+        ],
+        "parameter_size": "12.2B",
+        "quantization_level": "unknown"
+      }
+    },
+    {
+      "name": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "modified_at": "2026-11-21T22:36:19.386542795+01:00",
+      "size": 6724116067,
+      "digest": "2a469907c5257233e9eee7cbd7f27b0bc86dfc5414d9578784195f70d15eb88f",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "llama",
+        "families": [
+          "llama"
+        ],
+        "parameter_size": "11.2B",
+        "quantization_level": "Q4_K_M"
+      }
+    }
+  ],
+  "hostBytes": 51539607552,
+  "measuredAt": "2026-11-22T01:19:09.135Z",
+  "groups": [
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "kind": "plan_public",
+      "cold": true,
+      "n": 3,
+      "p50": 3065,
+      "p95": 3224,
+      "schema": 3,
+      "correct": 0,
+      "inBudget": 3
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "kind": "plan_public",
+      "cold": false,
+      "n": 3,
+      "p50": 1807,
+      "p95": 1924,
+      "schema": 3,
+      "correct": 0,
+      "inBudget": 3
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "kind": "verify_claim",
+      "cold": true,
+      "n": 3,
+      "p50": 3076,
+      "p95": 3168,
+      "schema": 3,
+      "correct": 0,
+      "inBudget": 3
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "kind": "verify_claim",
+      "cold": false,
+      "n": 3,
+      "p50": 1131,
+      "p95": 1188,
+      "schema": 3,
+      "correct": 0,
+      "inBudget": 3
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "kind": "plan_public",
+      "cold": true,
+      "n": 3,
+      "p50": 4305,
+      "p95": 5288,
+      "schema": 3,
+      "correct": 3,
+      "inBudget": 3
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "kind": "plan_public",
+      "cold": false,
+      "n": 3,
+      "p50": 1835,
+      "p95": 1942,
+      "schema": 3,
+      "correct": 3,
+      "inBudget": 3
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "kind": "verify_claim",
+      "cold": true,
+      "n": 3,
+      "p50": 3396,
+      "p95": 3423,
+      "schema": 3,
+      "correct": 3,
+      "inBudget": 3
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "kind": "verify_claim",
+      "cold": false,
+      "n": 3,
+      "p50": 654,
+      "p95": 664,
+      "schema": 3,
+      "correct": 3,
+      "inBudget": 3
+    }
+  ],
+  "results": [
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "plan_public",
+      "cold": true,
+      "attemptId": "0b748495-2b67-49fb-b70b-537e208d1c67",
+      "ms": 3053,
+      "detail": {
+        "intent": "explain",
+        "nextTool": "prepareDraft",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 782,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "plan_public",
+      "cold": false,
+      "attemptId": "607aefeb-dedb-42ff-a863-11f7dbff17ee",
+      "ms": 1660,
+      "detail": {
+        "intent": "explain",
+        "nextTool": "prepareDraft",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 7,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "plan_public",
+      "cold": true,
+      "attemptId": "1d465aa9-9d36-429e-bece-64cd8d9e4a94",
+      "ms": 3065,
+      "detail": {
+        "intent": "explain",
+        "nextTool": "prepareDraft",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 691,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "plan_public",
+      "cold": false,
+      "attemptId": "7dfc0d47-601e-424e-b71e-58adcf660733",
+      "ms": 1807,
+      "detail": {
+        "intent": "explain",
+        "nextTool": "prepareDraft",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 8,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "plan_public",
+      "cold": true,
+      "attemptId": "05df0c7d-2d14-4b38-bc27-5f533358c0d4",
+      "ms": 3224,
+      "detail": {
+        "intent": "explain",
+        "nextTool": "prepareDraft",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 705,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "plan_public",
+      "cold": false,
+      "attemptId": "71624130-7c0f-440b-85b3-91f45886fd08",
+      "ms": 1924,
+      "detail": {
+        "intent": "explain",
+        "nextTool": "prepareDraft",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 9,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "verify_claim",
+      "cold": true,
+      "attemptId": "4db50fa7-3daf-4c72-932a-3a4f8ac57c83",
+      "ms": 3076,
+      "detail": {
+        "verdict": "partial",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ]
+      },
+      "loadMs": 727,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "verify_claim",
+      "cold": false,
+      "attemptId": "92604764-bd15-41b1-b9f4-6498a2e002ca",
+      "ms": 1131,
+      "detail": {
+        "verdict": "partial",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ]
+      },
+      "loadMs": 9,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "verify_claim",
+      "cold": true,
+      "attemptId": "2599addc-13da-4ba4-a36a-d93efa29de41",
+      "ms": 3060,
+      "detail": {
+        "verdict": "partial",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ]
+      },
+      "loadMs": 694,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "verify_claim",
+      "cold": false,
+      "attemptId": "7919f047-cfe9-42e1-929a-347755032da8",
+      "ms": 1188,
+      "detail": {
+        "verdict": "partial",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ]
+      },
+      "loadMs": 9,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "verify_claim",
+      "cold": true,
+      "attemptId": "7c03125c-b871-4c0b-ba44-6a3a6e2fe318",
+      "ms": 3168,
+      "detail": {
+        "verdict": "partial",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ]
+      },
+      "loadMs": 727,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+      "task": "verify_claim",
+      "cold": false,
+      "attemptId": "38165b88-d434-42fc-9991-92e99eda18aa",
+      "ms": 1110,
+      "detail": {
+        "verdict": "partial",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ]
+      },
+      "loadMs": 9,
+      "residentBytes": 7798519808,
+      "vramBytes": 7798519808,
+      "json": true,
+      "correct": false,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "plan_public",
+      "cold": true,
+      "attemptId": "4fb58865-a751-469b-b767-ec8c92512b31",
+      "ms": 5288,
+      "detail": {
+        "intent": "cite_previous",
+        "nextTool": "readPreviousEvidence",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 1960,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "plan_public",
+      "cold": false,
+      "attemptId": "4ecbdf1c-9714-4cec-b964-c3011b2f41d7",
+      "ms": 1942,
+      "detail": {
+        "intent": "cite_previous",
+        "nextTool": "readPreviousEvidence",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 55,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "plan_public",
+      "cold": true,
+      "attemptId": "cf848a89-c7d7-4d03-91cc-810dfa224200",
+      "ms": 4305,
+      "detail": {
+        "intent": "cite_previous",
+        "nextTool": "readPreviousEvidence",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 1172,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "plan_public",
+      "cold": false,
+      "attemptId": "f875a46d-c206-4b42-9b6e-308dddab7f5f",
+      "ms": 1835,
+      "detail": {
+        "intent": "cite_previous",
+        "nextTool": "readPreviousEvidence",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 53,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "plan_public",
+      "cold": true,
+      "attemptId": "8553d9b4-f9d4-44cf-816b-f6d04fd3a80d",
+      "ms": 4238,
+      "detail": {
+        "intent": "cite_previous",
+        "nextTool": "readPreviousEvidence",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 869,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "plan_public",
+      "cold": false,
+      "attemptId": "0198d2c5-ed2f-41b2-849a-27f424af3773",
+      "ms": 1712,
+      "detail": {
+        "intent": "cite_previous",
+        "nextTool": "readPreviousEvidence",
+        "evidenceIds": [
+          "rozp-2025-322-par22"
+        ],
+        "requiredFacts": []
+      },
+      "loadMs": 50,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "verify_claim",
+      "cold": true,
+      "attemptId": "53e5b2c7-667b-40ed-894b-9d11e18848c0",
+      "ms": 3423,
+      "detail": {
+        "verdict": "missing",
+        "evidenceIds": []
+      },
+      "loadMs": 1108,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "verify_claim",
+      "cold": false,
+      "attemptId": "e58623dc-76e6-47b0-8034-990c587bb517",
+      "ms": 593,
+      "detail": {
+        "verdict": "missing",
+        "evidenceIds": []
+      },
+      "loadMs": 48,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "verify_claim",
+      "cold": true,
+      "attemptId": "7e576629-0cf4-4dc2-a373-6cc776fde52c",
+      "ms": 3252,
+      "detail": {
+        "verdict": "missing",
+        "evidenceIds": []
+      },
+      "loadMs": 862,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "verify_claim",
+      "cold": false,
+      "attemptId": "132ece5e-df5a-4ea7-976b-fa4ddb9f7c38",
+      "ms": 654,
+      "detail": {
+        "verdict": "missing",
+        "evidenceIds": []
+      },
+      "loadMs": 53,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "verify_claim",
+      "cold": true,
+      "attemptId": "6640b04a-9207-4812-860d-822fc0950f1c",
+      "ms": 3396,
+      "detail": {
+        "verdict": "missing",
+        "evidenceIds": []
+      },
+      "loadMs": 888,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    },
+    {
+      "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+      "task": "verify_claim",
+      "cold": false,
+      "attemptId": "fff1f672-04c8-4826-880b-fe47b555811c",
+      "ms": 664,
+      "detail": {
+        "verdict": "missing",
+        "evidenceIds": []
+      },
+      "loadMs": 71,
+      "residentBytes": 8081692672,
+      "vramBytes": 8081692672,
+      "json": true,
+      "correct": true,
+      "withinBudget": true,
+      "stop": "stop"
+    }
+  ]
+}
