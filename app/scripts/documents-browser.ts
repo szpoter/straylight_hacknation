@@ -19,6 +19,8 @@ const sample: Record<string, string> = {
   placowka: "Szpital Miejski w Opolu", obywatelstwo: "polskie", rodzic_rodowe: "Nowak", rodzic_urodzenie: "1990-05-12", rodzic_miejsce: "Opole",
   drugi_rodowe: "Lis", drugi_urodzenie: "1944-05-14", drugi_miejsce: "Opole", drugi_obywatelstwo: "polskie",
   zameldowanie: "Opole, ul. Testowa 8", cel: "Prywatna dokumentacja rodzinna",
+  logowanie: "Profil zaufany", platnosc: "Płatność online w usłudze gov.pl", podpis: "Podpis zaufany",
+  podpis_poz: "Podpis kwalifikowany", dostep_ikp: "Tak",
   przychodnia: "Przychodnia Rodzinna", adres_przychodni: "ul. Testowa 2, 45-001 Opole", lekarz: "Ewa Nowak",
   imie: "Ola", rodzic_imie: "Marta", rodzic_nazwisko: "Lis", dziecko_imie: "Ola", dziecko_nazwisko: "Lis",
   termin: "2027-01-10", wykorzystane_moje: "0", wykorzystane_drugiego: "0", drugi: "Nie", wydluzenie: "Nie", wymiar: "1/4",
@@ -109,6 +111,14 @@ async function checkChannel(browser: Browser, origin: string, directory: string,
     const fullLeave = id === "zasilek-macierzynski" ? channel === "zus" : undefined;
     if (id === "zasilek-macierzynski") Object.assign(values, { od: values.data_urodzenia, do: "", caly_okres: fullLeave ? "Tak" : "Nie", platnik: ["pue", "zus", "edoreczenia"].includes(channel) ? "ZUS" : "Pracodawca" });
     if (id === "urlop-ojcowski") values.rodzic = "Paweł Lis";
+    if (id === "ubezpieczenie-dziecka" && channel === "poczta") {
+      Object.assign(values, {
+        rodzic: "Roman Lis", rodzic_data: "1944-05-14", rodzic_pesel: "44051401359",
+        pokrewienstwo: "Wnuk lub wnuczka", rodzice_bez_ubezpieczenia: "Tak", wymaga_zgloszenia: "Tak",
+        orzeczenie: "Dziecko ma orzeczenie o niepełnosprawności", rodzaj_orzeczenia: "Orzeczenie dla dziecka poniżej 16 lat",
+      });
+    }
+    if (id === "odpis" && channel === "govpl") Object.assign(values, { odbior: "Na skrzynkę do e-Doręczeń", ade: "AE:PL-00000-00001-TESTY-00" });
     if (id === "poz" && medic) values.medyk = medic;
     if (id === "becikowe" && channel === "poczta") {
       Object.assign(values, {
