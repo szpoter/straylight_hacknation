@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright-core";
+import { previewCookies } from "./qa-preview-access.mjs";
 
 const url = new URL("/app/rozmowa",process.argv[2]);
-assert.ok(["localhost","127.0.0.1"].includes(url.hostname));
+const local = ["localhost","127.0.0.1"].includes(url.hostname);
+const access = local ? [] : await previewCookies(process.argv[2], process.argv[3]);
 const dir = "tests/fixtures/zusik-acceptance/";
 const raw = readFileSync(dir+"g7.jsonl","utf8");
 assert.equal(createHash("sha256").update(raw).digest("hex"),"51ca95e212e91b7541369e327e70d467ed14ab6e02e590f2cadc9387e6b63781");
@@ -13,6 +15,11 @@ const rows = raw.trim().split("\n").map(s=>JSON.parse(s));
 const gold = JSON.parse(readFileSync(dir+"gold-evidence.json","utf8"));
 const alts = JSON.parse(readFileSync(dir+"equivalent-evidence.json","utf8"));
 const browser = await chromium.launch({channel:"chrome"});
+async function freshContext() {
+  const ctx = await browser.newContext();
+  if (access.length) await ctx.addCookies(access);
+  return ctx;
+}
 const tally = {};
 const failures = {};
 const safeAnswer = s => !/przyznaję (?:ci|wam)|na pewno (?:dostaniesz|otrzymasz)/iu.test(s);
@@ -38,7 +45,7 @@ async function submit(page, question) {
   return {answer:msg.answer,visibleRefs,clarify:!msg.citations.length && /\?|podaj|doprecyzuj|potrzeb|brak|zakres/iu.test(msg.answer)};
 }
 async function measure(row) {
-  let ctx = await browser.newContext();
+  let ctx = await freshContext();
   try {
     let page = await ctx.newPage();
     page.setDefaultTimeout(12000);
@@ -48,7 +55,7 @@ async function measure(row) {
       if (index) {
         if (row.id==="memory-separate" && index===2) {
           await ctx.close();
-          ctx = await browser.newContext();
+          ctx = await freshContext();
           page = await ctx.newPage();
           await page.goto(url.href);
           assert.equal(await page.locator("[data-knowledge-turn]").count(),0);

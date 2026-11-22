@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { factInput, factValueKinds, type CaseDocument, type EvidenceFact, type FactInput } from "@/lib/zusik/memory/contract";
 import { confirmCaseCandidate, type EvidenceCandidate, type LocalCaseDocument } from "./case-evidence";
-import type { Assessment, Citation } from "./case-api";
+import type { Assessment, CaseMessage, Citation } from "./case-api";
+import { questions } from "../../../corpus/opportunities.json";
 import s from "./zusik.module.css";
 
 export type LocalPdf = { name: string; url: string; read: LocalCaseDocument };
@@ -23,13 +24,37 @@ export const labels: Record<FactInput["field"], string> = {
 export function valueLabel(v: FactInput["value"]) {
   return v.kind === "money" ? currency.format(v.grosze / 100) : v.kind === "date" ? v.date : v.kind === "count" ? String(v.count) : v.code;
 }
+function publicSourceUrl(cite: Citation) {
+  if (cite.kind !== "public_source" || !cite.publicUrl || !URL.canParse(cite.publicUrl)) return;
+  const url = new URL(cite.publicUrl);
+  if (url.protocol === "https:" && /(^|\.)(zus\.pl|gov\.pl|sejm\.gov\.pl)$/.test(url.hostname)) return url.href;
+}
+
+export function OpportunityCards({ message }: { message: CaseMessage }) {
+  const cards = (message.opportunities ?? []).flatMap(card => {
+    const sources = message.citations.flatMap(cite => {
+      const href = card.citationIds.includes(cite.ref) && publicSourceUrl(cite);
+      return href ? [{ href, cite }] : [];
+    });
+    return sources.length ? [{ ...card, sources }] : [];
+  });
+  const prompts: Record<string, string> = questions;
+  return cards.map(card => <article key={card.id} aria-label={card.title} className={s.source}>
+    <h3>{card.title}</h3>
+    {card.exclusiveGroup && cards.some(other => other.id !== card.id && other.exclusiveGroup === card.exclusiveGroup) &&
+      <p>Alternatywa w tym samym programie za ten sam okres.</p>}
+    {card.missingFacts.length > 0 && <details><summary>Warunki do sprawdzenia</summary>
+      <ul>{card.missingFacts.map(field => <li key={field}>{prompts[field] ?? field}</li>)}</ul></details>}
+    {card.sources.map(({href, cite}) => <a key={cite.ref} href={href} target="_blank" rel="noreferrer">Źródło programu · {cite.version}</a>)}
+  </article>);
+}
+
 export function Evidence({ citations, documents, local }: { citations: Citation[]; documents: CaseDocument[]; local: Map<string, LocalPdf> }) {
   return citations.map((cite, index) => {
     const key = cite.ref + index;
     if (cite.kind === "public_source") {
-      const url = URL.canParse(cite.publicUrl ?? "") ? new URL(cite.publicUrl ?? "") : null;
-      return url?.protocol === "https:" && /(^|\.)(zus\.pl|gov\.pl|sejm\.gov\.pl)$/.test(url.hostname)
-        ? <a key={key} href={url.href} target="_blank" rel="noreferrer">Przepis · {cite.version}</a> : null;
+      const href = publicSourceUrl(cite);
+      return href ? <a key={key} href={href} target="_blank" rel="noreferrer">Przepis · {cite.version}</a> : null;
     }
     if (cite.kind === "account") return <p key={key}>Źródło: symulowane konto ZUS · {cite.version}</p>;
     const doc = documents.find(d => d.id === cite.ref);

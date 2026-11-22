@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { answerFromAskBody, groundedClaims, pdfPage, turnsFromView, type Answer } from "@/features/chat/contract";
 import { AnswerView, TurnView } from "@/features/chat/turn-view";
+import { OpportunityCards } from "@/features/chat/case-review";
+import type { CaseMessage } from "@/features/chat/case-api";
 import { mergeConversation } from "@/features/chat/use-zusik-case";
 import { chatStarters, conversationInput } from "@/lib/zusik/conversation";
 import { ChatStarters } from "@/features/chat/scenario-nav";
@@ -185,4 +187,20 @@ describe("pdfPage", () => {
     expect(pdfPage("https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66")).toBe(66);
     expect(pdfPage("https://www.gov.pl/web/rodzina/urlop-rodzicielski")).toBeNull();
   });
+});
+
+it("shows alternatives with their own public sources and excludes unsupported cards", () => {
+  const message: CaseMessage = {
+    id:"turn", state:"completed", input:{intent:"public_question",publicQuestion:"Porównaj programy."},
+    answer:"", caseRevision:1, profileRevision:1,
+    citations:["dom", "zlobek"].map(ref => ({ref, kind:"public_source", version:"v1", publicUrl:"https://www.zus.pl/" + ref})),
+    opportunities:["dom", "zlobek", "bez-dowodu"].map(id => ({id,title:id,citationIds:[id],missingFacts:["careType"],exclusiveGroup:"rodzic"})),
+  };
+  const html = renderToStaticMarkup(createElement(OpportunityCards, {message}));
+  expect(html.match(/<article/g)).toHaveLength(2);
+  expect(html.match(/Alternatywa w tym samym programie/g)).toHaveLength(2);
+  expect(html).toContain("https://www.zus.pl/dom");
+  expect(html).toContain("https://www.zus.pl/zlobek");
+  expect(html).toContain("Czy dziecko będzie chodziło do żłobka");
+  expect(html).not.toContain("bez-dowodu");
 });

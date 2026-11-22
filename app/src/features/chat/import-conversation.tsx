@@ -11,7 +11,7 @@ import { clearCaseReadProgress } from "./case-read-progress";
 import { SimulatedAccount } from "./simulated-account";
 import { Composer } from "./composer";
 import { ChatStarters } from "./scenario-nav";
-import { DecisionCard, DocumentReview, Evidence, FactForm, labels, valueLabel, type FactDraft, type LocalPdf, type ManualSource } from "./case-review";
+import { DecisionCard, DocumentReview, Evidence, FactForm, OpportunityCards, labels, valueLabel, type FactDraft, type LocalPdf, type ManualSource } from "./case-review";
 import { usePhone, useVisualViewport } from "./use-chat-viewport";
 import s from "./zusik.module.css";
 
@@ -337,6 +337,7 @@ export function ImportConversation() {
                 onClick={() => sendAccount({ intent: "declare_fact", fact: f, basisProfileRevision: view.profile.revision })}>
                 Potwierdź z konta · {labels[f.field]} · {valueLabel(f.value)} · {f.asOf ?? f.validFrom}
               </button>)}
+              <OpportunityCards message={m} />
               <Evidence citations={m.citations} documents={view.documents} local={local} />
               {m.input.intent === "public_question" && m.input.publicQuestion === chatStarters[1].prompt && <a href="/app/kalkulator" target="_blank" rel="noreferrer">Otwórz kalkulator dla swojej sprawy</a>}
             </div></div>)}

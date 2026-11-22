@@ -3,7 +3,7 @@ import { chatStarters } from "../conversation";
 import type { EvidenceFact } from "../memory/contract";
 import type { MessageInput } from "./conversation";
 
-type History = { id: string; input: {intent:string;topic?:string;subjectId?:string;knownAt?:string}; citations: {kind:string;ref:string}[] };
+type History = { id: string; publicQuery?:string; input: {intent:string;topic?:string;subjectId?:string;knownAt?:string;publicQuestion?:string}; citations: {kind:string;ref:string}[] };
 type Context = { facts: EvidenceFact[]; subjectId?: string; lastMessage?: History; assessmentId?: string; hasDocuments?: boolean };
 type Result = {input:MessageInput} | {clarify:string} | {correction:true};
 const recipient = "Komu ZUS wypłaca świadczenie aktywnie w żłobku?";
@@ -77,11 +77,18 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
   if ((nursery && (!privateContext || generalNursery)) || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto(?: (?:trafia|wpływa) świadczenie)?[?!. ]*$/iu.test(text)))
     return {input:{intent:"public_question",publicQuestion:nursery ? recipient : "Na czyje konto?",replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
   if (/^(?:hej|cześć|co umiesz|jak możesz mi pomóc)[?!. ]*$/iu.test(text)) return {input:{intent:"public_question",publicQuestion:"Co umiesz?"}};
+  if (prior?.input.intent === "public_question" && !prior.citations.length && /ojcowsk/iu.test(prior.publicQuery ?? prior.input.publicQuestion ?? "")) {
+    const employee = /^(?:na etacie|etat|pracownik|pracownica|jako pracownik|umowa o pracę)[?!. ]*$/iu.test(text);
+    const business = /^(?:na działalności|działalność|własna firma|przedsiębiorca|jako przedsiębiorca)[?!. ]*$/iu.test(text);
+    if (employee || business) return {input:{intent:"public_question",publicQuestion:employee ? "Na etacie." : "Przedsiębiorca.",replyTo:prior.id}};
+  }
   const direct = publicQuestion(text, true);
   const explicitlyGeneral = /^(?:ogólnie\b|jakie są ogólne zasady\b|co (?:mówią|stanowią) przepisy\b)/iu.test(text);
   if (direct?.question && !direct.clarify && (!privateContext || explicitlyGeneral || text === direct.question)) {
     return {input:{intent:"public_question",publicQuestion:direct.question,replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
   }
+  if (!privateContext && direct?.clarify && direct.question)
+    return {input:{intent:"public_question",publicQuestion:direct.question}};
   if (prior?.input.intent === "public_question" && /^(?:(?:a |i )?(?:jakie dokumenty|do kiedy|ile dni|jak długo|ile tygodni|gdzie złożyć|w jakim terminie))[?!. ]*$/iu.test(text))
     return {input:{intent:"public_question",publicQuestion:text,replyTo:prior.id}};
   if (!privateContext) return {clarify:direct?.clarify ?? "Którego świadczenia, wniosku lub okresu dotyczy pytanie?"};

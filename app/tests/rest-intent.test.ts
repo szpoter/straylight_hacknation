@@ -57,6 +57,15 @@ it("keeps the person, fact and historical visibility on a date-only follow-up",(
   expect(routeCaseQuestion("U kogo pracowałam?",ctx)).toMatchObject({input:{intent:"read_context",topic:"employerRef"}});
   expect(routeCaseQuestion("Moja siostra zarabia 8000 zł.",ctx)).toHaveProperty("clarify");
 });
+it("preserves a public clarification as a resumable turn and accepts its role after reload",()=>{
+  const first = routeCaseQuestion("Jaki jest termin składania wniosku o ojcowski?",{facts:[]});
+  if (!("input" in first) || first.input.intent !== "public_question") throw new Error("public turn required");
+  expect(first.input.publicQuestion).toContain("ojcowskiego");
+  for (const [answer,expected] of [["Na etacie","Na etacie."],["Na działalności","Przedsiębiorca."]]) {
+    const ctx = {facts:[],lastMessage:{id:"prior",input:first.input,citations:[]}};
+    expect(routeCaseQuestion(answer,ctx)).toEqual({input:{intent:"public_question",publicQuestion:expected,replyTo:"prior"}});
+  }
+});
 it("can explicitly ask about public rules in an open private case",()=>{
   const ctx = {facts:[fact],hasDocuments:true,lastMessage:privateHistory};
   for (const question of ["Komu ZUS wypłaca świadczenie aktywnie w żłobku?", "Ogólnie, jak długo trwa urlop ojcowski?"]) {

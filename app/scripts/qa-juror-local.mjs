@@ -10,13 +10,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 import { chromium } from "playwright-core";
+import { previewCookies } from "./qa-preview-access.mjs";
 
 const app = fileURLToPath(new URL("../", import.meta.url));
 const script = fileURLToPath(import.meta.url);
 const vault = path.join(homedir(), "Library/Application Support/Zusik/private-cases");
 let stage = "startup";
 const switchName = process.argv[2];
-assert.ok(["--preflight", "--draw"].includes(switchName));
+const remoteSynthetic = switchName === "--preview-preflight";
+assert.ok(remoteSynthetic || ["--preflight", "--draw"].includes(switchName));
 const noIP = '(version 1)(allow default)(deny network-outbound (remote ip "*:*"))';
 const sandbox = "/usr/bin/sandbox-exec";
 const marker = "QA-JUROR-FICTION-4179";
@@ -86,12 +88,13 @@ async function privateDraw() {
   return bytes;
 }
 
-function permitted(request, origin) {
+function permitted(request, origin, headers = request.headers()) {
   const url = new URL(request.url()), method = request.method(), body = request.postData() || "";
-  const wire = request.url() + body + JSON.stringify(request.headers());
+  const wire = request.url() + body + JSON.stringify(headers);
   if (url.origin !== origin || /QA-JUROR-FICTION|%PDF-|JVBERi0|public_question|publicQuestion/i.test(wire)) return false;
   const p = url.pathname;
   if (method === "GET") {
+    if (p.startsWith("/_next/static/") && /^\?dpl=dpl_[a-zA-Z0-9]+$/.test(url.search)) return /^[\w./-]+$/.test(p);
     if (url.search && !(p === "/app/rozmowa" && uuid.test(url.searchParams.get("sprawa") || "") &&
       Array.from(url.searchParams.keys()).length === 1)) return false;
     return p === "/app/rozmowa" || /^\/(?:_next\/static|ocr|pdfjs|fonts)\/[\w./-]+$/.test(p) ||
@@ -110,18 +113,33 @@ function permitted(request, origin) {
   return /^\/api\/v1\/cases\/[a-f0-9-]{36}\/messages$/.test(p) && keys("intent") && input.intent === "ask_case";
 }
 
-async function exercise(browser, origin, buffer, real) {
+async function exercise(browser, origin, buffer, real, cookies = []) {
   const context = await browser.newContext({viewport:{width:1365,height:880}, serviceWorkers:"block", acceptDownloads:false});
   let requests = 0, blocked = 0, workers = 0, active = false;
+  const assets = new Set();
   try {
+    if (cookies.length) await context.addCookies(cookies);
+    context.on("request", req => {
+      if (/^https?:/.test(req.url()) && new URL(req.url()).origin !== origin) blocked++;
+    });
     await context.routeWebSocket("**/*", ws => { blocked++; ws.close(); });
-    await context.route("**/*", route => {
+    await context.route("**/*", async route => {
       const request = route.request();
-      if (new URL(request.url()).origin !== origin || active && !permitted(request,origin)) {
-        if (!real) console.error("Synthetic preflight blocked", request.method(), new URL(request.url()).pathname.slice(0,100));
+      const target = new URL(request.url());
+      if (target.origin !== origin || active && !permitted(request,origin,await request.allHeaders())) {
+        if (!real) console.error("Synthetic preflight blocked", request.method(), target.origin === origin ? "same origin" : "other origin");
         blocked++; return route.abort();
       }
+      if (target.pathname.startsWith("/ocr/") || target.pathname.startsWith("/pdfjs/")) assets.add(target.pathname);
       requests++;
+      if (remoteSynthetic) {
+        const response = await route.fetch({maxRedirects:0});
+        if (response.status() >= 300 && response.status() < 400) {
+          blocked++;
+          return route.abort();
+        }
+        return route.fulfill({response});
+      }
       return route.continue();
     });
     const page = await context.newPage();
@@ -184,10 +202,42 @@ async function exercise(browser, origin, buffer, real) {
     await page.getByText(/Dołącz ponownie ten sam PDF/).first().waitFor();
     stage = "boundary";
     assert.equal(blocked,0);
-    console.log(JSON.stringify({stage:real ? "local_draw":"synthetic_preflight", hasPage, followedEvidence, decisionCard,
-      candidatesAvailable:candidateFields>0, correctionAvailable:hasCorrection, manualReviewOpened, restoredMetadata:true, requests, blocked, workers}));
+    const pdfWorker = assets.has("/pdfjs/pdf.worker.min.mjs");
+    const polishOcr = assets.has("/ocr/worker.min.js") && assets.has("/ocr/lang/pol.traineddata.gz");
+    console.log(JSON.stringify({stage:real ? "local_draw": remoteSynthetic ? "preview_synthetic":"synthetic_preflight", hasPage, followedEvidence, decisionCard,
+      candidatesAvailable:candidateFields>0, correctionAvailable:hasCorrection, manualReviewOpened, restoredMetadata:true, requests, blocked, workers, pdfWorker, polishOcr}));
+    if (!real) assert.ok(pdfWorker && polishOcr && followedEvidence && workers >= 2);
     return {hasPage, decisionCard, hasCorrection};
   } finally { await context.close(); }
+}
+
+async function syntheticPacket(browser) {
+  const blank = await browser.newPage();
+  const png = await blank.evaluate(label => {
+    const canvas = document.createElement("canvas");
+    canvas.width=800; canvas.height=450;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="white"; ctx.fillRect(0,0,800,450);
+    ctx.fillStyle="black"; ctx.font="26px Arial";
+    ctx.fillText("Syntetyczny dokument " + label,20,70);
+    return canvas.toDataURL("image/png").split(",")[1];
+  }, marker);
+  await blank.close();
+  const pdf = await PDFDocument.create();
+  pdf.addPage().drawText("Dokument testowy. Okres, podstawa i kwota " + marker);
+  const raster = await pdf.embedPng(Buffer.from(png,"base64"));
+  pdf.addPage([600,338]).drawImage(raster,{x:0,y:0,width:600,height:338});
+  return Buffer.from(await pdf.save());
+}
+
+async function previewPreflight() {
+  stage = "deployment authentication";
+  const origin = process.argv[3];
+  const cookies = await previewCookies(origin, process.argv[4]);
+  const browser = await chromium.launch({channel:"chrome",args:["--disable-background-networking"]});
+  try {
+    await exercise(browser,origin,await syntheticPacket(browser),false,cookies);
+  } finally { await browser.close(); }
 }
 
 async function run() {
@@ -207,9 +257,7 @@ async function run() {
     JSON.stringify({intent:"public_question", publicQuestion:marker})), origin), false);
   const browser = await chromium.launch({channel:"chrome", args:["--disable-background-networking"]});
   try {
-    const pdf = await PDFDocument.create();
-    pdf.addPage().drawText("Dokument testowy. Okres, podstawa i kwota " + marker);
-    const preflight = await exercise(browser,origin,Buffer.from(await pdf.save()),false);
+    const preflight = await exercise(browser,origin,await syntheticPacket(browser),false);
     assert.ok(preflight.hasPage);
     if (switchName === "--draw") {
       const draw = await exercise(browser,origin,await privateDraw(),true);
@@ -217,7 +265,7 @@ async function run() {
     }
   } finally { await browser.close(); }
 }
-try { await (process.env.QA_JUROR_ORIGIN ? run() : start()); }
+try { await (remoteSynthetic ? previewPreflight() : process.env.QA_JUROR_ORIGIN ? run() : start()); }
 catch (error) {
   // Playwright and filesystem exceptions can contain a filename or a quoted locator. Never log them.
   console.error("Juror check incomplete at " + stage + " (" + (error.name === "TimeoutError" ? "timeout" : "guard or application") + ").");

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { assessCase, assessCaseVariant, CASE_RULE_VERSION, type AssessmentInput, type DecisionResult } from "../../rules/case-assessment";
 import { factInput, type CaseFile, type EvidenceFact, type MemoryRepository, type Page, type Profile } from "../memory/contract";
 import { accountAnswer, accountReadInput, accountLinkInput, type AccountReport } from "./account";
+import type { AskAnswer } from "../types";
 import { ApiProblem } from "./http";
 
 const id = z.string().min(1).max(128);
@@ -23,7 +24,7 @@ export const messageInput = z.discriminatedUnion("intent", [
 export const assessmentInput = z.strictObject({ subjectId: id, benefit: id, asOf: date, profileRevision: revision, caseRevision: revision });
 export type MessageInput = z.infer<typeof messageInput>;
 type Citation = { kind: "account" | "fact" | "workflow" | "document" | "public_source" | "assessment"; ref: string; version: string; page?: number; publicUrl?: string };
-export type Answer = { answer: string; citations: Citation[]; publicQuery?: string; proposalIds?: string[]; account?: AccountReport };
+export type Answer = { answer: string; citations: Citation[]; publicQuery?: string; opportunities?: AskAnswer["opportunities"]; proposalIds?: string[]; account?: AccountReport };
 export type Message = Answer & { id: string; input: MessageInput; state: "completed"; profileRevision: number; caseRevision: number };
 type Assessment = { id: string; input: AssessmentInput; decisions: DecisionResult[]; ruleVersion: string; stale: boolean };
 export type Context = { repo: MemoryRepository; db: PoolClient; owner: string; file: CaseFile; profile: Profile };

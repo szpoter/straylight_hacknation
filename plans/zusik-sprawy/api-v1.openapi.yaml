@@ -1498,6 +1498,18 @@ components:
         publicQuery:
           type: string
           description: Publiczne zapytanie utworzone przez serwer do wznowienia tematu.
+        opportunities:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, title, citationIds, missingFacts, exclusiveGroup]
+            properties:
+              id: {type: string}
+              title: {type: string}
+              citationIds: {type: array, minItems: 1, items: {type: string}}
+              missingFacts: {type: array, items: {type: string}}
+              exclusiveGroup: {type: [string, 'null']}
         citations:
           type: array
           items:
