@@ -1,6 +1,17 @@
 # 06 · Chyba tak
 
-**10–12 s.** Kadr nieco wyżej, oba nadgarstki i oczy Pawła widoczne razem. Przesuwa kciuk na krawędź, odwraca pierwszy arkusz i sprawdza rubryki. Po krótkiej pauzie odpowiada „Chyba tak”. [Rozkład faz](../../../v2/przyklady/fazy-ruchu.png)
+Autor planu: s06
+
+**10–12 s.** Paweł chce upewnić się, że zabrał właściwy formularz. Wchodzimy odrobinę wyżej niż w 05, z tej samej strony barku Marty. W jednym nieruchomym kadrze mieszczą się oba mankiety, wolny brzeg kartki i oczy Pawła w widoku trzy czwarte. Podczas odpowiedzi górna krawędź papieru wypada poniżej ust.
+
+| Klatki | Co widzi widz |
+| --- | --- |
+| 0–6 | „URLOP” wciąż jest zwrócony do Marty i do kamery. Prawy kciuk Pawła zsuwa się z narożnika na boczną krawędź. Wskazujący podtrzymuje arkusz od tyłu. Lewa ręka przyciska otwartą teczkę do brzucha. |
+| 7–19 | Paweł obraca przedramię. Kciuk i wskazujący zabierają ze sobą boczną krawędź druku. Wolny róg zostaje chwilę z tyłu, po czym przechodzi łukiem przed koszulą. W połowie obrotu widać tylko cienki profil papieru. Po drugiej stronie palców rozwija się odwrotna strona z kratkami. |
+| 20–26 | Papier przestaje drgać. Oczy Pawła zatrzymują się na jednej kratce, broda lekko opada. Marta czeka na odpowiedź. Oboje mają zamknięte usta. |
+| 27–59 | Na „Chyba” Paweł jeszcze patrzy w kratki. Przy „tak” zaczyna opuszczać druk do teczki. Pozostawia go uchwyconego za tę samą krawędź. Pod koniec Marta zaczyna kolejne pytanie i kieruje twarz ku budce wózka, przejmując uwagę na cięciu do 07. |
+
+Z dolnego rzędu arkusza Stickman bierzemy sposób prowadzenia gestu od barku przez łokieć po miejsce kontaktu. W przykładzie Video Shotcraft każda karta zachowuje własny brzeg na tle sąsiedniej. U nas „ZASIŁEK” wystaje z teczki przez cały obrót „URLOPU”. [Rozkład faz](../../../v2/przyklady/fazy-ruchu.png) · [Warstwy kart](../../../v2/przyklady/stos-kart.jpg)
 
 [Plansza firmowa](../../../referencje/kolejka-zus-v1.png) · [Wspólna obsada](../../POSTACIE.md)
 
