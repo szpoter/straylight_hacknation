@@ -13,6 +13,8 @@ import { GROUP_TONE } from "./model";
 import { Timeline } from "./CaseTimeline";
 import { FormEditor } from "./FormEditor";
 import { CheckAnswers, SendStep } from "./FormReview";
+import { FormPdf } from "./FormPdf";
+import { applicationDoc, pdfFilename } from "./pdf";
 import { canEdit, demoProfile, initialValues, nextState, progress, sendEvents, validate, type Values } from "./flow";
 import { buildTimeline } from "./timeline";
 
@@ -68,6 +70,14 @@ export function CaseDetail({ id }: { id: string }) {
   const sentOrLater = stages[0].status === "done";
   const zusik = (field?: string) => openZusik({ planId: plan.id, place: "Dokumenty", stopId: c.id, field, returnTo: `/dokumenty/${c.id}` });
 
+  // PDF z tych samych wartości co ekran, do pobrania od pierwszego zapisu wniosku.
+  // Kopia wysłanego wniosku nosi datę wysyłki; niepełny wniosek jest oznaczony jako szkic.
+  const correction = values[CORRECTION] === "1";
+  const sentOn = c.doc.events?.find((e) => e.title === "Wysłano w symulacji")?.date;
+  const pdfDoc = def && applicationDoc(def, values, { recipient: c.doc.recipient, date: step === "podglad" ? (sentOn ?? DEMO_TODAY) : DEMO_TODAY, correction });
+  const pdf = (label?: string) =>
+    def && pdfDoc && <FormPdf doc={pdfDoc} filename={pdfFilename(def, correction)} label={label ?? (pdfDoc.marks.includes("SZKIC") ? "Pobierz szkic PDF" : "Pobierz wniosek PDF")} />;
+
   // Kroki wniosku: każdy zapisuje wartości i stan sprawy przez wspólny plan, więc ścieżka
   // na „Moim planie” i lista dokumentów zmieniają się razem z nim.
   const saveValues = (next: Values) => setFormValues(c.id, next);
@@ -87,7 +97,6 @@ export function CaseDetail({ id }: { id: string }) {
     go("przekaz");
   };
   const send = (channel: Channel) => {
-    const correction = values[CORRECTION] === "1";
     patchStop(c.id, {
       state: nextState("zatwierdzony", "send", true),
       doc: { events: sendEvents(c.doc.events, channel, c.doc.recipient, DEMO_TODAY, correction), lastEvent: `Wysłano ${formatLong(DEMO_TODAY)}`, note: undefined, hasDraft: false },
@@ -152,9 +161,19 @@ export function CaseDetail({ id }: { id: string }) {
               />
             </>
           )}
-          {step === "sprawdz" && <CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} />}
-          {step === "przekaz" && <SendStep channels={def.channels} recipient={c.doc.recipient} onSend={send} onBack={() => go()} />}
-          {step === "podglad" && <CheckAnswers def={def} values={values} onBack={() => go()} readOnly />}
+          {step === "sprawdz" && (
+            <>
+              {pdf()}
+              <CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} />
+            </>
+          )}
+          {step === "przekaz" && <SendStep channels={def.channels} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} />}
+          {step === "podglad" && (
+            <>
+              {pdf("Pobierz kopię PDF")}
+              <CheckAnswers def={def} values={values} onBack={() => go()} readOnly />
+            </>
+          )}
         </div>
       </Page>
     );
@@ -183,7 +202,15 @@ export function CaseDetail({ id }: { id: string }) {
 
       <Panel className="mt-stack max-w-prose" aria-labelledby="teraz">
         <SectionTitle id="teraz">Czy mam teraz coś zrobić?</SectionTitle>
-        <NowCard c={c} def={def} filled={def ? progress(def, values) : undefined} onZusik={zusik} onStep={(s) => go(s)} onCorrect={startCorrection} />
+        <NowCard
+          c={c}
+          def={def}
+          filled={def ? progress(def, values) : undefined}
+          pdf={c.doc.hasDraft ? pdf() : undefined}
+          onZusik={zusik}
+          onStep={(s) => go(s)}
+          onCorrect={startCorrection}
+        />
       </Panel>
 
       {c.howTo && (
@@ -249,6 +276,7 @@ function NowCard({
   c,
   def,
   filled,
+  pdf,
   onZusik,
   onStep,
   onCorrect,
@@ -256,6 +284,8 @@ function NowCard({
   c: DocCase;
   def?: FormDef;
   filled?: { done: number; total: number };
+  /** Pobranie zapisanego wniosku jako PDF (od pierwszego zapisu). */
+  pdf?: React.ReactNode;
   onZusik: (field?: string) => void;
   onStep: (step: Step) => void;
   onCorrect: () => void;
@@ -337,6 +367,7 @@ function NowCard({
           ) : (
             <p className="text-on-surface-variant">Tę sprawę załatwiasz poza Zusikiem — szczegóły w „Jak złożyć” poniżej.</p>
           )}
+          {pdf}
         </div>
       );
     case "wyslano": {
@@ -397,6 +428,7 @@ function NowCard({
               {c.doc.hasDraft ? "Wróć do przygotowanego wniosku" : "Przygotuj wniosek wcześniej"}
             </Button>
           )}
+          {pdf}
         </div>
       );
     default:
