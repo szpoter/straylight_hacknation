@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SpeechBubble, Zusik } from "@/components/mascot/Zusik";
-import type { ZusikState } from "@/components/mascot/babelek/types";
 import {
   Button,
   ChevronLeftIcon,
@@ -111,7 +109,7 @@ function choicePatch(step: StepId, value: string): Partial<Answers> {
 
 /**
  * Onboarding w stylu aplikacji typu Duolingo / Cal AI: jedno pytanie na ekran, duże karty,
- * pasek postępu, Zusik reagujący na odpowiedzi. Wybór karty tylko zaznacza — dalej idzie się
+ * pasek postępu, krótka reakcja na odpowiedź nad pytaniem (bez maskotki). Wybór karty tylko zaznacza — dalej idzie się
  * przyciskiem „Dalej”. Na końcu plan układa się na oczach rodzica i widać konkretne liczby.
  *
  * Gdy z rejestru znamy już dziecko (plan z kłódką), rodzic może od razu przejść do jego planu,
@@ -133,7 +131,6 @@ export function Onboarding() {
   const [error, setError] = useState<string>();
   const [names, setNames] = useState<string[]>([]);
   const [planName, setPlanName] = useState("");
-  const [typingTick, setTypingTick] = useState(0);
   const [showWhy, setShowWhy] = useState(false);
   /** Ekran końcowy: najpierw „układam plan”, potem wynik. */
   const [built, setBuilt] = useState(false);
@@ -289,12 +286,11 @@ export function Onboarding() {
   if (screen === "start") {
     // Po logowaniu rodzic trafia tutaj — czat z Zusikiem (zakres Juliana, `features/chat/parent-chat.tsx`)
     // jest dostępny obok ekranu startowego. Na ekranach pytań go nie ma: przycisk czatu w rogu
-    // zasłaniałby na telefonie przyklejony pasek „Dalej”; tam rodzic ma Zusika w dymku.
+    // zasłaniałby na telefonie przyklejony pasek „Dalej”. Maskotki w onboardingu nie ma (prośba zespołu).
     return (
       <ParentChat topLauncher>
       <Shell>
         <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 pb-20 text-center md:pt-14", ENTER)}>
-          <Zusik size={128} animated entrance state="available" toward={270} />
           <div className="flex flex-col gap-3">
             <h1 className="font-serif text-headline-mobile md:text-headline">Ułóżmy Twój plan</h1>
             <p className="text-lead text-on-surface-variant">Kilka krótkich pytań, ok. 1 minuty. Na końcu zobaczysz wszystkie sprawy z terminami.</p>
@@ -359,7 +355,6 @@ export function Onboarding() {
         ) : (
           <PlanReady
             plans={builtPlans}
-            line={zusikLine("summary", answers)}
             estimatedDate={estimatedDate}
             headingRef={headingRef}
             onFinish={finish}
@@ -388,7 +383,6 @@ export function Onboarding() {
   const isChoice = CHOICE_STEPS.includes(step);
   const isOptional = OPTIONAL_STEPS.includes(step);
   const current = (answers as Record<string, unknown>)[step] as string | undefined;
-  const mascotState: ZusikState = ((step === "names" || step === "planName") && typingTick > 0) || isDate ? "waiting" : "available";
   const total = childTotal(answers);
 
   return (
@@ -404,15 +398,9 @@ export function Onboarding() {
         }}
         className={cn("flex flex-1 flex-col gap-6 pt-6 md:gap-stack md:pt-10", ENTER)}
       >
-        {/* Zusik z dymkiem: reakcja na poprzednią odpowiedź, pod nią pytanie. */}
-        <div className="flex items-end gap-3">
-          <Zusik size={72} animated state={mascotState} typingTick={typingTick} toward={0} className="shrink-0" />
-          <SpeechBubble className="mb-4 flex-1 px-4 py-3">
-            <p>{zusikLine(step, answers)}</p>
-          </SpeechBubble>
-        </div>
-
         <div>
+          {/* Reakcja na poprzednią odpowiedź (dawniej w dymku maskotki), pod nią pytanie. */}
+          <p className="mb-2 text-on-surface-variant">{zusikLine(step, answers)}</p>
           <h1 ref={headingRef} tabIndex={-1} className="font-serif text-title focus:outline-none md:text-headline-mobile">
             {question}
           </h1>
@@ -518,7 +506,6 @@ export function Onboarding() {
                       const next = [...names];
                       next[i] = e.target.value;
                       setNames(next);
-                      setTypingTick((t) => t + 1);
                     }}
                   />
                   {answers.childCount === "3" && names.length > 3 && i >= 3 && (
@@ -545,10 +532,7 @@ export function Onboarding() {
               hint="Np. imię, jeśli już je wybraliście. Zmienisz go później."
               value={planName}
               maxLength={40}
-              onChange={(e) => {
-                setPlanName(e.target.value);
-                setTypingTick((t) => t + 1);
-              }}
+              onChange={(e) => setPlanName(e.target.value)}
               placeholder={total > 1 ? "Np. Nasze bliźnięta" : "Np. Maluszek"}
               autoComplete="off"
               autoFocus
@@ -642,7 +626,7 @@ function TopRow({ onBack, value }: { onBack: () => void; value: number }) {
         <ChevronLeftIcon />
       </button>
       <div className="flex-1">
-        <ProgressBar value={value} label="Postęp rozmowy z Zusikiem" />
+        <ProgressBar value={value} label="Postęp pytań" />
       </div>
     </div>
   );
