@@ -11,6 +11,16 @@ const CLOCK = () => ({ now: "2026-11-21T10:00:00.000Z", today: "2026-11-21" });
 let n = 0;
 const op = () => `op-test-${++n}-xxxxxxxx`;
 
+it.each([
+  ["Przygotuj mi szkic wniosku ZAM", true],
+  ["Wypełnij ZAM", true],
+  ["Nie przygotuj jeszcze wniosku", false],
+  ["Widziałem szkic wniosku ZAM", false],
+  ["Przygotuj wniosek o 800+", false],
+])("requires a request for this form before drafting: %s", (text, expected) => {
+  expect(parseMessage(String(text), "2026-11-22", null).wantsDraft).toBe(expected);
+});
+
 function setup(model: KamilModel | null = null) {
   const store = new MemoryCaseStore();
   const checkpointer = new MemorySaver();
@@ -299,4 +309,20 @@ describe("step 2–4 · Kamil's case on the session", () => {
     expect(v.chat.at(-1)?.text).not.toMatch(/pytanie o ubezpieczenie/);
     expect(v.chat.at(-1)?.text).toMatch(/odpis aktu urodzenia/);
   });
+});
+
+it("keeps case messages inside the application even with a public provider configured", async () => {
+  vi.stubEnv("KAMIL_MEMORY_STORE", "1");
+  vi.stubEnv("SHERLOCK_BASE_URL", "https://provider.invalid");
+  vi.stubEnv("SHERLOCK_MODEL", "test");
+  vi.stubEnv("SHERLOCK_API_KEY", "test");
+  const outbound = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Unexpected external request"));
+  try {
+    const { kamilService } = await import("@/lib/kamil/server");
+    await say(kamilService(), "test-private-case", "W moim dokumencie jest literówka. Co zrobić?");
+    expect(outbound).not.toHaveBeenCalled();
+  } finally {
+    outbound.mockRestore();
+    vi.unstubAllEnvs();
+  }
 });
