@@ -6,6 +6,7 @@
 /* ---------- Rama ---------- */
 
 .shell {
+  --demo-bar-height: 36px;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
@@ -39,7 +40,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: var(--demo-bar-height);
   padding: 6px var(--gutter);
   background: var(--color-tertiary);
   color: var(--color-on-surface);

@@ -412,7 +412,7 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 | --- | --- | --- |
 | Logowanie (§10, §13 B) | ✅ | Login i hash hasła (scrypt) ze zmiennych `ADMIN_LOGIN` i `ADMIN_PASSWORD_HASH`, nadawanych przez operatora. Sesja 8 h w podpisanym ciasteczku, dostęp sprawdzany po stronie serwera na każdej stronie panelu. `ADMIN_DEMO_PASSWORD` wypełnia formularz w demo. |
 | Reguły świadczeń (§3, §4) | ✅ odczyt | Etykieta „W aplikacji” oznacza wartości czytane z kodu: ojcowski (14 dni, 2 części), cztery przepisy ustawy zasiłkowej z oceny chorobowego (w tym 100% w ciąży, art. 11 ust. 2 pkt 1) i wzór ZAM z 24.10.2026. Pozostałe wartości mają etykietę „Ze specyfikacji”. |
-| Zmiana parametru (§7) | ✅ dla łącznego wymiaru ojcowskiego | Szkic, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty, wpis w historii. Wartość trafia do sprawy Kamila w aplikacji rodzica. |
+| Zmiana parametru (§7) | ✅ dla łącznego wymiaru ojcowskiego | Szkic, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty, wpis w historii. Wartość trafia do sprawy Kamila w aplikacji rodzica (sprawdzone na produkcji). „Pokaż oczami rodzica” otwiera sprawę Kamila z wartością ze szkicu i paskiem „Podgląd szkicu” na 30 minut. |
 | Sprawy testowe (§6) | ✅ 8 spraw syntetycznych | Sprawa Kamila w 8 wariantach, liczona na żywo regułą. Oczekiwane wyniki jak w `app/tests/kamil-rules.test.ts`. |
 | Historia zmian (§8) | ✅ | Publikacje z sesji z autorem, godziną, podstawą i wynikiem sprawdzenia. Wycofanie zaplanowanej zmiany. Wpisy przykładowe są oznaczone. |
 | Treści i źródła (§5) | ✅ | 3 pakiety wiedzy, 13 dokumentów, ostrzeżenie po 6 miesiącach od pobrania. |
@@ -444,4 +444,5 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 2. Parametry urlopu rodzicielskiego (21 dni, 5 części, 287 dni): przenieść wartości z `app/src/lib/marta/case.ts` do `app/src/lib/rules/parameters.ts`.
 3. Odczyt wgranego wniosku w „Sprawach testowych” albo odesłanie do odczytu dokumentów w aplikacji rodzica.
 4. Przy wdrożeniu produkcyjnym: wersje w bazie zamiast ciasteczka oraz role redaktora i zatwierdzającego.
-5. „Pokaż oczami rodzica” dla szkicu. Dziś przycisk pokazuje tylko opublikowane wartości.
+
+Materiał do opisu projektu i prezentacji: [ZGLOSZENIE-PANEL-ADMINISTRACYJNY.md](ZGLOSZENIE-PANEL-ADMINISTRACYJNY.md).

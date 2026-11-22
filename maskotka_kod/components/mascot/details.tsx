@@ -7,7 +7,10 @@
 import { BOOK, CALCULATOR, CLOSED_FOLDER, COVER_PATHS, DOT, FOLDER, PENCIL, pencilPoint } from "./shapes";
 import type { Point } from "./geometry";
 
-const fmt = (points: readonly Point[]) => points.map(([x, y]) => `${x} ${y}`).join(" L ");
+// Współrzędne z sin/cos zaokrąglone do setnych: Node i przeglądarka potrafią różnić się na ostatniej
+// cyfrze, a wtedy React zgłasza niezgodność hydratacji (SVG renderuje się najpierw na serwerze).
+const round = (value: number) => Math.round(value * 100) / 100;
+const fmt = (points: readonly Point[]) => points.map(([x, y]) => `${round(x)} ${round(y)}`).join(" L ");
 const mirror = (x: number) => 2 * BOOK.spine - x;
 
 /** Index cards behind the folder; only their tops peek out over its edge. */
@@ -97,10 +100,10 @@ export function DetailsFront() {
         {[-half + w + 40, -half + w + 110].map((along) => (
           <line
             key={along}
-            x1={pencilPoint(along, w)[0]}
-            y1={pencilPoint(along, w)[1]}
-            x2={pencilPoint(along, -w)[0]}
-            y2={pencilPoint(along, -w)[1]}
+            x1={round(pencilPoint(along, w)[0])}
+            y1={round(pencilPoint(along, w)[1])}
+            x2={round(pencilPoint(along, -w)[0])}
+            y2={round(pencilPoint(along, -w)[1])}
             strokeWidth={26}
             className="stroke-babelek-rim"
           />

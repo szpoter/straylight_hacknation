@@ -260,29 +260,7 @@
 }
 
 /* Chat */
-.chat {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-right: 4px;
-}
-.bubbleKamil {
-  align-self: flex-end;
-  max-width: 85%;
-  background: var(--user-bg);
-  color: var(--user-ink);
-  border-radius: 16px 16px 4px 16px;
-  padding: 10px 14px;
-}
-.bubbleZusik {
-  align-self: flex-start;
-  max-width: 92%;
-  color: var(--answer-ink);
-}
-.bubbleZusik > p:first-child {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
+.reply { white-space: pre-line; overflow-wrap: anywhere; }
 .author {
   font-size: 11px;
   color: var(--ink-variant);

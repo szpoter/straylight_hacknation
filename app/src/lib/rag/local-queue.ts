@@ -3,10 +3,14 @@ import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type { Corpus, Fragment } from "./corpus";
 import { loadCorpus } from "./corpus-fs";
+import { corpusKeywords } from "./corpus-search";
 import { publicQuestion } from "./public-query";
 
 /** Verify against shipped public material at the last boundary before persistence. */
 export function publicQueueEvidence(corpus: Corpus, question: string, evidence: Fragment[]) {
+  if (evidence.length === 1 && corpusKeywords(question, evidence[0]) &&
+      (["marta", "publiczne", "oferta"] as const).some(name => loadCorpus(name) === corpus) &&
+      corpus.fragments.get(evidence[0].logicalId) === evidence[0]) return evidence;
   const plan = publicQuestion(question);
   if (!plan || plan.clarify || plan.question !== question || /\d{4}/u.test(question) || !evidence.length) return null;
   const official = loadCorpus(plan.corpus);

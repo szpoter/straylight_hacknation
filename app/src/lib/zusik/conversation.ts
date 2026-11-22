@@ -1,4 +1,4 @@
-export const caseNames = ["marta", "kamil", "chorobowe"] as const;
+export const caseNames = ["marta", "kamil", "chorobowe", "ogolna"] as const;
 export type CaseName = typeof caseNames[number];
 
 export function conversationOwner(session: string, scenario: CaseName) {
@@ -6,6 +6,7 @@ export function conversationOwner(session: string, scenario: CaseName) {
 }
 
 const prompts: Record<CaseName, string> = {
+  ogolna: "Opisz, co chcesz ustalić. Mogę sprawdzić w źródłach zasady świadczenia, termin lub potrzebne dokumenty.",
   marta: "Mogę porównać terminy urlopu, pomóc z wnioskiem albo sprawdzić pytanie o świadczenie. Co chcesz ustalić?",
   kamil: "Mogę pomóc z odpisem aktu urodzenia, okresem ojcowskiego i wnioskiem ZAM. Od czego zaczynamy?",
   chorobowe: "Mogę pomóc przejrzeć dokumenty ubezpieczenia albo wyjaśnić zasady zasiłku chorobowego. Co chcesz sprawdzić?",

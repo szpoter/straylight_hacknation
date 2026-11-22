@@ -6,11 +6,13 @@ import type { CaseStore } from "../zusik/case-store";
 import { labels, packetA, parsePage } from "./read";
 import type { Answer, Law, PageFact, SicknessView } from "./types";
 
+const message = z.string().trim().min(1).max(600).optional();
 const version = z.number().int().positive();
 export const mutationSchema = z.discriminatedUnion("type", [
-  z.strictObject({ type: z.literal("start") }),
-  z.strictObject({ type: z.literal("close"), version }),
-  z.strictObject({ type: z.literal("confirm"), version, answer: z.enum(["yes", "no", "unknown"]) }),
+  z.strictObject({ type: z.literal("start"), message }),
+  z.strictObject({ type: z.literal("sources"), version, requestId: z.uuid(), message: message.unwrap() }),
+  z.strictObject({ type: z.literal("close"), version, message }),
+  z.strictObject({ type: z.literal("confirm"), version, message, answer: z.enum(["yes", "no", "unknown"]) }),
   z.strictObject({ type: z.literal("evidence"), version, includeEmployment: z.boolean() }),
   z.strictObject({
     type: z.literal("import"),
@@ -83,6 +85,19 @@ export class SicknessService {
         return { status: 200, view: current.view };
       if (action.type !== "start" && (!current || current.view.version !== action.version))
         return { status: 409, view: current?.view ?? null };
+      if (action.type === "sources") {
+        if (!current) return { status: 404, view: null };
+        const prior = current.view.sourceRequests ?? [];
+        if (prior.some(reply => reply.id === action.requestId)) return { status: 200, view: current.view };
+        const reply = {
+          id: action.requestId, at: new Date().toISOString(), message: action.message,
+          evidence: current.view.evidence.filter(doc => current.view.assessment.evidenceIds.includes(doc.id)),
+          law: current.view.assessment.law,
+        };
+        const view = { ...current.view, sourceRequests: [...prior, reply].slice(-40) };
+        await this.graph.invoke({ record: { ...current, view } }, this.config(owner.threadId));
+        return { status: 200, view };
+      }
       if (action.type === "close" && current?.view.assessment.status !== "not_entitled_for_period")
         return { status: 422, view: current?.view ?? null };
       let packet = current?.packet ?? packetA;
@@ -108,6 +123,7 @@ export class SicknessService {
       const view: SicknessView = {
         version: (current?.view.version ?? 0) + 1,
         closed: action.type === "close",
+        sourceRequests: current?.view.sourceRequests,
         includeEmployment,
         otherCoverage,
         canRestoreEmployment: packet.some((p) => p.kind === "employment"),
@@ -120,6 +136,13 @@ export class SicknessService {
           return { id, title: labels[p.kind], page: p.page, url: "/api/zusik/sickness/evidence/" + locator };
         }),
       };
+      const history = current?.view.history ?? (current ? [{
+        version: current.view.version, at: "", closed: current.view.closed, assessment: current.view.assessment,
+      }] : []);
+      view.history = [...history, {
+        version: view.version, at: new Date().toISOString(), message: "message" in action ? action.message : undefined,
+        closed: view.closed, assessment: view.assessment,
+      }].slice(-40);
       await this.graph.invoke({ record: { packet, view, lastMutation: key } }, this.config(owner.threadId));
       return { status: 200, view };
     } finally {

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   // The ask route reads the public corpus (manifest + fragments) from disk at runtime.
   outputFileTracingIncludes: {
     "/api/zusik/**": ["./corpus/*/manifest.json", "./corpus/*/fragments.jsonl"],
+    "/api/zusik/ask": ["./corpus/corpus-lexicon.json.gz", "./corpus/*/manifest.json", "./corpus/*/fragments.jsonl"],
     "/api/zusik/marta/pdf": ["./public/forms/fonts/*.ttf"],
     // Admin panel pages show the corpus sources and the statute units the rules rely on.
     "/admin/**": ["./corpus/*/manifest.json", "./corpus/*/fragments.jsonl"],

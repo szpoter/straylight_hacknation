@@ -77,7 +77,7 @@ export function Hero() {
           </div>
         </div>
 
-        <section className={styles.features} aria-labelledby="features-title">
+        <section id="formalnosci" className={styles.features} aria-labelledby="features-title">
           <h2 id="features-title" className={styles.featuresTitle}>
             Formalności po kolei, bez zgadywania.
           </h2>

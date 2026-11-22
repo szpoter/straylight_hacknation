@@ -21,6 +21,7 @@ export type LocalAsk = {
   requestId: string;
   question: string;
   state: "sending" | "lost" | "done";
+  createdAt?: string;
   answer?: Answer;
 };
 
@@ -31,7 +32,7 @@ export type AskOutcome =
   | { kind: "unavailable"; reason: "not_deployed" | "service_down"; message?: string | null };
 
 /** One entry of the visible conversation: a saved turn or a question still on its way. */
-export type ConversationItem = { requestId: string; question: string; state: LocalAsk["state"]; answer?: Answer };
+export type ConversationItem = { requestId: string; createdAt?: string; question: string; state: LocalAsk["state"]; answer?: Answer };
 
 type Payload = { documentCache?:string; view?: ClientView; error?: string; variable?: string };
 
@@ -70,7 +71,7 @@ export function newRequestId(): string {
 export function mergeConversation(saved: Turn[], local: LocalAsk[]): ConversationItem[] {
   const known = new Set(saved.map((turn) => turn.requestId));
   return [
-    ...saved.map((turn) => ({ requestId: turn.requestId, question: turn.question, state: "done" as const, answer: turn })),
+    ...saved.map((turn) => ({ requestId: turn.requestId, question: turn.question, createdAt: turn.createdAt, state: "done" as const, answer: turn })),
     ...local.filter((ask) => !known.has(ask.requestId)),
   ];
 }
@@ -128,7 +129,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
     setPhase("restoring");
     setError(null);
     try {
-      if (scenario === "marta") {
+      if (scenario === "marta" || scenario === "ogolna") {
         const session = await post("/api/zusik/session");
         if (session.status >= 400) return fail(errorFrom(session.status, session.body));
         setDocumentCache(session.body.documentCache ?? "");
@@ -217,11 +218,12 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
     async (requestId: string, question: string): Promise<AskOutcome> => {
       if (activeRequest.current || asking.current.has(requestId)) return { kind: "lost" };
       asking.current.add(requestId);
+      const createdAt = new Date().toISOString();
       const upsert = (patch: Partial<LocalAsk>) =>
         setAsks((list) =>
           list.some((item) => item.requestId === requestId)
             ? list.map((item) => (item.requestId === requestId ? { ...item, ...patch } : item))
-            : [...list, { requestId, question, state: "sending", ...patch }],
+            : [...list, { requestId, question, createdAt, state: "sending", ...patch }],
         );
       const drop = () => setAsks((list) => list.filter((item) => item.requestId !== requestId));
       upsert({ state: "sending" });
@@ -261,7 +263,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
           await sleep(POLL_MS);
           res = await request();
         }
-        const body = res.body as Payload & { turn?: { message?: string } };
+        const body = res.body as Payload & { turn?: { message?: string; createdAt?: string } };
         if (res.status === 404 || res.status === 405 || (res.status === 500 && body.error === "config_missing")) {
           drop();
           return { kind: "unavailable", reason: "not_deployed" };
@@ -289,7 +291,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
           drop();
           return { kind: "unavailable", reason: "service_down", message: answer.message };
         }
-        upsert({ state: "done", answer });
+        upsert({ state: "done", answer, createdAt: body.turn?.createdAt ?? createdAt });
         return { kind: "answered" };
       } catch {
         upsert({ state: "lost" });
