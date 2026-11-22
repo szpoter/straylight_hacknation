@@ -28,7 +28,7 @@ const SRC = {
   vaccines: { label: "pacjent.gov.pl · Kalendarz szczepień 2026", url: "https://pacjent.gov.pl/kalendarz-szczepien-dzieci-i-mlodziezy-na-2026-rok" },
   parental: { label: "gov.pl · Urlop rodzicielski", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" },
   aktywny: { label: "gov.pl · Program Aktywny Rodzic", url: "https://www.gov.pl/web/rodzina/pytania-i-odpowiedzi---program-aktywny-rodzic" },
-  pip: { label: "pip.gov.pl · Uprawnienia rodzicielskie", url: "https://www.pip.gov.pl/" },
+  pip: { label: "pip.gov.pl · Uprawnienia rodzicielskie", url: "https://www.pip.gov.pl/dla-pracodawcow/porady-prawne/rodzicielstwo" },
   poradnikPozor: S.poradnikPozor,
   poradnikSick: S.poradnikSick,
   uzArt30: S.uzArt30,
