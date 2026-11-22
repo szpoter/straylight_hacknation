@@ -182,6 +182,7 @@ async function score(origin: string, trial: Trial) {
   const client = await session(origin, trial.id);
   let last: Sample | undefined;
   const split = trial.id === "memory-separate";
+  let previousScopeAnswered = false;
   for (const [i, question] of trial.questions.entries()) {
     const plan = split ? (i === 2 ? "plan-b" : "plan-a") : undefined;
     if (i > 0) {
@@ -193,12 +194,14 @@ async function score(origin: string, trial: Trial) {
       }
     }
     last = await client.ask(question, plan, trial.group === "rag");
+    if (split && i === 1) previousScopeAnswered = last.turn.citations.some(c => c.fragmentId === designated && verified(c));
   }
   assert.ok(last);
   const { turn } = last;
   const text = [turn.message, ...turn.claims.map(c => c.text)].join(" ");
   if (trial.group === "rag") return ragAssertions(trial, last);
   if (trial.group === "clarification" || split) return {
+    ...(split ? { previousScopeAnswered } : {}),
     action: ["needs_clarification", "insufficient_evidence", "conversation"].includes(turn.status),
     noAward: !/przyznaję|przyznaliśmy|na pewno (otrzymasz|dostaniesz)/iu.test(text),
     fact: matches(trial.facts ?? [], text),
