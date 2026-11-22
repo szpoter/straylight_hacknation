@@ -20,10 +20,10 @@ export default function ProfilePage() {
             Przetestuj przykładową sprawę
           </SectionTitle>
           <p className="mb-4 max-w-prose text-on-surface-variant">
-            Wgraj dokumenty sprawy w PDF. Odczytamy dane, policzymy okres i kwotę i porównamy je z decyzją ZUS. Sprawa trafi do osobnego planu z etykietą „Test”.
+            Przejdź przez fikcyjny przykład Alicji albo wybierz sprawę, w której Zusik odczyta Twój plik PDF.
           </p>
           <ButtonLink href="/profil/sprawa-testowa" variant="secondary">
-            Wczytaj przykładową sprawę
+            Wybierz sprawę
           </ButtonLink>
         </Panel>
         <ResetDemo />

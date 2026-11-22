@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { AiTag, ArrowLeftIcon, Button, CheckIcon, FileIcon, Panel, TextField, UploadIcon, cn } from "@/components/ui";
+import { useRef, useState } from "react";
+import { ArrowLeftIcon, Button, ButtonLink, CheckIcon, Panel, TextField, cn } from "@/components/ui";
 import { usePlan } from "@/features/family/PlanProvider";
 import { TEST_FIELDS, type ReadField } from "./data";
 
-const STEPS = ["Wgraj PDF", "Sprawdź dane", "Wynik"] as const;
+const STEPS = ["Wybierz sprawę", "Sprawdź dane", "Podsumowanie"] as const;
 type Step = 0 | 1 | 2;
 
 /** „Przetestuj przykładową sprawę”: trzy kroki (ui/MACIEJ.md, element 7). */
@@ -14,37 +14,11 @@ export function TestCaseWizard() {
   const router = useRouter();
   const { selectPlan } = usePlan();
   const [step, setStep] = useState<Step>(0);
-  const [file, setFile] = useState<File | null>(null);
-  const [pending, setPending] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
   const [fields, setFields] = useState<ReadField[] | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
-
   const goTo = (s: Step) => {
     setStep(s);
     requestAnimationFrame(() => headingRef.current?.focus());
-  };
-
-  const read = (f: File) => {
-    setFile(f);
-    setPending(null);
-    setFields(null);
-    setLoading(true);
-    // TODO(backend): odczyt OCR (lib/ocr) zamiast symulacji.
-    timer.current = setTimeout(() => {
-      setFields(TEST_FIELDS.map((x) => ({ ...x })));
-      setLoading(false);
-      goTo(1);
-    }, 1500);
-  };
-
-  const choose = (f: File | undefined) => {
-    if (!f) return;
-    if (f.type && f.type !== "application/pdf") return;
-    if (file && fields) setPending(f);
-    else read(f);
   };
 
   const missing = fields?.some((f) => f.missing && !f.value);
@@ -91,7 +65,26 @@ export function TestCaseWizard() {
         {STEPS[step]}
       </h1>
 
-      {step === 0 && <UploadStep file={file} loading={loading} pending={pending} onChoose={choose} onConfirm={() => pending && read(pending)} onCancel={() => setPending(null)} onNext={fields ? () => goTo(1) : undefined} />}
+      {step === 0 && (
+        <>
+          <Panel className="flex flex-col items-start gap-3">
+            <h2 className="font-serif text-title">Przykład Alicji T.</h2>
+            <p className="text-on-surface-variant">Przećwicz sprawdzanie pól wniosku na fikcyjnych danych. Jedno pole uzupełnisz samodzielnie.</p>
+            <Button onClick={() => {
+              setFields(fields ?? TEST_FIELDS.map(field => ({ ...field })));
+              goTo(1);
+            }}>
+              {fields ? "Wróć do danych przykładu" : "Rozpocznij przykład"}
+            </Button>
+          </Panel>
+          <Panel className="flex flex-col items-start gap-3">
+            <h2 className="font-serif text-title">Odczyt pliku PDF w czacie</h2>
+            <p className="text-on-surface-variant">Wybierz rodzaj dokumentu. W czacie dodasz plik i sprawdzisz odczytane z niego dane.</p>
+            <ButtonLink href="/app/kamil" variant="secondary">Odpis aktu urodzenia do wniosku ZAM</ButtonLink>
+            <ButtonLink href="/app/chorobowe" variant="secondary">Dokumenty do sprawy chorobowego w ciąży</ButtonLink>
+          </Panel>
+        </>
+      )}
       {step === 1 && fields && <ReviewStep fields={fields} setFields={setFields} onNext={() => goTo(2)} canNext={!missing} />}
       {step === 2 && fields && (
         <ResultStep
@@ -101,7 +94,6 @@ export function TestCaseWizard() {
             router.push("/plan");
           }}
           onAnother={() => {
-            setFile(null);
             setFields(null);
             goTo(0);
           }}
@@ -113,79 +105,6 @@ export function TestCaseWizard() {
 
 function StickyNext({ children }: { children: React.ReactNode }) {
   return <div className="fixed inset-x-0 bottom-16 z-30 border-t border-outline bg-background p-gutter-mobile md:static md:border-0 md:bg-transparent md:p-0 md:flex md:justify-end">{children}</div>;
-}
-
-function UploadStep({
-  file,
-  loading,
-  pending,
-  onChoose,
-  onConfirm,
-  onCancel,
-  onNext,
-}: {
-  file: File | null;
-  loading: boolean;
-  pending: File | null;
-  onChoose: (f: File | undefined) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-  onNext?: () => void;
-}) {
-  const [over, setOver] = useState(false);
-  return (
-    <>
-      <p className="text-lead text-on-surface-variant">Wgraj dokumenty sprawy w PDF (np. ZAM, Z-3, decyzję ZUS). Odczytamy dane i policzymy okres i kwotę.</p>
-      {loading ? (
-        <Panel aria-live="polite" className="flex items-center gap-3">
-          <FileIcon className="shrink-0" />
-          <span>Wczytujemy dokumenty…</span>
-        </Panel>
-      ) : (
-        <label
-          onDragOver={(e) => {
-            e.preventDefault();
-            setOver(true);
-          }}
-          onDragLeave={() => setOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setOver(false);
-            onChoose(e.dataTransfer.files[0]);
-          }}
-          className={cn(
-            "flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center has-focus-visible:outline-2 has-focus-visible:outline-on-surface",
-            over ? "border-primary bg-surface" : "border-on-surface-variant bg-background",
-          )}
-        >
-          <UploadIcon size={28} />
-          <span className="font-medium">Wybierz plik PDF albo przeciągnij go tutaj</span>
-          <span className="text-meta text-on-surface-variant">{file ? `Wczytany plik: ${file.name}` : "Tylko PDF. Plik zostaje w demo i nie jest udostępniany."}</span>
-          <input type="file" accept="application/pdf" className="sr-only" onChange={(e) => { onChoose(e.target.files?.[0]); e.target.value = ""; }} />
-        </label>
-      )}
-      {pending && (
-        <Panel role="alertdialog" aria-label="Podmienić plik?" className="flex flex-col gap-3 bg-surface">
-          <p>
-            Podmienić „{file?.name}” na „{pending.name}”? Twoje poprawki odczytanych danych zostaną utracone.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={onConfirm}>Podmień plik</Button>
-            <Button variant="secondary" onClick={onCancel}>
-              Zostaw obecny
-            </Button>
-          </div>
-        </Panel>
-      )}
-      {onNext && !loading && !pending && (
-        <StickyNext>
-          <Button onClick={onNext} className="w-full md:w-auto">
-            Dalej
-          </Button>
-        </StickyNext>
-      )}
-    </>
-  );
 }
 
 function ReviewStep({
@@ -207,7 +126,7 @@ function ReviewStep({
   };
   return (
     <>
-      <p className="text-on-surface-variant">Sprawdź dane odczytane z dokumentów. Każde pole możesz poprawić przed wyliczeniem.</p>
+      <p className="text-on-surface-variant">Sprawdź fikcyjne dane Alicji. Możesz je zmienić na potrzeby tego przykładu.</p>
       <ul className="divide-y divide-outline border-y border-outline">
         {fields.map((f) => {
           const empty = f.missing && !f.value;
@@ -243,12 +162,11 @@ function ReviewStep({
                   </button>
                   <span className="flex flex-wrap items-center gap-2">
                     {empty ? (
-                      <span className="rounded-sm bg-tertiary px-2 py-0.5 text-meta font-medium">Nie odczytaliśmy tej wartości</span>
+                      <span className="rounded-sm bg-tertiary px-2 py-0.5 text-meta font-medium">Do uzupełnienia</span>
                     ) : (
                       <span className="font-medium">{f.value}</span>
                     )}
-                    <span className="text-meta text-on-surface-variant">· {f.source}</span>
-                    {!empty && (f.edited ? <span className="text-meta text-on-surface-variant">· poprawione przez Ciebie</span> : <AiTag />)}
+                    <span className="text-meta text-on-surface-variant">{f.edited ? "Wpisane przez Ciebie" : "Przykład · " + f.source}</span>
                   </span>
                 </div>
               )}
@@ -267,41 +185,21 @@ function ReviewStep({
 }
 
 function ResultStep({ fields, onOpen, onAnother }: { fields: ReadField[]; onOpen: () => void; onAnother: () => void }) {
-  const value = (id: string) => fields.find((f) => f.id === id)?.value ?? "";
-  // TODO(backend): wynik z lib/rules i porównanie z decyzją w aktach sprawy.
-  const steps = [
-    { title: "Ubezpieczenie", text: `${value("tytul")} · chorobowe obowiązkowe, ciągłe od 1 marca 2021` },
-    { title: "Prawo do świadczenia", text: "Przysługuje zasiłek macierzyński · okres wyczekiwania spełniony" },
-    { title: "Okres i kwota", text: `Urlop macierzyński 20 tygodni od ${value("porod")} · podstawa ${value("podstawa")} · ${value("wyplata") || "sposób wypłaty do ustalenia"}` },
-  ];
   return (
     <>
-      <div role="status" className="flex items-center gap-3 rounded-lg bg-secondary p-card">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-          <CheckIcon size={18} strokeWidth={2.5} />
-        </span>
-        <div>
-          <p className="font-serif text-title">Zgodne z decyzją ZUS</p>
-          <p className="text-meta">Sprawa testowa · Alicja T.</p>
-        </div>
-      </div>
-      <ol className="flex flex-col gap-3">
-        {steps.map((s, i) => (
-          <li key={s.title}>
-            <Panel as="div" className="flex gap-4">
-              <span className="font-serif text-title text-on-surface-variant">{i + 1}</span>
-              <div>
-                <h2 className="font-sans text-label font-medium">{s.title}</h2>
-                <p className="text-on-surface-variant">{s.text}</p>
-              </div>
-            </Panel>
-          </li>
+      <p className="text-on-surface-variant">Tak wyglądają dane po Twoim sprawdzeniu przykładowej sprawy. Możesz teraz otworzyć gotowy plan Alicji.</p>
+      <dl className="divide-y divide-outline border-y border-outline">
+        {fields.map(field => (
+          <div key={field.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3">
+            <dt className="text-on-surface-variant">{field.label}</dt>
+            <dd className="font-medium">{field.value}</dd>
+          </div>
         ))}
-      </ol>
+      </dl>
       <div className="flex flex-col gap-3 md:flex-row">
-        <Button onClick={onOpen}>Otwórz jako plan</Button>
+        <Button onClick={onOpen}>Otwórz przykładowy plan Alicji</Button>
         <Button variant="secondary" onClick={onAnother}>
-          Wczytaj inną sprawę
+          Zacznij od nowa
         </Button>
       </div>
     </>
