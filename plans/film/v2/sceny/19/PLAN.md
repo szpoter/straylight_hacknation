@@ -5,7 +5,7 @@
 1. Paweł wciska łokieć w narożnik stosu i chwyta wolną krawędź górnego druku drugą ręką. Palce pociągają arkusz. Pod spodem ukazuje się drugi, wygięty róg.
 2. Róg wystrzeliwuje do środka. Paweł poprawia chwyt. Marta przenosi wzrok, pochyla się i próbuje podchwycić kartkę od spodu. Róg mija jej otwarte palce.
 3. Kolejne druki suną najpierw po kolanach, potem wznoszą się po obu stronach. Największy, już widziany arkusz podwija się w osi pomiędzy twarzami.
-4. Suchy klik zatrzymuje rodziców i wszystkie kartki w jednym momencie. Salon i papier tracą ostrość. Ostry Zusik przejmuje punkt, w którym widz zatrzymał wzrok.
+4. Suchy klik zatrzymuje rodziców i wszystkie kartki w jednym momencie. Salon i postaci tracą ostrość. Krawędzie zamrożonych formularzy pozostają czytelne. Ostry Zusik przejmuje punkt, w którym widz zatrzymał wzrok.
 
 ## Wzorce
 

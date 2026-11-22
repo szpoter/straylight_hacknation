@@ -1,5 +1,6 @@
+import {prepareSound} from "./dzwiek.mjs";
 import {build} from "../../../app/node_modules/esbuild/lib/main.js";
-import {existsSync,readFileSync,writeFileSync} from "node:fs";
+import {existsSync,readFileSync,writeFileSync,copyFileSync,mkdirSync} from "node:fs";
 import {dirname,join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 const here=dirname(fileURLToPath(import.meta.url));
@@ -12,7 +13,13 @@ await build({absWorkingDir:here,stdin:{contents:imports+"\nimport {start} from '
   outfile:"film.js",minify:true,bundle:true,jsx:"automatic",define:{"process.env.NODE_ENV":'"production"'},
   alias:{"@":join(app,"src"),"react":join(player,"react"),"react-dom":join(player,"react-dom"),"gsap":join(player,"gsap"),"remotion":join(player,"remotion"),"@remotion/player":join(player,"@remotion/player")}});
 const template=readFileSync(join(here,"../index.html"),"utf8");
-const html=template.replaceAll("url(montaz/assets/","url(../montaz/assets/").replaceAll('src="v1/sciezki/','src="../v1/sciezki/')
- .replace('src="montaz/bundle.js"','src="film.js"').replace(/<div id="plane">.*?<\/div><\/div>/,'<div id="plane"></div>');
+const media=join(here,"media");
+mkdirSync(media,{recursive:true});
+for(const match of template.matchAll(/(?:url\(|src=")((?:montaz\/assets|v1\/sciezki)\/([^)"']+))/g)){
+  copyFileSync(join(here,"..",match[1]),join(media,match[2]));
+}
+prepareSound(here);
+const html=template.replaceAll("url(montaz/assets/","url(media/").replaceAll('src="v1/sciezki/','src="media/')
+ .replace('src="montaz/bundle.js"','src="film.js"').replace(/<div id="plane">[^\n]+/,'<div id="plane"></div>');
 writeFileSync(join(here,"index.html"),html);
 console.log(available.length+" / 30 modułów");

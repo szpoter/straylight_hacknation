@@ -1,0 +1,7 @@
+# 03 · Zdjęcie pod folią
+
+Na początku 4. sekundy widz wciąż patrzy na rękę Oli na palcu Pawła. Pierwszą wskazówką zmiany miejsca jest odgłos kółka. Dopiero potem biała smuga jarzeniówki sunie po fotografii. Odjazd odsłania kremowy brzeg odbitki, kieszeń z przezroczystej folii, zagięty róg teczki i dwa kciuki. Paweł przekręca teczkę w dłoniach do światła, po czym opuszcza ją do wygodnej pozycji. Spomiędzy rodziców wyłania się śpiąca Ola. Za nimi widać oczekujących i okienko ZUS. Położenie rodziców i kolejność planów wyznacza [plansza kolejki](../../../referencje/kolejka-zus-v1.png).
+
+1. Zachować cały kadr po migawce, łącznie z fragmentem Marty i pasem na kocyku. Stanowi on powierzchnię odbitki przez całą scenę.
+2. Gdy zaczyna się przechył, pokazać prowadzący go kciuk, oparcie przeciwnej dłoni i dwa nadgarstki. Krawędzie teczki i fotografia obracają się wspólnie. W przykładzie Mei dłoń uzyskuje kontakt przed przechyleniem kubka. Tę kolejność przenosimy na teczkę. [Mei, etap reach](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/README.md)
+3. Odsuwać kamerę od środka odbitki. Pozostałe obiekty wchodzą przez brzegi kadru w miarę zmiany skali. Na końcu dać widzowi czas na przeniesienie wzroku ze zdjęcia na wózek. Tak pokazywany jest kontekst obiektu w [PullBackIsolation.tsx](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/demos/camera/tension-camera-moves/PullBackIsolation.tsx).

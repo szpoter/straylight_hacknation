@@ -1,3 +1,5 @@
+import {Group} from "../montaz/node_modules/konva/lib/Group.js";
+
 const ink="#283754", dark="#2d3950", skin="#ffebdb", sage="#b2caad", pale="#dce8d8", stock="#f5faf7";
 const path=(d,fill="none",stroke=ink,w=2.7)=>`<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>`;
 const ellipse=(x,y,a,b,fill,stroke="none",w=2)=>`<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" fill="${fill}" stroke="${stroke}" stroke-width="${w}"/>`;
@@ -31,14 +33,19 @@ function face(role,p){
   s+=path("M-32 6q-11 -8 -12 3q0 10 13 13",skin,ink,2.2);
   for(const ex of [-9,22]){
     s+=path(`M${ex-6} ${-10+b*(ex<0?4:-4)}q5 -4 11 -2`,"none",hair,2.5);
-    s+=blink>.84?path(`M${ex-4} 4q4 2 8 0`,"none",ink,2.5):ellipse(ex+look*3,4,2.8,4.8*(1-blink),ink);
+    s+=blink>.84?path(`M${ex-4} 4q4 2 8 0`,"none",ink,2.5):ellipse(ex+look*3,4+3*Math.max(-1,Math.min(1,p.gazeDown??0)),2.8,4.8*(1-blink),ink);
   }
   s+=path("M13 7q3 7 1 9","none","#95857b",1.8);
   s+=mouth>.15?path(`M2 24q7 -2 14 -1q-5 ${4+mouth*9} -14 1Z`,dark,ink,1.4):path("M2 25q8 4 15 -1","none",ink,2.2);
   return s;
 }
+// The torso joint carries the head; hands can stay planted as the shoulders turn.
+const torsoJoint=new Group(), headJoint=new Group({x:0,y:-177});
+torsoJoint.add(headJoint);
+const matrix=node=>"matrix("+node.getTransform().getMatrix().join(" ")+")";
 export function person(role,p={}){
-  const x=p.x??640,y=p.y??470,s=p.s??1,lean=p.lean??0,rad=lean*Math.PI/180;
+  const x=p.x??640,y=p.y??470,s=p.s??1,lean=p.lean??0;
+  torsoJoint.rotation(lean);headJoint.rotation(p.head??0);
   const female=role!=="pawel",clerk=role==="clerk",coat=clerk?"#f6f4e7":female?sage:dark;
   const step=p.step??0, seated=p.seat??false;
   const ll=p.left??[-62,-63,-61,-24],rr=p.right??[63,-68,61,-25];
@@ -46,7 +53,7 @@ export function person(role,p={}){
   const jacket=path("M-22 -127 L-49 -116 Q-59 -111 -57 -92 L-51 -43 -58 5 Q-39 14 -17 8 L-12 -102Z",coat)+path("M20 -128 L48 -115 Q58 -111 56 -83 L50 -28 57 7 Q39 14 15 7 L12 -104Z",coat)
     +path("M-19 -121l-15 18 10 7-5 8m48 -34 14 19-9 7 5 7","none",clerk||female?ink:"#94a0a7",1.7);
   const neck=path("M-13 -150l2 26q12 13 25 -2l-3 -25Z",skin);
-  const head=group(`translate(0 -177) rotate(${p.head??0})`,face(role,p));
+  const head=group(matrix(headJoint),face(role,p));
   let legs="";
   for(const side of [-1,1]){
     const fx=(seated?side*61:side*26)+step*side*29+(side===-1?p.footL??0:p.footR??0);
@@ -55,8 +62,8 @@ export function person(role,p={}){
     legs+=path(`M${side*24-13} -2 Q${kx-18} ${ky-11} ${kx-15} ${ky+8} L${fx-10} ${fy} L${fx+11} ${fy} L${kx+17} ${ky+10} Q${kx+17} ${ky-2} ${side*24+15} -3Z`,female?"#f6f5ec":"#d0d9cf");
     legs+=path(`M${fx-11} ${fy-4}q11 5 21 -2l7 8q17 4 16 9l-46 1q-4 -5 2 -16Z`,side===1&&p.sock?"#fbf9f0":ink,ink,2);
   }
-  const core=group(`rotate(${lean})`,shirt+jacket+neck+head);
-  function shoulder(side){return [side*52*Math.cos(rad)+108*Math.sin(rad),side*52*Math.sin(rad)-108*Math.cos(rad)]}
+  const core=group(matrix(torsoJoint),shirt+jacket+neck+head);
+  function shoulder(side){const point=torsoJoint.getTransform().point({x:side*52,y:-108});return [point.x,point.y]}
   const left=arm(...shoulder(-1),ll,coat,p.leftGrip??p.grip??"open",-1);
   const right=arm(...shoulder(1),rr,coat,p.rightGrip??p.grip??"open",1);
   return poseGroup(x,y,s,0,legs+core+left+right);

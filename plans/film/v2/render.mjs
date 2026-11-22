@@ -1,7 +1,7 @@
 import {chromium} from "../../../app/node_modules/playwright-core/index.mjs";
 import {execFileSync,spawn} from "node:child_process";
 import {once} from "node:events";
-import {mkdirSync,mkdtempSync,existsSync,readFileSync} from "node:fs";
+import {mkdirSync,mkdtempSync,existsSync} from "node:fs";
 import {resolve,dirname,join} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 import {tmpdir} from "node:os";
@@ -32,6 +32,6 @@ try{
     }
   }finally{ff.stdin.end()}
   if((await done)[0]!==0)throw Error("FFmpeg");
-  execFileSync("ffmpeg",["-v","error","-i",silent,"-ss",String(2*(first-1)),"-i",join(here,"../v1/sciezki/miks.flac"),"-t",String(2*(last-first+1)),"-map","0:v","-map","1:a","-c:v","copy","-c:a","aac","-b:a","192k","-movflags","+faststart",out]);
+  execFileSync("ffmpeg",["-v","error","-i",silent,"-ss",String(2*(first-1)),"-i",join(here,"media/miks.flac"),"-t",String(2*(last-first+1)),"-map","0:v","-map","1:a","-c:v","copy","-c:a","aac","-b:a","192k","-movflags","+faststart",out]);
   console.log(out);
 }finally{await browser.close()}
