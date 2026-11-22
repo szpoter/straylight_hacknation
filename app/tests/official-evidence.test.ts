@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import { officialEvidenceReader } from "@/lib/rag/official-fetch";
+import { officialCatalogueReader, officialEvidenceReader } from "@/lib/rag/official-fetch";
+import { FAMILY_CATALOG_URL } from "@/lib/rag/official-sections";
+import { answerQuestion } from "@/lib/zusik/ask-service";
+import { loadCorpus } from "@/lib/rag/corpus-fs";
 import { nurseryIntent } from "@/lib/zusik/turn-graph";
 
 const sourceId = "zus-aktywnie-w-zlobku";
@@ -12,7 +15,7 @@ describe("official evidence", () => {
     const [care, payment] = await Promise.all([read(sourceId, "care"), read(sourceId, "recipient")]);
     expect(request).toHaveBeenCalledTimes(1);
     expect(request).toHaveBeenCalledWith("https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku",
-      expect.objectContaining({ credentials: "omit", redirect: "error", headers: { accept: "text/html" } }));
+      expect.objectContaining({ credentials: "omit", redirect: "manual", headers: { accept: "text/html" } }));
     expect(care.citation?.hash).not.toBe(payment.citation?.hash);
     expect(payment.citation?.quote).toContain("rachunek bankowy podmiotu");
     expect(await read(sourceId, "recipient")).toEqual({ ...payment, fetches: 0 });
@@ -33,5 +36,48 @@ describe("official evidence", () => {
     expect(nurseryIntent("Od stycznia syn będzie w żłobku. Co warto sprawdzić?")).toBe("care");
     for (const question of ["na czyje konto?", "Zamknęli żłobek, co mogę zrobić?", "Dziecko zacznie żłobek. Ile dostanę?",
       "Co mogłam dostać za żłobek w 2021 roku?"]) expect(nurseryIntent(question)).toBeNull();
+  });
+});
+
+describe("family catalogue discovery", () => {
+  const link = FAMILY_CATALOG_URL + "/bursztynowy-plecak";
+  const title = "Program Bursztynowy Plecak";
+  const wrap = (s: string) => '<h1>' + title + '</h1><div class="article__main"><div class="zus-cms">' + s + '</div></div>';
+  const html = (s: string) => new Response(wrap(s), { headers: { "content-type": "text/html" } });
+  const index = () => html('<a href="' + link + '">' + title + '</a>');
+  const today = new Date().toISOString().slice(0, 10);
+  const question = "Jakie dokumenty są potrzebne w programie Bursztynowy Plecak? Maria Prywatna, prywatne@example.test.";
+  const section = "<h2>Jakie dokumenty dołączyć</h2><p>Dołącz potwierdzenie zapisania do programu próbnego.</p>";
+  it("discovers the new page on a miss and only sends registry URLs with public headers", async () => {
+    const request = vi.fn<typeof fetch>(async url => String(url) === FAMILY_CATALOG_URL ? index() : html(section));
+    const search = vi.fn(async () => ({ hits: [], status: "ok" as const, ms: 1 }));
+    const result = await answerQuestion({ corpus: loadCorpus("oferta"), search: { search }, generate: vi.fn(),
+      discoverOfficial: officialCatalogueReader(request) }, question, undefined, { corpus: "oferta", question: title });
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(result.answer.citations[0]).toMatchObject({ origin: "official_live", url: link, locator: "Jakie dokumenty dołączyć" });
+    expect(result.trace.officialFetches).toBe(2);
+    expect(request.mock.calls.map(([url]) => url)).toEqual([FAMILY_CATALOG_URL, link]);
+    expect(JSON.stringify(request.mock.calls)).not.toMatch(/Prywatna|example\.test|dokumenty/);
+  });
+  it("skips history and declines ambiguous, withdrawn or oversized content and unapproved redirects", async () => {
+    for (const makeResponse of [
+      () => html(section + section),
+      () => html("<p>Program został wycofany.</p>" + section),
+      () => new Response(null, { headers: { "content-length": "4194304", "content-type": "application/pdf" } }),
+      () => new Response(null, { status: 302, headers: { location: "https://example.org/page" } }),
+    ]) {
+      const request = vi.fn<typeof fetch>(async url => String(url) === FAMILY_CATALOG_URL ? index() : makeResponse());
+      const read = officialCatalogueReader(request);
+      expect((await read(question, "2020-01-01")).fetches).toBe(0);
+      expect((await read(question, today)).citation).toBeNull();
+      expect(request.mock.calls.map(([url]) => url)).toEqual([FAMILY_CATALOG_URL, link]);
+    }
+  });
+  it("keeps a submission question on its own section even when confirmation mentions the same words", async () => {
+    const question = "Jak złożę wniosek w programie Bursztynowy Plecak?";
+    const sections = "<h2>Jak złożę wniosek</h2><p>Wniosek przekaż przez stronę programu próbnego.</p>" +
+      "<h2>Jak otrzymam potwierdzenie złożenia wniosku</h2><p>Po wysłaniu dostaniesz kopię potwierdzenia.</p>";
+    const read = officialCatalogueReader(async url => String(url) === FAMILY_CATALOG_URL ? index() : html(sections));
+    expect((await read(question, today)).citation?.locator).toBe("Jak złożę wniosek");
   });
 });

@@ -23,7 +23,7 @@ export interface VectorSearchResult {
 
 /** External search. Injected so tests and the eval can control it. */
 export interface KnowledgeSearch {
-  search(input: { query: string; expanded: string | null; corpusVersion: string; limit: number; lexical?: CorpusCandidate[]; asOf?: string }): Promise<VectorSearchResult>;
+  search(input: { query: string; expanded: string | null; corpusVersion: string; limit: number; lexical?: CorpusCandidate[]; asOf?: string; deadlineMs?: number }): Promise<VectorSearchResult>;
 }
 
 export interface KnowledgeSettings {
@@ -56,9 +56,11 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
   const doFetch = settings.fetchImpl ?? fetch;
   const model = settings.model ?? DEFAULT_EMBED_MODEL;
   return {
-    async search({ query, expanded, corpusVersion, limit, lexical, asOf = new Date().toISOString().slice(0, 10) }) {
+    async search({ query, expanded, corpusVersion, limit, lexical, asOf = new Date().toISOString().slice(0, 10), deadlineMs }) {
       const started = Date.now();
-      const signal = AbortSignal.timeout(KNOWLEDGE_TIMEOUT_MS);
+      const remaining = Math.min(KNOWLEDGE_TIMEOUT_MS, (deadlineMs ?? Infinity) - started);
+      if (remaining <= 0) return { status: "error", hits: [], ms: 0 };
+      const signal = AbortSignal.timeout(remaining);
       const url = settings.url.replace(/\/$/, "") + "/collections/" + encodeURIComponent(settings.collection) + "/points";
       async function post(path: string, input: object) {
         const response = await doFetch(url + path, { method: "POST", headers: { "content-type": "application/json", "api-key": settings.apiKey },
