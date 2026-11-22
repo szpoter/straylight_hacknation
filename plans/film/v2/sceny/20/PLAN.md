@@ -1,0 +1,8 @@
+# Ujęcie 20 · Wejście marki
+
+**38,00–40,00 s.** Widz rozpoznaje tę samą postać, która zatrzymała papiery. Zusik osiada i patrzy w prawo, zanim jego przesunięcie odsłoni nazwę produktu. Narrator mówi „Po to stworzyliśmy Przewodnik Rodzica”. [Scenariusz](../../../../../PLAN-FILMU-DEMO.md)
+
+1. Przenieść ostatni kadr ujęcia 19 w całości na początek. Po sześciu klatkach nakryć sam zastygły salon jasną miętą. Zachować ostre krawędzie maskotki i rodziców w tych samych miejscach w tle. Punktem odniesienia jest środek fali pomiędzy twarzami rodziców. [Plansza z falą](../../../referencje/fala-formularzy-zusik-v1.png)
+2. Opuścić Zusika o 40 px, lekko spłaszczyć go u dołu ruchu, przywrócić proporcje. Oczy wyprzedzą przejazd w lewo. Wzorcem tempa końcówki ruchu jest łagodne dohamowanie z wykresu softLand. [Motionmaxxing · wykresy przebiegów](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg)
+3. Uruchomić przejazd i odsłonięcie napisu tym samym ruchem. Przy prawej krawędzi sylwetki najpierw widać początkowe litery dwóch wierszy. Otwierające się pole stopniowo pokazuje pozostałe. W przykładzie otwarcia Bang Motion fragmenty kompozycji są przypisane do jednego zegara. W ujęciu zegarem dla obu elementów jest numer klatki. [Bang Motion · przykład otwarcia](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/assets/starter-opener.html)
+4. Zatrzymać pełny tytuł na ostatnie pół sekundy. Przy odbiorze porównać styk z ujęciem 19, sprawdzić oba wyrazy w pomniejszeniu oraz stałą pozycję od klatki 45 do 59.
