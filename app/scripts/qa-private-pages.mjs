@@ -59,7 +59,7 @@ async function readPages(page, bytes, copies, synthetic = false, diagnose = fals
       const lines = text.split(/\n/u);
       const nearby = lines.some((l, i) => label.test(l) && numbers.test(l + " " + (lines[i + 1] || "")));
       const legalWords = /zasilk|ubezpiecze|platnik|wnios|porod|wynagrodze|zaswiadcz|(?:^|\W)z[ -]?3(?:\W|$)/.test(text);
-      const bucket = p.candidates.length ? "field_found"
+      const bucket = p.candidates.length ? "field_found" : p.leaveRequests?.length ? "leave_request_only"
         : p.status === "excluded" ? "decision_excluded"
         : !text.trim() ? "no_recognized_text"
         : p.method === "manual" || p.status === "manual" ? "reader_requires_review"
@@ -78,6 +78,8 @@ async function readPages(page, bytes, copies, synthetic = false, diagnose = fals
     }
     return { pages: pages.length, methods: pages.map(p => p.method), statuses: pages.map(p => p.status),
       fields: pages.reduce((n, p) => n + p.candidates.length, 0),
+      leavePages: pages.filter(p => p.leaveRequests?.length).length,
+      fieldPages: pages.filter(p => p.candidates.length).length,
       problems, signals, roles: pages.map(p => p.role),
       protectedFields: pages.filter(p => p.role === "decision").reduce((n, p) => n + p.candidates.length, 0),
       synthetic: synthetic && {
@@ -86,6 +88,8 @@ async function readPages(page, bytes, copies, synthetic = false, diagnose = fals
         mentioned: pages[3]?.role,
         chosen: pages[5]?.candidates.some(c => c.field === "sicknessCoverage" && c.value.code === "covered"),
         unmarked: pages[6]?.candidates.some(c => c.field === "sicknessCoverage"),
+        leaveOnly: pages[7]?.candidates.length === 0 && pages[7]?.leaveRequests?.length === 1 &&
+          pages[7].leaveRequests[0].kind === "paternity",
       } };
   }, { encoded: bytes.toString("base64"), copies, synthetic, diagnose });
 }
@@ -118,19 +122,25 @@ async function preflight(page) {
     ["Poswiadczenie ubezpieczenia", "Stan na dzien: 14.11.2026", "Ubezpieczenie chorobowe: " + select]
       .forEach((line, i) => form.drawText(line, { x: 40, y: 720 - i * 36, size: 14 }));
   }
+  const letter = pdf.addPage();
+  ["Prosze o udzielenie mi urlopu ojcowskiego", "od 15.05.2026 do 21.05.2026"].forEach((line, i) =>
+    letter.drawText(line, { x: 48, y: 700 - i * 36, size: 14 }));
   const result = await readPages(page, Buffer.from(await pdf.save()), 2, true);
-  assert.deepEqual(result.methods, ["pdf_text", "ocr", "ocr", "pdf_text", "ocr", "pdf_text", "pdf_text"]);
+  assert.equal(result.leavePages, 1);
+  assert.deepEqual(result.methods, ["pdf_text", "ocr", "ocr", "pdf_text", "ocr", "pdf_text", "pdf_text", "pdf_text"]);
   assert.equal(result.statuses[1], "blank");
-  assert.deepEqual(result.synthetic, { scanned: true, protection: true, mentioned: "other", chosen: true, unmarked: false });
+  assert.deepEqual(result.synthetic, { scanned: true, protection: true, mentioned: "other", chosen: true, unmarked: false, leaveOnly: true });
 }
 
 function aggregate(records) {
-  const counts = { files: 0, unique: 0, pages: 0, candidates: 0, methods: {}, statuses: {}, roles: {}, protectedFields: 0, durationSeconds: 0 };
+  const counts = { files: 0, unique: 0, pages: 0, candidates: 0, leavePages: 0, fieldPages: 0, methods: {}, statuses: {}, roles: {}, protectedFields: 0, durationSeconds: 0 };
   for (const record of records) {
     counts.files += record.copies;
     counts.unique++;
     counts.pages += record.n;
     counts.candidates += record.fields;
+    counts.leavePages += record.leavePages;
+    counts.fieldPages += record.fieldPages;
     counts.durationSeconds += record.seconds;
     counts.protectedFields += record.protectedFields;
     for (const column of ["methods", "statuses", "roles"]) for (const [key, value] of Object.entries(record[column]))
@@ -164,7 +174,7 @@ async function runEdition(context, table, firstPage, rejected, diagnose) {
     const receipt = JSON.stringify({ version: 1, purpose: "local_diagnosis", known: work.map(c => c.id) });
     try { await writeFile(exposurePath, receipt, { flag: "wx", mode: 0o600 }); }
     catch (e) { if (e.code !== "EEXIST") throw e; await safeFile(exposurePath); assert.equal(await readFile(exposurePath,"utf8"),receipt); }
-    const total = { workingPackages: work.length, pages: 0, problems: {}, signals: {} };
+    const total = { workingPackages: work.length, pages: 0, leavePages: 0, fieldPages: 0, problems: {}, signals: {} };
     for (const c of work) {
       const file = await realpath(path.resolve(root, c.aliases[0]));
       assert.ok(file.startsWith(root + path.sep));
@@ -174,6 +184,8 @@ async function runEdition(context, table, firstPage, rejected, diagnose) {
       assert.equal(r.pages, c.pages);
       assert.equal(rejected(), 0);
       total.pages += r.pages;
+      total.leavePages += r.leavePages;
+      total.fieldPages += r.fieldPages;
       for (const metric of ["problems", "signals"]) for (const [key, val] of Object.entries(r[metric]))
         total[metric][key] = (total[metric][key] || 0) + val;
     }
@@ -208,7 +220,7 @@ async function runEdition(context, table, firstPage, rejected, diagnose) {
         assert.equal(rejected(), 0);
         const record = { digest: c.sha, copies: c.aliases.length, n: result.pages,
           methods: count(result.methods, kinds), statuses: count(result.statuses, states),
-          fields: result.fields, roles: count(result.roles, roles), protectedFields: result.protectedFields, seconds: Math.round((performance.now() - began) / 1000) };
+          fields: result.fields, leavePages: result.leavePages, fieldPages: result.fieldPages, roles: count(result.roles, roles), protectedFields: result.protectedFields, seconds: Math.round((performance.now() - began) / 1000) };
         await appendFile(cache, JSON.stringify(record) + "\n", {mode: 0o600});
         records.set(c.sha, record);
       }
@@ -244,7 +256,7 @@ async function main(mode) {
     await page.goto(assetOrigin);
     await preflight(page);
     assert.equal(blocked, 0);
-    console.log("offline preflight: text, blank, OCR, duplicate, mixed decision, mentioned heading, marked and empty choices passed");
+    console.log("offline preflight: text, blank, OCR, duplicate, mixed decision, mentioned heading, marked and empty choices, leave-only request passed");
     if (mode !== "--self-test") await runEdition(context, table, page, () => blocked, mode === "--work-diagnosis");
   } finally { await browser.close(); }
 }

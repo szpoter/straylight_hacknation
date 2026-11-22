@@ -77,7 +77,7 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
   if ((nursery && (!privateContext || generalNursery)) || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto(?: (?:trafia|wpływa) świadczenie)?[?!. ]*$/iu.test(text)))
     return {input:{intent:"public_question",publicQuestion:nursery ? recipient : "Na czyje konto?",replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
   if (/^(?:hej|cześć|co umiesz|jak możesz mi pomóc)[?!. ]*$/iu.test(text)) return {input:{intent:"public_question",publicQuestion:"Co umiesz?"}};
-  const direct = publicQuestion(text);
+  const direct = publicQuestion(text, true);
   const explicitlyGeneral = /^(?:ogólnie\b|jakie są ogólne zasady\b|co (?:mówią|stanowią) przepisy\b)/iu.test(text);
   if (direct?.question && !direct.clarify && (!privateContext || explicitlyGeneral || text === direct.question)) {
     return {input:{intent:"public_question",publicQuestion:direct.question,replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};

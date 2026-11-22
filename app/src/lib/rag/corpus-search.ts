@@ -4,7 +4,7 @@ import { gunzipSync } from "node:zlib";
 import { relevantFragment } from "./relevance";
 import { isPrimary, isValidOn, type Corpus, type Fragment } from "./corpus";
 import { corpusNames, loadCorpus } from "./corpus-fs";
-import { asksAboutOwnEligibility, type PublicQuestion } from "./public-query";
+import { asksAboutOwnEligibility, offerDocuments, type PublicQuestion } from "./public-query";
 import type { AskTurn } from "../zusik/types";
 
 const stop = new Set(("gdzie kiedy dlaczego dlaczego jakiego jakich jakie jaki jaka jakim jeśli jeżeli przez można mogę może wtedy takiej takiego " +
@@ -98,7 +98,10 @@ let cached: ReturnType<typeof buildIndex> | undefined;
 
 export function searchCorpus(text: string, direct?: PublicQuestion | null, kind = intent(text)): PublicQuestion | null {
   const {entries, frequency} = cached ??= buildIndex();
-  const raw = terms(text);
+  const scopes = direct?.corpus === "oferta" ? offerDocuments.filter(([name]) => name.test(text)) : [];
+  const scope = scopes.length === 1 ? scopes[0] : undefined;
+  if (direct?.corpus === "oferta" && !scope) return null;
+  const raw = terms(scope ? text.replace(scope[0], "") : text);
   const input = [...raw.keys()];
   const variants = input.map(key => {
     const word = lemma(raw.get(key)!);
@@ -117,6 +120,7 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     : null;
   const day = new Date().toISOString().slice(0, 10);
   const ranked = entries.flatMap(entry => {
+    if (scope && entry.fragment.documentId !== scope[1]) return [];
     if (!isValidOn(entry.corpus, entry.fragment, day) || (kind !== "info" && !facetEvidence[kind].test(entry.fragment.sourceText))) return [];
     const weights = new Map<string, number>();
     for (let i = 0; i < variants.length; i++) {

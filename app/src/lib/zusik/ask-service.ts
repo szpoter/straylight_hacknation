@@ -8,7 +8,7 @@ import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/off
 import { nurseryIntent, runSectionTurn, schoolRecipientIntent } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
 import { extractiveAnswer, needsStatutoryText, reviewedSourceIds, withSourceException } from "../rag/excerpt";
-import { publicQuestion, type PublicQuestion } from "../rag/public-query";
+import { offerDetail, publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
 import type { CaseStore } from "./case-store";
@@ -80,12 +80,19 @@ function newTrace(sanitized: string, contextRequestId: string | null): AnswerTra
 
 function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null {
   const direct = publicQuestion(text);
+  if (direct?.corpus === "oferta" && !direct.clarify && text !== direct.question && offerDetail(text, direct).question === text) {
+    return deps.searchCorpus?.(text, direct) ?? { corpus:"oferta", question:text,
+      uncovered:"Nie znalazłem potwierdzonego fragmentu o tym szczególe programu." };
+  }
   const genericForm = direct?.question.startsWith("Jakie informacje należy zawrzeć") &&
     !/rodzicielsk/iu.test(text);
-  if (direct?.clarify || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
+  // The legacy Marta gate treats the programme name itself as a personal amount request.
+  const gateText = direct?.corpus === "oferta" ? text.replace(/\b800\s*(?:\+|plus)/iu, "") : text;
+  if (direct?.clarify || scopeGate(gateText) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
   const preset = (!direct || genericForm) ? deps.suggestTopic?.(text) : null;
   // Preserve reviewed compound rules whose exceptions must travel with the main article.
-  if (preset || direct?.corpus === "oferta" || (direct?.corpus === "marta" && !genericForm) ||
+  if (preset || (direct?.corpus === "oferta" && !["program:800-plus", "program:aktywny-rodzic", "program:dobry-start"].includes(direct.locators?.[0] ?? "")) ||
+      (direct?.corpus === "marta" && !genericForm) ||
       ((direct?.locators?.length ?? 0) > 1 && !direct?.broad) || explicitLocatorKeys(text).length) return preset ?? direct;
   return deps.searchCorpus?.(text, direct) ?? direct;
 }

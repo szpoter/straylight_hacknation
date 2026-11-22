@@ -27,6 +27,16 @@ async function run() {
       }
     });
     await page.goto(new URL("/app/rozmowa", origin).href);
+    const say = async (question: string) => {
+      await page.getByRole("textbox", {name:"Wiadomość do Zusika"}).fill(question);
+      const posted = page.waitForResponse(r => r.request().method() === "POST" && r.url().endsWith("/messages"));
+      await page.getByRole("button", {name:"Wyślij"}).click();
+      assert.equal((await posted).status(), 201);
+      await page.locator("[data-knowledge-turn]").getByText(question, {exact:true}).waitFor();
+    };
+    await say("Hej");
+    await page.reload();
+    await page.getByRole("log").getByText("Hej", {exact:true}).waitFor();
     const attach = async (buffer: Buffer) => {
       const chooser = page.waitForEvent("filechooser");
       await page.getByRole("button", {name:"Dołącz PDF sprawy"}).click();
@@ -58,8 +68,11 @@ async function run() {
     await page.getByText(/Potwierdzono 6\s?500,00/).waitFor();
     const saved = new URL(page.url());
     assert.ok(saved.searchParams.get("sprawa"));
+    const privateQuestion = "Jaka jest moja pensja? PRIVATE-SYNTHETIC-MARKER";
+    await say(privateQuestion);
     const numWrites = writes.filter(w => !w.endsWith("/sessions")).length;
     await page.reload();
+    await page.getByRole("log").getByText(privateQuestion, {exact:true}).waitFor();
     await page.getByText(/Wynagrodzenie brutto · 6\s?500,00/).first().waitFor();
     await page.getByText(/Ocena historyczna/).first().waitFor();
     assert.equal(writes.filter(w => !w.endsWith("/sessions")).length, numWrites);
@@ -68,6 +81,7 @@ async function run() {
     await other.goto(saved.href);
     await other.getByText(/Ta sprawa jest niedostępna/).waitFor();
     assert.equal(await other.getByText(/6\s?500,00/).count(), 0);
+    assert.equal(await other.getByText(privateQuestion, {exact:true}).count(), 0);
     assert.ok(!intents.includes("link_account"));
     await page.getByText("Sprawdź symulowane konto ZUS",{exact:true}).click();
     await page.getByLabel("Osoba na koncie").selectOption("person-A");
@@ -89,6 +103,8 @@ async function run() {
     await page.waitForURL("**/app/rozmowa?nowa=1");
     const erased = await page.request.get(new URL("/api/v1/cases/" + saved.searchParams.get("sprawa"),origin).href);
     assert.equal(erased.status(),404);
+    assert.equal(await page.evaluate(() => Object.values(sessionStorage).some(value => value.includes("PRIVATE-SYNTHETIC-MARKER"))), false);
+    console.log("PASS Hej i prywatne pytanie po F5 · treść prywatna poza żądaniami HTTP · usunięcie kopii po skasowaniu sprawy");
     console.log("PASS 390 · PDF → 600000 gr → dowód strony 1 → ocena → drugi PDF → konflikt → 650000 gr → F5 bez zapisów → drugie cookie bez danych → jawne konto, saldo 0 gr z 19 maja → usunięta sprawa 404");
   } finally { await browser.close(); }
 }

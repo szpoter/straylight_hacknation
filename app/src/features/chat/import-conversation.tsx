@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { routeCaseQuestion } from "@/lib/zusik/v1/intent";
 import { chatStarters } from "@/lib/zusik/conversation";
 import type { CaseFile, EvidenceFact, FactInput, Patch } from "@/lib/zusik/memory/contract";
-import { ApiError, caseApi, loadCase, type AssessmentInput, type CaseView, type MessageInput } from "./case-api";
+import { ApiError, caseApi, loadCase, type AssessmentInput, type CaseMessage, type CaseView, type MessageInput } from "./case-api";
 import { ChatHeader } from "./chat-panel";
 import { findCasePassages } from "./find-case-passages";
 import { clearCaseReadProgress } from "./case-read-progress";
@@ -16,6 +16,13 @@ import { usePhone, useVisualViewport } from "./use-chat-viewport";
 import s from "./zusik.module.css";
 
 const id = () => crypto.randomUUID();
+const originalPrefix = "zusik.chat.original.";
+const originalKey = (caseId: string, messageId: string) => originalPrefix + caseId + "." + messageId;
+function forgetOriginals(caseId: string) {
+  for (const key of Object.keys(sessionStorage)) {
+    if (key.startsWith(originalKey(caseId, ""))) sessionStorage.removeItem(key);
+  }
+}
 const leaveNames = { maternity: "urlop macierzyński", parental: "urlop rodzicielski", paternity: "urlop ojcowski" };
 function messageLabel(input: MessageInput) {
   switch (input.intent) {
@@ -69,6 +76,17 @@ export function ImportConversation() {
     const requested = params.get("sprawa") ?? (!params.has("nowa") ? sessionStorage.getItem("zusik.activeCase") : null);
     const file = cases.find(c => c.id === requested);
     const restored = file ? await loadCase(file.id) : null;
+    const saved = new Map<string, string>();
+    if (restored) {
+      for (const message of restored.messages) {
+        const original = sessionStorage.getItem(originalKey(restored.file.id, message.id));
+        if (original) saved.set(message.id, original);
+      }
+    }
+    for (const key of Object.keys(sessionStorage)) {
+      if (key.startsWith(originalPrefix) && !cases.some(c => key.startsWith(originalKey(c.id, "")))) sessionStorage.removeItem(key);
+    }
+    setOriginals(saved);
     active.current = restored?.file ?? null;
     setView(restored);
     setHistory(cases);
@@ -85,6 +103,7 @@ export function ImportConversation() {
     catch (error) {
       if (lifecycle.current?.signal.aborted) return;
       if (error instanceof ApiError && [401, 404].includes(error.status)) {
+        if (active.current) forgetOriginals(active.current.id);
         setView(null); active.current = null; setLocal(new Map()); setOriginals(new Map()); setForm(null); setHistory([]); setPendingFile(null); setDraft(""); setLastChange(""); setProgress(""); createKey.current = "";
         urls.current.forEach(url => URL.revokeObjectURL(url)); urls.current.clear();
         sessionStorage.removeItem("zusik.activeCase");
@@ -130,6 +149,13 @@ export function ImportConversation() {
     setHistory(items => [file, ...items.filter(item => item.id !== file.id)]);
     return file;
   }
+  function rememberOriginal(caseId: string, message: CaseMessage, question: string) {
+    setOriginals(prev => new Map(prev).set(message.id, question));
+    if (messageLabel(message.input) !== question) {
+      try { sessionStorage.setItem(originalKey(caseId, message.id), question); }
+      catch { setNotice("Pamięć karty jest niedostępna. Po odświeżeniu zobaczysz opis pytania."); }
+    }
+  }
   function send(text: string) {
     const question = text.trim();
     if (!question || locked.current) return;
@@ -150,7 +176,7 @@ export function ImportConversation() {
       setInFlightQuestion(question);
       const file = await current();
       const result = await caseApi.message(file.id, input, key);
-      setOriginals(prev => new Map(prev).set(result.data.id, question));
+      rememberOriginal(file.id, result.data, question);
       setView(await loadCase(file.id));
       setDraft(prev => prev.trim() === question ? "" : prev);
     });
@@ -200,7 +226,7 @@ export function ImportConversation() {
       // Reattaching an existing file for evidence must not append another turn.
       if (!existing || question) {
         const result = await caseApi.message(file.id, { intent: "ask_case" }, messageKey);
-        if (question) setOriginals(prev => new Map(prev).set(result.data.id, question));
+        if (question) rememberOriginal(file.id, result.data, question);
       }
       setView(await loadCase(file.id)); setProgress(""); setPendingFile(null);
       if (question) setDraft(prev => prev.trim() === question ? "" : prev);
@@ -211,6 +237,7 @@ export function ImportConversation() {
     if (!view || !caseEtag) return;
     void run(async () => {
       await caseApi.erase(view.file.id, caseEtag);
+      forgetOriginals(view.file.id);
       await clearCaseReadProgress(view.file.id).catch(() => undefined);
       sessionStorage.removeItem("zusik.activeCase");
       location.replace("?nowa=1");

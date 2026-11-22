@@ -10,7 +10,7 @@ import { pageLines, type PageLine } from "./case-page-layout";
 
 type Progress = (label: string) => void;
 type ReadOptions = { caseId: string; signal: AbortSignal; onProgress: Progress; onPage?: (page: LocalCasePage, total: number) => void };
-type PageRead = { text: string; method: LocalCasePage["method"]; lines?: PageLine[]; confidence?: number; blank?: boolean; protectedDecision?: boolean };
+type PageRead = { text: string; method: LocalCasePage["method"]; lines?: PageLine[]; confidence?: number; blank?: boolean; protectedDecision?: boolean; highConfidenceText?: () => string };
 type PdfPage = import("pdfjs-dist/types/src/display/api").PDFPageProxy;
 type Worker = Awaited<ReturnType<typeof createPolishOcrWorker>>;
 
@@ -101,14 +101,17 @@ async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, 
     } finally { retry.canvas.width = retry.canvas.height = 0; }
   }
   const words = data.words ?? data.blocks?.flatMap(b => b.paragraphs.flatMap(p => p.lines.flatMap(l => l.words))) ?? [];
-  const lines = pageLines(wordsFromTesseract(words, 1, width, height), width, height);
+  const positioned = wordsFromTesseract(words, 1, width, height);
+  const lines = pageLines(positioned, width, height);
   for (const line of lines) {
     const { x, y, w, h } = line.box;
     if (rotation === 180) line.box = { x: 1 - x - w, y: 1 - y - h, w, h };
     if (rotation === -90) line.box = { x: 1 - y - h, y: x, w: h, h: w };
   }
   const text = lines.length ? lines.map(l => l.text).join("\n") : data.text.trim();
-  return { method: "ocr", text, confidence: data.confidence, lines };
+  return { method: "ocr", text, confidence: data.confidence, lines,
+    highConfidenceText: () => pageLines(positioned.map(word => word.confidence >= MIN_CONFIDENCE ? word : { ...word, text: "�" }),
+      width, height).map(line => line.text).join("\n") };
 
 }
 
@@ -175,13 +178,21 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
     const lines = input.lines;
     if (lines?.length) {
       page.lines = lines;
-      const reliable = (c: { locator: LocalLocator }) => {
-        if (lines.slice(c.locator.lineStart - 1, c.locator.lineEnd).every(line => line.confidence >= MIN_CONFIDENCE)) return true;
-        page.reason = "ambiguous_field";
-        return false;
-      };
-      page.candidates = page.candidates.filter(reliable);
-      if (page.leaveRequests) page.leaveRequests = page.leaveRequests.filter(reliable);
+      const reliable = (c: { locator: LocalLocator }) =>
+        lines.slice(c.locator.lineStart - 1, c.locator.lineEnd).every(line => line.confidence >= MIN_CONFIDENCE);
+      const candidates = page.candidates.filter(reliable);
+      if (candidates.length < page.candidates.length) page.reason = "ambiguous_field";
+      page.candidates = candidates;
+      const leaves = page.leaveRequests;
+      if (leaves?.some(leave => !reliable(leave))) {
+        // A weak word elsewhere in a letter must not invalidate a legible request and its dates.
+        const masked = input.highConfidenceText?.() ?? "";
+        const confirmed = analyzeCasePage(clientDocumentId, page.page, masked, page.method, pages.at(-1), input.confidence).leaveRequests ?? [];
+        page.leaveRequests = leaves.filter(request => reliable(request) || confirmed.some(other =>
+          other.kind === request.kind && other.validFrom === request.validFrom && other.validTo === request.validTo &&
+          other.locator.lineStart === request.locator.lineStart && other.locator.lineEnd === request.locator.lineEnd));
+        if (page.leaveRequests.length < leaves.length) page.reason = "ambiguous_field";
+      }
     }
     pages.push(page);
     options.onPage?.(page, total);
