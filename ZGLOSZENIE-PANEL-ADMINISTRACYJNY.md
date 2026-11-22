@@ -19,12 +19,10 @@ Panel pozwala osobie odpowiedzialnej za zasady wyliczania świadczeń zmienić p
 ## Jak przetestować (około 3 minut)
 
 1. Otwórz `/admin` i kliknij „Zaloguj się”. W demo login i hasło są już wpisane.
-2. „Reguły świadczeń” → zakładka „Wymiary” → „Zasiłek za okres urlopu ojcowskiego: łączny wymiar” → „Przygotuj zmianę”.
-3. Ustaw 1 tydzień od 01.12.2026, wpisz podstawę, kliknij „Zapisz szkic” i „Sprawdź zmianę”. Wszystkie przypadki są zgodne.
-4. Kliknij „Zaplanuj zmianę od 01.12.2026”. Zmiana pojawia się w „Historii zmian” z autorem, datą i podstawą.
-5. W tej samej przeglądarce otwórz `/app/kamil` i poproś o dwa tygodnie od 8 grudnia. Asystent odpowiada „Zostało Ci 7 dni”, a bez zmiany przyznaje 8–21 grudnia.
-6. Przykład z treści zadania: „Reguły świadczeń” → „Stawki” → „Zasiłek macierzyński za okres urlopu rodzicielskiego: stawka” → „Przygotuj zmianę”. Wpisz 75% od 01.01.2027. Wpływ pokazuje 3 920,00 zł → 4 200,00 zł, czyli +280,00 zł. Po publikacji „Sprawy testowe” oznaczają R-01 i R-04 jako „Do aktualizacji” i podają, która zmiana zmieniła ich wynik.
-7. „Historia zmian” → „Przywróć wartości początkowe”. Kolejna sesja i tak zaczyna od wartości z kodu.
+2. W „Sprawach testowych” otwórz K-06 i sprawdź przyczynę odmowy. W K-08 porównaj odpowiedź dla brakujących informacji. Możesz też odczytać lokalny PDF i rozwinąć tekst z wybranej strony.
+3. W „Regułach świadczeń” wybierz stawkę uśrednioną i przygotuj zmianę z 81,5% na 90% od 1 stycznia 2027 r. Wpisz podstawę demonstracji, zapisz szkic, sprawdź i zaplanuj zmianę. Wybierz przyszłą datę, jeśli dzień demonstracji jest późniejszy.
+4. W tej samej przeglądarce otwórz logowanie rodzica i wybierz „Importuj dane i otwórz plan”. W kalkulatorze wczytaj przykład pracownicy z podstawą 5 608,85 zł. Ustaw datę porodu na dzień wejścia zmiany w życie. Początkowa stawka dzienna wynosi 168,27 zł. Dla dni sprzed zmiany nadal wynosi 152,37 zł.
+5. W „Historii zmian” można przywrócić wartości początkowe sesji testowej.
 
 ## Sztuczna inteligencja
 
@@ -46,9 +44,8 @@ Panel nie używa AI. Wartości, sprawdzenia i wyniki spraw testowych liczy kod r
 - Zmiany jurora działają tylko w jego sesji (podpisane ciasteczko). Inni ich nie widzą, a kolejna sesja zaczyna od wartości z kodu. Wdrożenie produkcyjne przeniesie ten sam zapis do bazy.
 - Akta spraw udostępnione przez ZUS nie są kopiowane ani dołączane do aplikacji (treść zadania, s. 11–12). Sprawy testowe w panelu są syntetyczne.
 
-## Czego jeszcze nie ma
+## Zakres demonstracji
 
-- Zmieniona stawka, kwota świadczenia rodzicielskiego, wymiary urlopów, próg płatnika, statusy formularzy i organizacje wsparcia działają w regułach i panelu, ale ekrany rodzica (kalkulator, dokumenty, wsparcie) jeszcze z nich nie korzystają. Dla kalkulatora jest gotowe przejście (`lib/rules/maternity-schedule.ts`).
-- Reguła podwyższenia nie liczy zaliczki na podatek: przyjmuje zasiłek po zaliczce jako daną.
-- Odczyt wgranego wniosku PDF w „Sprawach testowych”.
-- Zmiana parametrów urlopu rodzicielskiego tym samym mechanizmem.
+Kalkulator rodzica i zapisane wyliczenia w planie korzystają z opublikowanego harmonogramu tej sesji. Stawka wypłaty może zmienić się w trakcie miesiąca. W „Dokumentach” można sprawdzić status druków ZUS, a wycofanie ZAM blokuje przygotowanie nowego przekazania. Widok „Wsparcie” korzysta z opublikowanych wpisów o organizacjach.
+
+Panel testów pokazuje tekst odczytany z PDF. Ocena reguł korzysta z danych wskazanego scenariusza testowego. Do przeniesienia potwierdzonej podstawy z własnego PDF służy kalkulator rodzica.
