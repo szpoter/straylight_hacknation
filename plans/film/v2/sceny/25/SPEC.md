@@ -12,3 +12,9 @@
 **Przekazanie do 26.** Środek rysunku Zusika (241, 332), szerokość 262. Podpis na bazie y = 529. „Kodeks pracy · art. 182¹a § 6” startuje w (518, 519), Inter 31 px, 600, #1A8648. Kreska biegnie po y = 531 od 518 do 950. Funkcja `answerFrame(k)` udostępnia całą końcową planszę. [Rysunek i moduł sceny](scene.mjs)
 
 **Dźwięk i odbiór.** Istniejący lektor kończy „…naszego asystenta AI.”. Ruch wzroku ma doprowadzić do źródła także po wyciszeniu. Sprawdzić czytelność obu wierszy, ruch oczu i zbieżność ostatniej klatki z udostępnionym stanem. [Tekst lektora](../../../../../PLAN-FILMU-DEMO.md) · [Referencje ruchu i produktu](PLAN.md)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ruch-produktu.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

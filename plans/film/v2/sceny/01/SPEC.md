@@ -12,3 +12,9 @@ Klatki 0–59 przy 30 kl./s. Plan dwuosobowy obejmuje Martę od bioder, Olę na 
 Dźwięk zachowuje ciche tło istniejącego miksu. Głos Marty rozpoczyna się wraz z kolejnym ujęciem na 2,00 s. Obraz przechodzi na detal bez zanikania. Przedramię Oli biegnie z lewego dołu ku środkowi, palec Pawła wchodzi z prawej.
 
 Próba obejmuje wszystkie 60 klatek, położenie obu nadgarstków na początku i końcu oraz rasteryzację klatek 0, 29 i 59. Należy sprawdzić, czy Ola spoczywa na piersi także przy wdechu, palec dochodzi do jej dłoni i sylwetka Pawła pozostaje połączona z przesuwanym mankietem.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/pozy-postaci.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

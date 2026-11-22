@@ -11,3 +11,9 @@
 | 54–59 | Zamknięta teczka w (728,376), szerokość 125, obrót −5°. Marta dotyka rączki wózka, biodra rodziców w (323,445) i (712,438), osie na (474,612). | Ostatni kadr dostępny dla sceny 04 przez `queueShot(k)`. |
 
 Ujęcie działa z istniejącą atmosferą kolejki. Odsunięcie rozwija się wokół jednego motywu jak w [PullBackIsolation](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/demos/camera/tension-camera-moves/PullBackIsolation.tsx). Palce i nadgarstki zachowują fizyczne połączenie z rekwizytem jak w [chwycie Mei](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/README.md). Kontrola obejmuje porównanie klatek na obu cięciach, obejrzenie kolejnych faz refleksu oraz pełne pokrycie kadru.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ciagly-ruch.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

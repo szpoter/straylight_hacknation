@@ -14,3 +14,9 @@ Usta Marty korzystają z istniejącego przebiegu nagrania w klatkach 900–959 f
 Do sceny 17 przechodzą otwarta teczka, oba odczytywalne nagłówki i ten sam kadr dwojga siedzących rodziców. Odbiór na wyciszeniu wymaga czytelnego chwytu przed ruchem papieru, pełnego odsłonięcia obu druków i rozpoznawalnej zmiany kierunku spojrzenia. Sprawdzamy klatki przed otwarciem, w pionie okładki i po rozsunięciu. [Stickman · fazy ruchu](../../przyklady/fazy-ruchu.png) · [Video Shotcraft · warstwy papieru](../../przyklady/stos-kart.jpg)
 
 **Przekazanie do 17.** Pozycje końcowe zawierają eksporty `martaAtRest` i `pawelAtRest`. Nadgarstki Marty są w (463,500) i (538,526), łokcie w (372,471) i (531,485). Lewa dłoń jest otwarta, prawa przytrzymuje druk. Na tle `restingRoom(k)` rysujemy obie postaci, potem `documentsAtRest(k)` i `martaHands(k,martaAtRest)`, żeby nadgarstki i mankiety leżały nad drukami. Druki to te same rysunki nagłówków „URLOP” i „ZASIŁEK”, które przeglądali wcześniej w kolejce. [Rysunki wniosków](../10/scene.mjs)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

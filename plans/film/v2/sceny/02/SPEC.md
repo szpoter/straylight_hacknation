@@ -15,3 +15,9 @@ Szkielet gestu i hierarchię planów wyznacza zbliżenie `reach` w [scenie Mei](
 Odbiór obejmuje widoczne połączenie palca z dłonią Oli, czytelny podział na cztery palce, zanik błysku w czterech klatkach oraz identyczny obraz z `scene(59,k)` i `photo(k)`. Wyciszony detal ma pokazać, że to dziecko zamyka palce. Przy dźwięku klik powinien być słyszalny po „trzyma”.
 
 Sprawdzono 60 wygenerowanych klatek oraz wyrenderowane obrazy 0, 12, 26, 53, 54 i 59. Na arkuszu widać zmiany zgięcia palców i ciągły kontakt z palcem Pawła. Porównanie potwierdziło identyczność czystych klatek 53, 59 i obrazu fotografii oraz dokładnie cztery klatki błysku. Synchronizację sprawdzono na podstawie położenia kliku w miksie. Odsłuch z obrazem należy do odbioru montażu.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/pozy-postaci.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

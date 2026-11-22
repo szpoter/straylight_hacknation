@@ -13,3 +13,9 @@
 Ruch ust Pawła pochodzi z [obwiedni dialogu](../../../montaz/assets/mowa.json). Moment zapalenia numerka jest zgodny z [pozycją efektu w miksie](../../../montaz/miks.py). Klatkę po sygnale widać także przy wyciszeniu filmu. Barwa i krótki atak mają odniesienie w [rodzinie dźwięków Earshot](https://github.com/Leonxlnx/earshot/blob/7a7f7c5c70d4a763a1eca4b3666af7c77e313f97/earshot/forge/recipes/notify.py). Wychylenie i wyprost Marty można porównać z [kolejnymi pozami Stickman](../../przyklady/fazy-ruchu.png).
 
 Odbiór na wyrenderowanych klatkach obejmuje swobodny lot przed kontaktem, ułożenie palców po chwycie i moment, kiedy oboje trzymają papier. Na wyjściu stopy i koła ruszają ku stanowisku z prawej strony [planszy poczekalni](../../../referencje/kolejka-zus-v1.png).
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

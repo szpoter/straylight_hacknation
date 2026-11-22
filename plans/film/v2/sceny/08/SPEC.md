@@ -15,3 +15,9 @@ Obwiednie z [mowa.json](../../../montaz/assets/mowa.json) sterują ustami obojga
 Przy odbiorze porównujemy geometrię klatki 0 z wyjściem 07. Na klatkach 3–9 muszą zmienić się oczy bez ruchu głowy, a Paweł ma zacząć reakcję po Marcie. Na klatce 43 obie twarze, rączka wózka i otwarta teczka powinny mieścić się w kadrze. Przez całe ujęcie pozycje wydruków i dłoni Pawła są stałe w przestrzeni kolejki.
 
 W renderze sprawdzono klatki 0, 9, 25, 32, 43 i 59. W klatce 9 oko Marty odchodzi od kocyka przy wciąż opuszczonej brodzie. Gdy Paweł podnosi wzrok, widać jasne brzegi oczu, a nos obraca się w lewo. Na klatce 59 otwiera usta przy nieruchomych dokumentach. Test porównuje pełny rysunek na styku 07–08 i pozycje obu dłoni Pawła oraz teczki we wszystkich 60 klatkach.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

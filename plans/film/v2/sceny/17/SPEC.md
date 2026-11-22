@@ -14,3 +14,9 @@ Pierwszy but pozostaje w ekranowym położeniu początkowym, pięta około (716,
 Na wyjściu Paweł ma lean=−10°, head=−5°, gaze=−1 oraz gazeDown=1. Lewa ręka [−64,−23,−53,2], prawy łokieć [101,−31], nadgarstek w (942,537). Klatka 18/0 może użyć `lastFrame(k)`. Przy odkładaniu pierwsza podeszwa zostaje w miejscu, a lewa skarpeta wraca za nią wraz z parametrem `restingLegs(t)` z 0 do 1. Rysunek drugiego buta `shoe(x,y,angle,lining)` obraca się wokół pięty, a parametr lining wygasza linie na cholewce w końcowej pozie sceny 18.
 
 Sprawdzono raster wszystkich 60 klatek, porównano 0, 12, 22, 28, 38 i 59 na wspólnej planszy oraz przetestowano pozycję pięty przy zamkniętym chwycie i zgodność z 16/59.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

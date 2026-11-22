@@ -18,3 +18,9 @@ Dialog „A jak oboje z nią zostaniemy, to oboje dostaniemy zasiłek?” zaczyn
 Do odbioru porównać początek, skierowanie oka w dół, dół skłonu i wyjście. Sprawdzić wszystkie 60 klatek pod kątem stałego chwytu, maksimum wdechu w połowie ujęcia oraz ciągłości kadru i ust przy przejściu 07–08.
 
 Obejrzano render klatek 0, 15, 29 i 59. Widać opuszczenie źrenicy przed skłonem, niski kok w profilu i palce zachodzące na ciemny uchwyt. Górna krawędź kocyka unosi się przed nieruchomym policzkiem Oli. Test wszystkich 60 klatek potwierdził chwyt w (330,467), wdech z wydechem i zgodność całego obrazu między końcem 07 a pierwszą klatką 08. [Test sceny](scene.test.mjs)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

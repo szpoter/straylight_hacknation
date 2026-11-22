@@ -17,3 +17,9 @@ Szelest z istniejącego miksu wchodzi w 18,35 s przy pierwszym przesunięciu. Pa
 Odbiór obejmuje kolejność trzech odsłonięć, styk opuszki podczas każdego przesunięcia i osunięcie lewej kartki po puszczeniu. Zielony tusz ma stałe współrzędne na swoim papierze. Oddzielenie kart, widoczne na [klatce Card Stack](../../przyklady/stos-kart.jpg), ma pozwolić przypisać każdy ślad do osobnego arkusza. Następstwo kontaktu i ruchu przedmiotu odpowiada [sięgnięciu Mei](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/stage.cjs#L26).
 
 Wyrenderowano wszystkie 60 klatek z miksem 18–20 s. Na klatkach 0, 16, 26, 37, 53 i 59 sprawdzono pozycje palca i czytelność słów. Test pikseli potwierdza, że kolejne arkusze odsłaniają jeden, dwa i trzy pełne zielone ślady. Wyjściowy rysunek wydruku „ZASIŁEK” przejmuje [scena 11](../11/SPEC.md).
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

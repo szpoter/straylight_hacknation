@@ -14,3 +14,9 @@ Wejście opiera się na arkuszu z ujęcia 12, środek (816,463), obrót −10°,
 Na ustach pracownicy gra istniejące nagranie „A o urlop składacie w pracy”. Usta rodziców pozostają zamknięte. [Rozkład nagrań](../../../montaz/glosy.py) · [Obwiednia głosów](../../../montaz/assets/mowa.json)
 
 Odbiór obejmuje odczyt numeru przy zatrzymanym palcu, zgodność ruchu oczu z gestem i widoczność nadgarstka na blacie. Kolejność reakcji oczu pochodzi ze sceny Mei, a odstęp palca od zapisu ze wskazania na nazwę wiersza w przykładzie Cursor Flyover. [Stickman, `look`](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/stage.cjs#L25) · [Video Shotcraft, kadr demonstracyjny](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/cursor-flyover.jpg)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

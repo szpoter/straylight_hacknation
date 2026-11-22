@@ -13,3 +13,9 @@
 Odbiór wymaga zachowania punktu styku podczas przewracania, jak w [geście Mei z filiżanką](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/README.md). Na trzech kolejnych fazach obrotu widz musi odróżnić nagłówek, krawędź i kratki odwrotu, zgodnie z [przykładem odwracania karty](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/demos/transition/card-flip-reveal/CardFlipReveal.tsx). Po odsłonięciu kratek musi zostać czas na odczytanie reakcji twarzy przed otwarciem ust.
 
 Sprawdzono rasteryzacje klatek 0, 5, 10, 13, 18, 24, 30 i 59. W klatce 13 obok palców pozostał cienki brzeg, w 18 widać kratki, w 24 usta Pawła są zamknięte, a w 30 wyraźnie otwarte. Wejście porównano piksel po pikselu z końcem sceny 05. Na wyjściu obrócona kartka ma środek (752,359), obrót −4°, nadgarstek Pawła jest w (722,363).
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

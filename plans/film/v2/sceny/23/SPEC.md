@@ -15,3 +15,9 @@ Termin jest składany krojem Inter 600 o wielkości 50 px. Daje to 14,1 px po po
 Narrator kończy wypowiedź „…i co trzeba zrobić teraz”. Motyw 60 BPM przechodzi przez cięcie. Dojazd i zatrzymanie odbywają się pod głosem. [Miks pierwszej minuty](../../../montaz/miks.py)
 
 Współdzielenie rysunku zachowuje sylwetkę obiektu na granicy ujęć jak w przykładzie Bang Motion. Dojazd ma wyraźny koniec i statyczny czas odczytu zgodny z przykładami krzywych Motionmaxxing. [Bang Motion · Continuous Action](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg) · [Motionmaxxing · przebiegi krzywych](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ruch-produktu.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

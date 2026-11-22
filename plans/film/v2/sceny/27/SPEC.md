@@ -11,3 +11,9 @@ Jedna warstwa tekstu niesie cały zakres przez 60 klatek, a druga cały czas nie
 **Łączenie z 28.** Biały arkusz zaczyna się przy (105, 56), kończy przy x = 1175 i wychodzi poza dół obrazu. Lewy margines treści ma x = 188. Pole okresu ma miętową powierzchnię, cienki obrys i krótką zieloną kreskę z lewej. Po 59. klatce można ciąć niżej na ten sam arkusz i pole „Załącznik”. Ostatnia klatka utrzymuje status szkicu. [Właściwe pola i kolejność](../../../../../app/src/features/chat/draft-form.tsx) · [Źródło nazwy załącznika](../../../../../app/src/features/chat/case-data.ts)
 
 Makro telefonu i odsłonięcie maską z przykładu katalogowego rozpisano na dwa ruchy w [planie wraz z linkami do zweryfikowanych przykładów](PLAN.md). Czytelność sprawdzamy na początku i po zatrzymaniu również w zmniejszeniu do szerokości 390 px.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/budowa-karty.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

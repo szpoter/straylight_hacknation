@@ -20,3 +20,9 @@ Usta odczytują amplitudę Marty dla każdej klatki 180 + f. Pytanie zaczyna si�
 Odbiór obejmuje zgodność z ostatnią klatką 03, zgodność kierunku toczenia z ruchem nadgarstka, pełny kontakt w obu ustawieniach oraz pauzę na oczekiwanie odpowiedzi. W bliskim planie twarz Marty, górna krawędź ramienia Pawła i okładka muszą pozostać jednocześnie widoczne.
 
 Test przeszedł dla wszystkich 60 klatek. Na wyrenderowanych klatkach 0, 13, 21, 22, 39 i 59 sprawdzono odwrócenie ruchu wózka, czytelność twarzy Marty obok ramienia Pawła oraz końcową pozycję jego kciuka na rogu teczki. Odsłuch zmontowanego dialogu pozostaje częścią odbioru pełnego filmu.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

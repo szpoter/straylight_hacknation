@@ -11,3 +11,9 @@
 | 45–59 | Stała plansza. Pierwszy wiersz „Przewodnik”, drugi „Rodzica”. Linie bazowe y = 344 i 432 px. Domine Regular 88 px, tusz #283754. |
 
 Klatki 0 i 59 poprzedniego ujęcia muszą pokrywać się piksel w piksel na styku. Ruch maskotki i obszaru odsłonięcia korzysta z tej samej wartości przejazdu. Przy końcu przejazd wyhamowuje. [Motionmaxxing · krzywe](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg) · [Bang Motion · wspólny zegar animacji otwarcia](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/assets/starter-opener.html)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/gest-interfejsu.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

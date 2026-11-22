@@ -14,3 +14,9 @@ SVG 1280 × 720, klatki 840–899 filmu, lokalnie 0–59 przy 30 kl./s. Oś kame
 Cichy stuk w klatce 6 (28,20 s). Sprężyna i tarcie tapicerki towarzyszą osiadaniu, rodzice słuchają końcówki „do jutra”. W tym ujęciu usta pozostają zamknięte. Odbiór obejmuje zgodność cięcia na ruchu i kontakt przed reakcją poduszki. Najniższe położenia obu bioder należy odczytać osobno przy wyciszeniu. [Scenariusz z dźwiękiem](../../../../../PLAN-FILMU-DEMO.md)
 
 Na arkuszu pozy Stickman ręka i pochylenie tułowia wskazują odbiorcy ten sam cel. Tutaj oczy Marty wyprzedzają ostatni ruch przedramienia. W arkuszu faz ruchu najniższa poza ma odrębną sylwetkę przed wyprostowaniem. U nas podkreśla ją boczny szew poduszki. [Stickman · gra postaci](../../przyklady/pozy-postaci.png) · [Stickman · fazy ruchu](../../przyklady/fazy-ruchu.png) · [Oryginalne pliki i rewizje](../../przyklady/ZRODLA.md)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ciagly-ruch.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

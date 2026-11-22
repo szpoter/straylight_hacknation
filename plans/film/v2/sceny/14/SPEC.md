@@ -14,3 +14,9 @@
 Obwiednia głosu pracownicy pochodzi z klatek 780–839. Pod koniec powinno być słychać „do jutra”. Stuk teczki następuje w następnym ujęciu przy zetknięciu z kanapą. [Polskie dialogi](../../../montaz/assets/mowa.json) · [Scenariusz dźwiękowy](../../../../../PLAN-FILMU-DEMO.md)
 
 Odbiór bez dźwięku obejmuje zgodność czubka i końca kreski, pojedyncze kiwnięcie, nakładanie chwytów i ciągłość matowej okładki ze zdjęciem przez cięcie. Kontakt przed poruszeniem arkusza sprawdzamy według przykładu Mei. Schodzenie jednej krawędzi pod drugą porównujemy z lokalnym przykładem stosu. [Stickman, kontakt Mei](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/stage.cjs#L26) · [Video Shotcraft, card stack](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/card-stack.jpg) · [Lokalna klatka](../../przyklady/stos-kart.jpg)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

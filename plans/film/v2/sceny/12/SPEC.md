@@ -15,3 +15,9 @@ Rysunek arkusza zajmuje lokalnie około 188 × 220 px. Nagłówek jest przy (0,�
 Usta odpowiadają klatkom 660–719 ścieżki pracownicy podczas „To jest wniosek o zasiłek”. [Obwiednia dialogu](../../../montaz/assets/mowa.json) · [Rozkład głosów](../../../montaz/glosy.py)
 
 Odbiór obejmuje porównanie czterech faz z wyciszonym dźwiękiem. Widać właściciela każdej dłoni, nakładanie obu chwytów, pauzę wzroku i zmianę orientacji papieru. [Mei, chwyt przed ruchem rekwizytu](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/stage.cjs#L26) · [Karta, skrót perspektywiczny](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/demos/transition/card-flip-reveal/CardFlipReveal.tsx)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ciagly-ruch.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

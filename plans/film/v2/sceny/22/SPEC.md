@@ -14,3 +14,9 @@ W danych planu Oli badania są odhaczone, Z-3 to sprawa automatyczna pracodawcy.
 Scena 23 może importować funkcję drawMap(cameraX, traceX, cardOffset=0). Dodatnie cameraX przesuwa całą mapę w lewo, traceX to współrzędna końca śladu na mapie. Dodatni cardOffset odsuwa kartę od podestu w prawo podczas hamowania. W świecie karta ma x=1260, y=164, szerokość 648, wysokość 300. Data ma 50 px, czyli 14 px przy podglądzie o szerokości 360 px. Podest aktualnej sprawy ma x=1584. Naturalna kolejna klatka ma cameraX=606 i traceX=1478.
 
 Przy odbiorze obejrzeć klatki 0, 30, 42 i 59 w pomniejszeniu. W czasie jazdy znacznik odhaczenia i napis powinny pozostawać czytelne, a po cięciu do 23 kontur karty ma przesunąć się o jeden krok kamery. Słowom lektora towarzyszy istniejący motyw 60 BPM. Zachowujemy gest w kierunku czytania oraz jedno ognisko uwagi w kadrze. [Bang Motion · przykład ciągłego ruchu](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg) · [Bang Motion · przykład pracy z detalem interfejsu](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/03-saas-ui-tour.jpg)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ruch-produktu.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

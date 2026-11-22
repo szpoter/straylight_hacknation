@@ -18,3 +18,9 @@ W przykładzie katalogowym Bang Motion ruch kadru kończy się przed wejściem t
 **Dźwięk.** Zachować słowa „dołączyć odpis aktu urodzenia” i krótki, suchy odgłos teczki wyzwalany w 55,400 s. Ruch nad prześwitem biegnie pod głosem. [Punkt synchronizacji i długość efektu](../../../montaz/miks.py#L65)
 
 **Odbiór.** W wyciszonej próbce można wskazać źródło, odczytać pełną nazwę również podczas przejścia i odróżnić pusty cel od potwierdzonego załącznika. Skrajne pozycje wiersza, pojedynczy podpis i kolejność potwierdzenia sprawdza test modułu.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/budowa-karty.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

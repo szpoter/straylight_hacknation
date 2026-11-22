@@ -15,3 +15,9 @@ Pasek demonstracji o wysokości 54 px zawiera ikonę informacji i cały komunika
 Istniejący głos narratora „Marta loguje się mObywatelem” wchodzi w miksie przy 40,12 s. Nacisk przypada około 40,53 s. Kamera oraz oznaczenie demonstracji pozostają nieruchome. Przy odbiorze obejrzeć klatki 0, 17, 32 i 59, przeczytać CTA w pomniejszeniu i porównać długość linii przed cięciem. [Miks narracji](../../../montaz/miks.py)
 
 Kształt kapsuły i kolor pochodzą z wariantu primary. Gwałtowny powrót pochodzi z przebiegu snapRamp zastosowanego w lokalnym montażu, kolor i pełny podpis umożliwiają rozpoznanie akcji po puszczeniu kursora. [AppButton](../../../../../app/src/components/ui/AppButton.tsx) · [Motionmaxxing · runtime](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/runtime/motion.js) · [Bang Motion · detal interfejsu](../../przyklady/ruch-produktu.jpg) · [Video Shotcraft · ruch kursora](../../przyklady/gest-interfejsu.jpg)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/gest-interfejsu.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

@@ -13,3 +13,9 @@
 Kolejność rysowania obejmuje salon, obie postacie, teczkę i plik druków z wycięciami na przedramiona, arkusze pośrednie, przedni grzbiet fali oraz maskotkę. Dźwięk montażowy wykorzystuje szeroki szelest i suchy klik na **37,733 s**. Ujęcie nie wprowadza kwestii dialogowej.
 
 Eksport `scene(f,k)` zwraca wnętrze SVG. Eksport `frozenRoom(k)` daje scenie 20 gotowe zamrożone i rozmyte tło spod maskotki. Kontrola obejmuje klatki 0, 30, 59, stałą pozę na wyjściu i ciągłość punktu maskotki.
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/ciagly-ruch.jpg) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)

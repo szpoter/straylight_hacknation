@@ -12,3 +12,9 @@
 Końcowe ręce Pawła względem bioder wynoszą [−69,−42,−65,−35] i [61,−32,39,−93], Marty [−66,−36,−48,−10] i [65,−33,79,−5]. Luz podwijającego się rogu przejmuje rysunek wiodącego arkusza z następnego ujęcia. Usta Pawła prowadzi przebieg jego nagranej kwestii. Stuk buta przypada przy kontakcie z podłogą, szelest przy zwrocie papieru. [Scenariusz dźwiękowy](../../../../../PLAN-FILMU-DEMO.md) · [Dalszy ruch arkusza](../19/SPEC.md)
 
 Odbiór obejmuje klatki przed puszczeniem pięty, obrót formularza, zdjęcie obu dłoni na stosie i porównanie końcowej klatki z 19/0. Przy wyciszonym głosie ma być widoczne, że Paweł może wyciągnąć kartkę dopiero po odstawieniu buta. [Przykład prowadzenia ruchu postaci](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/references/b5-left-stage-motion.md) · [Wzór rozstawienia krawędzi](../../przyklady/stos-kart.jpg)
+
+## Załączniki do odbioru
+
+![Klatki 0, 20, 40 i 59 z ukończonego ujęcia](klatki.jpg)
+
+[Ujęcie z głosem lub dźwiękiem sceny](ujecie-720p.mp4) · [Załączony przykład warsztatowy](../../przyklady/fazy-ruchu.png) · [Autorstwo przykładów](../../przyklady/ZRODLA.md)
