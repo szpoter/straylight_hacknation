@@ -2,15 +2,22 @@ import { citationUrl, type Corpus, type Fragment } from "./corpus";
 import type { PublicQuestion } from "./public-query";
 import type { AskAnswer, AskCitation } from "../zusik/types";
 
-/** For an open-domain answer, a partial quotation can omit an explicit statutory exception. */
+/** A citation can be authentic while the answer omits the condition that selected it. */
 export function withSourceException(projected: PublicQuestion, answer: AskAnswer, evidence: Fragment[]): AskAnswer | null {
   if (!projected.fragmentId || answer.status !== "answered") return null;
   const fragment = evidence.find(f => f.logicalId === projected.fragmentId);
   const citation = answer.citations.find(c => c.fragmentId === projected.fragmentId);
-  if (!fragment || !citation || !/(?:z wyjątkiem|z wyłączeniem|chyba że)/iu.test(fragment.sourceText)) return null;
+  if (!fragment || !citation) return null;
+  const hasException = /(?:z wyjątkiem|z wyłączeniem|chyba że)/iu.test(fragment.sourceText);
+  const claimText = answer.claims.map(claim => claim.text.toLocaleLowerCase("pl")).join(" ");
+  // searchText contains source words. A short prefix also accepts common inflections in the answer.
+  const omittedCondition = projected.searchText?.split(" ").some(word =>
+    word.length >= 4 && !claimText.includes(word.slice(0, 5).toLocaleLowerCase("pl")));
+  if (!hasException && !omittedCondition) return null;
   return {
     ...answer,
-    message: "Podaję pełny fragment, ponieważ przepis przewiduje wyjątek.",
+    message: hasException ? "Podaję pełny fragment, ponieważ przepis przewiduje wyjątek." :
+      "Podaję pełny fragment źródła, który uwzględnia szczegóły pytania.",
     claims: [{ text: fragment.sourceText, citationIds: [citation.id] }],
     citations: [{ ...citation, quote: fragment.sourceText }],
   };

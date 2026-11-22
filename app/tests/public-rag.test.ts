@@ -9,6 +9,25 @@ import { answerQuestion } from "@/lib/zusik/ask-service";
 const corpus = loadCorpus("publiczne");
 
 describe("public knowledge partitions", () => {
+  it("shows the applicable clause when the model cites the right article but gives only its introduction", async () => {
+    const fragment = corpus.fragments.get("uz-6-1")!;
+    const quote = "Zasiłek chorobowy przysługuje ubezpieczonemu";
+    const result = await answerQuestion({
+      corpus,
+      search: { search: async () => ({ status: "ok", ms: 1, hits: [
+        { logicalId: fragment.logicalId, fragmentSha256: fragment.fragmentSha256, score: 0.9 },
+      ] }) },
+      generate: async () => ({ status: "ok", model: "test", ms: 0, output: {
+        status: "answered", message: "", claims: [{ text: quote, evidence: [{ id: fragment.logicalId, quote }] }],
+      } }),
+    }, "Jak traktuje się izolację w warunkach domowych?", undefined, {
+      corpus: "publiczne", question: "Jakie ogólne zasady wynikają ze źródła?",
+      fragmentId: fragment.logicalId, searchText: "kwarantanny izolacji warunkach domowych",
+    });
+    expect(result.answer.claims[0].text).toContain("kwarantanny");
+    expect(result.answer.citations[0].quote).toBe(fragment.sourceText);
+    expect(result.trace.quoteReason).toBe("statutory_conditions");
+  });
   it("retains an explicit exception when an open-domain answer quotes only the general rule", async () => {
     const fragment = corpus.fragments.get("uz-17-1")!;
     const quote = "każda czynność mająca charakter zarobkowy";
