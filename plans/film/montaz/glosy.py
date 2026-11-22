@@ -1,8 +1,8 @@
 """Generate only missing takes. Usage: python3 glosy.py [take ...]"""
+import argparse
 import http.client
 import json
 from pathlib import Path
-import sys
 
 FILM = Path(__file__).resolve().parents[1]
 VOICES = {"marta": "EXAVITQu4vr4xnSDxMaL", "pawel": "iP95p4xoKVk53GoZ742B",
@@ -27,16 +27,22 @@ TAKES = [
     ("final", "narrator", 57.9, "I tak z każdym innym dokumentem."),
 ]
 if __name__ == "__main__":
-    wanted = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--spokojnie", action="store_true")
+    parser.add_argument("kwestie", nargs="*")
+    args = parser.parse_args()
+    wanted = args.kwestie
+    directory = FILM / "v1" / ("duble-spokojne" if args.spokojnie else "kwestie")
+    directory.mkdir(exist_ok=True)
     key_file = FILM.parents[1] / ".env.elevenlabs.local"
     key = next(line.partition("=")[2].strip().strip("\"'") for line in key_file.read_text().splitlines()
                if line.startswith("ELEVENLABS_API_KEY="))
     for name, role, _, line in TAKES:
-        dest = FILM / "v1" / "kwestie" / (name + ".mp3")
+        dest = directory / (name + ".mp3")
         if dest.exists() or (wanted and name not in wanted):
             continue
         body = json.dumps(dict(text=line, model_id="eleven_multilingual_v2", language_code="pl",
-            voice_settings=dict(stability=0.46, similarity_boost=0.76, speed=1.14)))
+            voice_settings=dict(stability=.59 if args.spokojnie else .46, similarity_boost=.76, speed=1.0 if args.spokojnie else 1.14)))
         conn = http.client.HTTPSConnection("api.elevenlabs.io", timeout=50)
         conn.request("POST", "/v1/text-to-speech/" + VOICES[role], body,
                      {"xi-api-key":key, "Content-Type":"application/json","Accept":"audio/mpeg"})

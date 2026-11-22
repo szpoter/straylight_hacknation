@@ -1,3 +1,5 @@
+import {createRig} from "./gesty";
+import mouths from "./assets/mowa.json";
 import Konva from "konva";
 import { stagger } from "animejs";
 import { World, Vec2, Box } from "planck";
@@ -8,7 +10,7 @@ const clip=x=>Math.min(1,Math.max(0,x));
 const ease=x=>{x=clip(x);return x*x*(3-2*x)};
 const mix=(a,b,p)=>a+(b-a)*p;
 const art={
-  birth:"montaz/assets/narodziny.png", window:"montaz/assets/okienko.png", elbow:"montaz/assets/lokiec.png",
+  birth:"montaz/assets/narodziny.png", pair:"montaz/assets/oboje.png", window:"montaz/assets/okienko.png", elbow:"montaz/assets/lokiec.png",
   queue:"referencje/kolejka-zus-v1.png", sofa:"referencje/kanapa-przed-fala-v1.png",
 };
 function path(ctx,d,fill,stroke,width=2) {
@@ -68,8 +70,8 @@ function folder(ctx,x,y,w,r,photo){
 const shots=[
   ["birth",1,.5,.5,1.14,.52,.54],["birth",1.72,.54,.66,2.00,.54,.65],null,
   ["queue",1.04,.46,.54,1.32,.38,.48],["queue",1.57,.414,.42,1.92,.42,.43],
-  ["queue",2.04,.426,.426,1.81,.43,.36],["queue",2.05,.292,.569,2.24,.29,.56],
-  ["queue",1.72,.283,.33,1.53,.33,.31],["queue",1.52,.401,.42,1.22,.432,.46],
+  ["queue",2.04,.426,.426,1.81,.43,.36],["pair",1.72,.476,.73,1.52,.435,.66],
+  ["pair",1.24,.427,.44,1.11,.45,.46],["pair",1.28,.74,.446,1.17,.64,.48],
   null,["queue",1.08,.48,.48,1.49,.73,.42],["window",1.05,.52,.5,1.18,.64,.5],
   ["window",1.79,.69,.69,2.08,.689,.70],["window",1.43,.685,.50,1.36,.64,.5],
   ["sofa",1.23,.56,.57,1.02,.5,.5],["sofa",1.79,.467,.548,1.97,.468,.558],
@@ -79,6 +81,7 @@ export async function setupDrawing(element){
   const imgs=Object.fromEntries(await Promise.all(Object.entries(art).map(async ([key,src])=>{
     const im=new Image();im.src=src;await im.decode();return [key,im];
   })));
+  const pose=createRig(imgs);
   const stage=new Konva.Stage({container:element,width:W,height:H,listening:false});
   const bg=new Konva.Layer({listening:false}), fg=new Konva.Layer({listening:false});stage.add(bg,fg);
   let frame=0;
@@ -92,7 +95,8 @@ export async function setupDrawing(element){
     }
     if(shot===2 || shot===9){room(ctx,imgs.queue,shot===9?1.32:1,.44,.5);return}
     const [key,z,x,y,z1,x1,y1]=shots[shot];
-    room(ctx,imgs[key],mix(z,z1,p),mix(x,x1,p),mix(y,y1,p));
+    const voice={marta:mouths.marta[frame],pawel:mouths.pawel[frame],pracownica:mouths.pracownica[frame]};
+    room(ctx,pose(key,t,voice),mix(z,z1,p),mix(x,x1,p),mix(y,y1,p));
   }}));
   fg.add(new Konva.Shape({sceneFunc(context){
     const ctx=context._context,t=frame/30,shot=Math.floor(t/2),local=t%2;

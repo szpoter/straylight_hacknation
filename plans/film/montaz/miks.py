@@ -1,5 +1,6 @@
 """Build aligned mono stems at native voice speed. Requires numpy, soundfile and ffmpeg."""
 import subprocess
+import json
 from pathlib import Path
 import numpy as np
 import soundfile as sf
@@ -30,13 +31,20 @@ def env(t, length, attack, release):
 
 # Only spacing changes after casting. Leave each word, breath and vowel at its recorded speed.
 starts = {"login":40.12, "mapa":42.41, "pytanie":46.25,"zrodlo":50.10,"wniosek":51.71,"final":57.92}
+mouths={role:[0]*1800 for role in ("marta","pawel","pracownica")}
 for name, role, at, _ in TAKES:
     voice = decode(FILM / "v1/kwestie" / (name + ".mp3"))
     voice *= .81 / max(.1,np.max(np.abs(voice)))
     at = starts.get(name, at)
     if round(at*RATE)+len(voice)>N:
         assert np.max(np.abs(voice[N-round(at*RATE):]))<.004, "Voiced ending is clipped"
+    if role in mouths:
+        for i in range(0,len(voice),1600):
+            level=float(np.sqrt(np.mean(voice[i:i+1600]**2)))
+            mouths[role][round(at*30)+i//1600]=round(min(1,level*8),2)
     put("narrator" if role=="narrator" else "dialog", at, voice)
+
+(FILM/"montaz/assets/mowa.json").write_text(json.dumps(mouths,separators=(",",":")))
 
 def foley(name, at, gain, dur=None):
     a=decode(assets / (name+".wav"))
