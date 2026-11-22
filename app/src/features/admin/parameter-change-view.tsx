@@ -2,21 +2,23 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
-import { limitImpact, type CheckRow } from "@/lib/admin/change-checks";
-import { validateValue, weeksLabel, type RuleSchedule } from "@/lib/rules/parameters";
+import { useState, useTransition } from "react";
+import type { CheckRow, ImpactRow } from "@/lib/admin/change-checks";
+import { changeSpecFor, displayValue } from "@/lib/admin/parameter-changes";
+import { RULE_PARAMETERS, validateValue, type RuleSchedule } from "@/lib/rules/parameters";
 import { formatDate } from "./mock-data";
 import { Badge, Card, OriginNote, StateBadge, cx } from "./ui";
 import s from "./admin.module.css";
 
-export interface LimitForm {
-  weeks: number;
+/** Form values sent to the server actions; `value` is in the parameter's stored unit. */
+export interface ParameterForm {
+  value: number | null;
   validFrom: string;
   reason: string;
   source: string;
 }
 
-export interface LimitActionResult {
+export interface ParameterActionResult {
   ok: boolean;
   error?: string;
   revision: number;
@@ -26,63 +28,65 @@ export interface LimitActionResult {
   passed?: boolean;
 }
 
-export interface LimitActions {
-  save: (form: LimitForm) => Promise<LimitActionResult>;
-  check: (form: LimitForm) => Promise<LimitActionResult>;
-  publish: (request: { draftId: string; expectedRevision: number }) => Promise<LimitActionResult>;
-  discard: () => Promise<LimitActionResult>;
-  preview: () => Promise<{ ok: boolean; error?: string }>;
+export interface ParameterActions {
+  save: (catalogId: string, form: ParameterForm) => Promise<ParameterActionResult>;
+  check: (catalogId: string, form: ParameterForm) => Promise<ParameterActionResult>;
+  publish: (catalogId: string, request: { draftId: string; expectedRevision: number }) => Promise<ParameterActionResult>;
+  discard: (catalogId: string) => Promise<ParameterActionResult>;
+  preview: (catalogId: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
 interface Props {
-  name: string;
+  catalogId: string;
   appSource?: string;
-  event: string;
-  /** Value in force today, in days. */
-  currentDays: number;
+  /** Value in force today, in the stored unit. */
+  current: number;
   published: RuleSchedule;
   revision: number;
   tomorrow: string;
-  draft: (LimitForm & { id: string }) | null;
-  actions: LimitActions;
+  draft: { id: string; value: number; validFrom: string; reason: string; source: string } | null;
+  actions: ParameterActions;
 }
 
 const CHECK_TONE = { zgodna: "active", niezgodna: "warn", informacja: "planned" } as const;
 const CHECK_LABEL = { zgodna: "Zgodna", niezgodna: "Niezgodna", informacja: "Zmienia się" } as const;
 
-/** Real change of the paternity total: draft, check, publication from a date (SPEC-PANEL §7). */
-export function LimitChangeView(props: Props) {
+type Text = { text: string; validFrom: string; reason: string; source: string };
+
+/** Real change of any registered parameter: draft, check, publication from a date (SPEC-PANEL §7). */
+export function ParameterChangeView(props: Props) {
+  const spec = changeSpecFor(props.catalogId)!;
+  const id = spec.parameter;
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [form, setForm] = useState<LimitForm>(
-    props.draft ?? { weeks: props.currentDays / 7 + 1, validFrom: nextMonthStart(props.tomorrow), reason: "", source: "" },
-  );
+  const initial: Text = props.draft
+    ? { text: spec.toText(props.draft.value), validFrom: props.draft.validFrom, reason: props.draft.reason, source: props.draft.source }
+    : { text: spec.toText(props.current), validFrom: nextMonthStart(props.tomorrow), reason: "", source: "" };
+  const [form, setForm] = useState<Text>(initial);
   const [draftId, setDraftId] = useState<string | null>(props.draft?.id ?? null);
-  const [savedForm, setSavedForm] = useState<string | null>(props.draft ? JSON.stringify(props.draft) : null);
+  const [savedKey, setSavedKey] = useState<string | null>(props.draft ? JSON.stringify(initial) : null);
   const [revision, setRevision] = useState(props.revision);
-  const [checks, setChecks] = useState<{ rows: CheckRow[]; passed: boolean; summary: string; form: string } | null>(null);
+  const [checks, setChecks] = useState<{ rows: CheckRow[]; passed: boolean; summary: string; key: string } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [published, setPublished] = useState<{ from: string; value: number } | null>(null);
+  // Impact as it was when published: afterwards the published schedule already holds the new value.
+  const [published, setPublished] = useState<ImpactRow[] | null>(null);
 
-  const formKey = JSON.stringify({ weeks: form.weeks, validFrom: form.validFrom, reason: form.reason, source: form.source });
-  const value = Math.round(form.weeks * 7);
-  const problems = useMemo(() => {
-    const list = validateValue("paternity.totalDays", value);
-    if (!form.validFrom) list.push("Podaj datę obowiązywania.");
-    else if (form.validFrom < props.tomorrow) list.push("Zmiana może obowiązywać najwcześniej od jutra.");
-    return list;
-  }, [value, form.validFrom, props.tomorrow]);
-  const valid = problems.length === 0;
-  const impact = useMemo(
-    () => (valid ? limitImpact(props.published, { value, validFrom: form.validFrom }) : null),
-    [valid, props.published, value, form.validFrom],
-  );
+  const key = JSON.stringify(form);
+  const value = spec.toValue(form.text);
+  const payload: ParameterForm = { value, validFrom: form.validFrom, reason: form.reason, source: form.source };
+  const valueProblems = value === null ? ["Wpisz wartość w podanej jednostce."] : validateValue(id, value);
+  const problems = [...valueProblems];
+  if (!form.validFrom) problems.push("Podaj datę obowiązywania.");
+  else if (form.validFrom < props.tomorrow) problems.push("Zmiana może obowiązywać najwcześniej od jutra.");
+  const valid = problems.length === 0 && value !== null;
+  const impact =
+    published ?? (valid && value !== null ? spec.impact(props.published, { value, validFrom: form.validFrom }) : null);
 
-  const saved = savedForm === formKey && draftId !== null;
-  const checked = checks?.form === formKey;
+  const saved = savedKey === key && draftId !== null;
+  const checked = checks?.key === key;
   const canPublish = saved && checked && checks.passed && form.source.trim() !== "";
 
-  const update = (patch: Partial<LimitForm>) => {
+  const update = (patch: Partial<Text>) => {
     setForm((f) => ({ ...f, ...patch }));
     setMessage(null);
     setPublished(null);
@@ -92,10 +96,10 @@ export function LimitChangeView(props: Props) {
 
   const save = () =>
     run(async () => {
-      const r = await props.actions.save(form);
+      const r = await props.actions.save(props.catalogId, payload);
       if (!r.ok) return setMessage(r.error ?? "Nie udało się zapisać szkicu.");
       setDraftId(r.draftId ?? null);
-      setSavedForm(formKey);
+      setSavedKey(key);
       setRevision(r.revision);
       setMessage("Zapisano szkic. Uruchom „Sprawdź zmianę”.");
       router.refresh();
@@ -103,9 +107,9 @@ export function LimitChangeView(props: Props) {
 
   const check = () =>
     run(async () => {
-      const r = await props.actions.check(form);
+      const r = await props.actions.check(props.catalogId, payload);
       if (!r.ok || !r.checks) return setMessage(r.error ?? "Nie udało się sprawdzić zmiany.");
-      setChecks({ rows: r.checks, passed: Boolean(r.passed), summary: r.summary ?? "", form: formKey });
+      setChecks({ rows: r.checks, passed: Boolean(r.passed), summary: r.summary ?? "", key });
       setRevision(r.revision);
       setMessage(
         r.passed
@@ -116,26 +120,28 @@ export function LimitChangeView(props: Props) {
 
   const publish = () =>
     run(async () => {
-      if (!draftId) return;
-      const r = await props.actions.publish({ draftId, expectedRevision: revision });
+      if (!draftId || value === null) return;
+      const r = await props.actions.publish(props.catalogId, { draftId, expectedRevision: revision });
       if (!r.ok) {
-        if (r.checks) setChecks({ rows: r.checks, passed: false, summary: r.summary ?? "", form: formKey });
+        if (r.checks) setChecks({ rows: r.checks, passed: false, summary: r.summary ?? "", key });
         setRevision(r.revision);
         return setMessage(r.error ?? "Nie udało się opublikować zmiany.");
       }
-      setPublished({ from: form.validFrom, value });
+      setPublished(impact);
       setDraftId(null);
-      setSavedForm(null);
+      setSavedKey(null);
       setRevision(r.revision);
-      setMessage(`Zaplanowano zmianę: ${weeksLabel(props.currentDays)} → ${weeksLabel(value)} od ${formatDate(form.validFrom)}.`);
+      setMessage(
+        `Zaplanowano zmianę: ${displayValue(id, props.current)} → ${displayValue(id, value)} od ${formatDate(form.validFrom)}.`,
+      );
       router.refresh();
     });
 
   const discard = () =>
     run(async () => {
-      const r = await props.actions.discard();
+      const r = await props.actions.discard(props.catalogId);
       setDraftId(null);
-      setSavedForm(null);
+      setSavedKey(null);
       setRevision(r.revision);
       setMessage("Szkic odrzucony.");
       router.refresh();
@@ -143,66 +149,75 @@ export function LimitChangeView(props: Props) {
 
   // The tab opens synchronously (popup blockers allow it only inside the click), then gets its address.
   const showAsParent = () => {
+    if (!spec.parentView) return;
+    const view = spec.parentView;
     const tab = window.open("about:blank", "_blank");
     if (tab) tab.opener = null;
     if (!saved) {
-      if (tab) tab.location.href = "/app/kamil";
+      if (tab) tab.location.href = view;
       return;
     }
     run(async () => {
-      const r = await props.actions.preview();
+      const r = await props.actions.preview(props.catalogId);
       if (!r.ok) {
         tab?.close();
         return setMessage(r.error ?? "Nie udało się włączyć podglądu.");
       }
-      if (tab) tab.location.href = "/app/kamil";
+      if (tab) tab.location.href = view;
       setMessage("Podgląd szkicu otwarty w nowej karcie. Kończy się po publikacji, odrzuceniu szkicu albo po 30 minutach.");
     });
   };
 
-  const statusBadge = published ? "Zaplanowana" : "Szkic";
-
   return (
     <div className={s.grid}>
       <Card className={s.span7} title="Formularz zmiany" id="change-form" meta={<Link href="/admin/reguly">Wróć do reguł</Link>}>
-        <p className={s.eyebrow}>Wymiary · {props.name}</p>
+        <p className={s.eyebrow}>
+          {spec.group} · {RULE_PARAMETERS[id].label}
+        </p>
         <OriginNote origin="app" appSource={props.appSource} />
         <form className={s.form} onSubmit={(e) => e.preventDefault()} style={{ marginTop: 16 }}>
           <div className={s.currentValue}>
             <div>
               <p className={s.eyebrow}>Obecnie</p>
-              <span className={s.delta}>{weeksLabel(props.currentDays)}</span>
+              <span className={s.delta}>{displayValue(id, props.current)}</span>
             </div>
             <span className={s.arrow} aria-hidden>
               →
             </span>
             <div>
               <p className={s.eyebrow}>Po zmianie</p>
-              <span className={s.delta}>{validateValue("paternity.totalDays", value).length ? "—" : weeksLabel(value)}</span>
+              <span className={s.delta}>{value === null || valueProblems.length ? "—" : displayValue(id, value)}</span>
             </div>
             <span className={s.topbarSpacer} />
-            <StateBadge state={statusBadge} />
+            <StateBadge state={published ? "Zaplanowana" : "Szkic"} />
           </div>
 
           <div className={s.fieldRow}>
-            <label className={s.field}>
-              <span className={s.labelText}>Nowy wymiar</span>
-              <span className={s.withUnit}>
-                <input
-                  className={s.input}
-                  type="number"
-                  min={1}
-                  max={4}
-                  step={1}
-                  inputMode="numeric"
-                  value={Number.isFinite(form.weeks) ? form.weeks : ""}
-                  onChange={(e) => update({ weeks: e.target.valueAsNumber })}
-                  aria-invalid={validateValue("paternity.totalDays", value).length > 0}
-                />
-                <span className={s.unit}>tyg.</span>
-              </span>
-              <span className={s.hint}>Od 1 do 4 tygodni. Aplikacja przyjmuje części po tydzień lub dwa, najwyżej dwie.</span>
-            </label>
+            {spec.input === "flag" ? (
+              <label className={s.field}>
+                <span className={s.labelText}>Nowy status</span>
+                <select className={s.select} value={form.text} onChange={(e) => update({ text: e.target.value })}>
+                  <option value="1">obowiązuje</option>
+                  <option value="0">wycofany</option>
+                </select>
+                <span className={s.hint}>{spec.hint}</span>
+              </label>
+            ) : (
+              <label className={s.field}>
+                <span className={s.labelText}>Nowa wartość</span>
+                <span className={s.withUnit}>
+                  <input
+                    className={s.input}
+                    inputMode={spec.input === "percent" ? "decimal" : "numeric"}
+                    value={form.text}
+                    onChange={(e) => update({ text: e.target.value })}
+                    aria-invalid={valueProblems.length > 0}
+                  />
+                  <span className={s.unit}>{spec.suffix}</span>
+                </span>
+                <span className={s.hint}>{spec.hint}</span>
+              </label>
+            )}
             <label className={s.field}>
               <span className={s.labelText}>Stosuj od</span>
               <input
@@ -219,7 +234,7 @@ export function LimitChangeView(props: Props) {
 
           <div className={s.field}>
             <span className={s.labelText}>Zakres spraw</span>
-            <p className={s.readonlyField}>Okresy zasiłku zaczynające się od tej daty. O wartości decyduje: {props.event.toLowerCase()}.</p>
+            <p className={s.readonlyField}>{spec.scope}</p>
           </div>
 
           <label className={s.field}>
@@ -247,11 +262,11 @@ export function LimitChangeView(props: Props) {
         </form>
       </Card>
 
-      <Card className={s.span5} title="Wpływ na rodzinę" id="impact" meta="Przykładowa rodzina">
+      <Card className={s.span5} title="Wpływ na rodzinę" id="impact" meta="Przykładowa sprawa">
         {impact ? (
           <>
             <p className={cx(s.small, s.muted)} style={{ marginTop: 0 }}>
-              Ojciec z dobrowolnym ubezpieczeniem, dziecko ma 2 miesiące w dniu zmiany. Wnioskuje o cały nowy wymiar.
+              {spec.impactNote}
             </p>
             <table className={s.compare}>
               <thead>
@@ -275,16 +290,24 @@ export function LimitChangeView(props: Props) {
         ) : (
           <p className={s.empty}>Popraw wartość i datę, aby zobaczyć wpływ.</p>
         )}
-        <div className={s.cardActions}>
-          <button type="button" className={s.btnSecondary} onClick={showAsParent} disabled={pending}>
-            Pokaż oczami rodzica
-          </button>
-        </div>
-        <p className={cx(s.small, s.muted)} style={{ margin: "8px 0 0" }}>
-          {saved
-            ? "Otwiera sprawę Kamila z wartością ze szkicu, oznaczoną jako podgląd. Nic nie zostaje opublikowane."
-            : "Zapisz szkic, żeby zobaczyć go oczami rodzica. Bez szkicu sprawa Kamila pokazuje opublikowane wartości."}
-        </p>
+        {spec.parentView ? (
+          <>
+            <div className={s.cardActions}>
+              <button type="button" className={s.btnSecondary} onClick={showAsParent} disabled={pending}>
+                Pokaż oczami rodzica
+              </button>
+            </div>
+            <p className={cx(s.small, s.muted)} style={{ margin: "8px 0 0" }}>
+              {saved
+                ? "Otwiera sprawę rodzica z wartością ze szkicu, oznaczoną jako podgląd. Nic nie zostaje opublikowane."
+                : "Zapisz szkic, żeby zobaczyć go oczami rodzica. Bez szkicu sprawa pokazuje opublikowane wartości."}
+            </p>
+          </>
+        ) : (
+          <p className={cx(s.small, s.muted)} style={{ margin: "16px 0 0" }}>
+            Widok rodzica dla tego parametru powstaje. Wpływ powyżej liczy ta sama reguła, z której skorzysta aplikacja.
+          </p>
+        )}
       </Card>
 
       <Card
@@ -320,8 +343,8 @@ export function LimitChangeView(props: Props) {
           </div>
         ) : (
           <p className={cx(s.muted, s.small)} style={{ margin: 0 }}>
-            „Sprawdź zmianę” uruchamia prawdziwą regułę z wartością ze szkicu: wniosek na limicie i ponad limit, ten sam
-            wniosek dzień przed zmianą, drugą część urlopu i sprawy testowe sprzed daty zmiany, które muszą zachować wynik.
+            „Sprawdź zmianę” uruchamia prawdziwą regułę z wartością ze szkicu: przypadki na granicy zmiany, dzień przed
+            datą obowiązywania, sprawę spoza zakresu i sprawy testowe sprzed daty zmiany, które muszą zachować wynik.
           </p>
         )}
       </Card>

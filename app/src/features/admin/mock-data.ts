@@ -16,44 +16,6 @@ export {
 
 const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   {
-    id: "rate-parental",
-    group: "Stawki",
-    name: "Zasiłek za okres urlopu rodzicielskiego",
-    value: "70%",
-    from: "2023-04-26",
-    state: "Obowiązuje",
-    source: "ZUS s. 9",
-    usedIn: "Kalkulator, plan",
-    planned: { value: "75%", from: "2027-01-01" },
-    history: [
-      { value: "75%", from: "2027-01-01", state: "Zaplanowana" },
-      { value: "70%", from: "2023-04-26", state: "Obowiązuje" },
-      { value: "60%", from: "2016-01-01", state: "Historyczna" },
-    ],
-  },
-  {
-    id: "rate-maternity",
-    group: "Stawki",
-    name: "Zasiłek za okres urlopu macierzyńskiego",
-    value: "100%",
-    from: "2016-01-01",
-    state: "Obowiązuje",
-    source: "ZUS s. 9",
-    usedIn: "Kalkulator, plan",
-    history: [{ value: "100%", from: "2016-01-01", state: "Obowiązuje" }],
-  },
-  {
-    id: "rate-averaged",
-    group: "Stawki",
-    name: "Stawka uśredniona przy wniosku do 21 dni",
-    value: "81,5%",
-    from: "2023-04-26",
-    state: "Obowiązuje",
-    source: "ZUS s. 9, Zał.",
-    usedIn: "Kalkulator, wariant wypłaty",
-    history: [{ value: "81,5%", from: "2023-04-26", state: "Obowiązuje" }],
-  },
-  {
     id: "limit-maternity",
     group: "Wymiary",
     name: "Urlop macierzyński, jedno dziecko",
@@ -166,31 +128,6 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
     usedIn: "Plan, przypomnienie",
     history: [{ value: "7 dni", from: "2016-01-01", state: "Obowiązuje" }],
   },
-  {
-    id: "form-zam",
-    group: "Formularze",
-    name: "ZAM obejmuje dawne ZUR i ZAO",
-    value: "obowiązuje",
-    from: "2026-10-24",
-    state: "Obowiązuje",
-    source: "ZUS s. 12",
-    usedIn: "Dokumenty i wnioski",
-    history: [{ value: "obowiązuje", from: "2026-10-24", state: "Obowiązuje" }],
-  },
-  {
-    id: "form-z3b",
-    group: "Formularze",
-    name: "Z-3b",
-    value: "zlikwidowany",
-    from: "2026-10-24",
-    state: "Obowiązuje",
-    source: "ZUS s. 12",
-    usedIn: "Dokumenty i wnioski",
-    history: [
-      { value: "zlikwidowany", from: "2026-10-24", state: "Obowiązuje" },
-      { value: "obowiązuje", from: "2016-01-01", state: "Historyczna" },
-    ],
-  },
 ];
 
 export const SPEC_PARAMETERS: Parameter[] = SPEC_VALUES.map((p) => ({ ...p, origin: "spec" }));
@@ -199,7 +136,7 @@ export const SPEC_PARAMETERS: Parameter[] = SPEC_VALUES.map((p) => ({ ...p, orig
 const SAMPLE_HISTORY: HistoryEntry[] = [
   {
     id: "H-05",
-    parameterId: "rate-parental",
+    parameterId: "app-rate-parental",
     scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-11-20 14:12",
     parameter: "Zasiłek za okres urlopu rodzicielskiego",
@@ -231,7 +168,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-03",
-    parameterId: "form-zam",
+    parameterId: "app-form-ZUR",
     scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-10-23 16:05",
     parameter: "ZAM obejmuje dawne ZUR i ZAO",
@@ -247,7 +184,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-02",
-    parameterId: "form-z3b",
+    parameterId: "app-form-Z3b",
     scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-10-23 16:01",
     parameter: "Z-3b",
