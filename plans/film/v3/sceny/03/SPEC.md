@@ -14,3 +14,17 @@ Autor planu: s03
 **Styk 03/04.** Zachowaj na 04/0 układ z 03/59, łącznie z miejscem styku dłoni Marty z rączką, ustawieniem szprych, kątem teczki i dwiema podporami Pawła. Przekaż tę pozę autorowi 04 jako początek kołysania i późniejszego uniesienia teczki. [Wyjście do ujęcia 04](../04/SPEC.md) · [Plansza kolejki](../../../referencje/kolejka-zus-v1.png)
 
 **Odbiór.** Obejrzyj w tempie 1× bez dźwięku końcówkę 02, całe 03 i początek 04. Widz ma móc wskazać, czyje palce widać na zdjęciu, kto trzyma odbitkę i gdzie jest Ola. W podglądzie szerokości 360 px sprawdź, czy można rozróżnić twarze rodziców oraz kciuk na teczce. Przy drugim odtworzeniu włącz miks i sprawdź, czy skrzyp słychać, zanim wózek wejdzie w kadr. [Miks](../../../v2/media/miks.flac) · [Plan i przykłady](PLAN.md)
+
+## Realizacja v3 (autor b01)
+
+Kamera: `translate(640 360) rotate(r) scale(S) translate(−Q)`; S₀ = 1/(skala zdjęcia) ≈ 23, ln S maleje smoothstepem 6→56, Q wędruje od środka zdjęcia do (640,360), r od +5° do 0. Kl. 6 = obraz 02/53 co do piksela (różnica średnia 0,10 poziomu jasności, subpikselowe krawędzie). Folia tonuje zdjęcie dopiero od 6 do 16 (bez skoku jasności).
+
+**03/59 = 04/0 (kadr kolejki):** Marta biodra (232,456), dłoń na rączce (273,415), patrzy na Olę (`head .5, gaze .15, gazeDown .9`). Wózek oś (470,657.5), s 1,25, koła na podłodze y 700, `roll 0`. Paweł biodra (880,424), bark (802,228), łokieć (740,305), nadgarstek (803,370), kciuk na grzbiecie (840,356), lewa dłoń pod dołem teczki (932,408). Teczka (896,342), w 114, −5°, zamknięta, zdjęcie = 02/53; nad okładką URLOP (z przodu) i ZASIŁEK.
+
+## Odbiór
+
+- Klatki 0, 5, 6, 12, 20, 25, 32, 45, 59 obejrzane. W 20 refleks dochodzi do szwu kieszonki i znika; od 21 widać białą ramkę odbitki. W 32 widać mankiet, nadgarstek, kciuk na przedniej krawędzi i zdjęcie ponad palcami.
+- 02/59 → 03/0 identyczne; 03/5 → 03/6 bez skoku. Zdjęcie przyklejone do okładki przez cały odjazd (jedna transformacja).
+- 59: ucho i niski kok Marty, grzywka Pawła, jeden pas kocyka w gondoli i na odbitce.
+- Problem modelu: w r1 `folder()` przedramię dziecka z `grasp(1)` wystaje poza odbitkę (brak przycięcia). W 03–06 przykrywam pole zdjęcia kolorem okładki i rysuję własną ramkę. Prośba do autora modeli: przycięcie oraz `photo02` jako zdjęcie w `rekwizyty.folder` (dla spójności 07–18).
+- Statyści to płaskie sylwetki bez twarzy (r1 ich nie ma) — prośba o modele statystów.

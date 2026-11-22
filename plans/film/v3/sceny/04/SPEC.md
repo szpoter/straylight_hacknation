@@ -16,3 +16,14 @@ Autor planu: s04
 **Cięcie 04/05.** Detal w 05/0 przejmuje ułożenie górnego rogu względem prawego kciuka i wskazującego Pawła. Lewa nadal podtrzymuje tę samą krawędź. Początek wysuwania pierwszej kartki przypada na 05. Oczy Marty w 04/59 wskazują miejsce, które wypełnia następny kadr. [Następne ujęcie](../05/SPEC.md)
 
 **Test na gotowym obrazie.** Odtworzyć 03/55–05/05 w tempie 1× bez dźwięku i wskazać moment zmiany kierunku oraz przedmiot pytania Marty. Przewinąć 12–15 klatka po klatce, śledząc jedną szprychę i kciuk. Na 0, 13, 29 i 59 porównać styk palców z rurką i podeszew z posadzką. Przy szerokości 360 px sprawdzić, czy widać oko Marty nad ramieniem Pawła i jego palce przy górnym rogu. Z miksem sprawdzić zamknięcie ust po „wypłacą?” oraz pauzę do odpowiedzi. [Miks](../../../v2/media/miks.flac) · [Plan i przykłady](PLAN.md)
+
+## Realizacja v3 (autor b01)
+
+Wejście: 03/59 (patrz SPEC 03). Wózek: x +24 px (13), 0 px (29), koło obraca się o drogę/R. Marta: dłoń na rączce przez całe ujęcie (rozwiązywana co klatkę), skłon 30–41, usta 1–35 lok. Paweł 04/59: teczka (890,326), −12°, uniesiona o 16 px; łokieć prawej ręki (709,260), kciuk+wskazujący (`pinch`) w lewym górnym rogu teczki (821,273); lewa pod dołem (933,387). Marta 04/59: biodra (238,459), patrzy na druki.
+
+## Odbiór
+
+- Klatki 0, 13, 20, 29, 39, 59 obejrzane: w 13 wózek najdalej, w 29 z powrotem, dłoń na rączce i oba koła na y 700; stopy Marty na podłodze.
+- 03/59 vs 04/0: różnica średnia 0,03 (tylko kołysanie torby statysty).
+- 360 px: oko Marty nad budką i palce Pawła przy rogu teczki czytelne.
+- Uwaga: chwyt `hold` leży na rurce, kciuk nie jest osobno widoczny od strony kamery (r1 ma pięć kształtów dłoni).

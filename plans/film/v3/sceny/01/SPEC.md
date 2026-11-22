@@ -20,3 +20,24 @@ Nałożyć większy plan na wspólny punkt (578, 401). Prawy wskazujący Pawła 
 1. Odtworzyć klatki 0–65 bez dźwięku i wskazać moment zatrzymania palca. Przy powtórce z głosem pierwsze słowo Marty ma wypaść na detalu.
 2. Zatrzymać kl. 0, 28, 48 i 59. Połączyć prawy bark, łokieć, nadgarstek oraz opuszkę Pawła. Porównać długość obu segmentów w układzie ciała, zakładkę rękawa i tor opuszki. Sprawdzić stały styk łokcia Marty z poduszką i ucha Oli z piersią.
 3. Sprowadzić kl. 59 i 60 do tej samej skali opuszki i nałożyć je półprzezroczyście. Obrys opuszki, otwartej dłoni, szwu rękawa i pasa kocyka powinien się pokryć. W podglądzie o szerokości 360 px porównać z planszą rodziny linię włosów, ucho i żuchwę obojga rodziców oraz odczytać kierunek ich wzroku. [Plansza rodziny](../../../referencje/rodzina-oli-v1.png) · [Plan i przykłady](PLAN.md)
+
+## Realizacja v3 (autor b01)
+
+Współrzędne ekranu 1280×720. Kamera stała (`CAM` w `scene.mjs`). Chwyt Pawła `point`, kąt palca w kl. 59 = 155°.
+
+| Kl. | Bark | Łokieć | Nadgarstek | Opuszka | Odstęp (oś kresek) |
+| --- | --- | --- | --- | --- | --- |
+| 0 | (916,279) | (898,425) | (777,363) | (705,349) | 103 px |
+| 28 | (907,290) | (869,433) | (753,361) | (680,358) | 85 px |
+| 48 | (903,296) | (786,387) | (653,362) | (589,396) | 13 px |
+| 59 | (903,296) | (780,379) | (645,365) | (581,400) | 6 px ≈ 3 px prześwitu |
+
+Dłoń Oli w kl. 49–59 nieruchoma: środek dłoni (560,409), szew rękawa (512,428), palce otwarte w wachlarzu odchylonym od palca Pawła. Wdech 14–28 unosi Olę, dłoń i kocyk o 4 px, wydech wraca do zera przed 48. **Styk 01/59 → 02/0:** 02 rysuje te same dłonie powiększone ×7 wokół (578,401); punkt styku leży między opuszką a obrysem dłoni.
+
+## Odbiór
+
+- Klatki 0, 13, 28, 30, 48, 55, 59 obejrzane w 720p i w powiększeniu 4× przy dłoniach. Łokieć Pawła otwiera się dopiero od 29, bark prowadzi wcześniej. Długości ramienia i przedramienia stałe (IK r1). Łokieć Marty na poduszce przez całe ujęcie.
+- W kl. 59 między opuszką a dłonią widać szczelinę ≈3 px; dotyk nie następuje w 01.
+- Nałożenie 01/59 (wycinek 183×103 wokół (578,401) powiększony ×7) na 02/0: obrysy opuszki, dłoni Oli, kciuka i mankietu się pokrywają (różni się tylko grubość linii). Zapis: `robocze/b01/r/ov5960.png`.
+- 360 px: kok Marty i grzywka Pawła odróżnialne, kierunek wzroku czytelny (`robocze/b01/w360.png`).
+- Uwaga: dłoń Oli to lokalne rozszerzenie (geometria `grasp()`); prośba do autora modeli o pozę „otwarta dłoń Oli” w r2.

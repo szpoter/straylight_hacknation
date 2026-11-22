@@ -23,3 +23,15 @@ Weź układ kości i orientację dłoni z 01/59. Na 02/0 powiększ rysunek wokó
 2. Porównaj klatki 8, 13, 19, 26 i 34 w szerokości 360 px. Kolejno powinno być widać zero, jeden, dwa, trzy i cztery rozpoczęte zgięcia. Na przybliżeniu od 20 do 53 śledź nasadę palca Pawła względem kadru. Dopuszczalne przesunięcie wynosi 2 px w 720p. Opuszka pozostaje w kontakcie przy osiadaniu barku Oli.
 3. Obejrzyj bez dźwięku i wskaż, kto zaciska dłoń. Przy odsłuchu migawka ma wypaść po końcowej sylabie Marty, z różnicą do jednej klatki względem błysku.
 4. Porównaj źródłowe klatki 02/53, 02/59 i 03/0 przed kodowaniem MP4. Obraz różnicowy powinien być czarny na całej powierzchni 1280 × 720. W 03/20 po wyrównaniu czterech narożników odbitki sprawdź położenie małego palca, krawędzi mankietu i szałwiowego pasa. Tolerancja wynosi 1 px w skali odbitki poza refleksem folii.
+
+## Realizacja v3 (autor b01)
+
+Z = 7 wokół (578,401); tło makro osobne (twarz Marty, koszula, kocyk z pasem −10°, prześcieradło). Kontakt w kl. 5 (film 65), poduszeczka 5–12, palce kolejno: środkowy 9, serdeczny 14, wskazujący 20, mały 27, pełny chwyt 34. Odruch cofnięcia 13–20 o ≈4 px w makro przy stałym kontakcie. Kl. 53 = wzorzec; błysk 54–57; 58–59 = 53. `photo02(k)` (kl. 53 z tłem przedłużonym o 114 px w górę i w dół) jest zdjęciem w teczce w 03–06.
+
+## Odbiór
+
+- Klatki 0, 4, 5, 13, 26, 34, 53, 54, 59 obejrzane. Na 02/4 jeszcze prześwit, na 02/5 obrysy się stykają. W 360 px po kolei widać 0/1/2/3/4 zgięte palce (kl. 8/13/19/26/34).
+- Bez dźwięku czytelne, że zaciska Ola; Paweł nie cofa ręki.
+- Klik 3,805 s = film 114,15 → błysk startuje w lokalnej 54 (film 114). Ostatnia sylaba Marty kończy się w filmie 94.
+- **02/53, 02/59 i 03/0: obraz różnicowy czarny (YMAX 0)** na PNG przed kodowaniem.
+- Kąt pasa kocyka w makro = kąt w 01 (−10°); położenie pasa w makro jest kompozycyjne (pas z 01 leży poza oknem ×7).
