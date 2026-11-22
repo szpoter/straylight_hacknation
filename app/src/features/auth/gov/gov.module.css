@@ -1,0 +1,561 @@
+/*
+ * Ekrany login.gov.pl („Zaloguj się do usługi ZUS”) i „Aplikacja mObywatel” odwzorowane ze zrzutów zespołu.
+ * Kolory, rozmiary i odstępy zmierzone na zrzutach (1 px CSS = 1,8 px zrzutu).
+ * Celowo poza tokenami DESIGN.md: ekrany naśladują zewnętrzną usługę logowania (prośba zespołu).
+ * Bez godła i logotypu gov.pl (ui/NIKODEM.md, punkt 6): w ich miejscu nazwa przewodnika.
+ */
+.page {
+  --gov-blue: #2251a2;
+  --gov-link: #023895;
+  --gov-ink: #111317;
+  --gov-text: #080a0e;
+  --gov-muted: #50545b;
+  --gov-sub: #4f535a;
+  --gov-card: #f4f6fb;
+  --gov-line: #e4e6ea;
+  --demo-bar: 36px;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #ffffff;
+  color: var(--gov-text);
+  font-family: var(--font-gov), "Open Sans", Arial, sans-serif;
+}
+
+/* globals.css (warstwa base) daje h1–h3 szeryfowy krój strony; tu nagłówki zostają w Open Sans */
+.page :where(h1, h2, h3) {
+  font-family: inherit;
+}
+
+.layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0 16px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ——— Nagłówek kolumny: znak przewodnika zamiast gov.pl i wybór języka ——— */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 0 22px;
+  border-bottom: 1px solid var(--gov-line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--gov-ink);
+  text-decoration: none;
+}
+
+.brand:focus-visible,
+.back:focus-visible,
+.method:focus-visible,
+.qrButton:focus-visible,
+.regenerate:focus-visible {
+  outline: 2px solid var(--gov-blue);
+  outline-offset: 3px;
+}
+
+.brandMark,
+.brandMark svg {
+  display: block;
+  width: 34px;
+  height: 34px;
+}
+
+.brandName {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+/* Wersji ukraińskiej nie ma: link wygląda jak w źródle, ale jest nieaktywny */
+.language {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--gov-blue);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+  cursor: not-allowed;
+}
+
+.languageIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 30px 0 40px;
+}
+
+.title {
+  color: var(--gov-ink);
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 34px;
+}
+
+/* ——— Lista metod ——— */
+.groupLabel {
+  margin-top: 26px;
+  color: var(--gov-muted);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.groupLabel + .methods {
+  margin-top: 14px;
+}
+
+.groupLabel ~ .groupLabel {
+  margin-top: 30px;
+}
+
+.methods {
+  display: grid;
+  gap: 17px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 85px;
+  padding: 14px 24px 14px 16px;
+  border-radius: 6px;
+  background: var(--gov-card);
+  color: var(--gov-ink);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+a.method:hover {
+  background: #e8edf7;
+}
+
+.methodIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  color: var(--gov-blue);
+}
+
+.iconPhone {
+  width: 23px;
+  height: 33px;
+}
+
+.iconBank,
+.iconTrusted,
+.iconEu {
+  width: 30px;
+  height: 33px;
+}
+
+.iconEdowod {
+  width: 33px;
+  height: 33px;
+}
+
+.methodText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.methodTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.recommended {
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #204ea1;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.methodSub {
+  color: var(--gov-sub);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.chevron {
+  flex: none;
+  width: 7px;
+  height: 13px;
+  color: var(--gov-blue);
+}
+
+/* Zablokowane w demo: przygaszone, bez strzałki, z kłódką i opisem dla czytnika ekranu */
+.method[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.method[aria-disabled="true"] > :not(.lock) {
+  opacity: 0.45;
+}
+
+.lock {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  color: var(--gov-sub);
+}
+
+.errorTest {
+  align-self: flex-start;
+  margin-top: 28px;
+  color: var(--gov-muted);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ——— Ekran „Aplikacja mObywatel” ——— */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  color: var(--gov-link);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.backIcon {
+  width: 18px;
+  height: 14px;
+}
+
+.back + .title {
+  margin-top: 22px;
+}
+
+.lead {
+  margin-top: 26px;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.qrLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.qrPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 250px;
+  max-width: 100%;
+}
+
+.qrFrame {
+  position: relative;
+}
+
+/* Kod QR jest przyciskiem: kliknięcie symuluje zeskanowanie w aplikacji */
+.qrButton {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 250 / 244;
+  padding: 0;
+  border: 1px solid #e3e6ea;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.qrButton:disabled {
+  cursor: default;
+}
+
+.qr {
+  position: absolute;
+  inset: 21px 23px;
+  display: block;
+  width: calc(100% - 46px);
+  height: calc(100% - 42px);
+}
+
+.qrExpired {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 92%);
+}
+
+.qrExpiredTitle {
+  color: var(--gov-ink);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.regenerate {
+  height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--gov-blue);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.timer {
+  margin-top: 34px;
+  color: var(--gov-ink);
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.timer strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress {
+  height: 8px;
+  margin-top: 18px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--gov-blue);
+  transform-origin: left center;
+  transition: transform 300ms linear;
+}
+
+.steps {
+  display: grid;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step {
+  display: flex;
+  gap: 10px;
+  color: #4c5057;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.step strong {
+  font-weight: 700;
+}
+
+.stepNumber {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: -3px;
+  border: 1px solid #959ba4;
+  border-radius: 50%;
+  color: #484d54;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ——— Stopka kolumny ——— */
+.footer {
+  margin-top: auto;
+  padding: 30px 0 28px;
+  border-top: 1px solid #e8eaed;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 25px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #5b5f6a;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+/* Wąski telefon: nazwa przewodnika i „українська” w jednej linii */
+@media (max-width: 479px) {
+  .brandMark,
+  .brandMark svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brandName {
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  .language {
+    gap: 6px;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .languageIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ——— Panel ze zdjęciem po prawej (tylko na dużych ekranach) ——— */
+.promo {
+  display: none;
+}
+
+/* Warstwa zdjęcia: next/image z „fill” wymaga rodzica absolute/relative, a panel jest sticky */
+.promoMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+@media (min-width: 640px) {
+  .qrLayout {
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 31px;
+  }
+}
+
+@media (min-width: 768px) {
+  .layout {
+    padding: 0 31px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 31px;
+  }
+
+  .promo {
+    position: sticky;
+    align-self: start;
+    top: calc(var(--demo-bar) + 31px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: calc(100dvh - var(--demo-bar) - 62px);
+    min-height: 560px;
+    margin-top: 31px;
+    padding: 0 40px 48px;
+    overflow: hidden;
+    border-radius: 13px;
+    /* tło do czasu wczytania zdjęcia (telefon z aplikacją w dłoniach, assets/login-promo.jpg) */
+    background: linear-gradient(160deg, #c9ced6 0%, #8d939d 45%, #4f4a4b 100%);
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .promoImage {
+    object-fit: cover;
+    /* telefon w górnej części panelu, dół pod napisami przyciemnia .promoShade */
+    object-position: 50% 30%;
+  }
+
+  .promoShade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgb(30 28 30 / 0%) 45%, rgb(30 28 30 / 72%) 100%);
+  }
+
+  .promoTitle,
+  .promoText,
+  .promoButton {
+    position: relative;
+    z-index: 1;
+  }
+
+  .promoTitle {
+    max-width: 440px;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 31px;
+  }
+
+  .promoText {
+    max-width: 575px;
+    margin-top: 22px;
+    font-size: 15px;
+    line-height: 23px;
+  }
+
+  /* „Dowiedz się więcej”: w demo nieaktywny */
+  .promoButton {
+    display: grid;
+    place-items: center;
+    min-width: 186px;
+    height: 51px;
+    margin-top: 24px;
+    padding: 0 24px;
+    border-radius: 4px;
+    background: var(--gov-card);
+    color: #2755a4;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: not-allowed;
+  }
+}

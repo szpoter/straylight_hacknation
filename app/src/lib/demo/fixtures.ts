@@ -5,6 +5,7 @@
  */
 import { OLA } from "../family/ola";
 import { formatLong } from "./dates";
+import { S } from "./stop-details";
 import type { CalculatorPlan, Plan, ProfileRow, StageId, Stop } from "./types";
 
 const STAGES: Plan["stages"] = {
@@ -28,6 +29,9 @@ const SRC = {
   parental: { label: "gov.pl · Urlop rodzicielski", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" },
   aktywny: { label: "gov.pl · Program Aktywny Rodzic", url: "https://www.gov.pl/web/rodzina/pytania-i-odpowiedzi---program-aktywny-rodzic" },
   pip: { label: "pip.gov.pl · Uprawnienia rodzicielskie", url: "https://www.pip.gov.pl/" },
+  poradnikPozor: S.poradnikPozor,
+  poradnikSick: S.poradnikSick,
+  uzArt30: S.uzArt30,
 };
 
 function olaStops(): Stop[] {
@@ -72,6 +76,20 @@ function olaStops(): Stop[] {
       action: { label: "Sprawdź, gdzie wykonać badanie" },
     },
     {
+      // Zadanie ZUS s. 9–10 (pkt H) i s. 13 (pkt h). Opis i źródła: stop-details.ts.
+      id: "ryzyka",
+      stage: "ciaza",
+      substage: "I trymestr",
+      title: "Co może odebrać albo obniżyć zasiłek",
+      kind: "informacja",
+      checked: true,
+      institution: "ZUS",
+      forWhom: "Dla Ciebie",
+      why: "Umowa dla pozoru, podwyżka wynagrodzenia w ciąży i brak ubezpieczenia chorobowego w dniu porodu to sytuacje, w których ZUS może odmówić zasiłku albo ustalić go niżej.",
+      source: SRC.poradnikPozor,
+      action: { label: "Zobacz szczegóły" },
+    },
+    {
       id: "chorobowy-ciaza",
       stage: "ciaza",
       substage: "II trymestr",
@@ -84,6 +102,34 @@ function olaStops(): Stop[] {
       source: SRC.zusDocs,
       action: { label: "Zobacz szczegóły" },
       doc: { goal: "swiadczenia", recipient: "ZUS", result: "Świadczenie wypłacone", lastEvent: "Wypłacono 30 września 2026" },
+    },
+    {
+      // Zadanie ZUS s. 4 i s. 12 (pkt a). Opis i źródła: stop-details.ts.
+      id: "zasilek-likwidacja",
+      stage: "ciaza",
+      substage: "II trymestr",
+      title: "Gdy pracodawca upadnie albo zostanie zlikwidowany",
+      kind: "informacja",
+      checked: true,
+      institution: "ZUS",
+      forWhom: "Dla Ciebie",
+      why: "Jeśli w ciąży stracisz pracę przez upadłość, likwidację albo śmierć pracodawcy, do porodu dostajesz zasiłek w wysokości zasiłku macierzyńskiego, a po porodzie zasiłek macierzyński.",
+      source: SRC.uzArt30,
+      action: { label: "Zobacz szczegóły" },
+    },
+    {
+      // Zadanie ZUS s. 12 (pkt a). Opis i źródła: stop-details.ts.
+      id: "swiadczenie-rehabilitacyjne",
+      stage: "ciaza",
+      substage: "III trymestr",
+      title: "Długie zwolnienie: świadczenie rehabilitacyjne",
+      kind: "informacja",
+      checked: true,
+      institution: "ZUS",
+      forWhom: "Dla Ciebie",
+      why: "Gdy niezdolność do pracy trwa dłużej niż 270 dni zasiłku chorobowego, a leczenie rokuje powrót do pracy. W ciąży świadczenie wynosi 100% podstawy.",
+      source: SRC.poradnikSick,
+      action: { label: "Zobacz szczegóły" },
     },
     {
       id: "macierzynski-przed",
@@ -378,6 +424,9 @@ function expectedStops(): Stop[] {
     if (stop.stage === "ciaza") {
       switch (stop.id) {
         case "badania-prenatalne":
+        case "ryzyka":
+        case "zasilek-likwidacja":
+        case "swiadczenie-rehabilitacyjne":
           return { ...common, checked: false };
         case "chorobowy-ciaza":
           return { ...common, state: "warunek", condition: "Jeśli lekarz wystawi zwolnienie w ciąży", doc: undefined };

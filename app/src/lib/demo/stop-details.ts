@@ -2,6 +2,14 @@
 export type StopDetails = { paragraphs: string[]; sources: Array<{ label: string; url: string }>; checked: string; uwagi?: string };
 
 export const CHECKED = "2026-11-21";
+/** Sprawdzenie nowych opisów (zadanie ZUS s. 12–13, pkt a i h) z tekstem przepisów w korpusie. */
+const CHECKED_LAW = "2026-11-22";
+
+// Te same pliki co w korpusie Zusika (manifest: Dz.U. 2026 poz. 854 i 1316, Poradnik ZUS 2026).
+const UZ_PDF = "https://eli.gov.pl/api/acts/DU/2026/854/text.pdf";
+const RZ_PDF = "https://eli.gov.pl/api/acts/DU/2026/1316/text.pdf";
+const PORADNIK_PDF =
+  "https://www.zus.pl/documents/10182/167567/1184_26%2BPoradnik%2Bdla%2Brodzic%C3%B3w.pdf/9378de60-151e-9b9f-ba65-abdf41d9f5b4?download=true&version=1.0";
 
 export const S = {
   govParentBenefit: { label: "gov.pl · Uzyskaj świadczenie rodzicielskie", url: "https://www.gov.pl/web/gov/uzyskaj-swiadczenie-rodzicielskie" },
@@ -44,6 +52,19 @@ export const S = {
   govParental: { label: "gov.pl · Urlop rodzicielski", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" },
   govRights: { label: "gov.pl · Uprawnienia związane z rodzicielstwem", url: "https://www.gov.pl/web/rodzina/uprawnienia-zwiazane-z-rodzicielstwem" },
   bizProtected: { label: "biznes.gov.pl · Pracownicy chronieni przed zwolnieniem", url: "https://www.biznes.gov.pl/pl/portal/00202" },
+  // Akty prawne i Poradnik ZUS z korpusu Zusika (app/corpus/publiczne/manifest.json); strona PDF w kotwicy.
+  uzArt2a: { label: "Ustawa zasiłkowa, art. 2a (zaległości w składkach)", url: `${UZ_PDF}#page=3` },
+  uzArt18: { label: "Ustawa zasiłkowa, art. 18 (świadczenie rehabilitacyjne: komu i jak długo)", url: `${UZ_PDF}#page=7` },
+  uzArt19: { label: "Ustawa zasiłkowa, art. 19 (wysokość świadczenia rehabilitacyjnego)", url: `${UZ_PDF}#page=8` },
+  uzArt29: { label: "Ustawa zasiłkowa, art. 29 (komu przysługuje zasiłek macierzyński)", url: `${UZ_PDF}#page=9` },
+  uzArt30: { label: "Ustawa zasiłkowa, art. 30–31 (zasiłek po ustaniu ubezpieczenia, wysokość zasiłku)", url: `${UZ_PDF}#page=11` },
+  uzArt61: { label: "Ustawa zasiłkowa, art. 61 (kto wypłaca zasiłki)", url: `${UZ_PDF}#page=26` },
+  rzPar17: { label: "Rozporządzenie o dokumentach zasiłkowych, § 15 i § 17", url: `${RZ_PDF}#page=4` },
+  rzZal5: { label: "Rozporządzenie o dokumentach zasiłkowych, załącznik nr 5 (wniosek o świadczenie rehabilitacyjne)", url: `${RZ_PDF}#page=16` },
+  poradnikPozor: { label: "ZUS · Poradnik dla rodziców 2026, s. 9 (umowa dla pozoru, wysokość wynagrodzenia)", url: `${PORADNIK_PDF}#page=9` },
+  poradnikZlecenie: { label: "ZUS · Poradnik dla rodziców 2026, s. 10 i 12 (zleceniobiorcy)", url: `${PORADNIK_PDF}#page=10` },
+  poradnikFirma: { label: "ZUS · Poradnik dla rodziców 2026, s. 14 (działalność: dobrowolne ubezpieczenie chorobowe)", url: `${PORADNIK_PDF}#page=14` },
+  poradnikSick: { label: "ZUS · Poradnik dla rodziców 2026, s. 25 (okres zasiłkowy, świadczenie rehabilitacyjne)", url: `${PORADNIK_PDF}#page=25` },
 } as const;
 
 export const STOP_DETAILS: Record<string, StopDetails> = {
@@ -92,11 +113,59 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "W ciąży zasiłek przysługuje przez cały czas niezdolności do pracy, najdłużej przez 270 dni. W innych przypadkach limit wynosi zwykle 182 dni.",
       "Pracownik za pierwsze 33 dni choroby w roku (14 dni po 50. roku życia) dostaje wynagrodzenie chorobowe od pracodawcy. Zasiłek z ZUS przysługuje od kolejnego dnia. Inni ubezpieczeni dostają zasiłek od pierwszego dnia.",
       "Prawo do zasiłku chorobowego masz po 30 dniach nieprzerwanego ubezpieczenia obowiązkowego albo po 90 dniach dobrowolnego.",
+      "Jeśli wykorzystasz cały okres zasiłkowy, a leczenie rokuje powrót do pracy, możesz ubiegać się o świadczenie rehabilitacyjne. Opisujemy je w osobnej sprawie na ścieżce.",
     ],
-    sources: [S.zusSickAmount, S.zusSickRight],
+    sources: [S.zusSickAmount, S.zusSickRight, S.poradnikSick],
     checked: CHECKED,
     uwagi:
       "Źródło w fixtures (zus.pl · zasiłek macierzyński — dokumenty) nie dotyczy zasiłku chorobowego. Zmieniono je na strony ZUS o wysokości i okresie zasiłku chorobowego. Te strony nie wspominają o kodzie „B” na zwolnieniu. biznes.gov.pl (Pracownicy chronieni przed zwolnieniem) wymienia kod „B” tylko jako potwierdzenie ciąży.",
+  },
+
+  ryzyka: {
+    paragraphs: [
+      "Umowa zawarta dla pozoru. Ubezpieczenie jest skuteczne tylko wtedy, gdy naprawdę pracujesz. ZUS może zbadać, w jakich okolicznościach zawarto umowę o pracę albo umowę zlecenia. Jeśli uzna, że zawarto ją dla pozoru albo w celu obejścia prawa, wydaje decyzję o niepodleganiu ubezpieczeniom społecznym. Bez ubezpieczenia chorobowego nie ma prawa do zasiłku chorobowego ani macierzyńskiego.",
+      "Podwyżka wynagrodzenia w ciąży. ZUS może zbadać, czy wynagrodzenie w umowie o pracę ustalono w uzasadnionej wysokości, i wydać decyzję w sprawie podstawy wymiaru składek. Jeśli uzna, że podwyżka miała służyć tylko wyższemu zasiłkowi, ustali niższą podstawę, więc zasiłek też będzie niższy.",
+      "Podstawą zasiłku pracownika jest średnie wynagrodzenie z 12 miesięcy kalendarzowych przed miesiącem, w którym powstało prawo do zasiłku. Jedna podwyżka tuż przed porodem zmienia więc tylko część tej średniej.",
+      "Brak ubezpieczenia chorobowego w dniu porodu. Zasiłek macierzyński przysługuje, jeśli urodzisz dziecko (albo przyjmiesz je na wychowanie) w czasie ubezpieczenia chorobowego.",
+      "Przy umowie zlecenia i przy własnej firmie ubezpieczenie chorobowe jest dobrowolne. Trzeba się do niego zgłosić (druk ZUS ZUA). Co do zasady obejmuje Cię najwcześniej od dnia złożenia zgłoszenia, nie wstecz. Przy firmie ustaje m.in. wtedy, gdy wygasa obowiązek ubezpieczeń emerytalnego i rentowych, np. po jej zamknięciu.",
+      "Jeśli umowa o pracę skończy się przed porodem, zasiłek macierzyński przysługuje tylko w wyjątkach: śmierć, upadłość lub likwidacja pracodawcy, rozwiązanie umowy z naruszeniem prawa stwierdzone prawomocnym wyrokiem sądu albo umowa na czas określony przedłużona z mocy prawa do dnia porodu.",
+      "Zaległości w składkach przy własnej firmie. Jeśli w dniu powstania prawa do zasiłku zaległość przekracza 1% minimalnego wynagrodzenia, zasiłek nie przysługuje do czasu spłaty całego długu. Bez spłaty w ciągu 6 miesięcy prawo się przedawnia.",
+    ],
+    sources: [S.poradnikPozor, S.zusBase, S.uzArt29, S.uzArt30, S.poradnikZlecenie, S.poradnikFirma, S.uzArt2a],
+    checked: CHECKED_LAW,
+    uwagi:
+      "Trzy ryzyka z treści zadania ZUS (s. 9–10, pkt H): pozorna umowa lub działalność, podwyższenie podstawy w ciąży, brak ubezpieczenia na dzień porodu. Poradnik ZUS 2026 (s. 9, 12) opisuje pozorną umowę o pracę i zlecenia oraz badanie wysokości wynagrodzenia. O obniżeniu podstawy po podwyżce w ciąży mówi treść zadania (s. 10). Pozorną działalność gospodarczą treść zadania wymienia, ale korpus jej nie opisuje, dlatego w tekście jej nie ma. Kod reguł tego nie liczy: to informacja.",
+  },
+
+  "zasilek-likwidacja": {
+    paragraphs: [
+      "Jeśli w ciąży Twoja umowa o pracę wygaśnie z powodu śmierci pracodawcy albo pracodawca rozwiąże ją z powodu ogłoszenia upadłości lub likwidacji i nie zapewni Ci innego zatrudnienia, do dnia porodu dostajesz zasiłek w wysokości zasiłku macierzyńskiego.",
+      "Zasiłek wynosi tyle, co zasiłek macierzyński za okres urlopu macierzyńskiego, czyli 100% podstawy wymiaru. Podstawę ustala się tak samo jak przy zasiłku macierzyńskim.",
+      "Po porodzie przysługuje Ci zasiłek macierzyński, choć ubezpieczenie ustało w czasie ciąży.",
+      "Zasiłek macierzyński po ustaniu ubezpieczenia przysługuje też wtedy, gdy umowę rozwiązano z Tobą w ciąży z naruszeniem prawa, a stwierdził to prawomocny wyrok sądu.",
+      "Zasiłek za okres po ustaniu ubezpieczenia wypłaca ZUS, a nie były pracodawca.",
+      "Do wniosku dołącz: zaświadczenie lekarskie na zwykłym druku, że byłaś w ciąży w czasie zatrudnienia, świadectwo pracy albo inny dokument z przyczyną końca umowy oraz oświadczenie, że nie zapewniono Ci innego zatrudnienia.",
+      "Ten zasiłek dotyczy tylko pracownic, czyli osób zatrudnionych na umowę o pracę.",
+    ],
+    sources: [S.uzArt30, S.rzPar17, S.uzArt61],
+    checked: CHECKED_LAW,
+    uwagi:
+      "Art. 30 ust. 3 ustawy zasiłkowej daje zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu tylko przy śmierci, upadłości lub likwidacji pracodawcy. Treść zadania (s. 4) dopisuje do tej listy naruszenie prawa przy rozwiązaniu umowy, ale ustawa wiąże je wyłącznie z zasiłkiem macierzyńskim po porodzie (art. 30 ust. 1 pkt 2) i tak to opisujemy. 100% podstawy: treść zadania (s. 4) i art. 31 ust. 1. Podstawa: art. 47. Wypłata przez ZUS: art. 61 ust. 1 pkt 2 lit. d.",
+  },
+
+  "swiadczenie-rehabilitacyjne": {
+    paragraphs: [
+      "Zasiłek chorobowy w ciąży przysługuje najdłużej przez 270 dni, czyli przez okres zasiłkowy. Wlicza się do niego zwolnienia bez przerwy oraz zwolnienia z przerwą krótszą niż 61 dni.",
+      "Jeśli po wykorzystaniu zasiłku chorobowego nadal nie możesz pracować, a dalsze leczenie lub rehabilitacja lecznicza rokują odzyskanie zdolności do pracy, przysługuje Ci świadczenie rehabilitacyjne.",
+      "Przysługuje przez czas potrzebny do odzyskania zdolności do pracy, najdłużej przez 12 miesięcy.",
+      "O tym, czy świadczenie Ci przysługuje i na jak długo, orzeka lekarz orzecznik ZUS. Od jego orzeczenia możesz wnieść sprzeciw do komisji lekarskiej ZUS. Orzeczenie jest podstawą decyzji o świadczeniu.",
+      "Świadczenie wynosi 90% podstawy wymiaru zasiłku chorobowego przez pierwsze 3 miesiące i 75% przez pozostały okres. Jeśli niezdolność do pracy przypada w okresie ciąży, wynosi 100% podstawy.",
+      "Nie przysługuje m.in. osobie, która ma prawo do emerytury, renty z tytułu niezdolności do pracy albo zasiłku dla bezrobotnych.",
+      "We wniosku o świadczenie część wypełniasz Ty, a część płatnik składek i płatnik zasiłku chorobowego, np. pracodawca.",
+    ],
+    sources: [S.poradnikSick, S.uzArt18, S.uzArt19, S.rzZal5],
+    checked: CHECKED_LAW,
+    uwagi: "Treść zadania ZUS, s. 12, pkt a. Kod reguł nie liczy tego świadczenia: to informacja.",
   },
 
   "macierzynski-przed": {

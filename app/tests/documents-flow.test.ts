@@ -64,11 +64,29 @@ describe("walidacja", () => {
     expect(validPesel("44051401358")).toBe(false);
     expect(validPesel("123")).toBe(false);
   });
+  it("PESEL wpisany w grupach (spacje, myślnik) przechodzi i jest pokazywany jako same cyfry", () => {
+    for (const v of ["440514 01359", "440 514 01359", "440514-01359", " 44051401359 "]) {
+      expect(validate(def, { ...initialValues(def, ctx), rodzic_pesel: v }).rodzic_pesel, v).toBeUndefined();
+    }
+    expect(displayValue(allFields(def).find((f) => f.id === "rodzic_pesel")!, "440514 01359")).toBe("44051401359");
+  });
+  it("komunikat przy PESEL-u mówi, co jest nie tak (zgłoszenie: 11 cyfr odrzucane jako „ma 11 cyfr”)", () => {
+    const error = (v: string) => validate(def, { ...initialValues(def, ctx), rodzic_pesel: v }).rodzic_pesel;
+    expect(error("12345678901")).toBe("Ostatnia cyfra PESEL-u (kontrolna) nie zgadza się z pozostałymi. Sprawdź, czy nie ma literówki");
+    expect(error("4405140135")).toBe("PESEL ma 11 cyfr, a wpisano 10");
+    expect(error("4405140135a")).toBe("PESEL składa się tylko z cyfr");
+  });
   it("brakujące pola i zły rachunek", () => {
     const errors = validate(def, { ...initialValues(def, ctx), rachunek: "12 3456" });
     expect(errors.dziecko_pesel).toBeDefined();
     expect(errors.caly_okres).toBe("Wybierz jedną odpowiedź");
-    expect(errors.rachunek).toBe("Numer rachunku ma 26 cyfr");
+    expect(errors.rachunek).toBe("Numer rachunku ma 26 cyfr, a wpisano 6");
+    expect(validate(def, { ...initialValues(def, ctx), rachunek: "61 1090 1014 0000 0712 198x 2874" }).rachunek).toBe("Numer rachunku składa się z cyfr. Możesz je oddzielić spacjami");
+  });
+  it("rachunek ze spacjami, myślnikami albo „PL” przechodzi", () => {
+    for (const v of ["61109010140000071219812874", "61 1090 1014 0000 0712 1981 2874", "PL61 1090 1014 0000 0712 1981 2874", "61-1090-1014-0000-0712-1981-2874"]) {
+      expect(validate(def, { ...initialValues(def, ctx), rachunek: v }).rachunek, v).toBeUndefined();
+    }
   });
   it("ukryte pole nie blokuje (przekaz pocztowy bez rachunku)", () => {
     const errors = validate(def, { ...initialValues(def, ctx), wyplata: "Przekazem pocztowym" });

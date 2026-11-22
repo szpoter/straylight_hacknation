@@ -21,7 +21,10 @@ const GUIDE = [
   { label: "Otwórz profil Oli", href: "/logowanie" },
 ];
 
-export function SiteFooter() {
+/** Poza stroną główną kotwice sekcji muszą prowadzić na „/”, np. „/#agent”. */
+const withBase = (href: string, base: string) => (href.startsWith("#") ? `${base}${href}` : href);
+
+export function SiteFooter({ sectionBase = "" }: { sectionBase?: string }) {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -58,7 +61,7 @@ export function SiteFooter() {
             <LinkGroup title="Przewodnik">
               {GUIDE.map((link) => (
                 <li key={link.href}>
-                  <a className={styles.link} href={link.href}>
+                  <a className={styles.link} href={withBase(link.href, sectionBase)}>
                     {link.label}
                   </a>
                 </li>

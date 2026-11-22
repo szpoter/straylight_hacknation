@@ -9,10 +9,14 @@
 export type ParameterUnit =
   /** Whole days; with step 7 the panel edits them in weeks. */
   | "days"
+  /** Whole weeks, as the Labour Code states leave lengths. */
+  | "weeks"
   | "count"
   | "pln"
   /** Tenths of a percent: 700 = 70,0%. Integers keep money maths exact. */
   | "percent10"
+  /** Hundredths of a percent: 1371 = 13,71%. */
+  | "percent100"
   /** 1 = the form is in use, 0 = withdrawn. */
   | "flag";
 
@@ -27,6 +31,15 @@ export interface ParameterDefinition {
 }
 
 const FORM_EVENT = "Dzień złożenia wniosku";
+const BIRTH_EVENT = "Dzień porodu albo przyjęcia dziecka na wychowanie";
+const leave = (label: string, min: number, max: number): ParameterDefinition => ({
+  label,
+  unit: "weeks",
+  event: BIRTH_EVENT,
+  min,
+  max,
+  step: 1,
+});
 const form = (symbol: string, label: string): ParameterDefinition => ({
   label: `Formularz ${symbol}: ${label}`,
   unit: "flag",
@@ -75,6 +88,16 @@ export const RULE_PARAMETERS = {
     max: 1000,
     step: 1,
   },
+  /** Art. 17c ust. 5 ustawy o świadczeniach rodzinnych: 1000 zł a month. Art. 31 ust. 3a ustawy
+   * zasiłkowej raises a lower maternity benefit (after the income-tax advance) to this amount. */
+  "benefit.parentalMinimum": {
+    label: "Kwota świadczenia rodzicielskiego: najniższy miesięczny zasiłek macierzyński",
+    unit: "pln",
+    event: "Miesiąc, za który przysługuje zasiłek",
+    min: 100,
+    max: 10000,
+    step: 1,
+  },
   /** Art. 61 ust. 1 ustawy zasiłkowej: above this number of insured the payer pays benefits itself. */
   "payer.insuredThreshold": {
     label: "Próg płatnika wypłacającego zasiłki: liczba ubezpieczonych",
@@ -91,6 +114,39 @@ export const RULE_PARAMETERS = {
     event: "Dzień powstania prawa do świadczenia",
     min: 1000,
     max: 20000,
+    step: 1,
+  },
+  /* Leave lengths and terms of the parent calculator (lib/rules/maternity.ts, MATERNITY_PARAMETERS),
+   * moved here so the panel can change them (ui/KALKULATOR.md: "TODO dla panelu"). */
+  /** KP art. 180 § 1 pkt 1–5. */
+  "maternity.weeks1": leave("Urlop macierzyński: jedno dziecko przy porodzie", 1, 104),
+  "maternity.weeks2": leave("Urlop macierzyński: dwoje dzieci przy porodzie", 1, 104),
+  "maternity.weeks3": leave("Urlop macierzyński: troje dzieci przy porodzie", 1, 104),
+  "maternity.weeks4": leave("Urlop macierzyński: czworo dzieci przy porodzie", 1, 104),
+  "maternity.weeks5": leave("Urlop macierzyński: pięcioro i więcej dzieci przy porodzie", 1, 104),
+  /** KP art. 182¹a § 1–2. */
+  "parental.weeksOne": leave("Urlop rodzicielski: jedno dziecko", 1, 156),
+  "parental.weeksMany": leave("Urlop rodzicielski: więcej niż jedno dziecko przy porodzie", 1, 156),
+  "parental.weeksOneZaZyciem": leave("Urlop rodzicielski z zaświadczeniem „Za życiem”: jedno dziecko", 1, 156),
+  "parental.weeksManyZaZyciem": leave("Urlop rodzicielski z zaświadczeniem „Za życiem”: więcej dzieci", 1, 156),
+  /** KP art. 182¹a § 4: each parent's own part, not transferable. */
+  "parental.exclusiveWeeks": leave("Urlop rodzicielski: część wyłączna każdego z rodziców", 0, 52),
+  /** UZ art. 30a ust. 1–2: the 81,5% request at the latest this many days after the birth. */
+  "averaged.requestDays": {
+    label: "Wniosek o stawkę uśrednioną 81,5%: najpóźniej po porodzie",
+    unit: "days",
+    event: BIRTH_EVENT,
+    min: 1,
+    max: 365,
+    step: 1,
+  },
+  /** Employee-financed social contributions deducted from the benefit base (9,76% + 1,5% + 2,45%). */
+  "contributions.employeePct": {
+    label: "Podstawa zasiłku: pomniejszenie o składki finansowane przez ubezpieczonego",
+    unit: "percent100",
+    event: "Miesiąc, z którego przychód wchodzi do podstawy wymiaru",
+    min: 0,
+    max: 5000,
     step: 1,
   },
   /** Forms catalogue (ZUS task pp. 3–4, 7, 12; SPEC-PANEL §4.1). Descriptions follow the task text. */
@@ -119,13 +175,26 @@ export const ALWAYS = "1900-01-01";
 
 /**
  * Values written in the code, with the day each applies from. Sources: ZUS task pp. 7–9 and 12,
- * art. 61 ustawy zasiłkowej, minimum wage regulations (2027: Dz.U. 2026 poz. 1213).
+ * art. 17c ust. 5 ustawy o świadczeniach rodzinnych, art. 61 ustawy zasiłkowej, minimum wage regulations (2027: Dz.U. 2026 poz. 1213).
  */
 export const DEFAULTS: Record<RuleParameterId, readonly ScheduledValue[]> = {
   "paternity.totalDays": [{ value: 14, validFrom: ALWAYS }],
   "rate.maternity": [{ value: 1000, validFrom: ALWAYS }],
   "rate.parental": [{ value: 700, validFrom: ALWAYS }],
   "rate.averaged": [{ value: 815, validFrom: ALWAYS }],
+  "benefit.parentalMinimum": [{ value: 1000, validFrom: ALWAYS }],
+  "maternity.weeks1": [{ value: 20, validFrom: ALWAYS }],
+  "maternity.weeks2": [{ value: 31, validFrom: ALWAYS }],
+  "maternity.weeks3": [{ value: 33, validFrom: ALWAYS }],
+  "maternity.weeks4": [{ value: 35, validFrom: ALWAYS }],
+  "maternity.weeks5": [{ value: 37, validFrom: ALWAYS }],
+  "parental.weeksOne": [{ value: 41, validFrom: ALWAYS }],
+  "parental.weeksMany": [{ value: 43, validFrom: ALWAYS }],
+  "parental.weeksOneZaZyciem": [{ value: 65, validFrom: ALWAYS }],
+  "parental.weeksManyZaZyciem": [{ value: 67, validFrom: ALWAYS }],
+  "parental.exclusiveWeeks": [{ value: 9, validFrom: ALWAYS }],
+  "averaged.requestDays": [{ value: 21, validFrom: ALWAYS }],
+  "contributions.employeePct": [{ value: 1371, validFrom: ALWAYS }],
   "payer.insuredThreshold": [{ value: 20, validFrom: ALWAYS }],
   "wage.minimum": [
     { value: 4666, validFrom: "2025-01-01" },
@@ -184,6 +253,10 @@ export function formatValue(id: RuleParameterId, value: number): string {
       return `${value} dni`;
     case "percent10":
       return `${plain(value / 10, value % 10 === 0 ? 0 : 1)}%`;
+    case "percent100":
+      return `${plain(value / 100, value % 100 === 0 ? 0 : value % 10 === 0 ? 1 : 2)}%`;
+    case "weeks":
+      return `${value} tyg.`;
     case "pln":
       return `${plain(value)} zł`;
     case "flag":
@@ -193,19 +266,22 @@ export function formatValue(id: RuleParameterId, value: number): string {
   }
 }
 
-const UNIT_LABEL = { days: "dni", count: "", pln: "zł", percent10: "%", flag: "" } as const;
+const UNIT_LABEL = { days: "dni", weeks: "tyg.", count: "", pln: "zł", percent10: "%", percent100: "%", flag: "" } as const;
 
 /** Problems with a proposed value, in Polish, empty when valid (SPEC-PANEL §3: unit and range). */
 export function validateValue(id: RuleParameterId, value: number): string[] {
   const def: ParameterDefinition = RULE_PARAMETERS[id];
   if (!Number.isInteger(value)) {
-    return [def.unit === "percent10" ? "Stawkę podaje się z dokładnością do 0,1%." : "Wartość musi być liczbą całkowitą."];
+    if (def.unit === "percent10") return ["Stawkę podaje się z dokładnością do 0,1%."];
+    if (def.unit === "percent100") return ["Wartość podaje się z dokładnością do 0,01%."];
+    return ["Wartość musi być liczbą całkowitą."];
   }
   const problems: string[] = [];
   const weeks = def.unit === "days" && def.step === 7;
   if (value < def.min || value > def.max) {
     if (weeks) problems.push(`Dopuszczalny zakres to ${def.min / 7}–${def.max / 7} tygodni.`);
     else if (def.unit === "percent10") problems.push(`Dopuszczalny zakres to ${def.min / 10}–${def.max / 10}%.`);
+    else if (def.unit === "percent100") problems.push(`Dopuszczalny zakres to ${def.min / 100}–${def.max / 100}%.`);
     else problems.push(`Dopuszczalny zakres to ${def.min}–${def.max} ${UNIT_LABEL[def.unit]}`.trim() + ".");
   }
   if (value % def.step !== 0) {

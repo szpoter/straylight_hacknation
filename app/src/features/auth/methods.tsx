@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRightIcon, LockIcon } from "./icons";
+import { ChevronRightIcon, LockIcon } from "./service-icons";
 import styles from "./auth.module.css";
 
 // Lista metod logowania. Na każdym ekranie najpierw jedyna aktywna droga, pozostałe metody
@@ -36,7 +36,7 @@ export function MethodLink({ href, icon, title, description, badge }: MethodBase
           {description ? <span className={styles.methodDesc}>{description}</span> : null}
         </span>
         <span className={styles.methodGo} aria-hidden="true">
-          <ArrowRightIcon />
+          <ChevronRightIcon />
         </span>
       </Link>
     </li>

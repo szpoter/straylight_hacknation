@@ -28,6 +28,11 @@ export function ButtonLink({ variant, size, className, ...rest }: Common & Compo
   return <Link className={classes({ variant, size, className })} {...rest} />;
 }
 
+/** Zwykły `<a>` z wyglądem przycisku, np. pobranie pliku z adresu `blob:` (bez nawigacji Next). */
+export function ButtonAnchor({ variant, size, className, ...rest }: Common & ComponentProps<"a">) {
+  return <a className={classes({ variant, size, className })} {...rest} />;
+}
+
 /** Tekstowy link pomocniczy (np. „Uzupełnię później”, „Dlaczego pytamy?”). */
 export function TextButton({ className, type = "button", ...rest }: ComponentProps<"button">) {
   return (

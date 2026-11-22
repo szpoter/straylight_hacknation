@@ -1,7 +1,15 @@
 import type { PaternityResult } from "../kamil/contract";
 import { formatRange, formatShort } from "../rules/dates";
-import { formatValue, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
-import { RATES_RULES_VERSION, RATE_LABEL, benefitForPeriod, formatGrosze, type PeriodBenefit, type RateKind } from "../rules/rates";
+import { RULE_PARAMETERS, formatValue, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
+import {
+  RATES_RULES_VERSION,
+  RATE_LABEL,
+  benefitForPeriod,
+  formatGrosze,
+  parentalMinimumTopUp,
+  type PeriodBenefit,
+  type RateKind,
+} from "../rules/rates";
 import { evaluatePaternity, type PaternityInput } from "../rules/paternity";
 import type { TestCase } from "./types";
 
@@ -131,6 +139,35 @@ function resultValues(r: PaternityResult): Required<Omit<Expectation, "status">>
 
 const ROW_LABELS = { status: "Wynik", period: "Okres", deadline: "Termin ZAM", part: "Część urlopu" } as const;
 
+/* ---------- results moved by a published change ---------- */
+
+/**
+ * Status of a case that does not match: "do-aktualizacji" when it matches on the initial values,
+ * so the difference comes from a change published in this session, with the change named.
+ */
+function mismatchStatus(
+  schedule: RuleSchedule,
+  matchesUnder: (s: RuleSchedule) => boolean,
+): { status: "niezgodna" } | { status: "do-aktualizacji"; outdatedBy: string } {
+  if (!matchesUnder({})) return { status: "niezgodna" };
+  const published = (Object.keys(schedule) as RuleParameterId[]).filter((id) => schedule[id]?.length);
+  const alone = published.filter((id) => {
+    const rest = { ...schedule };
+    delete rest[id];
+    return matchesUnder(rest);
+  });
+  const causes = (alone.length ? alone : published).map((id) => {
+    const values = schedule[id]!.map((v) => `${formatValue(id, v.value)} od ${formatShort(v.validFrom)}`).join(", ");
+    return `${RULE_PARAMETERS[id].label}: ${values}`;
+  });
+  return {
+    status: "do-aktualizacji",
+    outdatedBy:
+      `Wynik zmienił się po opublikowanej zmianie (${causes.join("; ")}). ` +
+      "Oczekiwany wynik policzono dla wartości początkowych. Jeśli zmiana jest zamierzona, zaktualizuj oczekiwania tej sprawy.",
+  };
+}
+
 /** Short outcome of a scenario under a schedule; used to show what a rule change does to each case. */
 export function scenarioOutcome(s: Scenario, schedule: RuleSchedule): string {
   const r = evaluatePaternity({ ...s.input, schedule });
@@ -140,17 +177,21 @@ export function scenarioOutcome(s: Scenario, schedule: RuleSchedule): string {
 /** Scenarios evaluated with the rule values published in this demo session. */
 export function paternityTestCases(schedule: RuleSchedule = {}): TestCase[] {
   return PATERNITY_SCENARIOS.map((s) => {
-    const r = evaluatePaternity({ ...s.input, schedule });
-    const actual = resultValues(r);
     const expected = { ...s.expect, status: STATUS_LABEL[s.expect.status] };
     const keys = (Object.keys(ROW_LABELS) as (keyof typeof ROW_LABELS)[]).filter((k) => expected[k] !== undefined);
+    const matchesUnder = (sch: RuleSchedule) => {
+      const values = resultValues(evaluatePaternity({ ...s.input, schedule: sch }));
+      return keys.every((k) => expected[k] === values[k]);
+    };
+    const r = evaluatePaternity({ ...s.input, schedule });
+    const actual = resultValues(r);
     const matches = keys.every((k) => expected[k] === actual[k]);
     const missingProfile = r.status === "needs_info" && PROFILE_FIELDS.has(r.missing[0] ?? "");
     return {
       id: s.id,
       title: s.title,
       tag: s.tag,
-      status: missingProfile && matches ? "brak-danych" : matches ? "zgodna" : "niezgodna",
+      ...(missingProfile && matches ? { status: "brak-danych" as const } : matches ? { status: "zgodna" as const } : mismatchStatus(schedule, matchesUnder)),
       inputs: inputRows(s.input),
       expected: keys.map((k) => ({ label: ROW_LABELS[k], value: expected[k] as string })),
       result: keys.map((k) => ({ label: ROW_LABELS[k], value: actual[k] })),
@@ -265,23 +306,28 @@ export function rateTestCases(schedule: RuleSchedule = {}): TestCase[] {
         computedBy: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
       };
     }
-    const b = benefitForPeriod({ kind: s.kind, dailyBase: s.dailyBase, start: s.start, days: s.days, schedule });
+    const { dailyBase, expect } = s;
     const expected = [
-      { label: "Stawka", value: rateText(s.kind, s.expect.rate10) },
-      { label: "Za dzień", value: formatGrosze(s.expect.dailyGrosze) },
-      { label: "Za okres", value: formatGrosze(s.expect.totalGrosze) },
+      { label: "Stawka", value: rateText(s.kind, expect.rate10) },
+      { label: "Za dzień", value: formatGrosze(expect.dailyGrosze) },
+      { label: "Za okres", value: formatGrosze(expect.totalGrosze) },
     ];
-    const result = [
-      { label: "Stawka", value: partsRate(s.kind, b) },
-      { label: "Za dzień", value: partsDaily(b) },
-      { label: "Za okres", value: formatGrosze(b.totalGrosze) },
-    ];
-    const matches = expected.every((e, i) => e.value === result[i].value);
+    const computeUnder = (sch: RuleSchedule) => {
+      const benefit = benefitForPeriod({ kind: s.kind, dailyBase, start: s.start, days: s.days, schedule: sch });
+      const rows = [
+        { label: "Stawka", value: partsRate(s.kind, benefit) },
+        { label: "Za dzień", value: partsDaily(benefit) },
+        { label: "Za okres", value: formatGrosze(benefit.totalGrosze) },
+      ];
+      return { benefit, rows, matches: expected.every((e, i) => e.value === rows[i].value) };
+    };
+    const { benefit: b, rows: result, matches } = computeUnder(schedule);
+    const matchesUnder = (sch: RuleSchedule) => computeUnder(sch).matches;
     return {
       id: s.id,
       title: s.title,
       tag: s.tag,
-      status: matches ? "zgodna" : "niezgodna",
+      ...(matches ? { status: "zgodna" as const } : mismatchStatus(schedule, matchesUnder)),
       inputs,
       expected,
       result,
@@ -293,7 +339,94 @@ export function rateTestCases(schedule: RuleSchedule = {}): TestCase[] {
   });
 }
 
+/* ---------- raise to the parental benefit amount (art. 31 ust. 3a) ---------- */
+
+export interface TopUpScenario {
+  id: string;
+  title: string;
+  tag: string;
+  /** Monthly benefit after the income-tax advance, in grosze. */
+  netGrosze: number;
+  firstDay: string;
+  days: number | "whole";
+  /** Worked out by hand: 1000 zł a month, 1/30 a day for part of a month. */
+  expect: { minimumGrosze: number; topUpGrosze: number; paidGrosze: number };
+}
+
+export const TOPUP_SCENARIOS: TopUpScenario[] = [
+  {
+    id: "R-06",
+    title: "Zasiłek poniżej kwoty świadczenia rodzicielskiego, cały miesiąc",
+    tag: "Podwyższenie (art. 31 ust. 3a)",
+    netGrosze: 82000,
+    firstDay: "2027-01-01",
+    days: "whole",
+    expect: { minimumGrosze: 100000, topUpGrosze: 18000, paidGrosze: 100000 },
+  },
+  {
+    id: "R-07",
+    title: "Podwyższenie za część miesiąca: 15 dni",
+    tag: "Podwyższenie proporcjonalne",
+    netGrosze: 41000,
+    firstDay: "2027-02-14",
+    days: 15,
+    expect: { minimumGrosze: 50000, topUpGrosze: 9000, paidGrosze: 50000 },
+  },
+  {
+    id: "R-08",
+    title: "Zasiłek powyżej kwoty świadczenia rodzicielskiego",
+    tag: "Bez podwyższenia",
+    netGrosze: 151200,
+    firstDay: "2027-01-01",
+    days: "whole",
+    expect: { minimumGrosze: 100000, topUpGrosze: 0, paidGrosze: 151200 },
+  },
+];
+
+const topUpOf = (s: TopUpScenario, schedule: RuleSchedule) =>
+  parentalMinimumTopUp({ netGrosze: s.netGrosze, firstDay: s.firstDay, days: s.days, schedule });
+
+/** Short outcome of a top-up scenario under a schedule, for "Sprawdź zmianę". */
+export function topUpScenarioOutcome(s: TopUpScenario, schedule: RuleSchedule): string {
+  const r = topUpOf(s, schedule);
+  return `podwyższenie ${formatGrosze(r.topUpGrosze)}, wypłata ${formatGrosze(r.paidGrosze)}`;
+}
+
+export function topUpTestCases(schedule: RuleSchedule = {}): TestCase[] {
+  return TOPUP_SCENARIOS.map((s) => {
+    const rows = (v: { minimumGrosze: number; topUpGrosze: number; paidGrosze: number }) => [
+      { label: "Najniższa kwota za okres", value: formatGrosze(v.minimumGrosze) },
+      { label: "Podwyższenie", value: formatGrosze(v.topUpGrosze) },
+      { label: "Wypłata", value: formatGrosze(v.paidGrosze) },
+    ];
+    const expected = rows(s.expect);
+    const matchesUnder = (sch: RuleSchedule) => rows(topUpOf(s, sch)).every((r, i) => r.value === expected[i].value);
+    const r = topUpOf(s, schedule);
+    const period = s.days === "whole" ? `cały miesiąc od ${formatShort(s.firstDay)}` : `${s.days} dni od ${formatShort(s.firstDay)}`;
+    return {
+      id: s.id,
+      title: s.title,
+      tag: s.tag,
+      ...(matchesUnder(schedule) ? { status: "zgodna" as const } : mismatchStatus(schedule, matchesUnder)),
+      inputs: [
+        { label: "Okres", value: period },
+        { label: "Zasiłek po zaliczce na podatek", value: formatGrosze(s.netGrosze) },
+      ],
+      expected,
+      result: rows(r),
+      reasons: [
+        "Art. 31 ust. 3a: zasiłek niższy niż kwota świadczenia rodzicielskiego podwyższa się do tej kwoty.",
+        s.days === "whole"
+          ? "Za cały miesiąc porównuje się z pełną kwotą miesięczną."
+          : `Ust. 3c: za część miesiąca podwyższenie liczy się proporcjonalnie, ${s.days}/30 kwoty miesięcznej.`,
+        "Porównuje się zasiłek po potrąceniu zaliczki na podatek (poradnik ZUS, s. 20).",
+      ],
+      computedBy: `lib/rules/rates.ts · ${r.rulesVersion}`,
+    };
+  });
+}
+
 /** Every test case of the panel, evaluated with the values published in this demo session. */
 export function allTestCases(schedule: RuleSchedule = {}): TestCase[] {
-  return [...paternityTestCases(schedule), ...rateTestCases(schedule)];
+  return [...paternityTestCases(schedule), ...rateTestCases(schedule), ...topUpTestCases(schedule)];
 }

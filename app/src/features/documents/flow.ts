@@ -59,17 +59,39 @@ export function isVisible(field: FormField, values: Values): boolean {
   return !field.showIf || values[field.showIf.field] === field.showIf.equals;
 }
 
-/** PESEL: 11 cyfr i poprawna cyfra kontrolna. */
-export function validPesel(value: string): boolean {
+/** Numer wpisany w grupach („900512 12349”, „900512-12349”) → same cyfry. */
+export function compactDigits(value: string): string {
+  return value.replace(/[\s-]+/g, "");
+}
+
+/** PESEL: 11 cyfr i poprawna cyfra kontrolna. Spacje i myślniki między cyframi są dozwolone. */
+export function validPesel(raw: string): boolean {
+  const value = compactDigits(raw);
   if (!/^\d{11}$/.test(value)) return false;
   const w = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
   const sum = w.reduce((acc, weight, i) => acc + weight * Number(value[i]), 0);
   return (10 - (sum % 10)) % 10 === Number(value[10]);
 }
 
-/** Numer rachunku: 26 cyfr (spacje i „PL” na początku dozwolone). */
+/** Komunikat przy PESEL-u mówi, co dokładnie jest nie tak: znaki, liczba cyfr albo cyfra kontrolna. */
+export function peselError(raw: string): string | undefined {
+  const value = compactDigits(raw);
+  if (!/^\d+$/.test(value)) return "PESEL składa się tylko z cyfr";
+  if (value.length !== 11) return `PESEL ma 11 cyfr, a wpisano ${value.length}`;
+  if (!validPesel(value)) return "Ostatnia cyfra PESEL-u (kontrolna) nie zgadza się z pozostałymi. Sprawdź, czy nie ma literówki";
+  return undefined;
+}
+
+/** Numer rachunku: 26 cyfr (spacje, myślniki i „PL” na początku dozwolone). */
 export function normalizeAccount(value: string): string {
-  return value.replace(/\s+/g, "").replace(/^PL/i, "");
+  return compactDigits(value).replace(/^PL/i, "");
+}
+
+function accountError(raw: string): string | undefined {
+  const value = normalizeAccount(raw);
+  if (!/^\d+$/.test(value)) return "Numer rachunku składa się z cyfr. Możesz je oddzielić spacjami";
+  if (value.length !== 26) return `Numer rachunku ma 26 cyfr, a wpisano ${value.length}`;
+  return undefined;
 }
 
 export function validateField(field: FormField, raw: string | undefined): string | undefined {
@@ -77,9 +99,9 @@ export function validateField(field: FormField, raw: string | undefined): string
   if (!value) return field.required ? (field.type === "radio" || field.type === "select" ? "Wybierz jedną odpowiedź" : `Uzupełnij pole „${field.label}”`) : undefined;
   switch (field.type) {
     case "pesel":
-      return validPesel(value) ? undefined : "PESEL ma 11 cyfr. Sprawdź, czy nie ma literówki";
+      return peselError(value);
     case "account":
-      return /^\d{26}$/.test(normalizeAccount(value)) ? undefined : "Numer rachunku ma 26 cyfr";
+      return accountError(value);
     case "date":
       return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? undefined : "Wpisz datę, np. 10.11.2026";
     case "select":
@@ -111,6 +133,7 @@ export function progress(def: FormDef, values: Values): { done: number; total: n
 export function displayValue(field: FormField, value: string | undefined): string {
   if (!value) return "—";
   if (field.type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return formatLong(value);
+  if (field.type === "pesel") return compactDigits(value);
   if (field.type === "account") return normalizeAccount(value).replace(/(\d{2})(\d{4})(\d{4})(\d{4})(\d{4})(\d{4})(\d{4})/, "$1 $2 $3 $4 $5 $6 $7");
   return value;
 }
