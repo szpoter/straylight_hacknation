@@ -57,6 +57,16 @@ describe("whole public corpus", () => {
     expect(follow.turn?.citations[0]?.fragmentId).toBe("uz-53-2");
   });
 
+  it.each([
+    "Czy przy chorobowym pobyt za kratami ma znaczenie?",
+    "Czy niepełnosprawność marsjanina zmienia zasady wypłaty zasiłku?",
+  ])("asks for the missing condition when the remaining rare matches are stem collisions: %s", async q => {
+    const deps = makeDeps();
+    const { answer, trace } = await answerQuestion(deps, q);
+    expect(answer.status).toBe("needs_clarification");
+    expect(trace.calls).toEqual({qdrant:0, sherlock:0});
+  });
+
   it("requires a corroborating Qdrant hit with the same hash and rejects unrelated questions", async () => {
     const deps = makeDeps();
     const q = "Czy nadużycie alkoholu wpływa na chorobowe?";

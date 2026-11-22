@@ -116,7 +116,7 @@ function routeTopic(input: string): PublicQuestion | null {
     return { ...marta("Czy w okresie pobierania zasiłku macierzyńskiego za okres urlopu rodzicielskiego przez jednego rodzica drugi może korzystać z urlopu rodzicielskiego?"), locators: ["art182^1a§7"] };
   }
   if (/razem|jednocze|równocze|oboje|wspólni|samym (czasie|miesiącu)|tych samych|w tym czasie/u.test(q)) return marta("Czy oboje rodzice mogą być jednocześnie na urlopie rodzicielskim w tych samych tygodniach?");
-  if (/pół etatu|niepełn|łącz.{0,20}prac/u.test(q)) return marta("Jak połączyć pracę na pół etatu z urlopem rodzicielskim i kiedy złożyć wniosek?");
+  if (/pół etatu|niepełn\p{L}*\s+(?:wymiar|etat)|łącz.{0,20}prac/u.test(q)) return marta("Jak połączyć pracę na pół etatu z urlopem rodzicielskim i kiedy złożyć wniosek?");
   if (/wysłać.{0,20}elektr|elektronicz|mailem|przez internet|online/u.test(q)) return marta("Czy wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie?");
   if (/odmówi|odmowa/u.test(q)) return marta("Czy pracodawca może odmówić udzielenia urlopu rodzicielskiego po złożeniu wniosku w terminie?");
   if (/podziel|kawał|częś|ile razy/u.test(q)) return marta("Na ile części można podzielić urlop rodzicielski?");
@@ -138,7 +138,7 @@ const OTHER_TOPICS: ReadonlyArray<readonly [RegExp, string]> = [
   [/podstaw[ayę] wymiaru/iu, "podstawa wymiaru zasiłku"], [/podwójn|drug(?:a|iej) prac|drug(?:i|iego) tytuł/iu, "kilka tytułów ubezpieczenia"],
   [/opiekuń|opieki nad/iu, "zasiłek opiekuńczy"], [/porzuce/iu, "porzucenie dziecka przez matkę"],
   [/hospitaliz|szpital/iu, "pobyt dziecka w szpitalu"], [/wcześniak|przedwcześnie urodz/iu, "urodzenie dziecka przed terminem"],
-  [/pół etatu|część etatu|niepełn/iu, "wykonywanie pracy w niepełnym wymiarze"],
+  [/pół etatu|część etatu|niepełn\p{L}*\s+(?:wymiar|etat)/iu, "wykonywanie pracy w niepełnym wymiarze"],
 ];
 export function asksAboutOwnEligibility(input: string): boolean {
   return /czy (?:mi |nam )(?:przysługuje|należy się)|czy (?:przysługuje|należy się) (?:mi|nam)\b|czy dostanę|czy mam prawo/iu.test(input);

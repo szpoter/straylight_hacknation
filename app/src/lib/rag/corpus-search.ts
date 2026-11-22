@@ -131,6 +131,17 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
   }).sort((a,b) => b.score-a.score);
   const best = ranked[0];
   if (!best || best.score < 4.5 || best.matches.length < input.length * 0.25) return unknownCondition;
+  if (variants.some(variantsForWord => variantsForWord.length === 0)) {
+    // A dropped condition and an accidental stem collision must not corroborate each other.
+    // Require the same dictionary lemma in at least one term occurring in <5% of fragments.
+    const preservesCondition = best.matches.some(key => {
+      const word = raw.get(key);
+      return word && frequency.get(key)! * 20 < entries.length && lemma(word) === lemma(best.entry.words.get(key)!);
+    });
+    if (!preservesCondition) return {
+      corpus: best.entry.name, question: "", clarify: "Którą okoliczność mamy sprawdzić? Spróbuj opisać ją innymi słowami.",
+    };
+  }
   const rival = ranked.find(hit => hit.entry.fragment.fragmentSha256 !== best.entry.fragment.fragmentSha256 &&
     !(hit.entry.fragment.documentId === best.entry.fragment.documentId && hit.entry.fragment.locator === best.entry.fragment.locator));
   if (rival && best.score < rival.score * 1.055) return unknownCondition;
