@@ -10,6 +10,7 @@
 import { addDays, daysBetween, DEMO_TODAY } from "@/lib/demo/dates";
 import type { BuildAnswers, Employment } from "@/lib/plan/build";
 import { S } from "@/lib/demo/stop-details";
+import { OLA } from "@/lib/family/ola";
 
 export type Source = { label: string; url: string };
 
@@ -54,7 +55,7 @@ export type Answers = {
 export type Choice = { value: string; label: string; hint?: string };
 
 /** Dane z ZUS po zalogowaniu (symulacja eZUS): tytuł ubezpieczenia i płatnik. */
-export const ZUS_EMPLOYMENT: { employment: Employment; label: string } = { employment: "etat", label: "Kwiatek sp. z o.o." };
+export const ZUS_EMPLOYMENT: { employment: Employment; label: string } = { employment: "etat", label: OLA.employer };
 
 /** Najwięcej pól imion przy „troje lub więcej”. */
 export const MAX_CHILDREN = 6;

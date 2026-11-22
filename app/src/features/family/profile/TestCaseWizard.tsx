@@ -32,28 +32,30 @@ export function TestCaseWizard() {
         </button>
       )}
 
-      <nav aria-label="Kroki sprawy testowej">
+      {/* Trzy pełne pigułki potrzebują ok. 520 px. Węższy ekran (telefon): pozostałe kroki tylko
+          z numerem, podpis widać przy bieżącym (czytnik ekranu nadal czyta wszystkie nazwy). */}
+      <nav aria-label="Kroki sprawy testowej" data-tour="test-steps">
         <ol className="flex gap-2">
           {STEPS.map((label, i) => {
             const s = i as Step;
             const current = s === step;
             const done = s < step;
             return (
-              <li key={label} className="flex-1">
+              <li key={label} className={cn("flex-1 max-[540px]:min-w-0", !current && "max-[540px]:flex-none")}>
                 <button
                   type="button"
                   disabled={!reachable(s)}
                   aria-current={current ? "step" : undefined}
                   onClick={() => goTo(s)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-full border px-3 py-2 text-meta font-medium disabled:cursor-not-allowed disabled:text-on-surface-variant",
+                    "flex w-full items-center gap-2 max-[540px]:min-w-0 rounded-full border px-3 py-2 text-meta font-medium disabled:cursor-not-allowed disabled:text-on-surface-variant",
                     current ? "border-on-surface bg-on-surface text-on-primary" : "border-outline bg-background",
                   )}
                 >
                   <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full text-meta", current ? "bg-background text-on-surface" : done ? "bg-primary text-on-primary" : "bg-surface")}>
                     {done ? <CheckIcon size={12} strokeWidth={3} /> : i + 1}
                   </span>
-                  <span className="truncate">{label}</span>
+                  <span className={cn("truncate", !current && "max-[540px]:sr-only")}>{label}</span>
                 </button>
               </li>
             );
@@ -67,7 +69,7 @@ export function TestCaseWizard() {
 
       {step === 0 && (
         <>
-          <Panel className="flex flex-col items-start gap-3">
+          <Panel className="flex flex-col items-start gap-3" data-tour="test-example">
             <h2 className="font-serif text-title">Przykład Alicji T.</h2>
             <p className="text-on-surface-variant">Przećwicz sprawdzanie pól wniosku na fikcyjnych danych. Jedno pole uzupełnisz samodzielnie.</p>
             <Button onClick={() => {
@@ -77,7 +79,7 @@ export function TestCaseWizard() {
               {fields ? "Wróć do danych przykładu" : "Rozpocznij przykład"}
             </Button>
           </Panel>
-          <Panel className="flex flex-col items-start gap-3">
+          <Panel className="flex flex-col items-start gap-3" data-tour="test-pdf">
             <h2 className="font-serif text-title">Odczyt pliku PDF w czacie</h2>
             <p className="text-on-surface-variant">Wybierz rodzaj dokumentu. W czacie dodasz plik i sprawdzisz odczytane z niego dane.</p>
             <ButtonLink href="/app/kamil" variant="secondary">Odpis aktu urodzenia do wniosku ZAM</ButtonLink>

@@ -21,7 +21,7 @@ export async function SupportView() {
       <p className="mt-4 max-w-prose text-lead text-on-surface-variant">
         Organizacje charytatywne, które pomagają rodzicom w trudnych sytuacjach. Wybierz to, co Cię dotyczy. Sprawy formalne możesz odłożyć na później.
       </p>
-      <nav aria-label="Sytuacje" className="mt-stack">
+      <nav aria-label="Sytuacje" data-tour="support-situations" className="mt-stack">
         <ul className="flex flex-wrap gap-2">
           {groups.map((s) => (
             <li key={s.id}>
@@ -33,8 +33,8 @@ export async function SupportView() {
         </ul>
       </nav>
       <div className="mt-stack flex flex-col gap-stack pb-section-mobile md:pb-section">
-        {groups.map((s) => (
-          <Panel key={s.id} id={s.id} aria-labelledby={`${s.id}-title`} className="scroll-mt-20">
+        {groups.map((s, i) => (
+          <Panel key={s.id} id={s.id} data-tour={i === 0 ? "support-first" : undefined} aria-labelledby={`${s.id}-title`} className="scroll-mt-20">
             <SectionTitle id={`${s.id}-title`} className="mb-4 md:mb-6">
               {s.title}
             </SectionTitle>
@@ -59,7 +59,7 @@ export async function SupportView() {
             ) : (
               <p className="text-on-surface-variant">Lista organizacji jest w przygotowaniu. Dodamy tylko te, których pomoc potwierdziliśmy na ich stronach.</p>
             )}
-            <h3 className="mb-2 mt-6 font-sans text-label font-medium">Sprawy formalne</h3>
+            <h3 data-tour={i === 0 ? "support-formal" : undefined} className="mb-2 mt-6 font-sans text-label font-medium">Sprawy formalne</h3>
             <ul className="flex list-disc flex-col gap-1 pl-5 text-on-surface-variant">
               {s.formal.map((f) => (
                 <li key={f.text}>

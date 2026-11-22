@@ -110,6 +110,12 @@ export type Plan = {
    */
   family?: { groupId: string; label: string; primaryPlanId: string; primaryName: string; names: string[] };
   /**
+   * Rodzina (scenariusz), do której należy plan: gotowy scenariusz z `scenarios.ts` albo rodzina
+   * ułożona w onboardingu. Selektor dziecka pokazuje tylko plany tej samej rodziny. Brak = plan
+   * sam tworzy rodzinę (patrz `scenarioOf`).
+   */
+  scenario?: string;
+  /**
    * Skąd plan powstał (onboarding): odpowiedzi i dzień budowy. Zapisany plan odbudowujemy z nich
    * przy każdym wczytaniu, więc poprawki katalogu (nazwy etapów, teksty, źródła) docierają
    * do planów już dodanych. Postęp rodzica (odhaczenia, wnioski) jest osobno i zostaje.

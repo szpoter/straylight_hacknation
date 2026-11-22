@@ -73,7 +73,7 @@ export function buildTimeline(stop: Pick<Stop, "state" | "doc">): TimelineStage[
       case "przebieg":
         stage.entries = other;
         stage.date = other.at(-1)?.date;
-        if (status === "current" && !hasCorrespondence) stage.detail = simulated ? "Symulacja zakończona. Aby rozpocząć sprawę w urzędzie, złóż rzeczywisty wniosek." : "Oczekujemy na wiadomość";
+        if (status === "current" && !hasCorrespondence) stage.detail = simulated ? "Symulacja zakończona. Aby rozpocząć sprawę w urzędzie, złóż rzeczywisty wniosek." : "Czekamy na wiadomość";
         break;
       case "wynik":
         stage.detail = stop.doc?.result;

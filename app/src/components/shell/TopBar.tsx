@@ -7,6 +7,8 @@ import { countByGroup } from "@/lib/plan/docs";
 import { cn } from "../ui/cn";
 import { ChildSelector } from "./ChildSelector";
 import { NAV_ITEMS, isActive } from "./nav";
+import { Suspense } from "react";
+import { GuideButton } from "@/features/guide/GuideTour";
 
 /** Pływająca pigułka 56 px, 8 px od góry, przyklejona przy przewijaniu (DESIGN.md, Layout). */
 export function TopBar() {
@@ -17,8 +19,8 @@ export function TopBar() {
   return (
     <header className="sticky top-2 z-40 px-gutter-mobile md:px-gutter-desktop">
       <div className="mx-auto flex h-14 max-w-page items-center gap-2 rounded-full border border-outline bg-background pl-2 pr-2 md:gap-4 md:pl-3">
-        <ChildSelector className="min-w-0" />
-        <nav aria-label="Karty" className="ml-auto hidden md:block">
+        <div data-tour="child" className="min-w-0"><ChildSelector className="min-w-0" /></div>
+        <nav aria-label="Karty" data-tour="nav" className="ml-auto hidden md:block">
           <ul className="flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
               const active = isActive(pathname, item.href);
@@ -45,6 +47,7 @@ export function TopBar() {
             })}
           </ul>
         </nav>
+        <div className="ml-auto md:ml-0"><Suspense fallback={null}><GuideButton /></Suspense></div>
       </div>
     </header>
   );

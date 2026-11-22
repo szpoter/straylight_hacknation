@@ -181,9 +181,11 @@ function CaseDetails({ testCase: c }: { testCase: TestCase }) {
       ) : null}
 
       <div className={s.cardActions}>
-        <button type="button" className={s.btnSecondary} aria-disabled="true" title="Dostępne po podłączeniu kalkulatora">
-          Pokaż oczami rodzica
-        </button>
+        {c.parentView ? (
+          <a className={s.btnSecondary} href={c.parentView} target="_blank" rel="noopener">
+            Pokaż oczami rodzica
+          </a>
+        ) : null}
       </div>
     </Card>
   );

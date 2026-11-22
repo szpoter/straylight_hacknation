@@ -12,7 +12,7 @@ const CARDS: { kind: IllustrationKind; title: string; text: string }[] = [
   {
     kind: "folder",
     title: "Sprawdź, co Ci przysługuje",
-    text: `Sprawdź zasiłki i${NBSP}urlopy uwzględnione w${NBSP}planie rodziny Oli.`,
+    text: `Zobacz, jakie zasiłki i${NBSP}urlopy obejmuje plan rodziny Oli.`,
   },
   {
     kind: "balance",
@@ -22,7 +22,7 @@ const CARDS: { kind: IllustrationKind; title: string; text: string }[] = [
   {
     kind: "envelope",
     title: `Wiesz, co i${NBSP}do kiedy załatwić`,
-    text: `Plan oddziela sprawy obowiązkowe od tych, które zależą od Twojego wyboru, i${NBSP}przy każdej pokazuje termin oraz miejsce złożenia.`,
+    text: `Plan oddziela sprawy obowiązkowe od tych, które zależą od Twojego wyboru. Przy każdej pokazuje termin i${NBSP}miejsce złożenia.`,
   },
 ];
 

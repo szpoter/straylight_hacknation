@@ -5,9 +5,9 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-// Krój ekranów eZUS i login.gov.pl. Cyrylica dla linku „українська”.
+// Krój ekranów eZUS i login.gov.pl.
 const openSans = Open_Sans({
-  subsets: ["latin", "latin-ext", "cyrillic"],
+  subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-gov",
   display: "swap",

@@ -14,6 +14,7 @@ import {
   SYSTEM_PROMPT,
   validateAnswer,
 } from "../src/lib/rag/answer";
+import { requireEnv } from "../src/lib/zusik/config";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 
 const endpoint = "http://127.0.0.1:11434/v1";
@@ -52,7 +53,8 @@ const examples = [
   },
 ];
 
-async function runExample(model: string, e: (typeof examples)[number], corpus: ReturnType<typeof loadCorpus>) {
+async function runExample(model: string, e: (typeof examples)[number], corpus: ReturnType<typeof loadCorpus>,
+  provider = { baseURL: endpoint, apiKey: "ollama" }) {
   const evidence = e.evidence.map((id) => {
     const fragment = corpus.fragments.get(id);
     if (!fragment) throw new Error("Nieznany fragment " + id);
@@ -63,7 +65,7 @@ async function runExample(model: string, e: (typeof examples)[number], corpus: R
     .digest("hex")
     .slice(0, 12);
   const generation = await generateAnswer(
-    { baseURL: endpoint, apiKey: "ollama", model },
+    { ...provider, model },
     corpus,
     e.question,
     evidence,
@@ -302,6 +304,22 @@ async function compareRoles() {
   );
 }
 
+/** The same fixed public evidence and validator for local and configured hosted models. */
+async function comparePublic() {
+  const corpus = loadCorpus("marta");
+  const providers = [
+    ...models.map(model => ({ model, baseURL: endpoint, apiKey: "ollama" })),
+    { model: requireEnv("SHERLOCK_MODEL"), baseURL: requireEnv("SHERLOCK_BASE_URL"), apiKey: requireEnv("SHERLOCK_API_KEY") },
+  ];
+  for (const provider of providers) {
+    for (const example of examples) {
+      const { model, promptHash, correct, status, ms, cited, missing } = await runExample(provider.model, example, corpus, provider);
+      console.log(JSON.stringify({ model, task: example.id, promptHash, correct, status, ms, cited, missing }));
+      if (!correct) process.exitCode = 1;
+    }
+  }
+}
+
 async function main() {
   const modelsResponse = await fetch(endpoint + "/models", { signal: AbortSignal.timeout(5_000) });
   if (!modelsResponse.ok) throw new Error("Nie można pobrać listy modeli z lokalnej Ollamy.");
@@ -412,7 +430,7 @@ async function main() {
   ];
   writeFileSync("corpus/local-models.md", report.join("\n"));
 }
-(process.argv.includes("--roles") ? compareRoles() : main()).catch((e: Error) => {
+(process.argv.includes("--compare-public") ? comparePublic() : process.argv.includes("--roles") ? compareRoles() : main()).catch((e: Error) => {
   console.error(e.message);
   process.exitCode = 1;
 });

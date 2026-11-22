@@ -59,7 +59,8 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   const thread = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
-  const waiting = pdf.active ? !pdf.canAsk : busy || readingPlan || chat.asking || (!localPlan && chat.phase !== "ready");
+  const canUsePlanOffline = localPlan && chat.phase === "error";
+  const waiting = pdf.active ? !pdf.canAsk : busy || readingPlan || chat.asking || (chat.phase !== "ready" && !canUsePlanOffline);
   useEffect(() => {
     const viewport = thread.current;
     if (!viewport || !content.current) return;
@@ -115,7 +116,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
                 answer.sourceExplanation += " Stan osobnego wniosku pochodzi z zapisu sprawy urlopowej w tej sesji.";
               }
             } catch {
-              answer.lines.push("Dodatkowy stan wniosku w sprawie urlopu rodzicielskiego jest teraz niedostępny.");
+              answer.lines.push("Nie mogę teraz odczytać stanu osobnego wniosku o urlop rodzicielski.");
             }
           }
           setPlanTurns(turns => [...turns, { id: newRequestId(), at: new Date().toISOString(), question: message, answer }]);
@@ -128,7 +129,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       }
       if (chat.phase !== "ready") {
         setAskNotice(chat.phase === "error" ? "Brak połączenia ze źródłami publicznymi. Ponów połączenie z czatem."
-          : "Trwa łączenie ze źródłami publicznymi. Spróbuj ponownie po nawiązaniu połączenia.");
+          : "Łączę się ze źródłami publicznymi. Spróbuj ponownie, gdy połączenie będzie gotowe.");
         return;
       }
     }
@@ -156,7 +157,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       <div className={s.caseLayout}>
         {!fullscreen && documents && <aside className={s.caseDocuments} aria-label="Dokumenty sprawy">{documents}</aside>}
         <section className={`${s.chat} ${s.caseWindow}`} aria-label="Czat z Zusikiem">
-          <ChatHeader scenario={scenario} label={label} fullscreen={controls?.fullscreen ?? fullscreen} onCollapse={controls?.onCollapse}
+          <ChatHeader label={label} fullscreen={controls?.fullscreen ?? fullscreen} onCollapse={controls?.onCollapse}
             onFullscreen={controls?.onFullscreen ?? (documents ? () => setFullscreen(value => !value) : undefined)} />
           <div ref={thread} className={s.thread} onScroll={event => {
             const viewport = event.currentTarget;

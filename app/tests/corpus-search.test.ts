@@ -34,23 +34,43 @@ describe("whole public corpus", () => {
     const remote = (f: typeof wanted) => ({ id: pointId(f.corpusVersion, f.logicalId), score: 0.8,
       payload: { corpusVersion: f.corpusVersion, logicalId: f.logicalId, fragmentSha256: f.fragmentSha256 } });
     let found = [remote(wanted)];
+    let denseAvailable = true;
+    let pointsAvailable = true;
     const request: typeof fetch = async (input, init) => {
       const body = JSON.parse(String(init?.body));
       if (String(input).endsWith("/query")) {
+        if (!denseAvailable) return new Response(null, {status:503});
         expect(body.query.text).toBe(plan.searchText);
         expect(body.filter.must[0].match.any).toHaveLength(3);
         return Response.json({ result: { points: [remote(other)] } });
       }
+      if (!pointsAvailable) return new Response(null, {status:503});
       expect(body.ids).toContain(pointId(wanted.corpusVersion, wanted.logicalId));
       return Response.json({ result: found });
     };
     const reader = qdrantKnowledgeSearch({ url: "https://fixture.invalid", collection: "test", apiKey: "test", fetchImpl: request });
     const input = { query: plan.searchText ?? "", corpusVersion: corpus.manifest.corpusVersion, expanded: null, limit: 5, lexical: plan.lexical };
     expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([wanted.logicalId, other.logicalId]);
+    denseAvailable = false;
+    expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([wanted.logicalId]);
+    pointsAvailable = false;
+    expect((await reader.search(input)).status).toBe("error");
+    denseAvailable = true;
+    expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([other.logicalId]);
+    pointsAvailable = true;
     found = [remote({ ...wanted, fragmentSha256: "0".repeat(64) }), remote({ ...wanted, corpusVersion: "obsolete" })];
     expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([other.logicalId]);
     found = [];
     expect((await reader.search(input)).hits.map(hit => hit.logicalId)).toEqual([other.logicalId]);
+  });
+  it("preserves the version used by section lookup and rejects a point with an unrelated UUID", async () => {
+    const corpusVersion = loadCorpus("oferta").manifest.corpusVersion;
+    const f = loadCorpus("oferta").fragments.get("zlobek-odbiorca")!;
+    const point = { id: pointId(corpusVersion, f.logicalId), payload: f };
+    const reader = qdrantKnowledgeSearch({ url:"https://fixture.invalid", apiKey:"reader", collection:"test",
+      fetchImpl:async () => Response.json({result:{points:[point, {...point, id:"wrong"}]}}) });
+    const result = await reader.search({query:"Odbiorca świadczenia", corpusVersion, limit:5, expanded:null});
+    expect(result.hits).toEqual([{corpusVersion,logicalId:f.logicalId,fragmentSha256:f.fragmentSha256,score:0}]);
   });
   it.each([false, true])("finds an unseen test document from its contents only when indexed (present=%s)", async present => {
     vi.resetModules();

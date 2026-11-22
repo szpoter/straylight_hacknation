@@ -3,12 +3,13 @@ import { listOpportunities } from "../plan/opportunities";
 import type { PublicTaskInput } from "../rag/model-tasks";
 import type { runPublicModelTask } from "../rag/local-queue";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
+import { checkCitedSources } from "../rag/source-check";
 import { corpusFollowUp } from "../rag/corpus-search";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
-import { nurseryIntent, runSectionTurn } from "./turn-graph";
+import { nurseryIntent, runSectionTurn, schoolRecipientIntent } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
-import { extractiveAnswer, needsStatutoryText, withSourceException } from "../rag/excerpt";
-import { publicQuestion, type PublicQuestion } from "../rag/public-query";
+import { extractiveAnswer, needsStatutoryText, reviewedSourceIds, withSourceException } from "../rag/excerpt";
+import { offerDetail, publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
 import type { CaseStore } from "./case-store";
@@ -26,6 +27,7 @@ type Progress = (status: string) => void;
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
 
 export interface AnswerDeps {
+  extraVerification?: boolean;
   deadlineMs?: number;
   publicTask?(input: PublicTaskInput, deadline: number): ReturnType<typeof runPublicModelTask>;
   readOfficial?: typeof fetchOfficialEvidence;
@@ -80,12 +82,19 @@ function newTrace(sanitized: string, contextRequestId: string | null): AnswerTra
 
 function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null {
   const direct = publicQuestion(text);
+  if (direct?.corpus === "oferta" && !direct.clarify && text !== direct.question && offerDetail(text, direct).question === text) {
+    return deps.searchCorpus?.(text, direct) ?? { corpus:"oferta", question:text,
+      uncovered:"Nie znalazłem potwierdzonego fragmentu o tym szczególe programu." };
+  }
   const genericForm = direct?.question.startsWith("Jakie informacje należy zawrzeć") &&
     !/rodzicielsk/iu.test(text);
-  if (direct?.clarify || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
+  // The legacy Marta gate treats the programme name itself as a personal amount request.
+  const gateText = direct?.corpus === "oferta" ? text.replace(/\b800\s*(?:\+|plus)/iu, "") : text;
+  if (direct?.clarify || scopeGate(gateText) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
   const preset = (!direct || genericForm) ? deps.suggestTopic?.(text) : null;
   // Preserve reviewed compound rules whose exceptions must travel with the main article.
-  if (preset || direct?.corpus === "oferta" || (direct?.corpus === "marta" && !genericForm) ||
+  if (preset || (direct?.corpus === "oferta" && !["program:800-plus", "program:aktywny-rodzic", "program:dobry-start"].includes(direct.locators?.[0] ?? "")) ||
+      (direct?.corpus === "marta" && !genericForm) ||
       ((direct?.locators?.length ?? 0) > 1 && !direct?.broad) || explicitLocatorKeys(text).length) return preset ?? direct;
   return deps.searchCorpus?.(text, direct) ?? direct;
 }
@@ -204,10 +213,16 @@ export async function answerQuestion(
   trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
+  const exact = projected.fragmentId ? [projected.fragmentId] : reviewedSourceIds(projected);
+  const lexical = projected.lexical ?? exact.flatMap(id => {
+    const f = corpus.fragments.get(id);
+    return f && isValidOn(corpus, f, asOf)
+      ? [{ logicalId:id, fragmentSha256:f.fragmentSha256, corpusVersion:version }] : [];
+  });
   const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version,
-    limit: TOP_K, deadlineMs: deps.deadlineMs, ...(projected.lexical?.length ? { lexical: projected.lexical, asOf } : {}) });
+    limit: TOP_K, deadlineMs: deps.deadlineMs, ...(lexical.length ? { lexical, asOf } : {}) });
   trace.search = found.status;
-  if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
+  if (found.status !== "ok") return missingEvidence(plain("unavailable", UNAVAILABLE_MESSAGE));
   trace.vectorHits = found.hits;
 
   const evidence = assembleEvidence(corpus, found.hits, {
@@ -222,7 +237,9 @@ export async function answerQuestion(
     const fragment = corpus.fragments.get(id);
     return fragment && relevant(fragment);
   });
-  const fragments = rawSubjectHit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
+  const confirmed = new Set([...(found.rankings?.lexical ?? []), ...evidence.vectorIds]);
+  const missingReviewedUnit = found.rankings && exact.some(id => !confirmed.has(id));
+  const fragments = rawSubjectHit && !missingReviewedUnit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
   trace.evidenceIds = fragments.map((f) => f.logicalId);
   if (fragments.length === 0) {
     const { answer } = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
@@ -275,6 +292,60 @@ export async function answerQuestion(
     if (answer.status === "answered") return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
   }
   return { answer, trace };
+}
+
+export async function answerPublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
+  const result = await resolvePublicTurn(deps, text, history, onProgress, family);
+  const { answer, trace } = result;
+  const notes = [];
+  if (trace.modelId === "pllum" && trace.model !== "ok" && answer.citations.length)
+    notes.push("PLLuM nie wygenerował tej odpowiedzi. Pokazuję sprawdzone fragmenty źródeł.");
+  if (deps.extraVerification && answer.citations.length && deps.selectCorpus) {
+    onProgress?.("Porównuję cytaty z publikacjami urzędowymi…");
+    const corpora = [deps.selectCorpus("marta"), deps.selectCorpus("oferta"), deps.selectCorpus("publiczne")];
+    const count = await checkCitedSources(answer.citations, corpora, deps.deadlineMs ?? Date.now() + 3500);
+    notes.push(`Dodatkowa weryfikacja źródeł: ${count}/${answer.citations.length} potwierdzonych w publikacji urzędowej.`);
+  }
+  return notes.length ? { ...result, answer: { ...answer, message: [answer.message, ...notes].filter(Boolean).join(" ") } } : result;
+}
+
+async function resolvePublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
+  const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
+  const section = schoolRecipientIntent(text, previous) ? "schoolRecipient" : nurseryIntent(text, previous);
+  if (section && deps.selectCorpus) {
+    const { answer, result: resolved, query } = await runSectionTurn(section, deps.selectCorpus("oferta"),
+      deps.search, (deps.asOf ?? today)(), deps.readOfficial ?? fetchOfficialEvidence, onProgress, deps.deadlineMs);
+    const trace = newTrace(query, section !== "care" && !nurseryIntent(text) && !schoolRecipientIntent(text) ? previous?.requestId ?? null : null);
+    trace.calls.qdrant = 1;
+    trace.vectorHits = resolved.hits;
+    trace.vectorIds = resolved.hits.map(hit => hit.logicalId);
+    trace.search = resolved.searchError ? "error" : "ok";
+    trace.officialFetches = resolved.fetches;
+    trace.evidenceIds = answer.citations.map(c => c.fragmentId);
+    if (section === "care" && answer.citations.length) {
+      const card = listOpportunities({ text, asOf: (deps.asOf ?? today)() }).candidates
+        .find(c => c.evidence.fragmentId === "zlobek-opieka");
+      if (card) answer.opportunities = [{ id: card.id, title: card.title, citationIds: [answer.citations[0].id],
+        missingFacts: card.missingFacts, exclusiveGroup: card.exclusiveGroup }];
+    }
+    return { answer, trace };
+  } else {
+    const opportunities = await discoverOpportunities(deps, text, onProgress);
+    if (opportunities) return opportunities;
+    else {
+      const fromCorpus = deps.searchCorpus && corpusFollowUp(text, previous);
+      const topic = familyTopic(family?.stopId);
+      const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
+        : resolveFollowUp(text, history, deps.suggestTopic, Boolean(topic));
+      const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
+      const retrievalText = usePageTopic ? topic + ". " + text : text;
+      const projected = !usePageTopic && context ? context.plan : projectQuestion(deps, retrievalText);
+      const result = await answerQuestion(deps, retrievalText, onProgress, projected, context?.requestId);
+      if (projected?.question && result.answer.status !== "unavailable")
+        result.answer.publicQuery = projected.question;
+      return result;
+    }
+  }
 }
 
 export interface AskResult {
@@ -341,41 +412,7 @@ export class AskService {
         result = { answer, trace: null };
       } else {
         const history = await this.deps.turns.list(threadId, requestId, 24);
-        const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
-        const section = nurseryIntent(text, previous);
-        if (section && this.deps.selectCorpus) {
-          const { answer, result: resolved, query } = await runSectionTurn(section, this.deps.selectCorpus("oferta"),
-            this.deps.search, (this.deps.asOf ?? today)(), this.deps.readOfficial ?? fetchOfficialEvidence, onProgress, this.deps.deadlineMs);
-          const trace = newTrace(query, section === "recipient" && !nurseryIntent(text) ? previous?.requestId ?? null : null);
-          trace.calls.qdrant = 1;
-          trace.vectorHits = resolved.hits;
-          trace.vectorIds = resolved.hits.map(hit => hit.logicalId);
-          trace.search = resolved.unavailable && !resolved.fetches ? "error" : "ok";
-          trace.officialFetches = resolved.fetches;
-          trace.evidenceIds = answer.citations.map(c => c.fragmentId);
-          if (section === "care" && answer.citations.length) {
-            const card = listOpportunities({ text, asOf: (this.deps.asOf ?? today)() }).candidates
-              .find(c => c.evidence.fragmentId === "zlobek-opieka");
-            if (card) answer.opportunities = [{ id: card.id, title: card.title, citationIds: [answer.citations[0].id],
-              missingFacts: card.missingFacts, exclusiveGroup: card.exclusiveGroup }];
-          }
-          result = { answer, trace };
-        } else {
-          const opportunities = await discoverOpportunities(this.deps, text, onProgress);
-          if (opportunities) result = opportunities;
-          else {
-            const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
-            const topic = familyTopic(family?.stopId);
-            const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
-              : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
-            const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
-            const retrievalText = usePageTopic ? topic + ". " + text : text;
-            const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
-            result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
-            if (projected?.question && result.answer.status !== "unavailable")
-              result.answer.publicQuery = projected.question;
-          }
-        }
+        result = await answerPublicTurn(this.deps, text, history, onProgress, family);
       }
     } catch (error) {
       await this.deps.turns.release(threadId, requestId, token).catch(() => undefined);

@@ -210,7 +210,7 @@ function Declarations({
               catch { setFileError("Wybierz niepusty PDF, PNG lub JPEG do 25 MB."); }
             }}
           />
-          <small>W szkicu zapiszemy nazwę pliku. Przy przekazaniu rzeczywistego wniosku dołącz ten odpis.</small>
+          <small>W szkicu zapiszemy nazwę pliku. Dołącz ten odpis do prawdziwego wniosku, gdy będziesz go przekazywać.</small>
           {attachment ? <AttachmentLinks file={attachment} /> : view.attachmentName && <span>{view.attachmentName}</span>}
         </label>
       )}
@@ -295,7 +295,7 @@ export function MartaInterview({ state, attachment, onAttach, scope, fullscreen 
               {view.confirmed && !edit && !amend && (
                 <>
                   <p>
-                    <strong>Wniosek zatwierdzony.</strong> Pobierz i podpisz dokument, a następnie przekaż go pracodawcy.
+                    <strong>Wniosek zatwierdzony.</strong> Pobierz i podpisz dokument, potem przekaż go pracodawcy.
                   </p>
                   {fullscreen && (
                     <a className={s.download} href="/api/zusik/marta/pdf" download="wniosek-rodzicielski.pdf">

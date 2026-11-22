@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { appParameters, knowledgeSources, paternityTestCases } from "@/lib/admin/catalog";
+import { PATERNITY_SCENARIOS, allTestCases, appParameters, citeStatutes, knowledgeSources, paternityTestCases, scenarioOutcome } from "@/lib/admin/catalog";
+import { SPEC_PARAMETERS } from "@/features/admin/mock-data";
 import { ZAM_FORM } from "@/lib/kamil/sources";
 import { OFFICIAL_HOSTS } from "@/lib/rag/corpus";
 import { loadCorpus } from "@/lib/rag/corpus-fs";
@@ -61,7 +62,7 @@ describe("admin catalogue · test cases computed by the paternity rule", () => {
       ["K-05", "zgodna"],
       ["K-06", "zgodna"],
       ["K-07", "zgodna"],
-      ["K-08", "brak-danych"],
+      ["K-08", "zgodna"],
     ]);
   });
 
@@ -76,8 +77,24 @@ describe("admin catalogue · test cases computed by the paternity rule", () => {
     expect(k1.computedBy).toMatch(/^lib\/rules\/paternity\.ts · paternity-/);
   });
 
-  it("names the missing fact instead of deciding", () => {
-    expect(cases.find((c) => c.id === "K-08")?.missing).toMatch(/ubezpieczenie chorobowe/);
+  it("asks for the fact instead of deciding when insurance is not confirmed", () => {
+    const k8 = PATERNITY_SCENARIOS.find((s) => s.id === "K-08")!;
+    expect(scenarioOutcome(k8, {})).toBe("przysługuje, 8–21 grudnia 2026 r.");
+    expect(scenarioOutcome({ ...k8, input: { ...k8.input, insuranceConfirmed: null } }, {})).toBe("wymaga uzupełnienia");
+  });
+
+  it("includes the ZUS case set, each matching the ZUS decision and opening in /sprawdz", () => {
+    const zestaw = allTestCases().filter((c) => c.tag.startsWith("Zestaw ZUS"));
+    expect(zestaw).toHaveLength(10);
+    expect(zestaw.filter((c) => c.tag.endsWith("odmowa"))).toHaveLength(6);
+    expect(zestaw.every((c) => c.expected[0].value === c.result[0].value)).toBe(true);
+    expect(zestaw.find((c) => c.id === "Z-ZAB-3")?.parentView).toBe("/sprawdz?sprawa=zab-3");
+    expect(allTestCases()).toHaveLength(26);
+  });
+
+  it("every case in the set has complete data", () => {
+    expect(allTestCases().filter((c) => c.status !== "zgodna").map((c) => c.id)).toEqual([]);
+    expect(allTestCases().every((c) => !c.missing && c.result.length > 0)).toBe(true);
   });
 });
 
@@ -98,5 +115,17 @@ describe("admin catalogue · payer and arrears rules", () => {
     expect(plain(wage?.value)).toBe("4 806 zł");
     expect(plain(wage?.planned?.value)).toBe("4 950 zł");
     expect(wage?.planned?.from).toBe("2027-01-01");
+  });
+});
+
+describe("admin catalogue · values from the specification", () => {
+  it("cite the statute unit with a link and verbatim text", () => {
+    const cited = citeStatutes(SPEC_PARAMETERS);
+    for (const p of cited) {
+      expect(p.sourceUrl, p.id).toMatch(/^https:\/\//);
+      expect(p.quote, p.id).toBeTruthy();
+    }
+    expect(cited.find((p) => p.id === "deadline-paternity")?.quote).toContain("7 dni przed rozpoczęciem");
+    expect(cited.find((p) => p.id === "sick-period")?.quote).toContain("270 dni");
   });
 });

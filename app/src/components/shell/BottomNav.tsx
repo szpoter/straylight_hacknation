@@ -17,7 +17,7 @@ export function BottomNav() {
   const { plan } = usePlan();
   const todo = countByGroup(plan.stops)["do-zalatwienia"];
   return (
-    <nav aria-label="Karty" className="fixed inset-x-0 bottom-0 z-40 border-t border-outline bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav aria-label="Karty" data-tour="nav" className="fixed inset-x-0 bottom-0 z-40 border-t border-outline bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
       <ul className="grid grid-cols-4">
         {NAV_ITEMS.map((item) => {
           const Icon = ICONS[item.href];

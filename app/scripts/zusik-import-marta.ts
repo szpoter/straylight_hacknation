@@ -13,6 +13,7 @@
  * Re-running with the same version is idempotent: same ids, same hashes.
  */
 import { readFileSync } from "node:fs";
+import { auditCollection } from "./zusik-audit-collection";
 import sources from "../corpus/official-sources.json";
 import { DEFAULT_EMBED_MODEL } from "../src/lib/zusik/config";
 import { corpusDigest, embeddingText, pointId, sha256, withoutFragments } from "../src/lib/rag/corpus";
@@ -47,12 +48,24 @@ type ScrollResponse = {
 };
 
 async function main() {
+  if (process.argv.includes("--audit")) {
+    const report = await auditCollection(collectionOverride || env("QDRANT_KNOWLEDGE_COLLECTION"));
+    console.log(JSON.stringify(report));
+    if (!report.ok) process.exitCode = 1;
+    return;
+  }
   const complete = loadCorpus(corpusName);
   for (const source of sources.filter((s) => complete.documents.has(s.sourceId))) {
     const snapshot = readFileSync(`corpus/${source.snapshot}`, "utf8");
     if (sha256(snapshot) !== source.snapshotSha256) throw new Error(`Snapshot digest mismatch: ${source.sourceId}`);
     for (const { heading, fragmentId, paragraphStarts } of source.sections) {
-      if (extractOfficialParagraph(snapshot, heading, paragraphStarts) !== complete.fragments.get(fragmentId)?.sourceText) {
+      const expected = complete.fragments.get(fragmentId)?.sourceText;
+      const matchingSections = source.snapshot.endsWith(".json")
+        ? (JSON.parse(snapshot) as Array<{headingPath:string[]; blocks:string[]}>).filter(s => s.headingPath.at(-1) === heading)
+        : null;
+      const valid = matchingSections ? matchingSections.length === 1 && !!expected && matchingSections[0].blocks.includes(expected)
+        : extractOfficialParagraph(snapshot, heading, paragraphStarts) === expected;
+      if (!expected || !valid) {
         throw new Error(`Snapshot paragraph mismatch: ${fragmentId}`);
       }
     }

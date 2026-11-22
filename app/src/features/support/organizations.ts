@@ -21,7 +21,7 @@ export type Situation = { id: string; title: string; categories: SupportSituatio
 
 const GOV_PARENTAL = { label: "gov.pl · Urlop rodzicielski", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" };
 const GOV_SUPPLEMENTARY = { label: "gov.pl · Uzupełniający urlop macierzyński", url: "https://www.gov.pl/web/rodzina/uzupelniajacy-urlop-macierzynski" };
-const ASK_ZUSIK: Formal = { text: "O swoją sytuację możesz zapytać Zusika — odpowiedź pokaże przepis i źródło." };
+const ASK_ZUSIK: Formal = { text: "O swoją sytuację możesz zapytać Zusika. W odpowiedzi pokaże przepis i źródło." };
 
 export const SITUATIONS: Situation[] = [
   {
@@ -36,7 +36,7 @@ export const SITUATIONS: Situation[] = [
     categories: ["wczesniak"],
     formal: [
       {
-        text: "Uzupełniający urlop macierzyński: tydzień urlopu za każdy tydzień pobytu dziecka w szpitalu — do 15. tygodnia po porodzie (poród przed 28. tygodniem ciąży lub masa do 1000 g) albo do 8. tygodnia w pozostałych przypadkach.",
+        text: "Uzupełniający urlop macierzyński: tydzień urlopu za każdy tydzień pobytu dziecka w szpitalu, do 15. tygodnia po porodzie (poród przed 28. tygodniem ciąży lub masa do 1000 g) albo do 8. tygodnia w pozostałych przypadkach.",
         source: GOV_SUPPLEMENTARY,
       },
     ],

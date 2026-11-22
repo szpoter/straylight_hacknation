@@ -9,7 +9,7 @@ export function Payer({ title, date, schedule, parent }: { title: InsuranceTitle
   const [count, setCount] = useState("");
   if (!date) return null;
   const result = benefitPayer({
-    situation: title === "dzialalnosc" ? "self_employed" : "employee",
+    situation: title === "dzialalnosc" ? "self_employed" : title === "zleceniobiorca" ? "contract" : "employee",
     payerInsuredCount: /^\d{1,8}$/.test(count) ? Number(count) : null,
     benefitDate: date, schedule,
   });

@@ -41,7 +41,8 @@
 .panel > div { height: 100%; }
 @media (max-width: 767px) {
   .launcher[data-top] { top: max(8px, env(safe-area-inset-top)); bottom: auto; }
-  .layout[data-split] { padding: 0 0 70dvh; }
-  .panel { inset: auto 0 0; width: 100%; height: 70dvh; }
+  .layout[data-split] { padding: 0; }
+  .panel { inset: auto 0 0; width: 100%; height: 100dvh; box-shadow: none; }
+  .panel::backdrop { background: rgb(40 55 84 / 0.35); }
 }
 .panel[data-full] { inset: 0; width: 100%; height: 100dvh; }

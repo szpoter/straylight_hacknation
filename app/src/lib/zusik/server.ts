@@ -1,3 +1,4 @@
+import type { ChatModelOptions } from "./chat-model";
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { cookies } from "next/headers";
 import { Pool } from "pg";
@@ -9,7 +10,7 @@ import { searchCorpus } from "../rag/corpus-search";
 import { discoverOfficialEvidence } from "../rag/official-fetch";
 import { loadCorpus } from "../rag/corpus-fs";
 import { qdrantKnowledgeSearch } from "../rag/retrieve";
-import { AskService } from "./ask-service";
+import { AskService, type AnswerDeps } from "./ask-service";
 import { suggestTopic } from "./topic-ranker";
 import { PgCaseStore } from "./case-store";
 import { PgTurnStore } from "./turn-store";
@@ -24,10 +25,17 @@ import { askSherlock } from "./sherlock";
  */
 let pool: Pool | null = null;
 let checkpointer: PostgresSaver | null = null;
+let casePool: Pool | null = null;
+
+// A v1 transaction can await a public turn whose model queue needs another connection.
+function newPool() {
+  return new Pool({ connectionString: requireEnv("DATABASE_URL"), max: 3, connectionTimeoutMillis: 5_000 });
+}
+export function caseTransactionPool() { return casePool ??= newPool(); }
 
 export function runtime() {
   if (!pool || !checkpointer) {
-    pool = new Pool({ connectionString: requireEnv("DATABASE_URL"), max: 3, connectionTimeoutMillis: 5_000 });
+    pool = newPool();
     checkpointer = new PostgresSaver(pool, undefined, { schema: CHECKPOINT_SCHEMA });
   }
   return { pool, checkpointer };
@@ -44,7 +52,8 @@ function qdrantSettings() {
 
 /** Knowledge collection (zusik_marta_v1) with its own read-scoped key; the probe keeps its own. */
 export function knowledgeSettings() {
-  if (!process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || !process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim()) {
+  if (!["preview", "production"].includes(process.env.VERCEL_ENV || "") &&
+      (!process.env.QDRANT_KNOWLEDGE_READ_KEY?.trim() || !process.env.QDRANT_KNOWLEDGE_COLLECTION?.trim())) {
     return qdrantSettings();
   }
   return {
@@ -70,19 +79,12 @@ export function assertProviderConfig(): void {
 }
 
 
-/** Informational answers with citations, saved on the session's thread. */
-export function askService(deadlineMs?: number): AskService {
+export function publicAnswerDeps(deadlineMs?: number, options?: ChatModelOptions): AnswerDeps {
   const { pool: db } = runtime();
-  const corpus = loadCorpus("marta");
-  return new AskService({
+  return {
     deadlineMs,
-    store: new PgCaseStore(db),
-    turns: new PgTurnStore(db),
-    readMarta: async (sessionId) => {
-      const { readMarta } = await import("../marta/server");
-      return readMarta(sessionId);
-    },
-    corpus,
+    extraVerification: options?.model === "bielik" && options.verification === "extra",
+    corpus: loadCorpus("marta"),
     selectCorpus: (name) => loadCorpus(name),
     publicTask: process.env.ZUSIK_PLANNER_MODEL || process.env.ZUSIK_VERIFIER_MODEL
       ? (input, deadline) => runPublicModelTask(db, input, deadline).catch(() =>
@@ -91,7 +93,22 @@ export function askService(deadlineMs?: number): AskService {
     searchCorpus,
     discoverOfficial: discoverOfficialEvidence,
     search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
-    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db, deadlineMs }, activeCorpus, question, evidence),
+    generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), selectedModel: options?.model,
+      reasoningEffort: options?.model === "bielik" ? options.effort : undefined, queue: db, deadlineMs }, activeCorpus, question, evidence),
+  };
+}
+
+/** Informational answers with citations, saved on the session's thread. */
+export function askService(deadlineMs?: number, options?: ChatModelOptions): AskService {
+  const { pool: db } = runtime();
+  return new AskService({
+    ...publicAnswerDeps(deadlineMs, options),
+    store: new PgCaseStore(db),
+    turns: new PgTurnStore(db),
+    readMarta: async (sessionId) => {
+      const { readMarta } = await import("../marta/server");
+      return readMarta(sessionId);
+    },
   });
 }
 

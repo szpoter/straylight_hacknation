@@ -195,7 +195,7 @@ export function CaseCard({
 
       {stop.sharedGroup && plan.family && (
         <p className="rounded-sm bg-surface p-4">
-          <span className="font-medium">Wspólna sprawa: {plan.family.names.join(" i ")}.</span> To jeden wniosek — gdy go oznaczysz, zmieni się we
+          <span className="font-medium">Wspólna sprawa: {plan.family.names.join(" i ")}.</span> To jeden wniosek. Gdy go oznaczysz, zmieni się we
           wszystkich planach.
         </p>
       )}

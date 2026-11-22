@@ -1,3 +1,4 @@
+import { chatModelOptions } from "@/lib/zusik/chat-model";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { MAX_QUESTION_LENGTH } from "@/lib/rag/query";
@@ -14,6 +15,7 @@ export const maxDuration = 60;
 
 // Unknown fields (e.g. a threadId sent by the browser) are stripped and ignored.
 const bodySchema = z.object({
+  modelOptions: chatModelOptions.optional(),
   scenario: z.enum(caseNames).default("marta"),
   family: familyScopeSchema.optional(),
   question: z.string().trim().min(2).max(MAX_QUESTION_LENGTH),
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
     const sessionId = await currentSessionId();
     if (!sessionId) return Response.json({ error: "no_session" }, { status: 401, headers: NO_STORE });
     // Keep five seconds of the function budget for committing the turn and returning the stream.
-    const service = askService(started + (maxDuration - 5) * 1000);
+    const service = askService(started + (maxDuration - 5) * 1000, parsed.data.modelOptions);
     const { question, requestId } = parsed.data;
     const run = async (progress?: (value: string) => void, verified?: (turn: AskTurn) => void) => {
       const result = await service.ask(sessionId, question, requestId, progress, verified, parsed.data.scenario, parsed.data.family);

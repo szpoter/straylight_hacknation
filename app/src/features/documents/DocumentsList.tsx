@@ -38,7 +38,7 @@ export function DocumentsList() {
 
       {summons?.doc.summons && (
         // Brak tokenu koloru ostrzeżenia: akcent bursztynowy — do weryfikacji.
-        <div role="region" aria-label="Pilne pismo" className="mt-stack flex flex-col gap-3 rounded-lg bg-tertiary p-gutter-mobile md:flex-row md:items-center md:justify-between md:p-card">
+        <div role="region" aria-label="Pilne pismo" data-tour="summons" className="mt-stack flex flex-col gap-3 rounded-lg bg-tertiary p-gutter-mobile md:flex-row md:items-center md:justify-between md:p-card">
           <p className="flex items-start gap-2">
             <AlertIcon className="mt-0.5 shrink-0" />
             <span>
@@ -52,7 +52,7 @@ export function DocumentsList() {
         </div>
       )}
 
-      <div className="mt-stack flex flex-col gap-4">
+      <div className="mt-stack flex flex-col gap-4" data-tour="doc-tabs">
         <PillTabs<View>
           label="Widok"
           items={[
@@ -74,7 +74,7 @@ export function DocumentsList() {
       </div>
 
       {view === "sprawy" ? (
-        <div className="mt-stack flex flex-col gap-stack pb-section-mobile md:mt-section-mobile md:gap-section-mobile md:pb-section">
+        <div data-tour="doc-cases" className="mt-stack flex flex-col gap-stack pb-section-mobile md:mt-section-mobile md:gap-section-mobile md:pb-section">
           {filter === "do-zalatwienia" && visible.length === 0 && <EmptyState text="Na dziś masz wszystko załatwione" />}
           {filter !== "do-zalatwienia" && visible.length === 0 && <EmptyState text="Brak spraw w tej grupie" />}
           {!filter && counts["do-zalatwienia"] === 0 && cases.length > 0 && (

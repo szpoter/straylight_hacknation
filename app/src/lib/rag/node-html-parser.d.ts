@@ -1,4 +1,4 @@
-declare module "next/dist/compiled/node-html-parser" {
+declare module "next/dist/compiled/node-html-parser/index.js" {
   interface HtmlElement {
     text: string;
     getAttribute(key: string): string | undefined;

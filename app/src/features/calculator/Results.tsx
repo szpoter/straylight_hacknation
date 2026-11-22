@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { cn } from "@/components/ui/cn";
 import { Disclosure } from "@/components/ui/Disclosure";
-import { AlertIcon, InfoIcon } from "@/components/ui/icons";
+import { AlertIcon, CheckIcon, InfoIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
+import { Tag } from "@/components/ui/Tag";
+import type { BenefitPreset } from "@/lib/plan/benefit-presets";
 import { todayInPoland, formatLong, formatShort } from "@/lib/demo/dates";
 import { daysBetween } from "@/lib/rules/dates";
 import { estimateNet, monthlyPayments, round2, SOURCES, type Message, type ParentId, type Period, type ScenarioResult, type SourceId } from "@/lib/rules/maternity";
@@ -218,7 +220,7 @@ export function MonthlyTable({ result, form }: { result: ScenarioResult; form: C
         </table>
       </div>
       <p className="mt-4 text-meta text-on-surface-variant">
-        Wypłata za każdy dzień kalendarzowy: stawka dzienna × liczba dni w miesiącu. Na rękę: zaliczka na podatek 12% zaokrąglona do złotych{form.pit2 ? ", minus 300 zł (PIT-2)" : ""}; składki zdrowotnej od zasiłku się nie pobiera.
+        Wypłata za każdy dzień kalendarzowy: stawka dzienna × liczba dni w miesiącu. Na rękę: zaliczka na podatek 12% zaokrąglona do złotych{form.pit2 ? ", minus 300 zł (PIT-2)" : ""}. Od zasiłku nie pobiera się składki zdrowotnej.
       </p>
     </Disclosure>
   );
@@ -258,7 +260,7 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
     <Disclosure summary="Jak to policzyliśmy" summaryClassName="py-4" className="rounded-lg border border-outline px-gutter-mobile pb-2 md:px-card">
       <ol className="flex list-decimal flex-col gap-3 pl-5">
         <li>Podstawa wymiaru: przeciętne miesięczne wynagrodzenie (albo podstawa składki chorobowej) z 12 miesięcy przed miesiącem porodu, po odjęciu składek społecznych. Miesiące przepracowane w mniej niż połowie pomija się.</li>
-        <li>Przy umowie o pracę na pełny etat podstawa nie może być niższa niż płaca minimalna po odjęciu składek — i rośnie razem z płacą minimalną.</li>
+        <li>Przy umowie o pracę na pełny etat podstawa nie może być niższa niż płaca minimalna po odjęciu składek. Rośnie też razem z płacą minimalną.</li>
         <li>
           Stawka dzienna = podstawa × procent ÷ 30, zaokrąglona do grosza.
           {first && (
@@ -280,7 +282,7 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
         </li>
         <li>Stawka zależy od rodzaju urlopu, wariantu wypłaty i dnia, za który przysługuje zasiłek.</li>
         <li>Gdy zasiłek wychodzi poniżej kwoty świadczenia rodzicielskiego, kalkulator uwzględnia dopłatę (nie dotyczy urlopu ojcowskiego).</li>
-        <li>Praca do pół etatu w czasie rodzicielskiego: urlop wydłuża się (np. ½ etatu — dwa razy dłużej), zasiłek maleje o tę część.</li>
+        <li>Praca do pół etatu w czasie rodzicielskiego: urlop wydłuża się (np. przy ½ etatu trwa dwa razy dłużej), a zasiłek maleje o tę część.</li>
       </ol>
       <p className="my-5 text-meta text-on-surface-variant">
         Kalkulator pokazuje kwoty brutto i szacunkowy podatek. O wypłacie rozstrzyga płatnik albo ZUS.
@@ -294,5 +296,39 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
         ))}
       </ul>
     </Disclosure>
+  );
+}
+
+export function PresetCheckList({ preset, result }: { preset: BenefitPreset; result: ScenarioResult }) {
+  return (
+    <Panel className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <Tag tone="brand">Sprawa z zestawu ZUS</Tag>
+      </div>
+      <p className="text-meta">{preset.description}</p>
+      <ul className="flex flex-col divide-y divide-outline">
+        {preset.checks.map((c) => {
+          const ours = c.pick(result);
+          const match = ours !== undefined && Math.abs(ours - c.zus) < 0.005;
+          // Kwoty w złotych; okresy (gdy w aktach nie ma kwot) w dniach.
+          const show = (n: number) => (c.unit === "dni" ? `${n} dni` : pln(n));
+          return (
+            <li key={c.label} className="flex flex-col gap-1 py-3 text-meta first:pt-0 last:pb-0">
+              <span className="font-medium">{c.label}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {c.source === "dokumenty" ? "Dokumenty sprawy" : "ZUS"}: {show(c.zus)} · kalkulator: {ours === undefined ? "—" : show(ours)}
+                {match ? (
+                  <span className="inline-flex items-center gap-1 font-medium text-primary">
+                    <CheckIcon size={16} /> zgodne
+                  </span>
+                ) : (
+                  <span className="font-medium">różnica: zmieniono dane</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
   );
 }

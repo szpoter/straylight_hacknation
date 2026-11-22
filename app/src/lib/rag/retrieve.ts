@@ -88,7 +88,7 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
           }));
           const payload = ["logicalId", "fragmentSha256", "corpusVersion"];
           const ids = lexical.slice(0, 20).map(hit => pointId(hit.corpusVersion, hit.logicalId));
-          const [nearest, confirmed] = await Promise.all([
+          const [nearest, confirmed] = await Promise.allSettled([
             post("/query", { query: { text: query, model }, filter: { must: [{ key: "corpusVersion", match: { any: [...active.keys()] } }] },
               limit: 20, with_payload: payload }),
             post("", { ids, with_payload: payload, with_vector: false }),
@@ -101,9 +101,12 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
             return corpus && f && f.fragmentSha256 === fragmentSha256 && point.id === pointId(version, logicalId) && isValidOn(corpus, f, asOf)
               ? [{ logicalId, fragmentSha256, corpusVersion: version, score: point.score ?? 0 }] : [];
           }
-          const received = new Map<string | number, RemotePoint>((confirmed.result as RemotePoint[]).map(p => [p.id, p]));
+          if (nearest.status === "rejected" && confirmed.status === "rejected") throw nearest.reason;
+          const confirmedPoints: RemotePoint[] = confirmed.status === "fulfilled" ? confirmed.value.result : [];
+          const densePoints: RemotePoint[] = nearest.status === "fulfilled" ? nearest.value.result.points : [];
+          const received = new Map(confirmedPoints.map(p => [p.id, p]));
           const words = ids.flatMap(id => { const p = received.get(id); return p ? verified(p) : []; });
-          const dense = (nearest.result.points as RemotePoint[]).flatMap(verified);
+          const dense = densePoints.flatMap(verified);
           return { status: "ok", hits: fuseRanks(words, dense, limit), ms: Date.now() - started,
             rankings: { lexical: words.map(f => f.logicalId), dense: dense.map(f => f.logicalId) } };
         }
@@ -111,8 +114,8 @@ export function qdrantKnowledgeSearch(settings: KnowledgeSettings): KnowledgeSea
         const hits = points.flatMap((p) => {
           const logicalId = p.payload?.logicalId;
           const hash = p.payload?.fragmentSha256;
-          return typeof logicalId === "string" && typeof hash === "string"
-            ? [{ logicalId, fragmentSha256: hash, score: p.score ?? 0 }]
+          return typeof logicalId === "string" && typeof hash === "string" && p.id === pointId(corpusVersion, logicalId)
+            ? [{ corpusVersion, logicalId, fragmentSha256: hash, score: p.score ?? 0 }]
             : [];
         });
         return { status: "ok", hits, ms: Date.now() - started };

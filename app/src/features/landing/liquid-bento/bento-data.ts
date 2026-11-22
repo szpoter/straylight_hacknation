@@ -65,7 +65,7 @@ export const BENTO_TILES: BentoTile[] = [
     bridgeTo: "podzial",
     details: {
       title: "Ile trwa urlop rodzicielski",
-      body: "Tyle urlopu rodzicielskiego mają standardowo do dyspozycji łącznie uprawnieni rodzice po urodzeniu jednego dziecka przy jednym porodzie.",
+      body: "Tyle urlopu rodzicielskiego mają łącznie uprawnieni rodzice, gdy przy jednym porodzie urodzi się jedno dziecko.",
       source: { label: "Wymiar urlopu rodzicielskiego (gov.pl)", href: PARENTAL_LEAVE },
     },
   },

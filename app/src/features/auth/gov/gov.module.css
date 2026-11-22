@@ -41,7 +41,7 @@
   min-width: 0;
 }
 
-/* ——— Nagłówek kolumny: znak przewodnika zamiast gov.pl i wybór języka ——— */
+/* ——— Nagłówek kolumny: znak przewodnika zamiast gov.pl ——— */
 .header {
   display: flex;
   align-items: center;
@@ -80,23 +80,6 @@
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
-}
-
-/* Wersji ukraińskiej nie ma: link wygląda jak w źródle, ale jest nieaktywny */
-.language {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--gov-blue);
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 24px;
-  cursor: not-allowed;
-}
-
-.languageIcon {
-  width: 20px;
-  height: 20px;
 }
 
 .main {
@@ -434,7 +417,7 @@ a.method:hover {
   line-height: 24px;
 }
 
-/* Wąski telefon: nazwa przewodnika i „українська” w jednej linii */
+/* Wąski telefon: mniejszy znak i nazwa przewodnika */
 @media (max-width: 479px) {
   .brandMark,
   .brandMark svg {
@@ -444,17 +427,6 @@ a.method:hover {
 
   .brandName {
     font-size: 17px;
-  }
-
-  .language {
-    gap: 6px;
-    font-size: 15px;
-    white-space: nowrap;
-  }
-
-  .languageIcon {
-    width: 18px;
-    height: 18px;
   }
 }
 

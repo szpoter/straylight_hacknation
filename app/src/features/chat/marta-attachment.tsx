@@ -126,7 +126,7 @@ export function SavedAttachment({ view, scope }: { view: MartaView; scope: strin
               event.currentTarget.value = "";
               if (!selected) return;
               if (selected.name !== name) {
-                setError("Nazwa musi być zgodna z odpisem wskazanym w zatwierdzonym wniosku.");
+                setError("Wybierz plik o tej samej nazwie co odpis w zatwierdzonym wniosku.");
                 return;
               }
               try {

@@ -89,10 +89,14 @@ export function JourneyMap() {
             </button>
           )}
         </p>
-        <Button variant="secondary" size="sm" className={cn(!listView && "hidden md:inline-flex")} onClick={() => setListView((v) => !v)} aria-pressed={listView}>
-          {listView ? <MapIcon size={18} /> : <ListIcon size={18} />}
-          {listView ? "Ścieżka" : "Lista"}
-        </Button>
+        {/* Na telefonie „Lista” jest w zielonym pasku etapu; tu zostaje tylko powrót do ścieżki.
+            Opakowanie, bo `cn` nie scala klas i `hidden` przegrywał z `inline-flex` przycisku. */}
+        <div className={cn("shrink-0", !listView && "hidden md:block")}>
+          <Button variant="secondary" size="sm" onClick={() => setListView((v) => !v)} aria-pressed={listView} data-tour="path-view">
+            {listView ? <MapIcon size={18} /> : <ListIcon size={18} />}
+            {listView ? "Ścieżka" : "Lista"}
+          </Button>
+        </div>
       </div>
 
       {(listView || !pawnStop) && <Button variant="secondary" size="sm" onClick={onPawn}
@@ -105,7 +109,7 @@ export function JourneyMap() {
         </>
       ) : (
         <>
-          <div className="hidden md:block">
+          <div className="hidden md:block" data-tour="path">
             <HorizontalPath
               items={items}
               pawnIndex={pawn}
@@ -119,7 +123,7 @@ export function JourneyMap() {
               focusPawnSignal={focusPawn}
             />
           </div>
-          <div className="md:hidden">
+          <div className="md:hidden" data-tour="path">
             <VerticalPath
               items={items}
               pawnIndex={pawn}
@@ -136,7 +140,7 @@ export function JourneyMap() {
         </>
       )}
 
-      {!listView && <NearestPanel stop={nearest} upcoming={pawnStop} onOpen={select} />}
+      {!listView && <div data-tour="nearest"><NearestPanel stop={nearest} upcoming={pawnStop} onOpen={select} /></div>}
 
       <BottomSheet
         open={Boolean(selected)}
@@ -164,7 +168,7 @@ function NearestPanel({ stop, upcoming, onOpen }: { stop?: Stop; upcoming?: Stop
         </h2>
         <p className="mt-3 max-w-prose">
           Następna sprawa: <span className="font-medium">{upcoming.title}</span>
-          {upcoming.condition ? ` — ${upcoming.condition.charAt(0).toLowerCase()}${upcoming.condition.slice(1)}.` : "."}
+          {upcoming.condition ? `, ${upcoming.condition.charAt(0).toLowerCase()}${upcoming.condition.slice(1)}.` : "."}
         </p>
         <Button variant="secondary" className="mt-5" onClick={() => onOpen(upcoming)}>
           Zobacz szczegóły

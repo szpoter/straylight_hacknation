@@ -9,20 +9,20 @@ import {
   DateField,
   Disclosure,
   FieldError,
-  LockIcon,
   ProgressBar,
   Segmented,
   SummaryList,
   TextButton,
   TextField,
+  ChevronRightIcon,
   cn,
   parseDateParts,
   type DateParts,
 } from "@/components/ui";
 import { useDemoSession } from "@/features/auth/demo-session";
-import { ParentChat } from "@/features/chat/parent-chat";
-import { firstVisitAfterLogin } from "@/features/family/LoginGate";
-import { hasCreatedPlans, usePlan } from "@/features/family/PlanProvider";
+import { usePlan } from "@/features/family/PlanProvider";
+import { SCENARIOS, familyOf, isPresetScenario, scenarioOf } from "@/lib/demo/scenarios";
+import { childrenGenitive } from "@/features/family/family-name";
 import type { Plan } from "@/lib/demo/types";
 import { buildPlans } from "@/lib/plan/build";
 import {
@@ -39,6 +39,7 @@ import {
   employmentChoices,
   estimateChoices,
   hasAnswer,
+  joinNames,
   nextStep,
   prevStep,
   progress,
@@ -112,13 +113,21 @@ function choicePatch(step: StepId, value: string): Partial<Answers> {
  * pasek postępu, krótka reakcja na odpowiedź nad pytaniem (bez maskotki). Wybór karty tylko zaznacza — dalej idzie się
  * przyciskiem „Dalej”. Na końcu plan układa się na oczach rodzica i widać konkretne liczby.
  *
- * Gdy z rejestru znamy już dziecko (plan z kłódką), rodzic może od razu przejść do jego planu,
- * bez odpowiadania na pytania.
+ * Po zalogowaniu odpowiedzi tworzą nową rodzinę (scenariusz): plany z „Twój plan jest gotowy”
+ * stają się wybranym planem. Na ekranie startowym można zamiast tego otworzyć gotowy scenariusz
+ * (Ola i dwa kolejne z `lib/demo/scenarios.ts`) albo rodzinę ułożoną wcześniej — tylko tu widać
+ * wszystkie rodziny. Potem plan z otwartym przewodnikiem „Jak to działa?” (`?przewodnik=1`).
+ *
+ * `family` („Dodaj dziecko albo ciążę” w selektorze dziecka): te same pytania, ale nowy plan
+ * dołącza do tej rodziny, a ekran startowy nie pokazuje innych rodzin.
  */
-export function Onboarding() {
+export function Onboarding({ family }: { family?: string } = {}) {
   const router = useRouter();
-  const { plans, addPlans, selectPlan } = usePlan();
   const session = useDemoSession();
+  const { plans, selectPlan, addPlans } = usePlan();
+  // Założyciel rodziny, do której dodajemy dziecko (do nazwy na ekranie startowym).
+  const joined = family ? plans.find((p) => scenarioOf(p) === family) : undefined;
+  const founder = joined && familyOf(plans, joined)[0];
   // „Wpisz dane samodzielnie” albo nieudane wczytanie: bez podpowiedzi z ZUS.
   const zusData = session?.data === "zus";
   const [screen, setScreen] = useState<Screen>("start");
@@ -138,17 +147,9 @@ export function Onboarding() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const loaded = useRef(false);
 
-  // Dzieci znane z rejestru (dane urzędowe) — można od razu przejść do ich planu.
-  const known = plans.filter((p) => p.kind === "rejestr");
-
   // Wznowienie przerwanej rozmowy od ostatniego pytania.
   useEffect(() => {
     const saved = loadSaved();
-    // Logowanie kończy się na /start. Rodzic, który ma już plan i nie jest w trakcie pytań, wraca od razu do planu.
-    if (session && firstVisitAfterLogin(session.loggedInAt) && (!saved || saved.screen === "start") && hasCreatedPlans()) {
-      router.replace("/plan");
-      return;
-    }
     if (saved) {
       /* eslint-disable react-hooks/set-state-in-effect -- odczyt po hydratacji */
       const restored = sanitize(saved.answers ?? {});
@@ -161,7 +162,7 @@ export function Onboarding() {
       /* eslint-enable react-hooks/set-state-in-effect */
     }
     loaded.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- tylko przy wejściu na ekran (sesja jest już znana: LoginGate)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tylko przy wejściu na ekran
   }, []);
 
   useEffect(() => {
@@ -264,73 +265,75 @@ export function Onboarding() {
     if (screen === "jobChange") advance(update({ jobChange: "pominieto" }));
   }
 
-  function finish() {
-    if (builtPlans.length === 0) return;
-    clearSaved();
-    addPlans(builtPlans);
-    router.push("/plan");
-  }
-
-  function openKnown(id: string) {
+  /** Gotowy scenariusz albo plan ułożony wcześniej: wybór planu i przewodnik „Jak to działa?”. */
+  function openPlan(id: string) {
     clearSaved();
     selectPlan(id);
-    router.push("/plan");
+    router.push("/plan?przewodnik=1");
   }
 
-  function browseExample() {
+  /** Koniec pytań: nowe dziecko w rodzinie albo nowa rodzina; jej plan staje się wybranym planem. */
+  function finish() {
     clearSaved();
-    selectPlan("przyklad");
-    router.push("/plan");
+    // Nowa rodzina nosi id pierwszego planu (`planId`), więc ten plan jest jej założycielem.
+    const scenario = joined ? scenarioOf(joined) : planId;
+    addPlans(builtPlans.map((p) => ({ ...p, scenario })));
+    router.push(joined ? "/plan" : "/plan?przewodnik=1");
   }
 
   if (screen === "start") {
-    // Po logowaniu rodzic trafia tutaj — czat z Zusikiem (zakres Juliana, `features/chat/parent-chat.tsx`)
-    // jest dostępny obok ekranu startowego. Na ekranach pytań go nie ma: przycisk czatu w rogu
-    // zasłaniałby na telefonie przyklejony pasek „Dalej”. Maskotki w onboardingu nie ma (prośba zespołu).
+    // Po logowaniu rodzic trafia tutaj. W całym onboardingu nie ma przycisku czatu z Zusikiem ani
+    // maskotki (prośba zespołu) — czat jest dostępny dopiero na planie.
+    // Rodziny ułożone wcześniej w onboardingu (bez dzieci dodanych do gotowych scenariuszy).
+    const own = [...new Set(plans.map(scenarioOf))]
+      .filter((id) => !isPresetScenario(id))
+      .map((id) => familyOf(plans, plans.find((p) => scenarioOf(p) === id)!))
+      .map((members) => ({ id: members[0].id, title: joinNames(members.map((p) => p.name)), description: members[0].keyDateLabel }));
+    const familyName = founder && childrenGenitive(founder);
     return (
-      <ParentChat topLauncher>
       <Shell>
-        <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 pb-20 text-center md:pt-14", ENTER)}>
+        <div className={cn("flex flex-1 flex-col items-center justify-center gap-stack py-8 text-center", ENTER)}>
           <div className="flex flex-col gap-3">
-            <h1 className="font-serif text-headline-mobile md:text-headline">Ułóżmy Twój plan</h1>
-            <p className="text-lead text-on-surface-variant">Kilka krótkich pytań, ok. 1 minuty. Na końcu zobaczysz wszystkie sprawy z terminami.</p>
+            <h1 className="font-serif text-headline-mobile md:text-headline">{family ? "Dodaj dziecko albo ciążę" : "Ułóżmy Twój plan"}</h1>
+            <p className="text-lead text-on-surface-variant">
+              {family
+                ? `Kilka krótkich pytań, ok. 1 minuty. Nowy plan dołączy do ${familyName ? `rodziny ${familyName}` : "Twojej rodziny"}.`
+                : "Kilka krótkich pytań, ok. 1 minuty. Na końcu zobaczysz wszystkie sprawy z terminami."}
+            </p>
           </div>
 
-          {known.length > 0 && (
-            <section aria-labelledby="znane-dzieci" className="w-full rounded-lg border border-outline bg-background p-gutter-mobile text-left md:p-card">
-              <h2 id="znane-dzieci" className="font-serif text-title">
-                {known.length > 1 ? "Znamy już Twoje dzieci" : "Znamy już Twoje dziecko"}
-              </h2>
-              <p className="mt-1 text-on-surface-variant">
-                Dane z rejestru PESEL (symulacja). Plan jest gotowy — nie musisz odpowiadać na pytania.
-              </p>
-              <ul className="mt-4 flex flex-col gap-3">
-                {known.map((p) => (
-                  <li key={p.id} className="flex flex-col gap-3 rounded-sm bg-surface p-4 sm:flex-row sm:items-center">
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="font-medium">{p.name}</span>
-                      <span className="inline-flex items-center gap-1 text-meta text-on-surface-variant">
-                        <LockIcon size={14} /> {p.keyDateLabel} · rejestr PESEL
-                      </span>
-                    </span>
-                    <Button onClick={() => openKnown(p.id)} className="sm:min-w-48">
-                      Otwórz plan
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           <div className="flex w-full max-w-sm flex-col items-center gap-4">
-            <Button variant={known.length > 0 ? "secondary" : "primary"} onClick={() => enter("situation", answers)} className="w-full">
-              {known.length > 0 ? "Dodaj inne dziecko albo ciążę" : "Zaczynamy"}
+            <Button onClick={() => enter("situation", answers)} className="w-full">
+              Zaczynamy
             </Button>
-            <TextButton onClick={browseExample}>Najpierw rozejrzę się na przykładzie</TextButton>
+            {family && (
+              <Link href="/plan" className="text-label underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+                Wróć do planu
+              </Link>
+            )}
             <Link href="/wsparcie" className="text-meta underline underline-offset-4 decoration-outline hover:decoration-on-surface">
               Potrzebuję wsparcia w trudnej sytuacji
             </Link>
           </div>
+
+          {/* Wszystkie rodziny tylko zaraz po zalogowaniu; przy dodawaniu dziecka zostajemy w swojej. */}
+          {!family && (
+            <ScenarioList
+              id="gotowe-scenariusze"
+              title="Albo wybierz gotowy scenariusz"
+              items={SCENARIOS.map((s) => ({ id: s.plans[0].id, title: s.title, description: s.description }))}
+              onOpen={openPlan}
+            />
+          )}
+
+          {!family && own.length > 0 && (
+            <ScenarioList
+              id="twoje-plany"
+              title="Plany ułożone wcześniej"
+              items={own}
+              onOpen={openPlan}
+            />
+          )}
 
           <Disclosure summary="Co już o Tobie wiemy" className="w-full border-y border-outline text-left">
             <p className="mb-3 max-w-prose text-meta text-on-surface-variant">
@@ -342,7 +345,6 @@ export function Onboarding() {
           </Disclosure>
         </div>
       </Shell>
-      </ParentChat>
     );
   }
 
@@ -619,6 +621,44 @@ function OptionCards({
   );
 }
 
+/** Lista scenariuszy na ekranie startowym: karta otwiera plan od razu, bez pytań. */
+function ScenarioList({
+  id,
+  title,
+  items,
+  onOpen,
+}: {
+  id: string;
+  title: string;
+  items: Array<{ id: string; title: string; description: string }>;
+  onOpen: (planId: string) => void;
+}) {
+  return (
+    <section aria-labelledby={id} className="flex w-full flex-col gap-3 text-left">
+      <h2 id={id} className="font-serif text-title">
+        {title}
+      </h2>
+      <ul className="flex flex-col gap-3">
+        {items.map((item) => (
+          <li key={item.id} className="flex">
+            <button
+              type="button"
+              onClick={() => onOpen(item.id)}
+              className="flex min-h-16 w-full items-center gap-4 rounded-lg border-2 border-outline bg-background px-5 py-4 text-left transition-[border-color] duration-150 hover:border-on-surface-variant motion-reduce:transition-none"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">{item.title}</span>
+                <span className="mt-0.5 block text-meta text-on-surface-variant">{item.description}</span>
+              </span>
+              <ChevronRightIcon className="shrink-0" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function TopRow({ onBack, value }: { onBack: () => void; value: number }) {
   return (
     <div className="flex items-center gap-3 pt-4 md:pt-8">
@@ -652,10 +692,7 @@ function ActionBar({ children }: { children: React.ReactNode }) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh w-full flex-col">
-      <header className="px-gutter-mobile pt-4 md:px-gutter-desktop md:pt-6">
-        <span className="font-serif text-title">Zusik</span>
-      </header>
-      <main className="mx-auto flex w-full max-w-column flex-1 flex-col px-gutter-mobile pb-6 md:pb-16">{children}</main>
+      <main className="mx-auto flex w-full max-w-column flex-1 flex-col px-gutter-mobile pt-10 pb-6 md:pt-12 md:pb-16">{children}</main>
     </div>
   );
 }

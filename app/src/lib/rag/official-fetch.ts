@@ -6,9 +6,8 @@ type Facet = Parameters<typeof getOfficialSection>[1];
 type Snapshot = { url: string; html: string; retrievedAt: string; etag: string | null; modified: string | null };
 const byteLimit = 2 * 1024 * 1024;
 
-async function readHtml(response: Response) {
-  if (!/^text\/html(?:\s*;|$)/i.test(response.headers.get("content-type") ?? "") ||
-      Number(response.headers.get("content-length")) > byteLimit || !response.body) {
+export async function readLimitedBody(response: Response, limit: number) {
+  if (Number(response.headers.get("content-length")) > limit || !response.body) {
     await response.body?.cancel();
     throw new Error("Unsupported official document");
   }
@@ -18,14 +17,22 @@ async function readHtml(response: Response) {
   try {
     for (;;) {
       const { value, done } = await reader.read();
-      if (done) return Buffer.concat(chunks).toString("utf8");
+      if (done) return Buffer.concat(chunks);
       size += value.byteLength;
-      if (size > byteLimit) throw new Error("Official document exceeds limit");
+      if (size > limit) throw new Error("Official document exceeds limit");
       chunks.push(value);
     }
   } finally {
     await reader.cancel();
   }
+}
+
+async function readHtml(response: Response) {
+  if (!/^text\/html(?:\s*;|$)/i.test(response.headers.get("content-type") ?? "")) {
+    await response.body?.cancel();
+    throw new Error("Unsupported official document");
+  }
+  return (await readLimitedBody(response, byteLimit)).toString("utf8");
 }
 
 type FetchResult = { citation: AskCitation | null; fetches: number; unavailable: boolean };

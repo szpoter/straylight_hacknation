@@ -1,9 +1,9 @@
 ---
 openapi: 3.1.1
 info:
-  title: ZUSik · proponowane REST API
-  version: 0.1.0-plan
-  description: Projekt kontraktu do wdrożenia. Surowe PDF i pełny OCR pozostają lokalne. Zasady semantyczne i migracja w 11-rest-api.md.
+  title: ZUSik · REST API
+  version: 1.0.0
+  description: Synchroniczne operacje v1 dla podpisanej sesji demo. Surowe PDF i pełny OCR pozostają lokalne. Zasady semantyczne i migracja w 11-rest-api.md.
 servers:
 - url: "/api/v1"
 security:
@@ -545,7 +545,7 @@ paths:
         maxLength: 128
     post:
       operationId: createMessage
-      summary: Dodaj turę lub rozpocznij przetwarzanie
+      summary: Zapisz ukończoną turę rozmowy
       tags:
       - chat
       responses:
@@ -560,21 +560,6 @@ paths:
               schema:
                 type: string
                 format: uri-reference
-        '202':
-          description: Przyjęto do przetwarzania.
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Message"
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri-reference
-            Retry-After:
-              schema:
-                type: integer
-                minimum: 1
         '400':
           "$ref": "#/components/responses/Problem"
         '401':
@@ -765,7 +750,7 @@ components:
       required: true
       schema:
         type: string
-      description: Silny ETag zasobu docelowego pobrany przez GET.
+      description: 'Silny walidator w formacie "<id>.<revision>". Oba pola pochodzą z tej samej odczytanej wersji profilu lub sprawy. Po kompresji odpowiedzi pośrednik może zwrócić słaby ETag. Klient odtwarza wówczas silny walidator z pól obiektu.'
     key:
       name: Idempotency-Key
       in: header
@@ -774,7 +759,7 @@ components:
         type: string
         minLength: 8
         maxLength: 128
-      description: Klucz jednej operacji, powtarzany bez zmian przy ponowieniu.
+      description: Klucz jednej operacji, powtarzany bez zmian przy ponowieniu. Sesja może zapisać 120 nowych operacji na minutę. Ponowienie zapisanego wyniku nie zużywa limitu.
     cursor:
       name: cursor
       in: query
@@ -809,6 +794,24 @@ components:
       - monthlyGrossPay
       - monthlyContributionBasis
       - submissionStatus
+      - deliveryDate
+      - benefitRequest
+      - sicknessCoverage
+      - otherCoverage
+      - postInsuranceException
+      - maternityPayVariant
+      - payrollRegime
+      - monthlyEmployeeDeduction
+      - monthlyPayAfterDeduction
+      - payerInsuredCount
+      - accountArrears
+      - sicknessCertificate
+      - benefitHistory
+      - birthChildCount
+      - prenatalLeaveDays
+      - maternityCourse
+      - childDeathDate
+      - debtSettlement
     Value:
       oneOf:
       - type: object
@@ -848,6 +851,15 @@ components:
         required:
         - kind
         - code
+      - type: object
+        additionalProperties: false
+        properties:
+          kind:
+            const: count
+          count:
+            type: integer
+            minimum: 0
+        required: [kind, count]
     Source:
       type: object
       additionalProperties: false
@@ -920,6 +932,8 @@ components:
             field:
               enum:
               - birthDate
+              - deliveryDate
+              - childDeathDate
           required:
           - field
         then:
@@ -934,6 +948,9 @@ components:
               enum:
               - monthlyGrossPay
               - monthlyContributionBasis
+              - monthlyEmployeeDeduction
+              - monthlyPayAfterDeduction
+              - accountArrears
           required:
           - field
         then:
@@ -949,6 +966,16 @@ components:
               - insuranceTitle
               - employerRef
               - submissionStatus
+              - benefitRequest
+              - sicknessCoverage
+              - otherCoverage
+              - postInsuranceException
+              - maternityPayVariant
+              - payrollRegime
+              - benefitHistory
+              - sicknessCertificate
+              - maternityCourse
+              - debtSettlement
           required:
           - field
         then:
@@ -957,6 +984,14 @@ components:
               properties:
                 kind:
                   const: code
+      - if:
+          properties:
+            field: {enum: [payerInsuredCount, birthChildCount, prenatalLeaveDays]}
+        then:
+          properties:
+            value:
+              properties:
+                kind: {const: count}
     FactVersion:
       type: object
       additionalProperties: false
@@ -1202,6 +1237,12 @@ components:
           - certificate
           - decision
           - other
+        pageKinds:
+          type: array
+          description: Rodzaj każdej kolejnej strony. Serwer wymaga dokładnie pages elementów.
+          items:
+            type: string
+            enum: [application, insurance, payroll, certificate, decision, other]
         pages:
           type: integer
           minimum: 1
@@ -1229,12 +1270,42 @@ components:
         intent:
           type: string
           enum:
+          - link_account
+          - read_account
           - public_question
           - read_context
           - declare_fact
           - ask_case
           - explain_result
           - hypothetical
+        basisCaseRevision: {type: integer, minimum: 1}
+        scenario: {type: string, enum: [employment-transition, business-settlement, unavailable]}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        areas:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: {type: string, enum: [insurance, contributions, e_zla, balance, benefits]}
+        titleRef: {type: string, minLength: 1, maxLength: 128}
+        payerRef: {type: string, minLength: 1, maxLength: 128}
+        publicTopic:
+          type: string
+          enum: [nursery_recipient]
+        modelOptions:
+          oneOf:
+          - type: object
+            additionalProperties: false
+            required: [model]
+            properties:
+              model: {const: bielik}
+              effort: {enum: [low, high]}
+              verification: {enum: [standard, extra]}
+          - type: object
+            additionalProperties: false
+            required: [model]
+            properties:
+              model: {const: pllum}
         publicQuestion:
           type: string
           minLength: 2
@@ -1327,6 +1398,54 @@ components:
         then:
           required:
           - variant
+      - if:
+          properties:
+            intent: {const: public_question}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, publicQuestion, modelOptions]
+      - if:
+          properties:
+            intent: {const: read_context}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, topic, subjectId, validAt, knownAt, publicTopic]
+      - if:
+          properties:
+            intent: {const: declare_fact}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, fact, basisProfileRevision]
+      - if:
+          properties:
+            intent: {const: ask_case}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, topic, subjectId, validAt, knownAt]
+      - if:
+          properties:
+            intent: {const: explain_result}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, assessmentId]
+      - if:
+          properties:
+            intent: {const: hypothetical}
+        then:
+          propertyNames:
+            enum: [intent, replyTo, variant, subjectId, validAt, knownAt]
+      - if:
+          properties:
+            intent: {const: link_account}
+        then:
+          required: [subjectId, scenario, basisCaseRevision]
+          propertyNames: {enum: [intent, subjectId, scenario, basisCaseRevision]}
+      - if:
+          properties:
+            intent: {const: read_account}
+        then:
+          required: [subjectId, from, to, areas]
+          propertyNames: {enum: [intent, subjectId, from, to, areas, titleRef, payerRef]}
       description: >-
         Jedna intencja na operację. Serwer akceptuje tylko pola mające znaczenie dla tej intencji i nigdy nie wykorzystuje parametrów
         wariantu do zmiany profilu.
@@ -1337,6 +1456,7 @@ components:
         kind:
           type: string
           enum:
+          - account
           - public_source
           - fact
           - document
@@ -1389,6 +1509,21 @@ components:
           - failed
         answer:
           type: string
+        publicQuery:
+          type: string
+          description: Publiczne zapytanie utworzone przez serwer do wznowienia tematu.
+        opportunities:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, title, citationIds, missingFacts, exclusiveGroup]
+            properties:
+              id: {type: string}
+              title: {type: string}
+              citationIds: {type: array, minItems: 1, items: {type: string}}
+              missingFacts: {type: array, items: {type: string}}
+              exclusiveGroup: {type: [string, 'null']}
         citations:
           type: array
           items:
@@ -1409,6 +1544,34 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+        account:
+          type: object
+          additionalProperties: false
+          required: [sourceVersion, readAt, facts, coverage]
+          properties:
+            sourceVersion: {type: string}
+            readAt: {type: string, format: date-time}
+            facts:
+              type: array
+              items: {"$ref": "#/components/schemas/FactInput"}
+            coverage:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [area, status, spans]
+                properties:
+                  area: {type: string, enum: [insurance, contributions, e_zla, balance, benefits]}
+                  status: {type: string, enum: [no_register, unavailable, partial, unknown, complete]}
+                  spans:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [from, to]
+                      properties:
+                        from: {type: string, format: date}
+                        to: {type: string, format: date}
         input:
           "$ref": "#/components/schemas/MessageInput"
           description: Zweryfikowana, zminimalizowana postać tury użytkownika do wznowienia kontekstu.
@@ -1473,6 +1636,24 @@ components:
         to:
           type: string
           format: date
+        titleRef: {type: string}
+        payerRef: {type: string}
+        payer: {type: string, enum: [zus, employer]}
+        paymentStatus: {type: string, enum: [payable, withheld, needs_information, expired]}
+        segments:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [from, to, days, ratePct, basisGrosze, dailyGrosze, grossAmountGrosze]
+            properties:
+              from: {type: string, format: date}
+              to: {type: string, format: date}
+              days: {type: integer, minimum: 1}
+              ratePct: {type: number, minimum: 0}
+              basisGrosze: {type: integer, minimum: 0}
+              dailyGrosze: {type: integer, minimum: 0}
+              grossAmountGrosze: {type: integer, minimum: 0}
         grossAmountGrosze:
           type: integer
           minimum: 0

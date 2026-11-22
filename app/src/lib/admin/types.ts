@@ -40,6 +40,8 @@ export interface Parameter {
   sourceUrl?: string;
   /** Verbatim fragment of that text, when the corpus has it. */
   quote?: string;
+  /** Corpus fragment (logicalId) the value rests on; `citeStatutes` fills source, link and quote from it. */
+  lawId?: string;
   usedIn: string;
   /** Defaults to all cases of the benefit when omitted. */
   scope?: string;
@@ -74,6 +76,8 @@ export interface TestCase {
   reasons?: string[];
   /** Rule and version that produced the result. */
   computedBy?: string;
+  /** Parent screen that shows this case, for "Pokaż oczami rodzica". */
+  parentView?: string;
 }
 
 export interface HistoryEntry {

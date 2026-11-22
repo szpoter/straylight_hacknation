@@ -13,11 +13,11 @@ export interface CaseError {
 
 const MESSAGES: Record<string, string> = {
   stale_version: "Sprawa zmieniła się w innej karcie. Pokazuję aktualny stan, spróbuj jeszcze raz.",
-  not_ready: "Szkic będzie gotowy, gdy wszystkie dane zostaną potwierdzone.",
-  reminder_out_of_range: "Przypomnienie musi wypaść między dzisiaj a ostatnim dniem na złożenie.",
+  not_ready: "Szkic będzie gotowy, gdy potwierdzisz wszystkie dane.",
+  reminder_out_of_range: "Przypomnienie musi wypaść między dzisiaj a ostatnim dniem na złożenie ZAM.",
   draft_not_reviewed: "Dane zmieniły się od zatwierdzenia podglądu. Zatwierdź podgląd ponownie.",
   no_conflict: "Ta rozbieżność została już rozstrzygnięta.",
-  busy: "Zapisuję poprzednią zmianę, za chwilę spróbuj ponownie.",
+  busy: "Zapisuję poprzednią zmianę. Spróbuj ponownie za chwilę.",
   network: "Nie udało się połączyć z serwerem. Sprawdź połączenie i spróbuj ponownie.",
   storage_unavailable: "Zapis sprawy jest chwilowo niedostępny. Spróbuj ponownie za chwilę.",
   config_missing: "Serwer demo nie ma konfiguracji bazy danych.",

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SiteFooter } from "@/features/landing/site-footer";
-import { OLA } from "@/lib/family/ola";
 import { AuthShell } from "../auth-shell";
 import { AUTH_PATHS, flowHref, type Flow } from "../flow";
 import { OpenFamilyPlan } from "../open-family-plan";
@@ -17,10 +16,20 @@ export function EzusMethods({ flow, title }: { flow: Flow; title: string }) {
       <h1 className="visually-hidden">{title}</h1>
       <ul className={styles.methods}>
         {flow.origin === "logowanie" && (
-          <li>
-            <h2>Import danych rodziny Oli</h2>
-            <p className="mb-4">{OLA.mother} i {OLA.father} · dane z mObywatela i mZUS</p>
-            <OpenFamilyPlan />
+          <li className={styles.quickItem}>
+            {/* Skrót dla jury: gotowa rodzina zamiast logowania i dodawania dzieci ręcznie. */}
+            <section className={styles.quick} aria-labelledby="quick-start-title">
+              <div className={styles.quickText}>
+                <p className={styles.quickEyebrow}>Szybki test</p>
+                <h2 id="quick-start-title" className={styles.quickTitle}>Wejdź na gotowy profil rodziny</h2>
+                <p className={styles.quickLead}>
+                  Najszybszy sposób, żeby w kilka minut sprawdzić wszystkie funkcje. Dane rodziny Oli są już wczytane,
+                  więc nie musisz dodawać dzieci ręcznie.
+                </p>
+              </div>
+              <OpenFamilyPlan />
+            </section>
+            <p className={styles.quickDivider}><span>albo zaloguj się jak w eZUS</span></p>
           </li>
         )}
         <li>

@@ -80,7 +80,14 @@
     "legalBasisUrl": "https://eli.gov.pl/eli/DU/2021/1092/ogl",
     "snapshot": "oferta/snapshots/zus-dobry-start.json",
     "snapshotSha256": "e7af20ad720ba8804419888d1cdedeca86fd515cf37164123f2ef52269f6e176",
-    "sections": [],
+    "sections": [
+      {
+        "facet": "recipient",
+        "heading": "Kogo dotyczy wsparcie i jakie wsparcie mogę otrzymać",
+        "fragmentId": "of-dobry-1-2",
+        "paragraphStarts": ["Pieniądze otrzymasz na rachunek bankowy"]
+      }
+    ],
     "retrievedUrl": "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/program-dobry-start",
     "validFrom": null,
     "validTo": null

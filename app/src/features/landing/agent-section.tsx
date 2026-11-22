@@ -14,7 +14,7 @@ export function AgentSection() {
         <h2 id="agent-title" className={styles.title}>
           Poznaj Zusika
         </h2>
-        <p className={styles.lead}>Asystent AI, który przeprowadzi Cię przez formalności.</p>
+        <p className={styles.lead}>Asystent AI, który odpowiada na pytania i{NBSP}pomaga z{NBSP}wnioskami.</p>
       </header>
 
       <AgentRow side="right" object="folder" title="Odpowiada na pytania, ze źródłem">
@@ -23,13 +23,13 @@ export function AgentSection() {
       </AgentRow>
 
       <AgentRow side="left" object="pencil" title={`Wypełnia wniosek razem z${NBSP}Tobą`}>
-        Przenosi dane z{NBSP}Twojego profilu do szkicu i{NBSP}dopyta o{NBSP}to, czego brakuje, np. od
+        Przenosi dane z{NBSP}Twojego profilu do szkicu i{NBSP}dopytuje o{NBSP}to, czego brakuje, np. od
         kiedy chcesz zacząć urlop.
       </AgentRow>
 
       <AgentRow side="right" object="calculator" title="Wyjaśnia, skąd wzięła się kwota">
         Zasiłek liczy kalkulator według przepisów, a{NBSP}Zusik prostymi słowami tłumaczy wynik
-        i{NBSP}to, co go zmieni.
+        i{NBSP}mówi, co może go zmienić.
       </AgentRow>
     </section>
   );

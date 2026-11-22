@@ -96,7 +96,7 @@ export function CaseDetail({ id }: { id: string }) {
     const state = c.state === "warunek" ? c.state : nextState(c.state, "save", valid);
     patchStop(c.id, {
       state,
-      doc: { hasDraft: true, note: valid ? "Wniosek uzupełniony — sprawdź i zatwierdź" : `Uzupełnione ${done} z ${total} pól`, lastEvent: `Szkic zapisany ${formatLong(todayInPoland())}` },
+      doc: { hasDraft: true, note: valid ? "Wniosek uzupełniony. Sprawdź i zatwierdź" : `Uzupełnione ${done} z ${total} pól`, lastEvent: `Szkic zapisany ${formatLong(todayInPoland())}` },
     });
     return valid;
   };
@@ -105,7 +105,7 @@ export function CaseDetail({ id }: { id: string }) {
       go("wniosek");
       return;
     }
-    patchStop(c.id, { state: "zatwierdzony", doc: { note: "Zatwierdzony — gotowy do przekazania", lastEvent: `Zatwierdzony ${formatLong(todayInPoland())}` } });
+    patchStop(c.id, { state: "zatwierdzony", doc: { note: "Zatwierdzony i gotowy do przekazania", lastEvent: `Zatwierdzony ${formatLong(todayInPoland())}` } });
     go("przekaz");
   };
   const send = (channel: Channel) => {
@@ -175,7 +175,7 @@ export function CaseDetail({ id }: { id: string }) {
                   </button>
                 </p>
               )}
-              <FormEditor
+              <div data-tour="case-form"><FormEditor
                 def={def}
                 values={values}
                 onChange={saveValues}
@@ -191,16 +191,16 @@ export function CaseDetail({ id }: { id: string }) {
                   setNotice("Szkic zapisany. Wrócisz do niego w każdej chwili.");
                   go();
                 }}
-              />
+              /></div>
             </>
           )}
           {step === "sprawdz" && (
             <>
-              {pdf()}
-              <CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} />
+              <div data-tour="case-pdf">{pdf()}</div>
+              <div data-tour="case-check"><CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} /></div>
             </>
           )}
-          {step === "przekaz" && <SendStep def={def} values={values} onEdit={(field) => go("wniosek", field)} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} />}
+          {step === "przekaz" && <div data-tour="case-send"><SendStep def={def} values={values} onEdit={(field) => go("wniosek", field)} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} /></div>}
           {step === "podglad" && (
             <>
               {pdf("Pobierz kopię PDF")}
@@ -232,7 +232,7 @@ export function CaseDetail({ id }: { id: string }) {
         </p>
       )}
 
-      <Panel className="mt-stack max-w-prose" aria-labelledby="teraz">
+      <Panel className="mt-stack max-w-prose" aria-labelledby="teraz" data-tour="case-now">
         <SectionTitle id="teraz">Czy mam teraz coś zrobić?</SectionTitle>
         {withdrawn ? <div className="mt-3 grid gap-2"><p>Formularz ZAM został wycofany. Sprawdź aktualny druk w ZUS.</p>
           {(c.doc.hasDraft || sentOrLater) && <Button variant="secondary" onClick={() => go("podglad")}>Podgląd zapisanego wniosku</Button>}</div> : <NowCard
@@ -247,7 +247,7 @@ export function CaseDetail({ id }: { id: string }) {
       </Panel>
 
       {c.howTo && (
-        <section aria-labelledby="jak-zlozyc" className="mt-stack max-w-prose">
+        <section aria-labelledby="jak-zlozyc" data-tour="case-howto" className="mt-stack max-w-prose">
           <SectionTitle id="jak-zlozyc" className="mb-4 md:mb-6">
             Jak złożyć
           </SectionTitle>
@@ -270,7 +270,7 @@ export function CaseDetail({ id }: { id: string }) {
       )}
 
       {sentOrLater && (
-        <section aria-labelledby="przebieg" className="mt-section-mobile md:mt-stack">
+        <section aria-labelledby="przebieg" data-tour="case-timeline" className="mt-section-mobile md:mt-stack">
           <SectionTitle id="przebieg" className="mb-card">
             Przebieg sprawy
           </SectionTitle>
@@ -278,7 +278,7 @@ export function CaseDetail({ id }: { id: string }) {
         </section>
       )}
 
-      <p className="mt-stack text-meta text-on-surface-variant">
+      <p data-tour="case-source" className="mt-stack text-meta text-on-surface-variant">
         Źródło:{" "}
         <a href={c.source.url} target="_blank" rel="noreferrer" className="underline decoration-outline underline-offset-4 hover:decoration-on-surface">
           {c.source.label}
@@ -331,7 +331,7 @@ function NowCard({
         <p className="flex items-start gap-2 rounded-sm bg-tertiary p-3">
           <AlertIcon className="mt-0.5 shrink-0" />
           <span>
-            <span className="font-medium">Twój krok — uzupełnij dokumenty.</span> Pismo od {summons.from}, termin do {formatLong(summons.due)} ({daysLeftLabel(summons.due)}).
+            <span className="font-medium">Twój krok: uzupełnij dokumenty.</span> Pismo od {summons.from}, termin do {formatLong(summons.due)} ({daysLeftLabel(summons.due)}).
           </span>
         </p>
         <p className="text-on-surface-variant">{summons.text}</p>
@@ -363,7 +363,7 @@ function NowCard({
       return (
         <div className="mt-4 flex flex-col gap-4">
           <p>
-            {c.state === "aktualna" ? "Tak — ta sprawa czeka na rozpoczęcie." : c.state === "szkic" ? "Tak — szkic jest zapisany, ale niepełny." : c.state === "wypelniony" ? "Tak — sprawdź i zatwierdź wypełniony wniosek." : "Tak — przekaż zatwierdzony wniosek odbiorcy."}
+            {c.state === "aktualna" ? "Tak. Ta sprawa czeka na rozpoczęcie." : c.state === "szkic" ? "Tak. Szkic jest zapisany, ale niepełny." : c.state === "wypelniony" ? "Tak. Sprawdź i zatwierdź wypełniony wniosek." : "Tak. Przekaż zatwierdzony wniosek odbiorcy."}
             {c.doc.note && <span className="block text-on-surface-variant">{c.doc.note}</span>}
             {c.due && (
               <span className="block text-on-surface-variant">
@@ -398,7 +398,7 @@ function NowCard({
               Zapytaj o ten wniosek
             </Button>
           ) : (
-            <p className="text-on-surface-variant">Tę sprawę załatwiasz poza Zusikiem — szczegóły w „Jak złożyć” poniżej.</p>
+            <p className="text-on-surface-variant">Tę sprawę załatwiasz poza Zusikiem. Szczegóły znajdziesz poniżej w części „Jak złożyć”.</p>
           )}
           {pdf}
         </div>
@@ -410,7 +410,7 @@ function NowCard({
         <div className="mt-4 flex flex-col gap-4">
           <p className="flex items-start gap-2">
             <CheckIcon className="mt-0.5 shrink-0 text-primary" />
-            {event?.title === SIMULATED_HANDOFF ? event.detail : recorded ? "Przekazanie zostało oznaczone przez Ciebie. Status u odbiorcy możesz sprawdzić bezpośrednio u niego." : "Historia planu zawiera wcześniejszy wpis o przekazaniu wniosku. Status możesz sprawdzić u odbiorcy."}
+            {event?.title === SIMULATED_HANDOFF ? event.detail : recorded ? "Przekazanie zapisano na podstawie Twojej informacji. Status sprawdzisz bezpośrednio u odbiorcy." : "W historii planu jest wcześniejszy wpis o przekazaniu wniosku. Status sprawdzisz u odbiorcy."}
           </p>
           <Actions>
             <ButtonLink href="#przebieg" variant="secondary">

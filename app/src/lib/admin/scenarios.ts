@@ -11,6 +11,8 @@ import {
   type RateKind,
 } from "../rules/rates";
 import { evaluatePaternity, type PaternityInput } from "../rules/paternity";
+import { ZESTAW, type ZestawCase } from "../cases/zestaw";
+import { assessMaternityEligibility, type EligibilityFacts, type EligibilityStatus } from "../rules/maternity-eligibility";
 import type { TestCase } from "./types";
 
 /**
@@ -102,10 +104,10 @@ export const PATERNITY_SCENARIOS: Scenario[] = [
   },
   {
     id: "K-08",
-    title: "Brak potwierdzenia ubezpieczenia",
-    tag: "Brakujące dane",
-    input: { ...KAMIL, insuranceConfirmed: null },
-    expect: { status: "needs_info" },
+    title: "Ubezpieczenie potwierdzone na koncie ZUS, 14 dni naraz",
+    tag: "Dane uzupełnione",
+    input: { ...KAMIL, request: { start: "2026-12-08", days: 14 } },
+    expect: { status: "eligible", period: "8–21 grudnia 2026 r.", deadline: "07.12.2026", part: "1" },
   },
 ];
 
@@ -198,6 +200,7 @@ export function paternityTestCases(schedule: RuleSchedule = {}): TestCase[] {
       missing: missingProfile ? (r.question ?? undefined) : undefined,
       reasons: r.reasons.map((reason) => reason.text),
       computedBy: `lib/rules/paternity.ts · ${r.rulesVersion}`,
+      parentView: "/app/kamil",
     };
   });
 }
@@ -211,6 +214,8 @@ export interface RateScenario {
   kind: RateKind;
   /** Daily base of the benefit in PLN; null = not known yet. */
   dailyBase: number | null;
+  /** Where the daily base comes from, when it was worked out from a document. */
+  baseNote?: string;
   start: string;
   days: number;
   /** Worked out by hand from the task's rates, independent of the rule code. */
@@ -261,13 +266,14 @@ export const RATE_SCENARIOS: RateScenario[] = [
   },
   {
     id: "R-05",
-    title: "Brak podstawy wymiaru zasiłku",
-    tag: "Brakujące dane",
+    title: "Podstawa wymiaru uzupełniona z zaświadczenia Z-3",
+    tag: "Dane uzupełnione",
     kind: "parental",
-    dailyBase: null,
+    dailyBase: 172.58,
+    baseNote: "Z-3: przeciętne wynagrodzenie 6 000,00 zł − 13,71% składek = 5 177,40 zł, ÷ 30",
     start: "2027-01-04",
     days: 28,
-    expect: null,
+    expect: { rate10: 700, dailyGrosze: 12081, totalGrosze: 338268 },
   },
 ];
 
@@ -292,6 +298,7 @@ export function rateTestCases(schedule: RuleSchedule = {}): TestCase[] {
     const inputs = [
       { label: "Okres", value: `${RATE_LABEL[s.kind]}, ${s.days} dni od ${formatShort(s.start)}` },
       { label: "Podstawa dzienna", value: s.dailyBase === null ? "—" : formatGrosze(Math.round(s.dailyBase * 100)) },
+      ...(s.baseNote ? [{ label: "Skąd podstawa", value: s.baseNote }] : []),
     ];
     if (s.dailyBase === null || !s.expect) {
       return {
@@ -335,6 +342,7 @@ export function rateTestCases(schedule: RuleSchedule = {}): TestCase[] {
         (p) => `${formatShort(p.from)}–${formatShort(p.to)}: ${p.days} dni × ${formatGrosze(p.dailyGrosze)} (${rateText(s.kind, p.rate10)})`,
       ),
       computedBy: `lib/rules/rates.ts · ${b.rulesVersion}`,
+      parentView: "/kalkulator",
     };
   });
 }
@@ -422,11 +430,88 @@ export function topUpTestCases(schedule: RuleSchedule = {}): TestCase[] {
         "Porównuje się zasiłek po potrąceniu zaliczki na podatek (poradnik ZUS, s. 20).",
       ],
       computedBy: `lib/rules/rates.ts · ${r.rulesVersion}`,
+      parentView: "/kalkulator",
+    };
+  });
+}
+
+/* ---------- cases from the ZUS set (lib/cases/zestaw.ts, lib/rules/maternity-eligibility.ts) ---------- */
+
+/** Day the facts were read from the case files; fixed so the expectation does not drift with the calendar. */
+const ZESTAW_READ_ON = "2026-11-22";
+
+const ELIGIBILITY_LABEL: Record<EligibilityStatus, string> = {
+  przysluguje: "przysługuje",
+  "nie-przysluguje": "nie przysługuje",
+  wstrzymany: "wstrzymany do spłaty",
+  "brak-danych": "brak danych",
+};
+const APPLICANT_LABEL: Record<EligibilityFacts["applicant"], string> = { rodzi: "matka dziecka", "drugi-rodzic": "drugi rodzic" };
+const EVENT_LABEL: Record<EligibilityFacts["event"], string> = {
+  porod: "poród",
+  przysposobienie: "przyjęcie dziecka na wychowanie",
+  "rodzina-zastepcza": "rodzina zastępcza",
+  "rodzina-zastepcza-zawodowa": "zawodowa rodzina zastępcza",
+};
+const TITLE_LABEL: Record<EligibilityFacts["title"], string> = {
+  pracownik: "umowa o pracę",
+  zleceniobiorca: "umowa zlecenia",
+  dzialalnosc: "działalność gospodarcza",
+  wspolpracujacy: "osoba współpracująca",
+  inny: "inny tytuł",
+};
+const ARREARS_LABEL: Record<NonNullable<EligibilityFacts["arrears"]>, string> = {
+  brak: "brak",
+  "do-progu": "do 1% płacy minimalnej",
+  "powyzej-progu": "powyżej 1% płacy minimalnej",
+  "nie-wiem": "nieustalone",
+};
+const INSURED_LABEL = { tak: "tak", nie: "nie", "nie-wiem": "nieustalone" } as const;
+
+function zestawInputs(c: ZestawCase) {
+  const f = c.facts;
+  const rows = [
+    { label: "Stan faktyczny", value: c.story },
+    { label: "Wnioskuje", value: APPLICANT_LABEL[f.applicant] },
+    { label: "Zdarzenie", value: f.eventDate ? `${EVENT_LABEL[f.event]}, ${formatShort(f.eventDate)}` : `${EVENT_LABEL[f.event]}, data zakryta w aktach` },
+    ...(f.periodStart ? [{ label: "Okres we wniosku od", value: formatShort(f.periodStart) }] : []),
+    { label: "Tytuł ubezpieczenia", value: TITLE_LABEL[f.title] },
+    { label: "Ubezpieczenie chorobowe", value: INSURED_LABEL[f.insured] + (f.notSubjectDecision ? " (decyzja ZUS o niepodleganiu)" : "") },
+    ...(f.arrears ? [{ label: "Zadłużenie składkowe", value: ARREARS_LABEL[f.arrears] + (f.arrearsPaidOn === null ? ", niespłacone" : "") }] : []),
+    { label: "Decyzja ZUS", value: c.zus.text },
+    { label: "Źródło faktów", value: c.source },
+    { label: "Plik w zestawie", value: c.fileHint },
+  ];
+  return rows;
+}
+
+/** The ZUS case set: expected result is the ZUS decision from the files, result is the eligibility rule. */
+export function zestawTestCases(schedule: RuleSchedule = {}): TestCase[] {
+  return ZESTAW.map((c) => {
+    const expected = [{ label: "Prawo do zasiłku", value: ELIGIBILITY_LABEL[c.zus.status] }];
+    const resultUnder = (sch: RuleSchedule) => assessMaternityEligibility(c.facts, ZESTAW_READ_ON, sch);
+    const matchesUnder = (sch: RuleSchedule) => resultUnder(sch).status === c.zus.status;
+    const r = resultUnder(schedule);
+    return {
+      id: `Z-${c.id.toUpperCase()}`,
+      title: c.title,
+      tag: `Zestaw ZUS · ${c.zus.status === "przysluguje" ? "przyznanie" : "odmowa"}`,
+      ...(r.status === "brak-danych"
+        ? { status: "brak-danych" as const, missing: r.question ?? undefined }
+        : matchesUnder(schedule)
+          ? { status: "zgodna" as const }
+          : mismatchStatus(schedule, matchesUnder)),
+      inputs: zestawInputs(c),
+      expected,
+      result: [{ label: "Prawo do zasiłku", value: ELIGIBILITY_LABEL[r.status] }],
+      reasons: [r.summary, ...r.reasons.map((reason) => reason.text)],
+      computedBy: `lib/rules/maternity-eligibility.ts · ${r.rulesVersion}`,
+      parentView: `/sprawdz?sprawa=${encodeURIComponent(c.id)}`,
     };
   });
 }
 
 /** Every test case of the panel, evaluated with the values published in this demo session. */
 export function allTestCases(schedule: RuleSchedule = {}): TestCase[] {
-  return [...paternityTestCases(schedule), ...rateTestCases(schedule), ...topUpTestCases(schedule)];
+  return [...zestawTestCases(schedule), ...paternityTestCases(schedule), ...rateTestCases(schedule), ...topUpTestCases(schedule)];
 }

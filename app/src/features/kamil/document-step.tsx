@@ -40,7 +40,7 @@ export function originText(origin: Origin): string {
 
 /** Shows the part of the page where the value was read, with some margin. */
 export function Crop({ page, box, label }: { page: PageImage | undefined; box: Box; label: string }) {
-  if (!page) return <div className={`${s.crop} ${s.cropMissing}`}>Wycinek wróci po ponownym dodaniu dokumentu</div>;
+  if (!page) return <div className={`${s.crop} ${s.cropMissing}`}>Wycinek wróci, gdy dodasz dokument ponownie</div>;
   const pad = 0.015;
   const bx = Math.max(0, box.x - pad);
   const by = Math.max(0, box.y - pad);

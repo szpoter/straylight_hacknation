@@ -88,7 +88,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
   wysokosc: {
     paragraphs: [
       "Podstawą zasiłku pracownika jest przeciętne miesięczne wynagrodzenie z 12 miesięcy kalendarzowych przed miesiącem, w którym powstało prawo do zasiłku. Przy krótszym zatrudnieniu liczy się pełne przepracowane miesiące.",
-      "Do podstawy wchodzi przychód, od którego płacisz składkę chorobową, po odliczeniu składek na ubezpieczenia społeczne potrąconych przez pracodawcę. Uwzględnia się wynagrodzenie od obecnego pracodawcy.",
+      "Do podstawy wchodzi przychód, od którego płacisz składkę chorobową, po odliczeniu składek na ubezpieczenia społeczne potrąconych przez pracodawcę. Liczy się wynagrodzenie od obecnego pracodawcy.",
       "Za urlop macierzyński i ojcowski zasiłek wynosi 100% podstawy, a za urlop rodzicielski 70%. Jeśli w ciągu 21 dni po porodzie złożysz wniosek o zasiłek za cały okres, dostaniesz 81,5% za urlop macierzyński i rodzicielski.",
       "Jeśli zasiłek po odjęciu zaliczki na podatek jest niższy niż 1000 zł miesięcznie, płatnik podnosi go do tej kwoty, czyli do wysokości świadczenia rodzicielskiego.",
       "Gdy zasiłek wypłaca ZUS, pracodawca wystawia zaświadczenie płatnika składek na druku Z-3 (pracownicy) albo Z-3a (część innych ubezpieczonych).",
@@ -103,8 +103,8 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
     paragraphs: [
       "Program badań prenatalnych NFZ jest bezpłatny i obejmuje wszystkie kobiety w ciąży, bez względu na wiek.",
       "Badania nieinwazyjne to USG płodu między 11. a 14. tygodniem oraz między 18. tygodniem a 22. tygodniem i 6. dniem ciąży, a także badania biochemiczne z krwi.",
-      "Potrzebne jest skierowanie od lekarza prowadzącego ciążę z podanym wiekiem ciąży w tygodniach. Termin ustala poradnia według tygodnia ciąży.",
-      "Gdy wynik jest nieprawidłowy albo niejednoznaczny lub gdy spełnione są kryteria medyczne, lekarz kieruje na dalszą diagnostykę, np. poradę genetyczną lub amniopunkcję, w ośrodku specjalistycznym.",
+      "Potrzebujesz skierowania od lekarza prowadzącego ciążę. Na skierowaniu musi być wiek ciąży w tygodniach. Termin ustala poradnia według tygodnia ciąży.",
+      "Gdy wynik jest nieprawidłowy albo niejednoznaczny lub gdy spełnione są kryteria medyczne, lekarz kieruje na dalszą diagnostykę w ośrodku specjalistycznym, np. na poradę genetyczną lub amniopunkcję.",
       "Placówkę znajdziesz w wyszukiwarce NFZ po haśle „Badania prenatalne”. Zabierz skierowanie, wcześniejsze wyniki i dokument tożsamości.",
     ],
     sources: [S.prenatal],
@@ -127,7 +127,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
 
   ryzyka: {
     paragraphs: [
-      "Umowa zawarta dla pozoru. Ubezpieczenie jest skuteczne tylko wtedy, gdy naprawdę pracujesz. ZUS może zbadać, w jakich okolicznościach zawarto umowę o pracę albo umowę zlecenia. Jeśli uzna, że zawarto ją dla pozoru albo w celu obejścia prawa, wydaje decyzję o niepodleganiu ubezpieczeniom społecznym. Bez ubezpieczenia chorobowego nie ma prawa do zasiłku chorobowego ani macierzyńskiego.",
+      "Umowa zawarta dla pozoru. Ubezpieczenie jest skuteczne tylko wtedy, gdy naprawdę pracujesz. ZUS może zbadać, w jakich okolicznościach zawarto umowę o pracę albo umowę zlecenia. Jeśli uzna, że zawarto ją dla pozoru albo żeby obejść prawo, wydaje decyzję o niepodleganiu ubezpieczeniom społecznym. Bez ubezpieczenia chorobowego nie ma prawa do zasiłku chorobowego ani macierzyńskiego.",
       "Podwyżka wynagrodzenia w ciąży. ZUS może zbadać, czy wynagrodzenie w umowie o pracę ustalono w uzasadnionej wysokości, i wydać decyzję w sprawie podstawy wymiaru składek. Jeśli uzna, że podwyżka miała służyć tylko wyższemu zasiłkowi, ustali niższą podstawę, więc zasiłek też będzie niższy.",
       "Podstawą zasiłku pracownika jest średnie wynagrodzenie z 12 miesięcy kalendarzowych przed miesiącem, w którym powstało prawo do zasiłku. Jedna podwyżka tuż przed porodem zmienia więc tylko część tej średniej.",
       "Brak ubezpieczenia chorobowego w dniu porodu. Zasiłek macierzyński przysługuje, jeśli urodzisz dziecko (albo przyjmiesz je na wychowanie) w czasie ubezpieczenia chorobowego.",
@@ -187,7 +187,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
     paragraphs: [
       "Najpierw wybierz sposób wypłaty zasiłku. Domyślnie dostajesz 100% podstawy za urlop macierzyński i 70% za rodzicielski.",
       "Druga możliwość to 81,5% za cały okres urlopu macierzyńskiego i rodzicielskiego. Trzeba wtedy złożyć wniosek najpóźniej 21 dni po porodzie: o zasiłek za cały okres albo za urlop macierzyński z deklaracją, że wykorzystasz pełny urlop rodzicielski.",
-      "81,5% nie obejmuje 9 tygodni urlopu rodzicielskiego zastrzeżonych dla drugiego rodzica. Za tę część zasiłek wynosi 70%.",
+      "81,5% nie obejmuje 9 tygodni urlopu rodzicielskiego zarezerwowanych dla drugiego rodzica. Za tę część zasiłek wynosi 70%.",
       "Jeśli w pierwszym roku życia dziecka nie weźmiesz ani jednego dnia płatnego urlopu rodzicielskiego, zasiłek za ten urlop wyniesie 70%. Za urlop macierzyński dostaniesz wtedy na wniosek jednorazowe wyrównanie do 100%.",
     ],
     sources: [S.zusAmount, S.govParental],
@@ -209,7 +209,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
 
   z3: {
     paragraphs: [
-      "Jeśli Twój pracodawca zgłasza do ubezpieczenia chorobowego nie więcej niż 20 osób, zasiłek macierzyński ustala i wypłaca ZUS, a nie pracodawca. Większy pracodawca wypłaca zasiłki sam.",
+      "Jeśli Twój pracodawca zgłasza do ubezpieczenia chorobowego nie więcej niż 20 osób, zasiłek macierzyński ustala i wypłaca ZUS. Większy pracodawca wypłaca zasiłki sam.",
       "Liczbę ubezpieczonych ustala się na cały rok kalendarzowy według stanu z 30 listopada poprzedniego roku.",
       "Gdy zasiłek wypłaca ZUS, potrzebne jest zaświadczenie płatnika składek na druku Z-3. Wystawia je pracodawca i podaje w nim dane o wynagrodzeniu do podstawy zasiłku.",
       "Wnioski i zaświadczenia od Ciebie, pracodawcy i lekarza można złożyć w ZUS papierowo albo elektronicznie przez PUE/eZUS.",
@@ -223,7 +223,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
   "zglos-urodzenie": {
     paragraphs: [
       "Urodzenie dziecka zgłasza matka albo ojciec w ciągu 21 dni od wystawienia karty urodzenia. Kartę wystawia lekarz lub położna i w ciągu 3 dni przekazuje ją do urzędu stanu cywilnego.",
-      "W urzędzie zgłaszasz urodzenie w USC właściwym dla miejsca urodzenia, z dowodem osobistym lub paszportem. Online potrzebujesz profilu zaufanego, e-dowodu albo podpisu kwalifikowanego, a od 1 stycznia 2026 r. także adresu do e-Doręczeń.",
+      "Osobiście zgłaszasz urodzenie w USC właściwym dla miejsca urodzenia, z dowodem osobistym lub paszportem. Online potrzebujesz profilu zaufanego, e-dowodu albo podpisu kwalifikowanego, a od 1 stycznia 2026 r. także adresu do e-Doręczeń.",
       "Możesz też skorzystać z usługi „Zgłoś urodzenie dziecka” w aplikacji mObywatel. Zgłoszenie jest bezpłatne. Jeśli urząd ma kartę urodzenia, sporządzi akt w dniu wizyty albo następnego dnia roboczego po zgłoszeniu online.",
       "Dostajesz jeden bezpłatny odpis skrócony aktu urodzenia, powiadomienie o nadaniu numeru PESEL i potwierdzenie zameldowania, jeśli dziecko zostało zameldowane.",
       "Jeśli nie zgłosisz urodzenia w terminie, kierownik USC sam wybierze dziecku imię i zarejestruje urodzenie na podstawie karty urodzenia.",
@@ -238,8 +238,8 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "Bez takiego wniosku w terminie dostaniesz 100% za urlop macierzyński i 70% za rodzicielski.",
       "Do wniosku podajesz dane dziecka: imię i nazwisko, PESEL, datę i miejsce urodzenia, a także imię, nazwisko i PESEL drugiego rodzica.",
       "Sprawdź w kadrach, kto wypłaca zasiłek. Jeśli pracodawca, przekaż mu podpisany wydruk albo dokument elektroniczny zgodnie z zasadami w firmie. Dołącz skrócony odpis aktu urodzenia lub jego kopię.",
-      "Jeśli wypłaca ZUS, możesz przekazać dokumenty przez kadry lub złożyć wniosek w ZUS osobiście, pocztą, przez eZUS albo e-Doręczenia. Pracodawca przekazuje zaświadczenie Z-3. ZUS pobiera polski akt z rejestru i może poprosić o odpis, jeżeli go nie uzyska.",
-      "Deklaracja na druku ZAM przewiduje co najmniej jeden dzień urlopu rodzicielskiego w pierwszym roku życia dziecka. Dziewięć tygodni przysługujących wyłącznie drugiemu rodzicowi pozostaje płatne w wysokości 70%.",
+      "Jeśli wypłaca ZUS, możesz przekazać dokumenty przez kadry lub złożyć wniosek w ZUS osobiście, pocztą, przez eZUS albo e-Doręczenia. Pracodawca przekazuje zaświadczenie Z-3. ZUS pobiera polski akt z rejestru i może poprosić o odpis, jeśli go nie uzyska.",
+      "Deklaracja na druku ZAM przewiduje co najmniej jeden dzień urlopu rodzicielskiego w pierwszym roku życia dziecka. Za 9 tygodni zarezerwowanych dla drugiego rodzica zasiłek nadal wynosi 70%.",
       "Zasiłek nie może być niższy niż 1000 zł miesięcznie po odjęciu zaliczki na podatek, bo płatnik podnosi go do tej kwoty.",
     ],
     sources: [S.zusAmount, S.zusDocs, S.zusPayers, { label: "Rozporządzenie z 27.09.2026 r., § 13", url: "https://eli.gov.pl/eli/DU/2026/1316/ogl" }, { label: "ZUS · Kanały składania wniosków", url: "https://www.zus.pl/o-zus/aktualnosci/-/asset_publisher/aktualnosci/content/id/14233105" }],
@@ -250,7 +250,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
     paragraphs: [
       "Urlop macierzyński trwa 20 tygodni przy jednym dziecku. Przy porodzie mnogim trwa 31, 33, 35 albo 37 tygodni, zależnie od liczby dzieci.",
       "Jeśli nie korzystałaś z urlopu przed porodem, Twój urlop rozpoczyna się w dniu porodu z mocy prawa. Nie musisz składać wniosku o jego udzielenie.",
-      "Matka musi wykorzystać co najmniej 14 tygodni po porodzie. Resztę może przejąć ojciec wychowujący dziecko. Wniosek o rezygnację z części urlopu składasz co najmniej 7 dni przed powrotem do pracy, a wniosek ojca o tę część co najmniej 14 dni przed jej rozpoczęciem.",
+      "Matka musi wykorzystać co najmniej 14 tygodni po porodzie. Resztę może przejąć ojciec wychowujący dziecko. Wniosek o rezygnację z części urlopu składasz co najmniej 7 dni przed powrotem do pracy. Ojciec składa wniosek o tę część co najmniej 14 dni przed jej rozpoczęciem.",
       "Za urlop przysługuje zasiłek macierzyński: 100% podstawy albo 81,5%, jeśli wniosek o taki zasiłek złożysz najpóźniej 21 dni po porodzie.",
       "W ciąży i w czasie urlopu pracodawca nie może wypowiedzieć umowy ani przygotowywać jej rozwiązania, z nielicznymi wyjątkami, np. upadłości lub likwidacji firmy.",
     ],
@@ -361,7 +361,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
       "Becikowe to jednorazowe 1000 zł z tytułu urodzenia dziecka. Wnioskuje rodzic, opiekun prawny albo opiekun faktyczny.",
       "Przysługuje, gdy dochód rodziny na osobę nie przekracza 1922 zł netto miesięcznie.",
       "Matka musi być pod opieką lekarza lub położnej od co najmniej 10. tygodnia ciąży do porodu. Potwierdza to zaświadczenie od lekarza lub położnej. Wymóg nie dotyczy opiekunów prawnych, faktycznych ani rodziców adopcyjnych.",
-      "Złóż SR-2 w gminie lub OPS właściwym dla miejsca zamieszkania, wyślij pocztą albo złóż wniosek elektroniczny przez Emp@tię. Rodzic ma 12 miesięcy od urodzenia, a przy przysposobieniu lub objęciu opieką prawną albo faktyczną termin biegnie od tego zdarzenia, do ukończenia przez dziecko 18 lat.",
+      "Złóż SR-2 w gminie lub OPS właściwym dla miejsca zamieszkania, wyślij pocztą albo złóż wniosek elektroniczny przez Emp@tię. Rodzic ma na to 12 miesięcy od urodzenia. Przy przysposobieniu lub objęciu opieką prawną albo faktyczną termin liczy się od tego zdarzenia, najpóźniej do ukończenia przez dziecko 18 lat.",
       "Jeśli samotnie wychowujesz dziecko, przygotuj tytuł alimentacyjny albo dokument potwierdzający ustawowy wyjątek, np. akt zgonu drugiego rodzica lub orzeczenie o opiece naprzemiennej.",
       "Wniosek złożony po terminie nie zostanie rozpatrzony. Decyzja zapada zwykle w ciągu miesiąca.",
     ],
@@ -401,7 +401,7 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
   praca: {
     paragraphs: [
       "Umowa na czas określony albo na okres próbny dłuższy niż miesiąc, która skończyłaby się po 3. miesiącu ciąży, przedłuża się do dnia porodu.",
-      "Przedłużenie następuje z mocy prawa, bez wniosku i bez aneksu. Nie dotyczy umowy zawartej na zastępstwo nieobecnego pracownika.",
+      "Przedłużenie działa z mocy prawa, bez wniosku i bez aneksu. Nie dotyczy umowy zawartej na zastępstwo nieobecnego pracownika.",
       "W ciąży pracodawca nie może wypowiedzieć umowy ani jej rozwiązać, z wyjątkiem upadłości lub likwidacji firmy albo zwolnienia z winy pracownicy za zgodą związku zawodowego. Ochrona działa od stwierdzenia ciąży zaświadczeniem lekarskim.",
       "Jeśli wypowiedzenie doręczono, zanim pracodawca wiedział o ciąży, a w okresie wypowiedzenia dostanie on zaświadczenie lekarskie, musi wypowiedzenie wycofać.",
       "Kobieta w ciąży nie może pracować w nadgodzinach ani w nocy. Pracodawca musi też zwolnić ją na zalecone badania lekarskie, jeśli nie da się ich zrobić poza pracą, i zapłacić za ten czas.",
