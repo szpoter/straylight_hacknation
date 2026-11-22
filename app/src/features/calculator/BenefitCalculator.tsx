@@ -51,9 +51,9 @@ export function BenefitCalculator() {
 
       <details className="rounded-lg border border-outline p-gutter-mobile">
         <summary>Sprawdź przykładową sprawę lub dokument PDF</summary>
-        <div className="mt-4 grid gap-4">
+        <div className="mt-4 grid grid-cols-1 gap-4">
           <p>Wybór przykładu zastępuje dane formularza na ekranie. Plan rodziny zachowuje zapisane dane.</p>
-          {BENEFIT_PRESETS.map(preset => <Button key={preset.id} variant="secondary" onClick={() => update(preset.form)}>{preset.title}</Button>)}
+          {BENEFIT_PRESETS.map(preset => <Button key={preset.id} variant="secondary" className="min-h-12 h-auto! whitespace-normal! py-2" onClick={() => update(preset.form)}>{preset.title}</Button>)}
           <CasePdf onBasis={known => update({ A: { ...form.A, mode: "known", known } })} />
         </div>
       </details>
