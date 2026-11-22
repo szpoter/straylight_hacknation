@@ -58,7 +58,7 @@ function bank(k, f, items) {
 }
 
 // Broad curved edges and printed lines share the same bend as the sheet rises.
-function leadingSheet(f) {
+export function leadingSheet(f) {
   const [x, y, w, h, a] = pose(f, [[0,821,458,165,43,-3],[8,821,458,165,43,-3],[14,799,455,167,51,-5],[22,753,447,170,65,-9],[30,682,432,177,78,-14],[36,630,421,183,101,-18],[43,605,387,195,122,-17],[54,654,302,208,166,9]]);
   const bend = crease.getNowFrame(f).get('bend');
   const lines = [[-22,19,26],[-22,25,18],[-17,39,44],[-17,52,47],[-17,66,32]];

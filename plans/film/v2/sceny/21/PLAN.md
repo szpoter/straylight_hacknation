@@ -1,0 +1,8 @@
+# Ujęcie 21 · Marta otwiera plan
+
+**40,00–42,00 s.** Po tytule tniemy na zbliżenie elementów ekranu logowania. Czytamy nazwę importu, widzimy oboje rodziców i źródła danych. Na słowie „loguje” Marta naciska przycisk. Odpowiedź widać w miejscu kliknięcia. [Scenariusz](../../../../../PLAN-FILMU-DEMO.md) · [Ekran eZUS](../../../../../app/src/features/auth/ezus/ezus-methods.tsx)
+
+1. Zostawić początek przycisku na lewej krawędzi poprzedniego tytułu. Odtworzyć okrągłe końce i oryginalny podpis. Zachować pełny komunikat demonstracji na bursztynowym pasku. [Przycisk importu](../../../../../app/src/features/auth/open-family-plan.tsx) · [Pasek demonstracji](../../../../../app/src/features/auth/auth-shell.tsx)
+2. Wprowadzić grot z dołu w prawą część przycisku. Kierunek ostatniego przesunięcia doprowadza oko do miejsca nacisku. Gest zbliżenia do celu opieramy na ujęciu kursora Video Shotcraft. Nieruchomy detal jednej czynności pochodzi z przykładu prezentacji interfejsu Bang Motion. [Video Shotcraft · Cursor Flyover](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/demos/camera/cursor-flyover/CursorFlyover.tsx) · [Bang Motion · SaaS UI Tour](../../przyklady/ruch-produktu.jpg)
+3. Ścisnąć przycisk w trzech klatkach. Puścić go szybko, z malejącym przemieszczeniem na końcu powrotu. Kursor po zwolnieniu odsuwa się w pustą przestrzeń. [Motionmaxxing · przebieg krzywej](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg)
+4. Pod koniec puścić z lewej zieloną kreskę mapy. Jej koniec przekracza lewą ćwiartkę kadru w chwili przejścia do planu Oli.
