@@ -16,12 +16,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   if (session === null) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-column flex-col items-center justify-center gap-6 px-gutter-mobile text-center">
-        <h1 className="font-serif text-headline-mobile md:text-headline">Plan rodziny Oli</h1>
+        <h1 className="font-serif text-headline-mobile md:text-headline">Ta część przewodnika wymaga logowania</h1>
         <p className="text-lead text-on-surface-variant">
-          Otwórz profil rodziny, żeby zobaczyć jej sprawy i terminy.
+          Zaloguj się w&nbsp;wersji demonstracyjnej. Skorzystasz z&nbsp;fikcyjnego profilu, bez prawdziwych danych.
         </p>
         <div className="flex w-full max-w-sm flex-col gap-3">
-          <ButtonLink href={AUTH_PATHS.login}>Otwórz profil Oli</ButtonLink>
+          <ButtonLink href={AUTH_PATHS.login}>Zaloguj się</ButtonLink>
           <ButtonLink href="/" variant="secondary">
             Wróć na stronę główną
           </ButtonLink>

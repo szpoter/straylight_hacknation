@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 import styles from "./site-footer.module.css";
 
+// Stopka strony głównej. Treść według SPEC.md („Po bento — wejście do demo i stopka”) i wymagań
+// z treści zadania ZUS (s. 13–16):
+// - przekierowania do informacji o uprawnieniach na www.zus.pl, w ministerstwie i w PIP,
+// - informacje o podmiotach wspierających w szczególnych sytuacjach (np. śmierć dziecka),
+// - odpis aktu urodzenia (rejestr stanu cywilnego na gov.pl),
+// - wskazanie, które funkcje działają z AI,
+// - logowanie przez mObywatel i pobieranie danych z ZUS są wyłącznie symulowane.
+// Linki zewnętrzne otwierają się w nowej karcie, z ikoną i informacją dla czytnika ekranu.
 const NBSP = " ";
 
 const OFFICIAL = [
@@ -18,7 +26,8 @@ const SUPPORT = [
 const GUIDE = [
   { label: "Poznaj Zusika", href: "#agent" },
   { label: "Urlop w liczbach", href: "#liczby" },
-  { label: "Otwórz profil Oli", href: "/logowanie" },
+  { label: "Zaloguj się", href: "/logowanie" },
+  { label: "Zarejestruj się", href: "/rejestracja" },
 ];
 
 /** Poza stroną główną kotwice sekcji muszą prowadzić na „/”, np. „/#agent”. */
@@ -36,6 +45,10 @@ export function SiteFooter({ sectionBase = "" }: { sectionBase?: string }) {
             </p>
             <p className={styles.brandText}>
               Formalności, zasiłki i{NBSP}urlopy związane z{NBSP}rodzicielstwem w{NBSP}jednym planie.
+            </p>
+            <p className={styles.demo}>
+              Wersja demonstracyjna. Logowanie przez mObywatel i{NBSP}pobranie danych z{NBSP}ZUS są
+              symulowane, a{NBSP}dane w{NBSP}przykładach są fikcyjne.
             </p>
           </div>
 

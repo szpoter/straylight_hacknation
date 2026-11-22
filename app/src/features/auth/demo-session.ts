@@ -51,7 +51,7 @@ function write(session: DemoSession | null) {
 }
 
 export function startDemoSession(origin: FlowOrigin, entry: FlowEntry) {
-  write({ version: 1, loggedInAt: new Date().toISOString(), method: "local", origin, entry, data: "local", family: importFamilyProfile() });
+  write({ version: 1, loggedInAt: new Date().toISOString(), method: "mobywatel", origin, entry, data: "pending", family: importFamilyProfile() });
 }
 
 export function setDemoData(data: DemoSession["data"]) {
