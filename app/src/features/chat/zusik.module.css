@@ -781,6 +781,7 @@
 .sourceMeta {
   color: var(--ink-variant);
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 /* ---- bottom: composer ---------------------------------------------------------- */
