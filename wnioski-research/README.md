@@ -1,8 +1,35 @@
-# Wnioski w „Dokumentach”: research i zadanie dla Codexa
+# Wnioski w Dokumentach
 
-Stan: 22.11.2026. Kod: `app/src/lib/demo/forms.ts` (definicje 10 wniosków), `app/src/features/documents/` (edycja, sprawdzanie, „Przekaż”, PDF), `app/src/lib/forms/application-pdf.ts` (PDF w przeglądarce), `app/src/lib/forms/zam-fill.ts` + `zam-map.ts` (wypełnianie oficjalnego druku ZAM po współrzędnych, wzór dla innych druków).
+## Wynik wdrożenia z 22 listopada 2026 r.
 
-## Cel
+Dziesięć spraw z pierwotnego zestawienia prowadzi teraz do właściwych kanałów. Rodzic ma także oddzielne pismo o pracę podczas urlopu rodzicielskiego. Wybór kanału internetowego zapisuje w planie przykładowe potwierdzenie. Przy piśmie papierowym lub wysyłanym e-mailem rodzic pobiera dokument i sam przekazuje go adresatowi.
+
+| Sprawa | Co przygotowuje aplikacja | Ustalenia i źródła |
+|---|---|---|
+| Zgłoszenie urodzenia | Symulację gov.pl lub mObywatela albo listę na wizytę w USC. Rodzic podpisuje protokół w urzędzie. | [USC i POZ](civil-wdrozenie.md) |
+| Urlop macierzyński | Pismo do pracodawcy o część urlopu przed porodem. Po porodzie plan pokazuje informację o rozpoczęciu urlopu. | [Urlopy](leave-wdrozenie.md) |
+| Urlop ojcowski | Pismo z wyliczonym ostatnim dniem urlopu, oświadczeniem o wcześniejszym wykorzystaniu i wykazem dokumentów. | [Urlopy](leave-wdrozenie.md) |
+| Urlop rodzicielski | Pismo o urlop oraz oddzielny wniosek o łączenie go z pracą. Formularze uwzględniają terminy i dotychczasowe wykorzystanie urlopu. | [Urlopy](leave-wdrozenie.md) |
+| Zasiłek macierzyński | Wypełniony druk ZAM. Wybór płatnika decyduje, czy można skorzystać z kanałów bezpośrednich ZUS. | [ZAM i ubezpieczenie](insurance-wdrozenie.md) |
+| Ubezpieczenie dziecka | Pismo pracownika do kadr. Zgłoszenie ZCNA do ZUS składa płatnik. | [ZAM i ubezpieczenie](insurance-wdrozenie.md) |
+| 800+ | Symulację SW-R w eZUS, mZUS, banku lub Emp@tii. | [Research świadczeń](800plus-becikowe.md) · [Wdrożenie](benefits-wdrozenie.md) |
+| Becikowe | Urzędowy wzór SR-2 z odpowiednimi załącznikami na papier albo symulację w Emp@tii. | [Research świadczeń](800plus-becikowe.md) · [Wdrożenie](benefits-wdrozenie.md) |
+| Dodatkowy odpis aktu urodzenia | Pismo papierowe do wybranego USC lub symulację online. Wniosek uwzględnia liczbę i rodzaj odpisów oraz podstawę zwolnienia z opłaty. | [USC i POZ](civil-wdrozenie.md) |
+| Wybór POZ | Właściwą deklarację lekarza, pielęgniarki lub położnej do podpisu albo symulację złożenia przez IKP. | [USC i POZ](civil-wdrozenie.md) |
+
+Nazwy przykładowych potwierdzeń odpowiadają usługom. Wniosek do ZUS przez eZUS ma UPP, odpis przez gov.pl ma UPP na skrzynce do e-Doręczeń, a zgłoszenie urodzenia ma potwierdzenie wysłania. Emp@tia określa potwierdzenie w eWnioskach jako UPO. [ZUS](https://www.zus.pl/-/16-sierpnia-to-ostatni-dzien-na-skladanie-wnioskow-o-swiadczenie-postojowe) · [Odpis aktu](https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu) · [Zgłoszenie urodzenia](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Instrukcja Emp@tii](https://empatia.gov.pl/documents/d/empatia/instrukcja-ewnioski_v14)
+
+### Odbiór
+
+Produkcyjna wersja lokalna przeszła 35 scenariuszy w Chrome na danych fikcyjnych. Sprawdzono 11 formularzy i wszystkie 33 połączenia formularza z kanałem, a także dwa dodatkowe warianty deklaracji POZ. Test wpisuje dane, zatwierdza wniosek, weryfikuje pobrany PDF lub przykładowe potwierdzenie i odczytuje historię po odświeżeniu strony. Wydruki ZAM dla obu wyborów stawki sprawdzono również po położeniu znaków na stronach 2 i 5.
+
+Skrypt można uruchomić z katalogu `app` poleceniem `node --import tsx scripts/documents-browser.ts http://127.0.0.1:3419`, podając adres działającej aplikacji. Pełny zestaw Vitest przeszedł 514 testów. Sprawdzono też TypeScript oraz produkcyjną kompilację Next.js.
+
+---
+
+## Pierwotne zadanie i stan przed wdrożeniem
+
+### Cel
 
 Każdy wniosek ma mieć sens merytoryczny:
 - jeśli istnieje **oficjalny druk** → pobrać go do `app/public/forms/`, wypełniać automatycznie z wartości wniosku (jak ZAM) i dawać do pobrania;
@@ -41,7 +68,7 @@ Teraz wszystkie 10 wniosków ma ten sam generyczny PDF „etykieta → wartość
 ### PDF dla pism urlopowych
 Zamiast tabeli „etykieta → wartość” — pismo: nadawca, miejscowość i data, adresat (pracodawca), tytuł „Wniosek o udzielenie urlopu …”, treść z podstawą prawną i okresem, oświadczenia, lista załączników, podpis. Kanały: „Do pracodawcy (papier)” i „E-mailem jako PDF”; hint kanału `pracodawca` („przekazuje dane do ZUS”) jest błędny dla urlopów.
 
-## Do zbadania (research nie skończony)
+### Pytania do sprawdzenia na początku projektu
 
 Dla każdego: oficjalna nazwa i symbol, podstawa prawna, kto do kogo, termin, **wszystkie kanały** (papier, PUE/eZUS, mZUS, bank, Emp@tia, gov.pl/ePUAP, mObywatel, IKP), czy istnieje **oficjalny druk PDF** (URL; pobrać i sprawdzić, czy ma pola AcroForm — `PDFDocument.load(...).getForm().getFields()` z `pdf-lib`), wymagane pola i załączniki, opłaty, błędy w obecnej definicji. Cytować źródła (zus.pl, gov.pl, isap.sejm.gov.pl).
 
@@ -52,7 +79,7 @@ Dla każdego: oficjalna nazwa i symbol, podstawa prawna, kto do kogo, termin, **
 - `odpis` — zadanie ZUS wprost wymaga symulacji wniosku o odpis (https://www.gov.pl/web/cyfryzacja/rejestr-stanu-cywilnego); online gov.pl (opłata), papier w dowolnym USC; opłaty 2026; czy jest ogólnopolski wzór.
 - `poz` — wzór deklaracji wyboru lekarza/pielęgniarki/położnej POZ z rozporządzenia MZ (druk do wypełnienia) albo online przez IKP/mojeIKP.
 
-## Kolejność pracy dla Codexa
+### Pierwotna kolejność prac
 
 1. Dokończyć research powyższych 6 wniosków; wyniki dopisać do tego pliku.
 2. W `forms.ts`: rozszerzyć `Channel` o realne kanały (np. `pracodawca`, `email`, `pue`, `mzus`, `bank`, `empatia`, `govpl`, `mobywatel`, `usc`, `gmina`, `przychodnia`, `ikp`) z polem trybu `pdf | online | osobiscie`; do `FormDef` dodać rodzaj PDF (`official` z mapą druku / `letter` z funkcją treści pisma / `none`) i opcjonalne reguły walidacji między polami.
