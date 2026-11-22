@@ -1,3 +1,9 @@
-// 18 · b13 block (r1 models). Drawn by the shared block timeline so internal cuts stay continuous.
-import { kanapa } from "../15/kanapa.mjs";
-export function scene(f, k) { return kanapa(1020 + f, k); }
+import {kanapa,sofaMotion} from "../15/kanapa.mjs";
+import {endPose} from "../../ruch/pose.mjs";
+import {motionFrame as previous} from "../17/scene.mjs";
+
+export function motionFrame(f,k) {
+  if(f===0) return endPose(previous,k);
+  return sofaMotion(1020+f,k);
+}
+export function scene(f,k) {return kanapa(motionFrame(f,k),k);}

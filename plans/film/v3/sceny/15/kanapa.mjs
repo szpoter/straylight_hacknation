@@ -1,7 +1,10 @@
 // b13 · living room for shots 15–18 (global frames 840–1079). ONE deterministic function of the global frame,
 // so the internal cuts 15/16, 16/17, 17/18 are continuous by construction. Camera fixed (1:1), r1 SOFA layout.
 // Frame 1079 (18/59) draws exactly sofaScene("przekazanie") from obsada/plansza.mjs (model handoff to 19).
-import { clamp, lerp, span, sm, smr, chan, tween, reach, rot, r1, teczka, teczkaPt, coverPt, toLocal, mouthAt, easeIn, easeOut } from "./teczka.mjs";
+import { clamp, lerp, span, sm, smr, chan, tween, rot, r1, teczka, teczkaPt, coverPt, toLocal, mouthAt, easeIn, easeOut } from "./teczka.mjs";
+
+import {handTracks} from "./gesty.mjs";
+import {attachment} from "../../ruch/pose.mjs";
 
 const INK = "#283754", SOFA_LIGHT = "#C9DAC4", SOFA_DARK = "#8EA889";   // sofa tints from rekwizyty r1 (do weryfikacji)
 // Dialog envelope (media/dialog.flac) 840–1079: Marta 884–923, Paweł 961–985 and 995–1043.
@@ -61,8 +64,8 @@ const M_FEET = [[398.8, 682], [455.2, 682]], M_KNEES = [[404, 536.1], [452.6, 53
 function marta(k, g, F, papers) {
   const P = k.sofaPose("marta", "przekazanie");
   const body = tween([
-    [840, { y: 420, bow: .38, lean: 2, head: .35, nod: .5, gaze: .5, gazeDown: .75, brow: -.3, smile: .1, left: [-60, -40, -54, -2], right: [60, -40, 52, -2] }],
-    [846, { y: 452 }],
+    [840, { y: 459, bow: .38, lean: 2, head: .35, nod: .5, gaze: .5, gazeDown: .75, brow: -.3, smile: .1, left: [-60, -40, -54, -2], right: [60, -40, 52, -2] }],
+    [846, { y: 471 }],
     [850, { y: 489, bow: .22 }],                                  // pelvis meets the cushion (15/10)
     [857, { y: 494, bow: .16, lean: 1 }],                         // deepest, cushion 18 px (15/17)
     [866, { y: 490, bow: .12, lean: 2 }],
@@ -78,44 +81,25 @@ function marta(k, g, F, papers) {
     [1079, { head: P.head, gaze: P.gaze, gazeDown: P.gazeDown, nod: P.nod, bow: P.bow, lean: P.lean, brow: P.brow, smile: P.smile }],
   ], g);
   let p = { ...P, ...body, x: 427, s: 1.28, seat: true };
-  if (g >= 1079) return { ...P };
+  p.r2=true; p.seatPerspective=true; p.poles={left:-1,right:-1};
   // legs: feet and knees stay on screen; the skirt hem lags the pelvis by ~3 frames
   const lag = Math.sin(span(g, 851, 862) * Math.PI) * 3;
   p.feet = toLocal(p, M_FEET);
   p.knees = toLocal(p, M_KNEES.map(([x, y]) => [x, y + lag]));
   p.mouth = g >= 880 && g < 926 ? voice(g) * .85 : 0;
   p.blink = blink(g, [872, 938, 1005, 1060]);
-  // hands
-  const fp = F;
-  let R = null, L = null;
-  if (g >= 876 && g < 905) { const sp = teczkaPt(fp.sx, fp.sy, W, fp.ang, 0, -78); const t = smr(g, 876, 899); R = [lerp(475, sp[0] - 8, t), lerp(470, sp[1], t)]; }
-  if (g >= 905 && g < 929) { R = coverPt(fp.sx, fp.sy, W, fp.ang, fp.theta, .36, -88 - Math.sin(fp.theta * Math.PI / 180) * 14); p.rightGrip = g >= 906 ? "pinch" : "open"; if (g < 906) { const sp = teczkaPt(fp.sx, fp.sy, W, fp.ang, 0, -78); R = [lerp(sp[0] - 8, R[0], smr(g, 899, 905)), lerp(sp[1], R[1], smr(g, 899, 905))]; } }
-  if (g >= 929 && g < 1079) { R = [papers.Z.x + M_GRIP_R[0], papers.Z.y + M_GRIP_R[1]]; p.rightGrip = g >= 931 ? "pinch" : "open";
-    if (g < 934) { const c = coverPt(fp.sx, fp.sy, W, fp.ang, 180, .36, -88); R = [lerp(c[0], R[0], smr(g, 927, 934)), lerp(c[1], R[1], smr(g, 927, 934))]; }
-    // 18: fingers leave ZASIŁEK so Paweł can pull the folder, then return
-    const away = smr(g, 1039, 1045) - smr(g, 1064, 1074);
-    if (away > 0) { R = [R[0] + 16 * away, R[1] - 30 * away]; if (away > .3) p.rightGrip = "open"; }
-  }
-  if (g >= 937 && g < 1079) { const t = smr(g, 937, 942); L = [lerp(390, papers.U.x + M_GRIP_L[0], t), lerp(522, papers.U.y + M_GRIP_L[1], t)]; p.leftGrip = g >= 941 ? "pinch" : "open"; }
-  else if (g < 1079) p.leftGrip = "open";
-  if (g < 905 && g >= 876) p.rightGrip = "open";
-  if (g < 876) { p.rightGrip = "open";
-    const sup = smr(g, 840, 848) - smr(g, 862, 874);
-    if (sup > 0) { const L0 = [lerp(392, 352, sup), lerp(522, 494, sup)]; L = L0; }
-  }
-  if (g < 1079) { if (R) p = reach(k, "marta", p, "right", R); if (L) p = reach(k, "marta", p, "left", L); }
   return p;
 }
 
 // Marta's two prints: in the folder (back panel) until 930, then in her hands, final layout from 953.
 function printsState(g, F) {
-  const inU = teczkaPt(F.sx, F.sy, W, F.ang, .48, 8), inZ = teczkaPt(F.sx, F.sy, W, F.ang, .54, 2);
+  const inU = teczkaPt(F.sx, F.sy, W, F.ang, .16, -12), inZ = teczkaPt(F.sx, F.sy, W, F.ang, .21, -16);
   const at = (a, b, t) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), a: lerp(a.a, b.a, t) });
   const U0 = { x: inU[0], y: inU[1], a: F.ang + 2 }, Z0 = { x: inZ[0], y: inZ[1], a: F.ang - 1 };
   const Umid = { x: 432, y: 462, a: -3 }, Zmid = { x: 446, y: 466, a: 1 };
-  let U, Z, inFolder = g < 934;
-  if (g < 934) { U = U0; Z = Z0; }
-  else if (g < 944) { const t = sm(span(g, 934, 944)); U = at(U0, Umid, t); Z = at(Z0, Zmid, t); U.y -= Math.sin(t * Math.PI) * 26; Z.y -= Math.sin(t * Math.PI) * 24; }
+  let U, Z, inFolder = g < 931;
+  if (g < 931) { U = U0; Z = Z0; }
+  else if (g < 944) { const t = sm(span(g, 931, 944)); U = at(U0, Umid, t); Z = at(Z0, Zmid, t); U.y -= Math.sin(t * Math.PI) * 13; Z.y -= Math.sin(t * Math.PI) * 12; }
   else { const t = sm(span(g, 944, 953)); U = at(Umid, URLOP_END, t); Z = at(Zmid, ZAS_END, t); }
   return { U: { ...U, w: 88, h: 112 }, Z: { ...Z, w: 88, h: 112 }, inFolder };
 }
@@ -130,12 +114,12 @@ function stackState(g, F) {
 }
 
 // ── Paweł ──────────────────────────────────────────────────────────────────────────────────────────────────
-const P_FEET0 = [[723.2, 682], [894.7, 692.2]], P_KNEES0 = [[733.4, 536.1], [876.8, 531]];
+const P_FEET0 = [[723.2, 682], [897.28, 694.8]], P_KNEES0 = [[733.4, 536.1], [876.8, 531]];
 function pawel(k, g, F, stack) {
   const P = k.sofaPose("pawel", "przekazanie");
   const body = tween([
-    [840, { y: 424, bow: .25, lean: -2, twist: -.3, head: -.35, nod: .45, gaze: -.6, gazeDown: .6, brow: -.4, smile: -.1, right: [62, -50, 52, -14], left: [-100, -80, -60, -60] }],
-    [852, { y: 446, bow: .3 }],
+    [840, { y: 444, bow: .25, lean: -2, twist: -.3, head: -.35, nod: .45, gaze: -.6, gazeDown: .6, brow: -.4, smile: -.1, right: [62, -50, 52, -14], left: [-100, -80, -60, -60] }],
+    [852, { y: 458, bow: .3 }],
     [860, { y: 489, bow: .28 }],                                 // pelvis on the cushion (15/20)
     [865, { y: 494, bow: .22, lean: -3 }],                       // deepest, cushion 22 px (15/25)
     [874, { y: 490, bow: .15, lean: -1, twist: -.25 }],
@@ -162,59 +146,65 @@ function pawel(k, g, F, stack) {
   let p = { ...P, ...body, s: 1.28, seat: true };
   p.x = body.x ?? 800;
   p.wristR = chan([[1060, 0], [1074, P.wristR]], g);
-  if (g >= 1079) p = { ...P };
+  p.r2=true; p.seatPerspective=true; p.poles={left:1,right:1};
   // legs: feet on the floor; first shoe comes off 962–972, the second foot lifts 976–1004
   let feet = P_FEET0.map(q => q.slice()), knees = P_KNEES0.map(q => q.slice());
   const up = smr(g, 976, 987) - smr(g, 997, 1006);
-  feet[1] = [lerp(894.7, 912, up), lerp(692.2, 604, up)];
+  feet[1] = [lerp(P_FEET0[1][0], 912, up), lerp(P_FEET0[1][1], 582, up)];
   knees[1] = [lerp(876.8, 902, up), lerp(531, 478, up)];
-  const toModel = smr(g, 1050, 1079);
-  feet = feet.map((q, i) => [lerp(q[0], [723.2, 897.3][i], toModel), lerp(q[1], [682, 694.8][i], toModel)]);
-  if (g < 1079) { p.feet = toLocal(p, feet); p.knees = toLocal(p, knees.map((q, i) => [lerp(q[0], [733.4, 876.8][i], toModel), lerp(q[1], [536.1, 531][i], toModel)])); }
+  p.feet = toLocal(p, feet); p.knees = toLocal(p, knees);
+  // Shift weight to the standing leg before ribs turn and the head follows the shoe.
+  p.x += chan([[960,0],[970,-7],[979,-7],[990,4],[1008,0],[1025,0],[1038,4],[1052,0]],g);
+  p.lean += chan([[973,0],[987,8],[1003,17],[1014,8],[1024,8],[1038,19],[1044,15],[1058,0]],g);
+  p.bow = Math.min(1,p.bow+chan([[973,0],[987,.22],[1003,.35],[1014,.12],[1024,.12],[1038,0]],g));
+  p.feet = toLocal(p,feet); p.knees=toLocal(p,knees);
   const heel0 = smr(g, 962, 969), heel1 = smr(g, 989, 995);
   p.shoes = [g < 970 ? "shoe" : "sock", g < 995 ? "shoe" : "sock"];
   p.heelOut = [g < 970 ? heel0 : 0, g < 995 ? heel1 : 0];
   p.mouth = g >= 955 && g < 1046 ? voice(g) * .9 : 0;
   p.blink = blink(g, [886, 955, 1023, 1062]);
-  // hands ------------------------------------------------------------------------------------------------
-  let L = null, Rt = null, held = null;
-  if (g < 871) { L = folderDrop(Math.min(g, 867)).grip; p.leftGrip = "hold"; }
-  else if (g < 878) { const a = folderDrop(867).grip; const t = smr(g, 871, 878); L = [lerp(a[0], 744, t), lerp(a[1], 528, t)]; p.leftGrip = "open"; }
-  // second shoe: hand to the heel (983–987), grip 987, pull (988–996), carry to (942,537) and hang (996–1019)
-  const footR = [feet[1][0], feet[1][1]];
-  if (g >= 978 && g < 1039) {
-    const heel = [footR[0] + 14, footR[1] - 4];
-    if (g < 987) { const t = smr(g, 978, 987); Rt = [lerp(890, heel[0], t), lerp(560, heel[1], t)]; p.rightGrip = "open"; }
-    else if (g < 996) { Rt = [heel[0] + 6 * smr(g, 989, 995), heel[1] - 10 * smr(g, 989, 995)]; p.rightGrip = "hold"; }
-    else if (g < 1020) { const t = smr(g, 996, 1012); Rt = [lerp(heel[0] + 6, 942, t), lerp(heel[1] - 10, 537, t)]; p.rightGrip = "hold"; }
-    else { const t = smr(g, 1022, 1038); Rt = [lerp(942, SHOE2[0], t), lerp(537, SHOE2[1], t)]; p.rightGrip = "hold"; }
-  }
-  if (g >= 840 && g < 882) { const sup = smr(g, 842, 850) - smr(g, 868, 880); if (sup > 0) Rt = [lerp(872, 912, sup), lerp(526, 492, sup)]; }
-  if (g >= 1039 && g < 1079) { // release, then the elbow travels to the stack
-    const t = smr(g, 1039, 1048), t2 = smr(g, 1056, 1072);
-    p.rightGrip = "open";
-    const j = k.joints("pawel", { ...P });
-    Rt = [lerp(lerp(SHOE2[0] + 6, 905, t), j.gripR[0], t2), lerp(lerp(SHOE2[1] - 10, 600, t), j.gripR[1], t2)];
-    p.right = [lerp(70, P.right[0], t2), lerp(30, P.right[1], t2), p.right[2], p.right[3]];
-  }
-  // left hand: thigh support during the shoe; folder edge (1040–1054); ZASIŁEK short edge (1056–1066)
-  if (g >= 1036 && g < 1079) {
-    const edge = teczkaPt(F.sx, F.sy, W, F.ang, 1, 4), zs = [stack.Z.x, stack.Z.y], zEdge = (() => { const d = rot(-stack.Z.w / 2 - 4, 10, stack.Z.a); return [zs[0] + d[0], zs[1] + d[1]]; })();
-    const j = k.joints("pawel", { ...P });
-    if (g < 1043) { const t = smr(g, 1036, 1043); L = [lerp(744, edge[0], t), lerp(528, edge[1], t)]; p.leftGrip = "open"; }
-    else if (g < 1055) { L = edge; p.leftGrip = "grab"; }
-    else { const t = smr(g, 1055, 1066); L = [lerp(edge[0], j.gripL[0], t), lerp(edge[1], j.gripL[1], t) - Math.sin(t * Math.PI) * 14]; p.leftGrip = t > .7 ? "pinch" : "open"; }
-  }
-  if (g < 1079) { if (Rt) p = reach(k, "pawel", p, "right", Rt); if (L) p = reach(k, "pawel", p, "left", L); }
-  if (g >= 1079) p = { ...P };
-  // shoe held in the right hand (drawn under the fingers)
-  if (g >= 995 && g < 1039) {
-    const j = k.joints("pawel", p), a = g < 1020 ? chan([[995, -25], [1006, -80], [1011, -98], [1016, -86], [1019, -90]], g) : chan([[1020, -90], [1028, -70], [1037, -4], [1038, 0]], g);
-    held = { x: j.gripR[0], y: j.gripR[1], a };
-    if (g === 1038) held = { x: SHOE2[0], y: SHOE2[1], a: 0 };
-  }
-  return { p, held, heel0 };
+  return p;
 }
+
+const paperPoint=(p,xy)=>attachment({...p,ang:p.a},xy);
+function sofaState(g,k) {
+  const F=folderState(g), prints=printsState(g,F), stack=stackState(g,F);
+  const m=marta(k,g,F,prints), p=pawel(k,g,F,stack);
+  const ankle=p.feet[1].map((v,i)=>[p.x,p.y][i]+v*p.s);
+  const heel=[ankle[0]+14,ankle[1]-4];
+  const lifting=smr(g,989,995), carry=smr(g,995,1012), lower=smr(g,1021,1038);
+  // After extraction the heel travels independently of the returning foot.
+  const raised=[926+6,578-10];
+  const heel2=g<=995?[heel[0]+6*lifting,heel[1]-10*lifting]:
+    [lerp(lerp(raised[0],942,carry),SHOE2[0],lower),lerp(lerp(raised[1],537,carry)-8*Math.sin(carry*Math.PI),SHOE2[1],lower)];
+  const held=g>=995&&g<1038?{x:heel2[0],y:heel2[1],a:chan([[995,-25],[1006,-80],[1011,-98],[1016,-86],[1019,-90],[1022,-90],[1038,0]],g)}:null;
+  const folder=[F.sx,F.sy];
+  const targets={
+    'seat.marta':[352,494], 'seat.pawel':[912,492], 'folder.carry':folderDrop(Math.min(g,867)).grip,
+    'folder.cover':coverPt(F.sx,F.sy,W,F.ang,F.theta,.12,-20),
+    'U.corner':paperPoint(prints.U,M_GRIP_L),'Z.corner':paperPoint(prints.Z,M_GRIP_R),
+    'shoe.heel':heel2,'folder.edge':teczkaPt(F.sx,F.sy,W,F.ang,1,4),'stack.edge':paperPoint(stack.Z,[-52,7]),
+  };
+  const supports=[];
+  for(const [role,feet] of [['marta',M_FEET],['pawel',P_FEET0]]) for(const [i,joint] of ['ankleL','ankleR'].entries()) {
+    if(role==='pawel'&&i===1&&g>976&&g<1006)continue;
+    supports.push({role,joint,id:'sofa.floor',target:feet[i]});
+  }
+  return {g,F,prints,stack,held,actors:{marta:m,pawel:p},contacts:[],supports,targets,
+    props:{folder,U:[prints.U.x,prints.U.y],Z:[prints.Z.x,prints.Z.y],stack:[stack.Z.x,stack.Z.y],shoe:heel2}};
+}
+
+const sofaTracks={
+  marta:{
+    left:{grips:[[840,'open'],[942,'pinch']],holds:[[849,862,'seat.marta'],[942,1079,'U.corner']],free:[[840,[110,-42,0]],[880,[122,-54,0]],[929,[127,-62,2]]]},
+    right:{grips:[[840,'open'],[906,'pinch'],[930,'open'],[933,'pinch'],[1043,'open'],[1070,'pinch']],holds:[[905,926,'folder.cover'],[931,1039,'Z.corner'],[1070,1079,'Z.corner']],free:[[840,[66,-30,5]],[878,[68,-35,4]],[1049,[58,-68,2]]]}
+  },
+  pawel:{
+    left:{grips:[[840,'hold'],[875,'open'],[1043,'grab'],[1059,'open'],[1068,'pinch']],holds:[[831,871,'folder.carry'],[1043,1055,'folder.edge'],[1068,1079,'stack.edge']],free:[[885,[88,46,-4]],[975,[86,44,-4]],[988,[78,53,-4]],[1027,[79,55,-4]]]},
+    right:{grips:[[840,'open'],[987,'hold'],[1042,'open']],holds:[[852,868,'seat.pawel'],[987,1038,'shoe.heel']],free:[[840,[58,40,0]],[882,[49,74,-3]],[971,[57,66,0]],[1050,[76,58,-4]],[1076,[102.113,134.626,-20]]]}
+  },
+};
+export const sofaMotion=handTracks(sofaState,sofaTracks);
 
 // ── seat dents (local extension: the r1 seat seam with dips under each pelvis) ─────────────────────────────────
 function seam(dM, dP) {
@@ -236,9 +226,8 @@ function seam(dM, dP) {
   return s;
 }
 
-export function kanapa(g, k) {
-  const F = folderState(g), prints = printsState(g, F), stack = stackState(g, F);
-  const m = marta(k, g, F, prints), { p, held } = pawel(k, g, F, stack);
+export function kanapa(state,k) {
+  const {g,F,prints,stack,held,actors:{marta:m,pawel:p}}=state;
   const breath = .5 + .5 * Math.sin((g - 1079) / 80 * 2 * Math.PI);
   const dM = chan([[849, 0], [857, 18], [868, 10], [884, 7], [930, 0]], g), dP = chan([[859, 0], [865, 22], [878, 11], [899, 7], [945, 0]], g);
   let s = k.salon({ pram: true, breath: g >= 1079 ? .5 : breath });

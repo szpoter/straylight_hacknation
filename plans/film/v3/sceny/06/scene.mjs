@@ -1,3 +1,4 @@
+import {endPose,reach,gripKeys} from "../../ruch/pose.mjs";
 // Scene 06 · "Chyba tak" (10–12 s, global frames 300–359). Author: block b01, models r1.
 // Same side of Marta's shoulder as 05, camera a little higher. 0–6 the right thumb slides from URLOP's corner down
 // its left edge; 7–19 the sheet turns ~180° about that held vertical edge (thin profile at 13, grid side at 19);
@@ -5,9 +6,9 @@
 // lowered over the folder, still held by the same edge. 54–59 Marta turns toward the pram and starts her question.
 import mouths from "../../../montaz/assets/mowa.json" with { type: "json" };
 import { thin } from "../01/scene.mjs";
-import { queueWorld, grip, papers, PAPER, folderLocal, ss } from "../03/kolejka.mjs";
+import { queueWorld, queueFrame, papers, PAPER, folderLocal, ss } from "../03/kolejka.mjs";
 import { withPhoto } from "../03/scene.mjs";
-import { pose05, pull05, camT } from "../05/scene.mjs";
+import { motionFrame as motion05, pull05, camT } from "../05/scene.mjs";
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const D = Math.PI / 180;
@@ -18,7 +19,7 @@ const PAWEL_VOICE = [.08, .24, .32, .17, 1, .5, 1, 1, .33, .02, .48, .45, .17, .
 
 export function turn06(f) { return 180 * ss(7, 19, f); }                     // degrees about the held edge
 export function sheet06(k, f) {
-  const base = pose05(k, 59), F = base.F, p0 = pull05(59), sc = F.w / 100;
+  const base = endPose(motion05,k), F = base.F, p0 = pull05(59), sc = F.w / 100;
   const lower = ss(36, 56, f);
   const pull = { ...p0, dx: p0.dx + 40 * lower, dy: p0.dy + 40 * lower, angle: p0.angle + 6 * lower, bend: 0, lift: 0 };
   const w = PAPER.w * sc, h = PAPER.h * sc, al = F.angle - 1 + pull.angle;
@@ -50,14 +51,19 @@ export function pose06(k, f) {
   const sh = sheet06(k, f), turn = turn06(f), base = sh.base;
   // grip on the held edge: corner (05/59) → lower on the same edge by 6; the pinch turns with the sheet
   const slide = ss(0, 6, f), alr = sh.al * D;
-  const along = lerp(-sh.h / 2 + 7 * (sh.w / (PAPER.w * sh.F.w / 100)), -sh.h * .12, slide);
+  const along = lerp(-sh.h / 2 + 7 * sh.F.w / 100, -sh.h * .12, slide);
   const inset = 6 * (sh.F.w / 100) * Math.cos(turn * D);
   const target = [sh.hinge[0] + inset * Math.cos(alr) - along * Math.sin(alr), sh.hinge[1] + inset * Math.sin(alr) + along * Math.cos(alr)];
   const check = ss(20, 26, f), talk = PAWEL_VOICE[f - 27] ?? 0;
   let pawel = { ...base.pawel, head: lerp(-.5, -.55, check), gaze: lerp(-.2, -.55, ss(8, 20, f)), gazeDown: lerp(.55, .75, ss(8, 20, f)) + .1 * check - .2 * ss(40, 56, f),
-    nod: .35 + .12 * check, mouth: talk * .9, brow: -.25 * check * (1 - ss(44, 56, f)), leftFlip: turn > 90 };
-  pawel = grip(k, "pawel", { ...pawel, left: [-90, -60, -40, -100] }, "left", target, lerp(-100, -150, ss(7, 19, f)) + 30 * ss(36, 56, f));
-  return { ...base, pawel, sheet: { ...sh, turn } };
+    nod: .35 + .12 * check, mouth: talk * .9, brow: -.25 * check * (1 - ss(44, 56, f)), roll:{left:turn} };
+  pawel=reach("pawel",pawel,"left",target);
+  const bar=base.bar, second=[bar[0]+13,bar[1]-2.6];
+  let marta=reach("marta",{...base.marta,rightGrip:gripKeys(f,[[0,"open"],[44,"hold"]]),
+    leftGrip:gripKeys(f,[[0,"hold"],[55,"open"]])},"right",second,ss(31,44,f));
+  marta=reach("marta",marta,"left",bar,1-ss(48,59,f));
+  const sheetCenter=[sh.hinge[0]+sh.w/2*Math.cos(turn*D)*Math.cos(alr),sh.hinge[1]+sh.w/2*Math.cos(turn*D)*Math.sin(alr)];
+  return {...base,marta,pawel,sheet:{...sh,turn},working:target,workingId:f===0?"urlop.corner":"urlop.edge",sheetCenter};
 }
 
 function martaOTS(k, f) {
@@ -69,8 +75,9 @@ function martaOTS(k, f) {
   return neck + shoulder + head;
 }
 
+export function motionFrame(f,k) {return queueFrame(pose06(k,f),CAM06);}
 export function scene(f, k) {
-  const { marta, pawel, F, pr, sheet } = pose06(k, f);
+  const { marta, pawel, F, pr, sheet } = motionFrame(f,k);
   const ps = papers(k, F, sheet.pull, { split: true });
   const front = sheet.turn > 40;                                 // the free edge swings out in front of the folder
   const sheetSvg = drawSheet(k, sheet);

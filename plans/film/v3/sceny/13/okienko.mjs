@@ -2,8 +2,12 @@
 // World coordinates = the final frame of 14 (camera 1:1 from 14/48). Shot 13 and 14/0–33 view it through a closer
 // camera (zoom 1.4 around world (830,330)); 14/34–48 pulls back to 1:1. The closed folder's path from 14/51 continues
 // in 15 (see ../15/kanapa.mjs → folderDrop) so the cut 14/15 is on the same moving prop.
-import { clamp, lerp, span, sm, smr, chan, tween, reach, rot, r1, teczka, coverPt, teczkaPt, mouthAt, easeIn } from "../15/teczka.mjs";
+import { clamp, lerp, span, sm, smr, chan, tween, rot, r1, teczka, coverPt, teczkaPt, mouthAt, easeIn } from "../15/teczka.mjs";
 import { folderDrop, PAWEL_DROP, SPINE14 } from "../15/kanapa.mjs";
+
+import {handTracks} from "../15/gesty.mjs";
+import {endPose,attachment} from "../../ruch/pose.mjs";
+import {motionFrame as previous} from "../12/scene.mjs";
 
 const INK = "#283754";
 const HAND_INK = "#2D3950";             // handwriting: navy token (DESIGN.md on-surface navy) — do weryfikacji
@@ -16,16 +20,34 @@ const SPINE = SPINE14, W = 150, FA = -4;                   // Paweł's open fold
 const PEN_REST = [952, 471];                                  // pen lying on the counter top by the paper's lower-left edge
 // 13/0 = 12/59: centre (816,463) on screen, −10°, height 151 px → world (976.5,405.5), scale .786; the clerk turns it
 // toward Marta and brings it forward (13/0–16) to the counter spot used in the rest of 13 and in 14.
-const paperNow = g => { const t = smr(g, 721, 736); return { x: lerp(976.5, PAPER.x, t), y: lerp(405.5, PAPER.y, t) - Math.sin(t * Math.PI) * 6, a: PAPER.a, sc: lerp(.786, 1, t), turn: lerp(.93, 1, t) }; };
-let CUR = paperNow(840);
-const pp = (x, y) => { const d = rot(x * CUR.sc * CUR.turn, y * CUR.sc, CUR.a); return [CUR.x + d[0], CUR.y + d[1]]; };  // paper-local → world
+// Express the previous set in the larger drawing units used at the counter.
+const entryCache=new WeakMap();
+function entry(k) {
+  if(entryCache.has(k))return entryCache.get(k);
+  const frame=endPose(previous,k), tx=790-frame.actors.pawel.x*S,ty=455-frame.actors.pawel.y*S;
+  const map=([x,y])=>[x*S+tx,y*S+ty];
+  const actors={};
+  for(const [role,p] of Object.entries(frame.actors)) {
+    const [x,y]=map([p.x,p.y]);
+    const pins=Object.fromEntries(Object.entries(p.pins??{}).map(([side,pin])=>[side,{...pin,target:map(pin.target)}]));
+    actors[role]={...p,x,y,s:(p.s??1)*S,pins};
+  }
+  const state={frame,actors,map,cutTransform:[S,0,0,S,tx,ty],z:map(frame.props.Z),folder:map(frame.props.folder),bar:map(frame.props.bar)};
+  entryCache.set(k,state);return state;
+}
+const paperNow=(g,e)=>{
+  const t=smr(g,720,739);
+  return {x:lerp(e.z[0],PAPER.x,t),y:lerp(e.z[1],PAPER.y,t)-6*Math.sin(t*Math.PI),a:PAPER.a,sc:lerp(84*S/150,1,t),turn:lerp(64/84*150/120,1,t)};
+};
+const pp=(p,x,y)=>attachment({...p,ang:p.a},[x*p.sc*p.turn,y*p.sc]);
 const DATE = { x: -50, y: 24, size: 15 }, LINE2 = { x: -46, y: 50, size: 15 };
 const DATE_END = 21.4, LINE2_END = 10, HEAD_END = 20.6;   // Chrome getBBox (robocze/b13/mierz.mjs)                          // measured ink extents of the two handwritten strings (local px)
 
-function camera(g) {
-  const t = smr(g, 814, 828), t0 = smr(g, 720, 742);         // 13/0–22 push-in from the 12/59 layout; 14/34 → 14/48 pull-back
-  const z = lerp(lerp(1.28, 1.4, t0), 1, t), cx = lerp(lerp(839, 805, t0), 640, t), cy = lerp(lerp(325, 338, t0), 360, t);
-  return `translate(640 360) scale(${r1(z * 1000) / 1000}) translate(${r1(-cx)} ${r1(-cy)})`;
+function camera(g,e) {
+  const t=smr(g,814,828), u=smr(g,720,742), original=e.frame.camera;
+  const start=e.map([original.cx,original.cy]);
+  const z=lerp(lerp(original.z/S,1.32,u),1,t),cx=lerp(lerp(start[0],730,u),640,t),cy=lerp(lerp(start[1],335,u),360,t);
+  return {z,cx,cy,tr:`translate(640 360) scale(${z}) translate(${-cx} ${-cy})`};
 }
 
 function pen(nib, ang = 128, len = 62) {                       // ang = direction nib → cap (deg)
@@ -64,105 +86,81 @@ function nibLocal(g) {
 }
 function writeReveal(g) { const f = g - 780; if (f < 2) return 0; if (f < 11) return span(f, 2, 11) * .4; if (f < 13) return .4; return lerp(.4, 1, span(f, 13, 23)); }
 
-function clerkPose(k, g) {
-  const f = g - 720;
-  const base = { x: 1178, y: 545, s: S, seat: true, legs: false, head: -.42, nod: .25, gaze: -.6, gazeDown: 0, brow: .1, smile: .4,
-    left: [-30, -20, -100, -90], right: [30, -20, -70, -75], leftGrip: "point", rightGrip: "pinch", lean: -6, bow: .15 };
+function clerkPose(g,e){
+  const base=e.actors.clerk,t=smr(g,720,738);
   const look = tween([[720, { gaze: -.9, gazeDown: -.1, nod: .2 }], [726, { gaze: -.5, gazeDown: .6, nod: .45 }], [740, { gazeDown: .9, nod: .55 }],
     [752, { gazeDown: 1, nod: .62 }], [770, { gazeDown: 1, nod: .62 }], [800, { gazeDown: 1, nod: .66 }], [806, { gaze: -.9, gazeDown: .1, nod: .3 }],
     [812, { gaze: -.6, gazeDown: .7, nod: .5 }], [840, { gaze: -.6, gazeDown: .7, nod: .5 }]], g);
-  let p = { ...base, ...look, mouth: mouthAt(VOICE, 720, g) * .9 };
-  // screen-right hand (anatomical left): thumb on the paper's right edge at 45 % height, releases at 14/32
-  const hold = pp(PAPER.w / 2 + 2, -PAPER.h / 2 + PAPER.h * .45);
-  const rel = smr(g, 812, 820);
-  const take = smr(g, 720, 726);
-  p = reach(k, "clerk", p, "right", [lerp(lerp(1150, hold[0], take), hold[0] + 40, rel), lerp(lerp(500, hold[1], take), hold[1] + 50, rel)]);
-  if (g < 725) p.rightGrip = "open";
-  if (g >= 812) p.rightGrip = "open";
-  // screen-left hand (anatomical right): point → pen
-  let tip, grip = "point", penAt = null;
-  const headerEnd = pp(HEAD_END + 9, -52), dateEnd = pp(DATE_END + 9, DATE.y - 5);
-  if (g < 734) { const t = smr(g, 725, 733); tip = [lerp(hold[0] - 6, headerEnd[0], t), lerp(hold[1] + 4, headerEnd[1], t) - Math.sin(t * Math.PI) * 14]; grip = g < 725 ? "pinch" : "point"; }
-  else if (g < 752) { const t = sm(span(g, 734, 751)); tip = [lerp(headerEnd[0], dateEnd[0], t) + Math.sin(t * Math.PI) * 10, lerp(headerEnd[1], dateEnd[1], t)]; }
-  else if (g < 768) tip = dateEnd;
-  else if (g < 774) { const t = sm(span(g, 768, 774)); tip = [lerp(dateEnd[0], PEN_REST[0] + 30, t), lerp(dateEnd[1], PEN_REST[1] - 40, t) - Math.sin(t * Math.PI) * 18]; grip = "open"; }
-  else {
-    grip = "pinch";
-    const pick = sm(span(g, 774, 778)), nibW = g < 780 || g > 803 ? null : null;
-    const n = nibLocal(Math.max(g, 780)), nibPaper = pp(n[0], n[1]);
-    const lift = sm(span(g, 776, 780));
-    const restNib = PEN_REST, nib = g < 776 ? restNib : [lerp(restNib[0], nibPaper[0], lift), lerp(restNib[1], nibPaper[1], lift)];
-    const pang = lerp(176, 128, sm(span(g, 775, 780)));
-    const [dx, dy] = rot(1, 0, pang);
-    tip = [nib[0] + dx * PEN_GRIP, nib[1] + dy * PEN_GRIP];
-    penAt = { nib, ang: pang };
-    if (g < 776) tip = [lerp(PEN_REST[0] + 30, tip[0], pick), lerp(PEN_REST[1] - 40, tip[1], pick)];
-  }
-  p.leftGrip = grip;
-  p = reach(k, "clerk", p, "left", tip);
-  return { p, penAt };
+  return {...base,...look,x:lerp(base.x,1158,t),y:lerp(base.y,537,t),s:lerp(base.s,S,t),
+    lean:lerp(base.lean,-12,t),head:lerp(base.head,-.42,t),bow:.15*t,mouth:mouthAt(VOICE,720,g)*.9};
 }
 
-function martaPose(g) {
+function martaPose(g,e) {
   const look = tween([
     [720, { head: .45, nod: .35, gaze: .7, gazeDown: .2, brow: -.2 }],
     [735, { gaze: .7, gazeDown: .2 }], [740, { gaze: .8, gazeDown: .75 }], [745, { nod: .6, gazeDown: .8 }], [752, { nod: .62, gazeDown: .85 }],
     [804, { nod: .62, head: .42, gazeDown: .85 }], [806, { nod: .82 }], [808, { nod: .82 }], [813, { nod: .45, gazeDown: .5 }],
     [820, { head: .3, gaze: .3, gazeDown: .6, nod: .4 }], [832, { head: 0, gaze: -.1, gazeDown: .5, nod: .35 }]], g);
-  return { x: 430, y: 475, s: S, lean: 5, bow: .1, smile: .1, brow: -.25, ...look,
-    left: [-56, -70, -44, -4], right: [56, -70, 30, -14], leftGrip: "open", rightGrip: "open", blink: blink(g, [742, 790, 830]) };
+  return {...e.actors.marta,...look,blink:blink(g,[742,790,830])};
 }
 const blink = (g, at) => { for (const b of at) { const d = g - b; if (d >= 0 && d < 5) return [.5, 1, 1, .6, .2][d]; } return 0; };
 
 // Paweł: standing, open folder at the chest; 14/24–33 takes the free left edge, inserts, closes, lowers.
-function pawelState(k, g) {
-  const p0 = { x: 790, y: 455, s: S, head: .35, nod: .35, gaze: .5, gazeDown: .55, brow: -.4, smile: -.1, bow: .1,
-    left: [-100, -80, -60, -60], right: [60, -30, 40, -80], leftGrip: "hold", rightGrip: "hold" };
+function officeState(g,k) {
+  const e=entry(k),cur=paperNow(g,e),clerk=clerkPose(g,e),marta=martaPose(g,e);
   const look = tween([[720, {}], [760, { gaze: .6, gazeDown: .5 }], [804, { head: .35, gazeDown: .5 }], [809, { head: .3, gaze: .7, gazeDown: .8 }],
     [822, { head: 0, gaze: 0, gazeDown: .9, nod: .5 }], [834, { head: -.3, gaze: -.4, gazeDown: .9, nod: .5, bow: .2 }]], g);
-  let p = { ...p0, ...look, blink: blink(g, [770]) };
-  // folder: spine glides a little right while he offers it (804–812), cover angle closes 40–51
-  const fs = lerp(.9, 1, smr(g, 720, 730)), fm = smr(g, 720, 730);
-  const offer = smr(g, 804, 812) - smr(g, 820, 830) * .5;
-  const sx = lerp(810 - 67.5, SPINE[0], fm) + offer * 16, sy = lerp(419 + 4.7, SPINE[1], fm);
-  const theta = chan([[730, 0], [746, 108], [820, 108], [831, 0]], g);
-  // 13/0–10: the closed folder from 12/59 (screen ≈ (603,480), 174 px) slides to the hinge used below
-  // paper: on counter → in Paweł's right hand (809) → onto back panel (813–825)
-  let paper = { x: PAPER.x, y: PAPER.y, a: PAPER.a, inFolder: false };
-  const tIn = sm(span(g, 813, 825));
-  if (g >= 813) {
-    const dst = teczkaPt(sx, sy, W, FA, .52, 6);
-    paper = { x: lerp(PAPER.x, dst[0], tIn), y: lerp(PAPER.y, dst[1], tIn) - Math.sin(tIn * Math.PI) * 30, a: lerp(PAPER.a, FA, tIn), inFolder: tIn > .99 };
-  }
-  // right hand: folder edge → paper left edge (804–809) → with paper → back to the panel edge (824–830)
-  const panelEdge = teczkaPt(sx, sy, W * fs, FA, 1, 46);
-  const paperEdge = (() => { const d = rot(-PAPER.w / 2 + 2, 4, paper.a); return [paper.x + d[0], paper.y + d[1]]; })();
-  let rT;
-  if (g < 804) rT = panelEdge;
-  else if (g < 809) { const t = sm(span(g, 804, 809)); rT = [lerp(panelEdge[0], paperEdge[0], t), lerp(panelEdge[1], paperEdge[1], t) - Math.sin(t * Math.PI) * 25]; }
-  else if (g < 824) rT = paperEdge;
-  else { const t = sm(span(g, 824, 830)); rT = [lerp(paperEdge[0], panelEdge[0], t), lerp(paperEdge[1], panelEdge[1], t)]; }
-  p.rightGrip = g >= 806 && g < 824 ? "pinch" : "hold";
-  if (g >= 831) p.rightGrip = "open";
-  // left hand on the cover's free edge (top third) until closed; then the closed folder's right edge
-  const early = g < 752 ? (() => { const a = coverPt(sx, sy, W * fs, FA, theta, g < 730 ? .1 : 1, g < 730 ? -84 : 30), b = coverPt(sx, sy, W, FA, theta, .12, 78), t = smr(g, 746, 752); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; })() : null;
-  let lT = early ? early : g < 816 ? coverPt(sx, sy, W, FA, theta, .12, 78) : g < 820 ? (() => { const a = coverPt(sx, sy, W, FA, theta, .12, 78), b = coverPt(sx, sy, W, FA, theta, 1, 30), t = smr(g, 816, 820); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; })() : coverPt(sx, sy, W, FA, theta, 1, 30);
-  let folder = { sx, sy, theta, ang: FA, w: W * fs };
-  if (g >= 831) {                                         // closed: continue on the shared drop path
-    const d = folderDrop(g);
-    folder = { sx: d.sx, sy: d.sy, theta: 0, ang: d.ang, w: W };
-    lT = d.grip;
-  }
-  p = reach(k, "pawel", p, "right", g >= 831 ? [lerp(panelEdge[0], 880, smr(g, 831, 838)), lerp(panelEdge[1], 430, smr(g, 831, 838))] : rT);
-  if (g < 828) p.left = [-60, -30, -60, -60];                 // elbow hint: low while holding the open cover, outward for the carry
-  p = reach(k, "pawel", p, "left", lT);
-  if (g >= 831) { const t = smr(g, 831, 839); p.bow = lerp(p.bow, PAWEL_DROP.bow, t); }
-  return { p, paper, folder };
+  const drop=smr(g,826,839),a=e.actors.pawel;
+  const pawel={...a,...look,x:lerp(a.x,800,drop),y:lerp(a.y,444,drop),bow:lerp(.1,.25,drop),lean:lerp(0,-2,drop)};
+  const feet=e.frame.supports.filter(c=>c.role==='pawel').map(c=>e.map(c.target));
+  pawel.feet=feet.map(([x,y])=>[(x-pawel.x)/pawel.s,(y-pawel.y)/pawel.s]);
+  const theta=chan([[730,0],[746,108],[820,108],[831,0]],g),move=smr(g,720,742);
+  const ang=lerp(e.frame.st.folder.ang,FA,move),w=lerp(e.frame.st.folder.w*S,W,move),init=rot(-e.frame.st.folder.w*S/2,0,e.frame.st.folder.ang);
+  let sx=lerp(e.folder[0]+init[0],SPINE[0],move),sy=lerp(e.folder[1]+init[1],SPINE[1],move);
+  const offer=smr(g,804,812)-.5*smr(g,820,830); sx+=16*offer;
+  let folder={sx,sy,theta,ang,w}, center=teczkaPt(sx,sy,w,ang,.5,0);
+  if(g>=831){const d=folderDrop(g);folder={sx:d.sx,sy:d.sy,theta:0,ang:d.ang,w};center=d.c;}
+  const take=smr(g,813,830),dst=teczkaPt(sx,sy,w,ang,.53,-6);
+  const paper={...cur,x:lerp(cur.x,dst[0],take),y:lerp(cur.y,dst[1],take)-15*Math.sin(Math.PI*take),a:lerp(cur.a,ang,take),inFolder:take===1};
+  const corner=pp(paper,-PAPER.w/2,PAPER.h/2),edge=pp(paper,PAPER.w/2,-PAPER.h*.05);
+  const date=pp(paper,DATE_END+9,DATE.y-5),title=pp(paper,HEAD_END+9,-52);
+  const scan=smr(g,734,751),n=nibLocal(Math.max(g,780)),nibOn=pp(cur,...n);
+  const lift=smr(g,774,780),pang=lerp(176,128,lift);
+  const nib=PEN_REST.map((v,i)=>lerp(v,nibOn[i],lift)), d=rot(PEN_GRIP,0,pang);
+  const penAt=g>=774?{nib,ang:pang}:null;
+  
+  const pinOf=side=>{
+    const t=e.actors.pawel.pins[side].target, offset=rot(t[0]-e.folder[0],t[1]-e.folder[1],-e.frame.st.folder.ang);
+    return teczkaPt(folder.sx,folder.sy,folder.w,folder.ang,.5+offset[0]/(e.frame.st.folder.w*S),offset[1]*folder.w/(e.frame.st.folder.w*S));
+  };
+  const holdL=coverPt(folder.sx,folder.sy,folder.w,folder.ang,folder.theta,.70,-40);
+  const startL=pinOf('left'),startR=pinOf('right'),coverMove=smr(g,720,738);
+  const targets={
+    'bar.l':e.bar,'Z.corner':corner, 'Z.edge':edge,
+    'Z.title':[lerp(title[0],date[0],scan)+8*Math.sin(Math.PI*scan),lerp(title[1],date[1],scan)],
+    'pen.barrel':[nib[0]+d[0],nib[1]+d[1]],
+    'folder.cover':startL.map((x,i)=>lerp(lerp(x,holdL[i],coverMove),folderDrop(831).grip[i],smr(g,817,831))),
+    'folder.edge':startR, 'folder.carry':folderDrop(Math.max(g,831)).grip,
+  };
+  const supports=e.frame.supports.map(c=>({...c,target:e.map(c.target)}));
+  const state={g,e,cur,paper,folder,penAt,actors:{pawel,marta,clerk},contacts:[{role:'marta',joint:'gripL',id:'bar.l',target:e.bar}],supports,
+    targets,props:{Z:[paper.x,paper.y],folder:center,bar:e.bar,pen:nib},camera:camera(g,e),cutTransform:g===720?e.cutTransform:undefined};
+  return state;
 }
 
-export function okienko(g, k) {
-  CUR = paperNow(g);
-  const { p: clerk, penAt } = clerkPose(k, g), marta = martaPose(g), { p: pawel, paper, folder } = pawelState(k, g);
+const officeTracks={
+  clerk:{
+    left:{holds:[[720,732,'Z.corner'],[739,765,'Z.title'],[774,839,'pen.barrel']],grips:[[720,'pinch'],[737,'point'],[772,'open'],[776,'pinch']]},
+    right:{holds:[[732,811,'Z.edge']],grips:[[720,'hold'],[724,'open'],[732,'pinch'],[816,'open']],free:[[720,'entry'],[825,[100,58,0]]]}
+  },
+  pawel:{
+    left:{holds:[[720,829,'folder.cover'],[831,839,'folder.carry']],grips:[[720,'hold']]},
+    right:{holds:[[720,795,'folder.edge'],[809,825,'Z.edge']],grips:[[720,'hold'],[799,'open'],[809,'pinch'],[832,'open']],free:[[839,[58,40,0]]]}
+  }
+};
+export const officeMotion=handTracks(officeState,officeTracks);
+export function okienko(state,k) {
+  const {g,e,cur,paper,folder,penAt,actors:{pawel,marta,clerk}}=state;
   let w = k.queue({ counter: false });
   w += `<path d="M960 110H1280V470H960Z" fill="#E6EFEA" stroke="#A9BBAF" stroke-width="2.4"/><path d="M1120 110V470" stroke="#C9D6CD" stroke-width="2"/>`;
   w += `<path d="M1116 131H1250V187H1116Z" fill="${INK}" stroke="${INK}" stroke-width="2.2"/><text x="1183" y="173" text-anchor="middle" font-family="Inter, Arial" font-weight="700" font-size="36" fill="#A6D0B8" letter-spacing="1.4">A17</text>`;   // queue display = 07–12 (A17)
@@ -170,8 +168,10 @@ export function okienko(g, k) {
   w += k.queueCounter();
   w += k.person("clerk", { ...clerk, parts: "right" });            // holding hand behind the sheet (fingers at the back)
   const wr = writeReveal(g);
-  if (!paper.inFolder && g < 813) w += g < 736 ? form(k, CUR.x, CUR.y, CUR.a, wr, g, CUR.sc, CUR.turn) : form(k, paper.x, paper.y, paper.a, wr, g);
+  if (!paper.inFolder && g < 813) w += form(k,paper.x,paper.y,paper.a,wr,g,paper.sc,paper.turn);
   if (!penAt) w += pen(PEN_REST, 176);
+  const pram=e.frame.st.pram, at=e.map([pram.x,558]);
+  w += k.pram(at[0],at[1],.95*S,{roll:pram.roll,breath:pram.breath});
   w += k.person("marta", marta);
   w += k.person("pawel", { ...pawel, parts: "body" });
   // folder with its papers (URLOP under; ZASIŁEK lands on top)
@@ -183,5 +183,5 @@ export function okienko(g, k) {
   w += k.person("clerk", { ...clerk, parts: "left" });
   if (penAt) w += pen(penAt.nib, penAt.ang);
   w += k.person("pawel", { ...pawel, parts: "arms" });
-  return `<g transform="${camera(g)}">${w}</g>`;
+  return `<g transform="${state.camera.tr}">${w}</g>`;
 }

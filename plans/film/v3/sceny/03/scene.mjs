@@ -1,10 +1,11 @@
+import {endPose} from "../../ruch/pose.mjs";
 // Scene 03 · "Zdjęcie pod folią" (4–6 s, global frames 120–179). Author: block b01, models r1.
 // 0–5: exactly the clean 02 picture (02/59 ≡ 02/53). From 6 (wheel squeak 4.20 s) the camera pulls back along the
 // print: the 02 picture IS the photo in the folder (photo02, same drawing), then the folder, Paweł's thumb and cuff,
 // and finally the family in the ZUS queue (03/59 = 04/0). One glint crosses the foil 6–20 and stops at the pocket seam.
-import { scene as scene02, photo02 } from "../02/scene.mjs";
+import { scene as scene02, motionFrame as motion02, photo02 } from "../02/scene.mjs";
 import { thin } from "../01/scene.mjs";
-import { queueWorld, restPoses, papers, FOLDER_Q, PRAM_Q, folderTransform, ss } from "./kolejka.mjs";
+import { queueWorld, queueFrame, restPoses, papers, FOLDER_Q, PRAM_Q, folderLocal, folderTransform, ss } from "./kolejka.mjs";
 
 const D = Math.PI / 180;
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -52,16 +53,38 @@ function glint(f) {
 // foil pocket seam (the sleeve holding the print on the cover) — local extension of rekwizyty.folder
 const POCKET = f => `<path d="M-30 -26H35V31H-30Z" fill="#FFFFFF" fill-opacity="${f1(.08 * ss(6, 16, f))}" stroke="#B9AC86" stroke-width=".9" stroke-dasharray="2.2 1.6"/>`;
 
-export function world03(k, f) {
-  const F = folder03(f), { marta, pawel, pr } = poses03(k, f, F);
-  return { F, svg: queueWorld(k, { marta, pawel, pram: { ...pr, breath: .3 + .3 * Math.sin(f / 18) }, folder: F, photo: "%%PHOTO%%", photoOver: POCKET(f) + glint(f), behindFolder: papers(k, F), extrasF: f }) };
+export function motionFrame(f,k) {
+  const print=endPose(motion02,k);
+  if(f<=5) return print;
+  const F=folder03(f), state=poses03(k,f,F), cam=camera03(f,F), a=cam.r*D;
+  const x=cam.S*Math.cos(a), y=cam.S*Math.sin(a);
+  const camera=[x,y,-y,x,640-x*cam.Q[0]+y*cam.Q[1],360-y*cam.Q[0]-x*cam.Q[1]];
+  const data=queueFrame(state,camera), mc=print.camera;
+  const onPhoto=p=>{
+    const sx=mc[0]*p[0]+mc[4],sy=mc[3]*p[1]+mc[5];
+    return folderLocal(F,2+.82*(-28+.04375*sx),2+.82*(-16.06+.04375*sy));
+  };
+  const j=k.joints("pawel",print.actors.pawel);
+  data.details={"photo.ola.gripL":onPhoto(print.details["ola.gripL"]),"photo.pawel.gripL":onPhoto(j.gripL)};
+  // The queue behind the print is outside the frame at the start of the pullback.
+  const inFrame=({target:[u,v]})=>{
+    const sx=x*u-y*v+camera[4],sy=y*u+x*v+camera[5];
+    return sx>=0 && sx<=1280 && sy>=0 && sy<=720;
+  };
+  data.contacts=data.contacts.filter(inFrame);
+  data.supports=data.supports.filter(inFrame);
+  return data;
+}
+export function world03(k,f,state) {
+  const {F,marta,pawel,pr}=state;
+  return queueWorld(k,{marta,pawel,pram:{...pr,breath:.3+.3*Math.sin(f/18)},folder:F,photo:"%%PHOTO%%",photoOver:POCKET(f)+glint(f),behindFolder:papers(k,F),extrasF:f});
 }
 // The world is thinned to keep its line weight under the zoom; the print keeps its own (photographed) lines.
 export function withPhoto(svg, k) { return svg.replace("%%PHOTO%%", photo02(k)); }
 
 export function scene(f, k) {
   if (f <= 5) return scene02(59, k);
-  const { F, svg } = world03(k, f);
+  const state=motionFrame(f,k), F=state.F, svg=world03(k,f,state);
   const cam = camera03(f, F);
   return `<rect width="1280" height="720" fill="#F5FAF7"/><g transform="${cam.transform}">${withPhoto(thin(svg, 1 / Math.max(1, Math.pow(cam.S, .92))), k)}</g>`;
 }

@@ -1,3 +1,4 @@
+import {endPose,reach,gripKeys} from "../../ruch/pose.mjs";
 // Scene 05 · "Na pewno wziąłeś dobre?" (8–10 s, global frames 240–299). Author: block b01, models r1.
 // Over Marta's left shoulder: her profile (r1 head, yaw +1) on the left edge, Paweł ¾ in the queue world behind.
 // Szelest 8.30 s = local 9: his right thumb+index (screen-left arm, pinch) leave the folder corner for URLOP's free
@@ -6,9 +7,9 @@
 // 36–59 he holds URLOP face-out under his face, corner still pinched — 06 starts from that pinch.
 import mouths from "../../../montaz/assets/mowa.json" with { type: "json" };
 import { thin } from "../01/scene.mjs";
-import { queueWorld, restPoses, grip, papers, paperPointQ, folderLocal, PRAM_Q, ss } from "../03/kolejka.mjs";
+import { queueWorld, queueFrame, papers, paperPointQ, folderLocal, PRAM_Q, ss } from "../03/kolejka.mjs";
 import { withPhoto } from "../03/scene.mjs";
-import { folder04, poses04 } from "../04/scene.mjs";
+import { motionFrame as motion04 } from "../04/scene.mjs";
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const f1 = v => Math.round(v * 1000) / 1000;
@@ -20,18 +21,19 @@ export function pull05(f) {
   return { dx: -84 * go, dy: -34 * go, angle: -9 * go, bend: .35 * corner + .12 * Math.sin(Math.PI * go), lift: .6 * corner };
 }
 export function pose05(k, f) {
-  const base = poses04(k, 59), F = folder04(59);
+  const base=endPose(motion04,k), F=base.F;
   const pull = pull05(f);
   // pinch target: folder corner (04/59) → URLOP's top-left corner (15) → travels with the sheet
   const corner0 = folderLocal(F, -50, -58);
   const pc = paperPointQ(k, F, pull, "cornerTL"), sc = F.w / 100, a = (F.angle - 1 + pull.angle) * Math.PI / 180;
   const onPaper = [pc[0] + sc * (6 * Math.cos(a) - 7 * Math.sin(a)), pc[1] + sc * (6 * Math.sin(a) + 7 * Math.cos(a))];
-  const reach = ss(9, 15, f);
-  const target = [lerp(corner0[0], onPaper[0], reach), lerp(corner0[1], onPaper[1], reach)];
+  const approach = ss(9, 15, f);
+  const target = [lerp(corner0[0], onPaper[0], approach), lerp(corner0[1], onPaper[1], approach)];
   const look = ss(26, 29, f), nod = ss(30, 35, f);
   let pawel = { ...base.pawel, gaze: -.2, gazeDown: .8 - .25 * ss(18, 35, f), head: lerp(-.42, -.5, ss(16, 35, f)), nod: .45 - .1 * ss(18, 35, f) };
-  pawel = grip(k, "pawel", { ...pawel, left: [-90, -60, -40, -100] }, "left", target, lerp(-60, -100, ss(16, 35, f)));
-  return { ...base, pawel, F, pull, look, nod };
+  pawel=reach("pawel",{...pawel,leftGrip:gripKeys(f,[[0,"pinch"],[10,"open"],[15,"pinch"]])},"left",target);
+  const sheetCenter=folderLocal(F,-2+pull.dx,-60-38+115/2+pull.dy);
+  return {...base,pawel,F,pull,look,nod,working:target,workingId:f<9?"folder.spine":f>=15?"urlop.corner":null,sheetCenter};
 }
 
 // Foreground: Marta's profile and the edge of her sage shoulder (left edge of frame).
@@ -45,8 +47,9 @@ function martaOTS(k, f, look, nod) {
   return neck + shoulder + head;
 }
 
+export function motionFrame(f,k) {return queueFrame(pose05(k,f),CAM05);}
 export function scene(f, k) {
-  const { marta, pawel, F, pr, pull, look, nod } = pose05(k, f);
+  const { marta, pawel, F, pr, pull, look, nod } = motionFrame(f,k);
   const ps = papers(k, F, pull, { split: true });
   const svg = queueWorld(k, { marta, pawel, pram: { ...pr, breath: .3 + .3 * Math.sin((f + 120) / 18) }, folder: F, photo: "%%PHOTO%%",
     behindFolder: ps.z + ps.u, extrasF: f + 120 });

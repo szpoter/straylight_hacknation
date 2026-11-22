@@ -4,7 +4,9 @@
 // local 53 is the clean "photo" frame; flash 54–57 (klik 3.805 s), 58–59 = frame 53 again.
 // photo02() returns the clean frame 53 extended to the print's aspect (56 : 41.4) for the folder in 03–06.
 import mouths from "../../../montaz/assets/mowa.json" with { type: "json" };
-import { CAM, CONTACT, W_EDGE, GK, thin, ss, pawelPose, graspTransform, babyHand, MARTA } from "../01/scene.mjs";
+import { CAM, CONTACT, W_EDGE, FINGER_DEG, thin, ss, motionFrame as wardFrame, graspTransform, MARTA } from "../01/scene.mjs";
+
+import {endPose,reach} from "../../ruch/pose.mjs";
 
 export const Z = 7;                                   // macro magnification relative to 01
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -13,12 +15,6 @@ const f1 = v => Math.round(v * 10) / 10;
 const INK = "#283754", SAGE = "#B2CAAD", CREAM = "#FBFAF3", GOWN = "#E2ECEA";
 
 // Fingertip gap in 01-screen px along the finger axis (negative = pressed into the palm).
-export function gap02(f) {
-  if (f <= 5) return lerp(6, .7, ss(0, 5, f));                       // last approach; outlines meet at 5
-  const press = -7 * ss(5, 12, f);                                    // pad flattens, finger slides onto the palm
-  const flinch = .7 * Math.sin(Math.PI * ss(13, 20, f)) * (f < 20 ? 1 : 0); // ≈4 px macro pull-back, contact kept
-  return .7 + press + flinch;
-}
 // Per-finger closure (index, middle, ring, little) and thumb.
 export function fingers02(f) {
   return [ss(20, 31, f), ss(9, 21, f), ss(14, 26, f), ss(27, 34, f)];
@@ -51,13 +47,24 @@ let KREF = null;
 const MARTA_HEAD = (f, a) => KREF.head("marta", { x: 60, y: 318, s: 3.0, head: .5, nod: .55, gaze: .75, gazeDown: .75, lid: .15, smile: .35 * (1 - a), mouth: a * .8, line: 1.3 });
 
 // The hands: 01 world (only Paweł's arm + Ola's hand) under the punch-in camera.
-function hands(f, k) {
-  const pp = pawelPose(k, 59, gap02(f));
-  const cl = fingers02(f), th = ss(25, 36, f), press = ss(5, 12, f) * (1 - .4 * ss(30, 53, f));
-  let w = `<g transform="${graspTransform(W_EDGE)}">${babyHand("back", cl, { line: 11.5, press })}</g>`;
+export function motionFrame(f,k) {
+  const start=endPose(wardFrame,k), t=Math.min(f,53);
+  const press=ss(5,12,t)*(1-.4*ss(30,53,t)), thumb=ss(25,36,t);
+  const settle=1.5*ss(27,40,t), c=CAM.c*Z;
+  const camera=[c,0,0,c,CONTACT[0]+Z*(CAM.tx-CONTACT[0]),CONTACT[1]+settle+Z*(CAM.ty-CONTACT[1])];
+  const before=start.actors.pawel.pins.left.target;
+  const point=before.map((v,i)=>lerp(v,W_EDGE[i],ss(0,5,t)));
+  const flinch=1.8*Math.sin(Math.PI*ss(13,20,t));
+  const pawel=reach("pawel",{...start.actors.pawel,handAngle:{left:FINGER_DEG+flinch}},"left",point);
+  return {camera,segment:"ward",actors:{pawel},details:{"ola.gripL":W_EDGE},props:{palm:W_EDGE},
+    visible:{pawel:["shoulderL","elbowL","wristL","gripL"]},contacts:t<5?[]:[{role:"pawel",joint:"gripL",id:"ola.palm",target:W_EDGE}],
+    cl:fingers02(t),thumb,press,settle,supports:[]};
+}
+function hands(f,k) {
+  const {actors:{pawel:pp},cl,thumb:th,press,settle}=motionFrame(f,k);
+  let w = `<g transform="${graspTransform(W_EDGE)}">${k.babyHand("back", cl, { line: 11.5, press })}</g>`;
   w += k.person("pawel", { ...pp, parts: "left" });
-  w += `<g transform="${graspTransform(W_EDGE)}">${babyHand("front", cl, { line: 11.5, thumb: th })}</g>`;
-  const settle = 1.5 * ss(27, 40, f);                                 // Ola's shoulder relaxes: hand + finger sink a hair
+  w += `<g transform="${graspTransform(W_EDGE)}">${k.babyHand("front", cl, { line: 11.5, thumb: th })}</g>`;
   return `<g transform="translate(${CONTACT[0]} ${f1(CONTACT[1] + settle)}) scale(${Z}) translate(${-CONTACT[0]} ${-CONTACT[1]})">` +
     `<g transform="translate(${CAM.tx} ${CAM.ty}) scale(${CAM.c})">${thin(w, .62 / Z * 1.55)}</g></g>`;
 }

@@ -2,6 +2,7 @@
 // Everything is in the 04 screen space ("queue world"); scenes add their own camera on top.
 // Local extensions (reported to the model owner): flat background extras without faces (no r1 model),
 // the thumb-in-front clip of Paweł's right hand on the folder edge, the second sheet behind the cover.
+import {ease,reach} from "../../ruch/pose.mjs";
 import { thin } from "../01/scene.mjs";
 
 export const FLOOR = 700;                 // soles of Marta and Paweł
@@ -11,7 +12,7 @@ const D = Math.PI / 180;
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const f1 = v => Math.round(v * 10) / 10;
-export const ss = (a, b, f) => { const t = clamp((f - a) / (b - a)); return t * t * (3 - 2 * t); };
+export const ss = (a, b, f) => { return ease((f-a)/(b-a)); };
 
 // Standing hips (sole at FLOOR): Marta 188 local, Paweł 212.
 export const MARTA_Q = { x: 232, y: FLOOR - 188 * S, s: S, head: .45, nod: .35, gaze: .45, gazeDown: .7, smile: .1, bow: .12, lean: 4,
@@ -22,28 +23,9 @@ export const PRAM_Q = { x: 470, y: FLOOR - 34 * 1.25, s: 1.25 };
 // Closed folder at Paweł's chest (rekwizyty.folder): centre, drawn width, angle.
 export const FOLDER_Q = { x: 896, y: 342, w: 114, angle: -5 };
 
-// Solve a wrist so that the given grip contact lands on target (px). For each candidate wrist bend (−60…60°) the
-// wrist is iterated onto the target; the result with the smallest miss, closest to the preferred hand direction
-// `angle` (screen deg, optional) and the least bend wins. Deterministic.
-export function grip(k, role, pose, side, target, angle) {
-  const gk = side === "left" ? "gripL" : "gripR", ek = side === "left" ? "elbowL" : "elbowR", wr = side === "left" ? "wristL" : "wristR";
-  const bk = side === "left" ? "wristL" : "wristR";
-  let best = null;
-  for (let bend = -60; bend <= 60; bend += 10) {
-    let w = [(target[0] - pose.x) / pose.s, (target[1] - pose.y) / pose.s], p;
-    for (let i = 0; i < 18; i++) {
-      p = { ...pose, [bk]: bend, [side]: [pose[side][0], pose[side][1], w[0], w[1]] };
-      const g = k.joints(role, p)[gk];
-      w = [w[0] + .7 * (target[0] - g[0]) / pose.s, w[1] + .7 * (target[1] - g[1]) / pose.s];
-    }
-    p = { ...pose, [bk]: bend, [side]: [pose[side][0], pose[side][1], w[0], w[1]] };
-    const j = k.joints(role, p), err = Math.hypot(j[gk][0] - target[0], j[gk][1] - target[1]);
-    const ha = Math.atan2(j[wr][1] - j[ek][1], j[wr][0] - j[ek][0]) / D + bend;
-    const da = angle == null ? 0 : Math.abs((((ha - angle) % 360) + 540) % 360 - 180);
-    const score = err * 8 + da * .25 + Math.abs(bend) * .04;
-    if (!best || score < best.score) best = { score, p };
-  }
-  return best.p;
+// Feet are planted in floor coordinates while the pelvis shifts over them.
+function plant(base,p,x) {
+  return [-x,x].map(lx=>[(base.x+lx*S-p.x)/S,(FLOOR-8*S-p.y)/S]);
 }
 
 // Folder-local → world (closed folder: local panel −50..50 × −60..60, scale w/100).
@@ -139,9 +121,29 @@ export function paperPointQ(k, F, pull, name) {
 export function restPoses(k, o = {}) {
   const F = o.folder ?? FOLDER_Q, pr = o.pram ?? PRAM_Q;
   const handle = k.pramPoint(pr.x, pr.y, pr.s, "handle");
-  let marta = grip(k, "marta", { ...MARTA_Q, ...(o.marta ?? {}) }, "left", [handle[0] - 10, handle[1] + 2], -10);
-  const spine = folderLocal(F, -50, o.spineY ?? 8), bottom = folderLocal(F, o.bottomX ?? 26, 60);
-  let pawel = grip(k, "pawel", { ...PAWEL_Q, ...(o.pawel ?? {}) }, "left", spine, o.rightHandAngle ?? -60);
-  pawel = grip(k, "pawel", pawel, "right", bottom, o.leftHandAngle ?? 185);
-  return { marta, pawel, F, pr };
+  const mp={...MARTA_Q,r2:true,poles:{left:-1,right:-1},angles:{left:[83,-45,-50],right:[104,-32,8]},...o.marta};
+  mp.feet=plant(MARTA_Q,mp,13);
+  const bar=[handle[0]-10,handle[1]+2];
+  const marta=reach("marta",mp,"left",bar);
+  const spine=folderLocal(F,-50,o.spineY??8),bottom=folderLocal(F,o.bottomX??26,60);
+  const pp={...PAWEL_Q,r2:true,downPole:{left:48},poles:{left:-1,right:1},angles:{left:[129,-83,-48],right:[61,55,52]},...o.pawel};
+  pp.feet=plant(PAWEL_Q,pp,22);
+  const pawel=reach("pawel",reach("pawel",pp,"right",bottom),"left",spine);
+  return {marta,pawel,F,pr,bar,bottom,working:spine,workingId:"folder.spine"};
+}
+
+export function queueFrame(state,camera) {
+  const {marta,pawel,F,bar,bottom,working,workingId}=state;
+  const c=(role,joint,id,target)=>({role,joint,id,target});
+  const contacts=[c("pawel","gripR","folder.bottom",bottom)];
+  if (workingId) contacts.push(c("pawel","gripL",workingId,working));
+  if ((marta.pins?.left?.weight??0)===1) contacts.push(c("marta","gripL","pram.handle",bar));
+  if ((marta.pins?.right?.weight??0)===1) contacts.push(c("marta","gripR","pram.handle",marta.pins.right.target));
+  const supports=[];
+  for(const [role,base,halfWidth] of [["marta",MARTA_Q,13],["pawel",PAWEL_Q,22]]) {
+    for(const [i,x] of [-halfWidth,halfWidth].entries())
+      supports.push(c(role,i?"ankleR":"ankleL","floor",[base.x+x*S,FLOOR-8*S]));
+  }
+  return {...state,actors:{pawel,marta},segment:"queue",camera,contacts,supports,
+    props:{folder:[F.x,F.y],"pram.handle":bar,...(state.sheetCenter?{urlop:state.sheetCenter}:{})}};
 }
