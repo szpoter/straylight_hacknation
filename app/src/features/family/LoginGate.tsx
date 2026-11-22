@@ -21,7 +21,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           Otwórz profil rodziny, żeby zobaczyć jej sprawy i terminy.
         </p>
         <div className="flex w-full max-w-sm flex-col gap-3">
-          <ButtonLink href={AUTH_PATHS.login}>Otwórz profil Oli</ButtonLink>
+          <ButtonLink href={AUTH_PATHS.login}>Zaloguj się</ButtonLink>
           <ButtonLink href="/" variant="secondary">
             Wróć na stronę główną
           </ButtonLink>

@@ -53,7 +53,7 @@ export function SiteHeader() {
               Zarejestruj się
             </ButtonLink>
             <ButtonLink href="/logowanie" variant="primary" size="sm">
-              Otwórz profil Oli
+              Zaloguj się
             </ButtonLink>
           </div>
         </div>
