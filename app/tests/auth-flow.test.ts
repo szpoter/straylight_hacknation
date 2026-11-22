@@ -30,6 +30,8 @@ describe("demo login flow params", () => {
     expect(backHref("register", fromRegister)).toBe("/");
     expect(backHref("loginGov", fromRegister)).toBe("/rejestracja");
     expect(backHref("loginGov", readFlow({}))).toBe("/logowanie");
+    expect(backHref("zusApp", fromRegister)).toBe("/rejestracja");
+    expect(backHref("zusApp", readFlow({ wejscie: "sytuacja" }))).toBe("/logowanie?wejscie=sytuacja");
     // Powrót z kodu QR do wyboru metody nie przenosi symulowanego błędu.
     expect(backHref("mObywatel", fromRegister)).toBe("/logowanie/login-gov?z=rejestracja");
   });

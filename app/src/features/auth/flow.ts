@@ -1,6 +1,7 @@
 // Stan ścieżki logowania demo przekazywany w adresie, żeby „Wróć” i odświeżenie działały
 // bez pamięci przeglądarki. Przebieg według ui/NIKODEM.md, punkt 6:
 // eZUS (logowanie albo rejestracja) → login.gov.pl → Aplikacja mObywatel → wczytanie danych.
+// „Aplikacja mobilna ZUS” pokazuje swój ekran z kodem, ale w demo nie prowadzi dalej.
 
 /** Skąd rodzic zaczął: z „Zaloguj się” albo z „Zarejestruj się”. */
 export type FlowOrigin = "logowanie" | "rejestracja";
@@ -20,6 +21,7 @@ export type SearchParams = Record<string, string | string[] | undefined>;
 export const AUTH_PATHS = {
   login: "/logowanie",
   register: "/rejestracja",
+  zusApp: "/logowanie/aplikacja-zus",
   loginGov: "/logowanie/login-gov",
   mObywatel: "/logowanie/mobywatel",
   loading: "/logowanie/wczytywanie",
@@ -54,12 +56,13 @@ export function flowHref(path: string, flow: Partial<Flow>): string {
 }
 
 /** „Wróć” cofa o jeden ekran. Z ekranów eZUS wraca na stronę główną. */
-export function backHref(screen: "login" | "register" | "loginGov" | "mObywatel", flow: Flow): string {
+export function backHref(screen: "login" | "register" | "zusApp" | "loginGov" | "mObywatel", flow: Flow): string {
   const keep = { origin: flow.origin, entry: flow.entry };
   switch (screen) {
     case "login":
     case "register":
       return "/";
+    case "zusApp":
     case "loginGov":
       return flowHref(flow.origin === "rejestracja" ? AUTH_PATHS.register : AUTH_PATHS.login, {
         entry: flow.entry,
