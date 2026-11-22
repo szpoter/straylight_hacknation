@@ -23,6 +23,8 @@ it("scores the retrieved article, the quoted condition, the answer and the actio
   expect(Object.values(checks()).every(Boolean)).toBe(true);
   turn.citations[0].quote = fragment.sourceText.slice(0, fragment.sourceText.indexOf(" 2."));
   expect(checks()).toMatchObject({ raw: true, citation: true, quoteAspect: false, fact: true });
+  turn.claims[0].text = "Kwarantanna i izolacja w warunkach domowych nie są traktowane na równi z chorobą.";
+  expect(checks()).toMatchObject({ fact: false });
   turn.claims[0].text = "Podstawa to 80% wynagrodzenia.";
   expect(checks()).toMatchObject({ fact: false });
   turn.status = "needs_clarification";

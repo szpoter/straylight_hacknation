@@ -86,6 +86,19 @@ function verified(c: AskCitation) {
 
 const matches = (patterns: string[], value: string) => patterns.every(p => new RegExp(p, "iu").test(value));
 
+function supportsClaim(id: string, text: string) {
+  if (id === "quarantine") {
+    const equivalence = /na równi|równoznaczn|równoważn|trakt(?:uje|owane|owana).{0,45}(?:jak|jako)|zrównan/iu;
+    const denial = /nie (?:są |jest |bywają )?(?:na równi|równoznaczn|równoważn|trakt|zrównan)|nie traktuje|nie przysługuje/iu;
+    return equivalence.test(text) && !denial.test(text);
+  }
+  if (id === "detention") {
+    return /(?:wyjąt|chyba że|jednak|jeżeli|jeśli)/iu.test(text)
+      && !/bez (?:żadnych )?wyjątków|nawet (?:gdy|jeśli).{0,50}odpłat/iu.test(text);
+  }
+  return true;
+}
+
 export function ragAssertions(trial: Trial, { turn, retrieval }: Sample) {
   const required = trial.requiredEvidence ?? [];
   const facts = trial.facts ?? [];
@@ -98,7 +111,7 @@ export function ragAssertions(trial: Trial, { turn, retrieval }: Sample) {
     evidence: required.every(id => retrieval?.evidence?.includes(id)),
     citation: required.every(id => citations.some(c => c.fragmentId === id)) && turn.citations.every(verified),
     quoteAspect: matches(facts, quotes),
-    fact: matches(facts, claims),
+    fact: matches(facts, claims) && supportsClaim(trial.id, claims),
     action: turn.status === "answered" && linked && turn.claims.length > 0,
   };
 }
