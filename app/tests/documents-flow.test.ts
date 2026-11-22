@@ -56,6 +56,14 @@ describe("podstawianie danych", () => {
       rodzic_imie: "Ewa", rodzic_nazwisko: "Kłos", dziecko_imie: "Jan", dziecko_nazwisko: "Kłos",
     });
   });
+  it("własny plan rozróżnia datę urodzenia, termin porodu i datę przyjęcia dziecka", () => {
+    const own = { ...getPlan("oczekiwane"), id: "moja-rodzina", name: "Jan Klon", keyDate: "2026-11-10" };
+    expect(prefillContext({ ...own, situation: "urodzone" }, demoProfile())).toMatchObject({ childName: "Jan Klon", birthDate: own.keyDate, dueDate: undefined });
+    for (const situation of ["adopcja", "piecza"] as const) {
+      expect(prefillContext({ ...own, situation }, demoProfile())).toMatchObject({ childName: "Jan Klon", birthDate: undefined, dueDate: undefined });
+    }
+    expect(prefillContext({ ...own, situation: "urodzone", name: "Dziecko 2" }, demoProfile()).childName).toBeUndefined();
+  });
   it("plan oczekiwanego dziecka nie podstawia daty urodzenia", () => {
     const expected = prefillContext(getPlan("oczekiwane"), demoProfile());
     expect(initialValues(FORMS["800plus"], expected).data_urodzenia).toBeUndefined();

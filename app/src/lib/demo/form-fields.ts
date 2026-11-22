@@ -72,16 +72,18 @@ export type PrefillContext = {
 };
 
 /** Dane do podstawienia z planu i profilu demonstracyjnego (Profil → Moje dane). */
-export function prefillContext(plan: Pick<Plan, "name" | "kind" | "keyDate"> & Partial<Pick<Plan, "id">>, profile: Pick<PrefillContext, "parentName" | "employer" | "secondParentName" | "childName" | "birthDate">): PrefillContext {
-  const born = plan.kind !== "planowane";
-  const childName = born ? plan.name.replace(/^Sprawa testowa · /, "").replace(/^Przykład · .*/, "") || undefined : undefined;
+export function prefillContext(plan: Pick<Plan, "name" | "kind" | "keyDate" | "situation"> & Partial<Pick<Plan, "id">>, profile: Pick<PrefillContext, "parentName" | "employer" | "secondParentName" | "childName" | "birthDate">): PrefillContext {
+  const due = plan.situation ? plan.situation === "ciaza" || plan.situation === "planuje" : plan.kind === "planowane";
+  const dateIsBirth = !due && plan.situation !== "adopcja" && plan.situation !== "piecza";
+  const childName = due || /^Dziecko(?: \d+)?$/.test(plan.name) ? undefined
+    : plan.name.replace(/^Sprawa testowa · /, "").replace(/^Przykład · .*/, "") || undefined;
   const familyPlan = plan.id === "ola";
   return {
     ...profile,
     secondParentName: familyPlan ? profile.secondParentName ?? OLA.father : undefined,
     childName: familyPlan && (childName === "Ola" || childName === OLA.child) ? profile.childName ?? OLA.child : childName,
-    birthDate: born ? (familyPlan ? profile.birthDate ?? plan.keyDate : plan.keyDate) : undefined,
-    dueDate: born ? undefined : plan.keyDate,
+    birthDate: dateIsBirth ? (familyPlan ? profile.birthDate ?? plan.keyDate : plan.keyDate) : undefined,
+    dueDate: due ? plan.keyDate : undefined,
   };
 }
 
