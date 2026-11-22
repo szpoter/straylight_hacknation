@@ -1,9 +1,10 @@
 # 20 · Wejście marki
 
-**38–40 s.** Otwórz ostatnią pozą przebudowanej sceny 19. Pierwsze sześć klatek utrzymuje ostrego oryginalnego Zusika nad zastygłymi papierami na rozmytym tle. Dopiero teraz mięta zastępuje salon, a jedno osiadanie i przesunięcie odsłania nazwę.
+Autor planu: s20
 
-[Design produktu](../../../../../DESIGN.md) · [Stany Zusika i przejścia](../../PRODUKT.md)
+**38–40 s.** Na „Po to stworzyliśmy Przewodnik Rodzica” widz ma połączyć nazwę z postacią, którą chwilę wcześniej zobaczył wśród papierów Marty i Pawła. Czas na rozpoznanie rodziny przypada przed zmianą tła, a czas na przeczytanie nazwy po ruchu Zusika. [Scenariusz i nagrany tekst](../../../../../PLAN-FILMU-DEMO.md) · [Specyfikacja klatek](SPEC.md)
 
-[Bang Motion · ciągłość gestu](../../../v2/przyklady/ciagly-ruch.jpg) · [Oryginał](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg) · [Motionmaxxing · przebieg wyhamowania](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg)
-
-[Specyfikacja tego ujęcia](SPEC.md)
+1. Otwórz gotową klatką 59 ujęcia 19 i potrzymaj ją przez sześć klatek. Wystający róg arkusza między dłońmi rodziców, stopień rozmycia twarzy i ostry kontur Zusika mają zostać dokładnie tam, gdzie zatrzymał je klik. [Kadr przekazany przez 19](../19/SPEC.md) · [Referencja pomostu](../../../referencje/fala-formularzy-zusik-v1.png)
+2. Wygaszaj salon i papier do mięty za jednym egzemplarzem oryginalnego modelu w stanie `available`. Ręce odpoczywają, usta utrzymują wyraz ze stopklatki. Jedno osiadanie ma pokazać ciężar postaci. Daj jej opaść, lekko spłaszcz dolny obrys i odzyskaj wyjściowe proporcje. Wtedy źrenice wskażą puste miejsce po prawej. [Rysunek i warstwy](../../../../../app/src/components/mascot/babelek/Babelek.tsx) · [Stany Zusika](../../PRODUKT.md) · [Motionmaxxing · krzywa softLand](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg)
+3. Przesuń Zusika na lewą trzecią. Rozszerzaj obszar widocznego tekstu tuż przy jego prawym obrysie w miarę tego samego przejazdu. Oba wiersze można czytać od pierwszej litery. Z przykładu Bang Motion weź zasadę, że ruch jednego elementu odsłania następny. [Bang Motion · ciągłość akcji](../../../v2/przyklady/ciagly-ruch.jpg) · [Plik w repozytorium](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg)
+4. Zatrzymaj nazwę na pół sekundy. Po cięciu lewy brzeg zielonego przycisku „Importuj dane i otwórz plan” zajmie tę samą oś co początek obu wierszy tytułu. [Geometria przycisku](../../../v2/sceny/21/SPEC.md) · [Dalsze ujęcie](../21/PLAN.md)
