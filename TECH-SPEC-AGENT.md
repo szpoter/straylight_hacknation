@@ -1,5 +1,7 @@
 # Zusik — specyfikacja techniczna agenta
 
+Instrukcja dla nowego czatu obejmuje audyt przepływu od logowania do formularza, wyszukiwanie w całym publicznym korpusie, niezależny zestaw prób i odbiór na Vercelu. [Master prompt do wdrożenia i audytu Zusika](MASTER-PROMPT-ZUSIK.md)
+
 **Projekt techniczny · 21 listopada 2026.** Priorytety wynikają z tego, co jury sprawdzi na własnym pliku i jakiej decyzji rodzic potrzebuje przed rozpoczęciem wniosku. [Opis zadania, s. 11–15](<Materiały hackathonowe/ZUS - Pełna treść zadania konkursowego.pdf>) · [Architektura demo i kryteria odbioru](#architektura-demo)
 
 **Uzgodnione trzy scenariusze.** Rodzice porównują dwa warianty i przygotowują wniosek dla pracodawcy. Przedsiębiorca przygotowuje ZAM. Osoba pytająca o chorobowe otrzymuje wyjaśnienie braku prawa w udokumentowanej sytuacji. [Przebieg demonstracji](#scenariusze-demonstracji)

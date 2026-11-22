@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { AuthShell } from "@/features/auth/auth-shell";
-import { StartHeaderAside, StartPlaceholder } from "@/features/auth/start-placeholder";
+import { LoginGate } from "@/features/family/LoginGate";
+import { Onboarding } from "@/features/onboarding/Onboarding";
 
-export const metadata: Metadata = {
-  title: "Przewodnik Rodzica · wersja demonstracyjna",
-  robots: { index: false },
-};
+export const metadata: Metadata = { title: "Ułóżmy plan · Zusik" };
 
-// Tymczasowy ekran po zalogowaniu demo. Docelowo pierwsze pytanie onboardingu
-// z SPEC-PO-LOGOWANIU.md (zakres Macieja).
 export default function StartPage() {
   return (
-    <AuthShell aside={<StartHeaderAside />}>
-      <StartPlaceholder />
-    </AuthShell>
+    <LoginGate>
+      <Onboarding />
+    </LoginGate>
   );
 }

@@ -1,6 +1,7 @@
 import type { PaternityResult } from "../kamil/contract";
 import { formatRange, formatShort } from "../rules/dates";
-import type { RuleSchedule } from "../rules/parameters";
+import { formatValue, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
+import { RATES_RULES_VERSION, RATE_LABEL, benefitForPeriod, formatGrosze, type PeriodBenefit, type RateKind } from "../rules/rates";
 import { evaluatePaternity, type PaternityInput } from "../rules/paternity";
 import type { TestCase } from "./types";
 
@@ -158,4 +159,141 @@ export function paternityTestCases(schedule: RuleSchedule = {}): TestCase[] {
       computedBy: `lib/rules/paternity.ts · ${r.rulesVersion}`,
     };
   });
+}
+
+/* ---------- benefit amounts (lib/rules/rates.ts) ---------- */
+
+export interface RateScenario {
+  id: string;
+  title: string;
+  tag: string;
+  kind: RateKind;
+  /** Daily base of the benefit in PLN; null = not known yet. */
+  dailyBase: number | null;
+  start: string;
+  days: number;
+  /** Worked out by hand from the task's rates, independent of the rule code. */
+  expect: { rate10: number; dailyGrosze: number; totalGrosze: number } | null;
+}
+
+/** Fictional families. Amounts: daily base × rate, rounded to the grosz, × days. */
+export const RATE_SCENARIOS: RateScenario[] = [
+  {
+    id: "R-01",
+    title: "Urlop rodzicielski 4 tygodnie, podstawa 200 zł",
+    tag: "Przykład demo (+280 zł)",
+    kind: "parental",
+    dailyBase: 200,
+    start: "2027-01-04",
+    days: 28,
+    expect: { rate10: 700, dailyGrosze: 14000, totalGrosze: 392000 },
+  },
+  {
+    id: "R-02",
+    title: "Urlop macierzyński 20 tygodni, podstawa 150 zł",
+    tag: "Stawka 100%",
+    kind: "maternity",
+    dailyBase: 150,
+    start: "2026-12-07",
+    days: 140,
+    expect: { rate10: 1000, dailyGrosze: 15000, totalGrosze: 2100000 },
+  },
+  {
+    id: "R-03",
+    title: "Stawka uśredniona za urlop macierzyński, podstawa 200 zł",
+    tag: "Stawka 81,5%",
+    kind: "averaged",
+    dailyBase: 200,
+    start: "2026-12-07",
+    days: 140,
+    expect: { rate10: 815, dailyGrosze: 16300, totalGrosze: 2282000 },
+  },
+  {
+    id: "R-04",
+    title: "Zaokrąglenie do grosza, podstawa 133,33 zł",
+    tag: "Stawka 70%",
+    kind: "parental",
+    dailyBase: 133.33,
+    start: "2027-01-04",
+    days: 28,
+    expect: { rate10: 700, dailyGrosze: 9333, totalGrosze: 261324 },
+  },
+  {
+    id: "R-05",
+    title: "Brak podstawy wymiaru zasiłku",
+    tag: "Brakujące dane",
+    kind: "parental",
+    dailyBase: null,
+    start: "2027-01-04",
+    days: 28,
+    expect: null,
+  },
+];
+
+const RATE_PARAMETER: Record<RateKind, RuleParameterId> = {
+  maternity: "rate.maternity",
+  parental: "rate.parental",
+  averaged: "rate.averaged",
+};
+
+const rateText = (kind: RateKind, rate10: number) => formatValue(RATE_PARAMETER[kind], rate10);
+const partsRate = (kind: RateKind, b: PeriodBenefit) => b.parts.map((p) => rateText(kind, p.rate10)).join(" / ");
+const partsDaily = (b: PeriodBenefit) => b.parts.map((p) => formatGrosze(p.dailyGrosze)).join(" / ");
+
+/** Short outcome of a rate scenario under a schedule, for "Sprawdź zmianę". */
+export function rateScenarioOutcome(s: RateScenario, schedule: RuleSchedule): string {
+  if (s.dailyBase === null) return "brak podstawy";
+  return formatGrosze(benefitForPeriod({ kind: s.kind, dailyBase: s.dailyBase, start: s.start, days: s.days, schedule }).totalGrosze);
+}
+
+export function rateTestCases(schedule: RuleSchedule = {}): TestCase[] {
+  return RATE_SCENARIOS.map((s) => {
+    const inputs = [
+      { label: "Okres", value: `${RATE_LABEL[s.kind]}, ${s.days} dni od ${formatShort(s.start)}` },
+      { label: "Podstawa dzienna", value: s.dailyBase === null ? "—" : formatGrosze(Math.round(s.dailyBase * 100)) },
+    ];
+    if (s.dailyBase === null || !s.expect) {
+      return {
+        id: s.id,
+        title: s.title,
+        tag: s.tag,
+        status: "brak-danych",
+        inputs,
+        expected: [{ label: "Za okres", value: "do ustalenia" }],
+        result: [],
+        missing: "Brakuje dziennej podstawy wymiaru zasiłku. Bez niej nie liczymy kwoty.",
+        computedBy: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
+      };
+    }
+    const b = benefitForPeriod({ kind: s.kind, dailyBase: s.dailyBase, start: s.start, days: s.days, schedule });
+    const expected = [
+      { label: "Stawka", value: rateText(s.kind, s.expect.rate10) },
+      { label: "Za dzień", value: formatGrosze(s.expect.dailyGrosze) },
+      { label: "Za okres", value: formatGrosze(s.expect.totalGrosze) },
+    ];
+    const result = [
+      { label: "Stawka", value: partsRate(s.kind, b) },
+      { label: "Za dzień", value: partsDaily(b) },
+      { label: "Za okres", value: formatGrosze(b.totalGrosze) },
+    ];
+    const matches = expected.every((e, i) => e.value === result[i].value);
+    return {
+      id: s.id,
+      title: s.title,
+      tag: s.tag,
+      status: matches ? "zgodna" : "niezgodna",
+      inputs,
+      expected,
+      result,
+      reasons: b.parts.map(
+        (p) => `${formatShort(p.from)}–${formatShort(p.to)}: ${p.days} dni × ${formatGrosze(p.dailyGrosze)} (${rateText(s.kind, p.rate10)})`,
+      ),
+      computedBy: `lib/rules/rates.ts · ${b.rulesVersion}`,
+    };
+  });
+}
+
+/** Every test case of the panel, evaluated with the values published in this demo session. */
+export function allTestCases(schedule: RuleSchedule = {}): TestCase[] {
+  return [...paternityTestCases(schedule), ...rateTestCases(schedule)];
 }

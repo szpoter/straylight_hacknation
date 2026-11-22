@@ -87,3 +87,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         working-directory: app
         run: npm run zusik:acceptance -- https://straylight-hacknation.vercel.app
+
+      - name: Check cross-corpus answers and citations on production
+        if: github.ref == 'refs/heads/main'
+        working-directory: app
+        run: node --import tsx scripts/zusik-eval-conversations.ts https://straylight-hacknation.vercel.app

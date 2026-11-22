@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Domine, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -21,10 +21,16 @@ export const metadata: Metadata = {
     "Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pl" className={`${domine.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );
 }

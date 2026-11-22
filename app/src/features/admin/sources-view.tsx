@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { KnowledgePackage, KnowledgeSource } from "@/lib/admin/types";
+import { SITUATION_LABEL, isStale, type SupportOrganization } from "@/lib/support/organizations";
 import { formatDate } from "./mock-data";
 import { Badge, Card, SourceLink, StatTile, cx } from "./ui";
 import s from "./admin.module.css";
@@ -20,7 +21,17 @@ function ageInDays(iso: string, today = new Date()): number {
   return Math.floor((today.getTime() - new Date(`${iso}T00:00:00Z`).getTime()) / 86_400_000);
 }
 
-export function SourcesView({ packages, sources }: { packages: KnowledgePackage[]; sources: KnowledgeSource[] }) {
+export function SourcesView({
+  packages,
+  sources,
+  organizations,
+  today,
+}: {
+  packages: KnowledgePackage[];
+  sources: KnowledgeSource[];
+  organizations: SupportOrganization[];
+  today: string;
+}) {
   const [pkg, setPkg] = useState<string>("Wszystkie");
   const filters = ["Wszystkie", ...packages.map((p) => p.version)];
   const rows = sources.filter((src) => pkg === "Wszystkie" || src.packageVersion === pkg);
@@ -90,6 +101,56 @@ export function SourcesView({ packages, sources }: { packages: KnowledgePackage[
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card
+        className={s.span12}
+        title="Organizacje wsparcia"
+        id="support"
+        meta="Wyłącznie fundacje i stowarzyszenia. Opisy i kontakty ze stron organizacji."
+      >
+        <div className={s.tableWrap}>
+          <table className={s.table}>
+            <thead>
+              <tr>
+                <th scope="col">Organizacja</th>
+                <th scope="col" className={s.hideMobile}>
+                  Sytuacje
+                </th>
+                <th scope="col" className={s.hideMobile}>
+                  Kontakt
+                </th>
+                <th scope="col">Zweryfikowano</th>
+              </tr>
+            </thead>
+            <tbody>
+              {organizations.map((o) => (
+                <tr key={o.id}>
+                  <td>
+                    <SourceLink label={o.name} url={o.url} />
+                    <div className={cx(s.small, s.muted)}>{o.helps}</div>
+                    {o.freeOfCharge ? <div className={s.small}>{o.freeOfCharge}</div> : null}
+                    <div className={cx(s.small, s.muted)}>
+                      {o.legalForm}, KRS {o.krs}
+                      {o.area ? ` · ${o.area}` : ""}
+                    </div>
+                  </td>
+                  <td className={cx(s.hideMobile, s.small)}>{o.situations.map((x) => SITUATION_LABEL[x]).join(", ")}</td>
+                  <td className={cx(s.hideMobile, s.small)}>
+                    {[o.phone ? `tel. ${o.phone}` : null, o.email].filter(Boolean).join(" · ") || "na stronie organizacji"}
+                  </td>
+                  <td className={s.nowrap}>
+                    {isStale(o.verifiedAt, today) ? (
+                      <Badge tone="warn">{formatDate(o.verifiedAt)}</Badge>
+                    ) : (
+                      formatDate(o.verifiedAt)
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

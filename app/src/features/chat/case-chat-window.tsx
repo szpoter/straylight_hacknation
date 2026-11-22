@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 import { ChatHeader } from "./chat-panel";
-import { conversationInput } from "@/lib/zusik/conversation";
+import { conversationInput, type FamilyChatScope } from "@/lib/zusik/conversation";
 import { useZusikCase } from "./use-zusik-case";
 import { TurnView } from "./turn-view";
 import { Composer } from "./composer";
@@ -12,19 +12,30 @@ import s from "./zusik.module.css";
 
 export type CaseChatEntry = { id: string; at: string; content: ReactNode };
 
-export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice }: {
+type EmbeddedControls = { fullscreen: boolean; onFullscreen: () => void; onCollapse: () => void };
+
+export function GeneralConversation({ controls, label = "Rozmowa ogólna", introduction, family }: {
+  controls?: EmbeddedControls; label?: string; introduction?: ReactNode; family?: FamilyChatScope;
+}) {
+  return <CaseChatWindow scenario="ogolna" family={family} label={label} ready busy={false} entries={[]} documents={null}
+    controls={controls} introduction={introduction ?? <p>O jakie świadczenie albo dokument chcesz zapytać?</p>} />;
+}
+
+export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice, controls, family }: {
   scenario: Scenario;
+  family?: FamilyChatScope;
   label: string;
   busy: boolean;
   introduction?: ReactNode;
   entries: CaseChatEntry[];
-  children: ReactNode;
+  children?: ReactNode;
   ready: boolean;
   documents: ReactNode;
-  onMessage: (message: string, original: string) => Promise<boolean | "ask">;
+  onMessage?: (message: string, original: string) => Promise<boolean | "ask">;
   notice?: string | null;
+  controls?: EmbeddedControls;
 }) {
-  const chat = useZusikCase(scenario, ready);
+  const chat = useZusikCase(scenario, ready, family);
   const [askNotice, setAskNotice] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [text, setText] = useState("");
@@ -32,6 +43,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   const thread = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
+  const waiting = busy || chat.asking || chat.phase !== "ready";
   useEffect(() => {
     const viewport = thread.current;
     if (!viewport || !content.current) return;
@@ -49,7 +61,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   }))].sort((a, b) => a.at.localeCompare(b.at));
   const submit = async () => {
     const message = text.trim();
-    if (!message || busy || chat.asking) return;
+    if (!message || waiting) return;
     setAskNotice(null);
     atBottom.current = true;
     const { text: body, reply } = conversationInput(message, scenario);
@@ -59,7 +71,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
     const asksSource = /źród|cytat|podstaw|skąd/iu.test(body);
     const caseDocument = /formularz|dokumen|odpis|skan|pesel|adres|nazwisk/iu.test(body);
     const aboutLastAnswer = asksSource && (previousAnswer || !caseDocument && lastAnswer && (lastAnswer.createdAt ?? "") >= lastCaseAt);
-    const result = reply || aboutLastAnswer ? "ask" : await onMessage(body, message);
+    const result = !onMessage || reply || aboutLastAnswer ? "ask" : await onMessage(body, message);
     if (result === "ask") {
       const answer = await chat.ask(message);
       if (answer.kind === "unavailable" || answer.kind === "invalid") {
@@ -71,12 +83,14 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       setText(current => current.trim() === message ? "" : current);
     }
   };
+  const Container = controls ? "div" : "main";
   return (
-    <main className={s.root} data-zusik-workspace>
+    <Container className={s.root} data-zusik-workspace>
       <div className={s.caseLayout}>
         {!fullscreen && documents && <aside className={s.caseDocuments} aria-label="Dokumenty sprawy">{documents}</aside>}
         <section className={`${s.chat} ${s.caseWindow}`} aria-label="Czat z Zusikiem">
-          <ChatHeader scenario={scenario} label={label} fullscreen={fullscreen} onFullscreen={() => setFullscreen(value => !value)} />
+          <ChatHeader scenario={scenario} label={label} fullscreen={controls?.fullscreen ?? fullscreen} onCollapse={controls?.onCollapse}
+            onFullscreen={controls?.onFullscreen ?? (documents ? () => setFullscreen(value => !value) : undefined)} />
           <div ref={thread} className={s.thread} onScroll={event => {
             const viewport = event.currentTarget;
             atBottom.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 32;
@@ -86,15 +100,16 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
               <div className={s.messages} role="log" aria-label="Przebieg rozmowy" aria-relevant="additions">
                 {introduction}
                 {timeline.map(entry => <Fragment key={entry.id}>{entry.content}</Fragment>)}
-                <fieldset className={s.caseActions} disabled={busy || chat.asking}>{children}</fieldset>
+                {children && <fieldset className={s.caseActions} disabled={busy || chat.asking}>{children}</fieldset>}
               </div>
             </div>
           </div>
           <div className={s.chatBottom}>
-            <Composer text={text} busy={busy || chat.asking} notice={askNotice ?? notice ?? null} textareaRef={input} onText={setText} onSend={() => void submit()} />
+            {chat.phase === "error" && <button type="button" className={s.secondaryButton} onClick={() => void chat.restore()}>Ponów połączenie z czatem</button>}
+            <Composer text={text} busy={waiting} notice={askNotice ?? notice ?? null} textareaRef={input} onText={setText} onSend={() => void submit()} />
           </div>
         </section>
       </div>
-    </main>
+    </Container>
   );
 }

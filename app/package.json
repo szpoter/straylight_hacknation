@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "^0.1.65",
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/flubber": "^0.4.0",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
@@ -52,6 +53,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.6",
     "playwright-core": "1.58.2",
+    "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.1.1"

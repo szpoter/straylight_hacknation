@@ -1,0 +1,103 @@
+import { describe, expect, it } from "vitest";
+import { buildPlan, buildPlans, declineName, leaveWeeks, planHighlights, shiftTextDates } from "@/lib/plan/build";
+import { isResolved } from "@/lib/plan/status";
+
+describe("plan z onboardingu", () => {
+  it("przesuwa terminy do daty urodzenia i zmienia imię", () => {
+    const plan = buildPlan({ situation: "urodzone", role: "urodzilam", date: "2026-11-15", name: "Maja" }, "p1");
+    const zgl = plan.stops.find((s) => s.id === "zglos-urodzenie")!;
+    expect(zgl.due).toBe("2026-12-06"); // 21 dni od 15.11
+    expect(zgl.title).toBe("Zgłoś urodzenie Mai");
+    expect(plan.stops.find((s) => s.id === "ubezpieczenie-dziecka")!.title).toBe("Zgłoś Maję do ubezpieczenia zdrowotnego");
+    expect(plan.keyDate).toBe("2026-11-15");
+    expect(plan.stage).toBe("narodziny");
+    // Etapy sprzed porodu zostają na ścieżce jako „Za Tobą”, pionek stoi na narodzinach.
+    const past = plan.stops.filter((s) => s.stage === "ciaza" || s.stage === "przed");
+    expect(past.length).toBeGreaterThan(0);
+    expect(past.every((s) => s.state === "minelo" && !s.due)).toBe(true);
+    expect(plan.stops.find((s) => s.id === "800plus")!.due).toBe("2027-02-15");
+  });
+
+  it("bez imienia mówi o dziecku", () => {
+    const plan = buildPlan({ situation: "urodzone", role: "urodzilam", date: "2026-11-10" }, "p2");
+    expect(plan.name).toBe("Dziecko");
+    expect(plan.stops.find((s) => s.id === "zglos-urodzenie")!.title).toBe("Zgłoś urodzenie dziecka");
+  });
+
+  it("plan oczekiwanego dziecka liczy od terminu porodu", () => {
+    const plan = buildPlan({ situation: "ciaza", role: "w-ciazy", date: "2027-06-14" }, "p3");
+    expect(plan.stage).toBe("ciaza");
+    expect(plan.stops.find((s) => s.id === "e-zaplanuj-urlopy")!.due).toBe("2027-07-05");
+    expect(plan.stops.find((s) => s.id === "e-macierzynski-przed")!.condition).toContain("3 maja 2027");
+    expect(plan.shortInfo).toBe("czerwiec 2027");
+  });
+
+  it("drugi rodzic nie widzi spraw osoby, która rodzi", () => {
+    const plan = buildPlan({ situation: "urodzone", role: "drugi-rodzic", date: "2026-11-10" }, "p4");
+    const ids = plan.stops.map((s) => s.id);
+    expect(ids).not.toContain("zasilek-macierzynski");
+    expect(ids).not.toContain("urlop-macierzynski");
+    expect(plan.stops.find((s) => s.id === "urlop-ojcowski")!.forWhom).toBe("Dla Ciebie");
+    expect(plan.stops.find((s) => s.id === "zglos-urodzenie")!.parallelWith).toBeUndefined();
+  });
+
+  it("zmiana pracy dodaje ostrzeżenie", () => {
+    const plan = buildPlan({ situation: "urodzone", role: "urodzilam", date: "2026-11-10", jobChange: "tak" }, "p5");
+    expect(plan.stops.find((s) => s.id === "zasilek-macierzynski")!.risk?.title).toBe("Zmiana pracy lub koniec umowy");
+    expect(planHighlights(plan).warnings).toBe(1);
+    const none = buildPlan({ situation: "urodzone", role: "urodzilam", date: "2026-11-10", jobChange: "nie" }, "p6");
+    expect(none.stops.some((s) => s.risk)).toBe(false);
+  });
+
+  it("nic nie jest za rodzicem poza sprawami, które dzieją się same", () => {
+    for (const situation of ["urodzone", "ciaza", "planuje", "adopcja"] as const) {
+      const plan = buildPlan({ situation, role: "urodzilam", date: situation === "ciaza" ? "2027-05-14" : "2026-11-10" }, "p");
+      const resolved = plan.stops.filter((s) => isResolved(s) && s.state !== "minelo");
+      expect(resolved.every((s) => s.kind === "dzieje-sie-samo")).toBe(true);
+    }
+  });
+
+  it("podaje liczby na ekran gotowego planu", () => {
+    const h = planHighlights(buildPlan({ situation: "urodzone", role: "urodzilam", date: "2026-11-10" }, "p7"));
+    expect(h.total).toBeGreaterThan(5);
+    expect(h.nearest?.id).toBe("zglos-urodzenie");
+    expect(h.stages).toBe(2);
+  });
+
+  it("bliźnięta: osobny plan na dziecko, wspólne sprawy rodzica w obu planach — ścieżki takie same", () => {
+    const plans = buildPlans({ situation: "urodzone", role: "urodzilam", date: "2026-11-10", childCount: "2", names: ["Bartek", "Julek"] }, "bl");
+    expect(plans.map((p) => p.name)).toEqual(["Bartek", "Julek"]);
+    const [b, j] = plans;
+    // Te same sprawy w tej samej kolejności → pionek na tym samym miejscu.
+    expect(b.stops.map((s) => s.id)).toEqual(j.stops.map((s) => s.id));
+    const shared = b.stops.find((s) => s.id === "zasilek-macierzynski")!;
+    expect(shared.sharedGroup).toBe("bl");
+    expect(j.stops.find((s) => s.id === "800plus")!.sharedGroup).toBeUndefined(); // 800+ na każde dziecko
+    expect(j.stops.find((s) => s.id === "zglos-urodzenie")!.title).toBe("Zgłoś urodzenie Julka");
+  });
+
+  it("dopisane zdania o przepisach zawsze mają źródło", () => {
+    const plans = buildPlans({ situation: "urodzone", role: "urodzilam", date: "2026-11-10", childCount: "2", employment: "nie-pracuje", jobChange: "tak" }, "s");
+    const stops = plans.flatMap((p) => p.stops);
+    const notes = stops.flatMap((s) => s.notes ?? []);
+    expect(notes.length).toBeGreaterThan(0);
+    expect(notes.every((n) => n.sources.length > 0)).toBe(true);
+    expect(notes.some((n) => n.text.includes("31 tygodni"))).toBe(true);
+    expect(stops.filter((s) => s.risk).every((s) => (s.risk!.sources ?? []).length > 0)).toBe(true);
+    expect(leaveWeeks(2)).toEqual({ maternity: 31, parental: 43 });
+    expect(leaveWeeks(5).maternity).toBe(37);
+  });
+
+  it("ciąża z bliźniętami: jeden plan bez imion", () => {
+    const plans = buildPlans({ situation: "ciaza", role: "w-ciazy", date: "2027-05-14", childCount: "2" }, "c");
+    expect(plans).toHaveLength(1);
+    expect(plans[0].name).toBe("Oczekiwane bliźnięta");
+  });
+
+  it("pomocnicze: odmiana i daty w tekście", () => {
+    expect(declineName("Antek")).toEqual({ nom: "Antek", gen: "Antka", acc: "Antka" });
+    expect(declineName("Ola")).toEqual({ nom: "Ola", gen: "Oli", acc: "Olę" });
+    expect(declineName("Jan").gen).toBe("Jana");
+    expect(shiftTextDates("od 30 marca 2027", 2)).toBe("od 1 kwietnia 2027");
+  });
+});

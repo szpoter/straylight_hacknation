@@ -307,6 +307,92 @@ async function testFollowUps(page: Page) {
   assert.equal(result.turn.citations.length, 0);
   assert.equal(result.retrieval, null);
 }
+async function testLoginToChat(page: Page) {
+  await page.goto(origin);
+  await page.locator("header").getByRole("link", {name: "Zaloguj się", exact: true}).click();
+  await page.getByRole("link", {name: /^login\.gov\.pl/i}).click();
+  await page.getByRole("link", {name: /^Aplikacja mObywatel/i}).click();
+  await page.getByRole("button", {name: "Symuluj zeskanowanie kodu"}).click();
+  await page.waitForURL("**/start");
+  const open = page.getByRole("button", {name: "Otwórz czat z Zusikiem"});
+  await open.click();
+  assert.equal(new URL(page.url()).pathname, "/start");
+  const chat = page.getByRole("region", {name: "Czat z Zusikiem"});
+  const draft = chat.getByRole("textbox", {name: "Wiadomość do Zusika"});
+  const question = "Czy wniosek o Dobry Start mogę wysłać przez mZUS?";
+  await draft.fill(question);
+  await chat.getByRole("button", {name: "Pełny ekran"}).click();
+  await chat.getByRole("button", {name: "Podziel ekran"}).click();
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Otwórz czat z Zusikiem");
+  await page.setViewportSize({width: 390, height: 844});
+  await open.click();
+  assert.equal(await draft.inputValue(), question);
+  assert.ok(await draft.evaluate(el => el === document.activeElement));
+  const sent = page.waitForRequest(r => r.url().endsWith("/api/zusik/ask") && r.method() === "POST");
+  const response = page.waitForResponse(r => r.url().endsWith("/api/zusik/ask") && r.request().method() === "POST");
+  const answer = askInChat(page, question);
+  await sent;
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await (await response).finished();
+  await open.click();
+  const {turn, retrieval} = await answer;
+  assert.ok(turn.citations.some(c => c.fragmentId === "dobry-start-kanaly"));
+  assert.ok(retrieval.evidence.includes("dobry-start-kanaly"));
+  await page.reload();
+  await open.click();
+  await chat.getByText(question, {exact: true}).waitFor();
+  const general = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=ogolna");
+  assert.ok(general.turns.some(saved => saved.requestId === turn.requestId));
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await page.getByRole("button", {name: "Otwórz plan", exact: true}).first().click();
+  await page.waitForURL("**/plan");
+  const pawn = page.getByRole("button", {name: /Otwórz czat z Zusikiem$/});
+  assert.equal(await pawn.count(), 1, "One visible launcher on the map");
+  await pawn.click();
+  await chat.getByText(/^Ola · /).waitFor();
+  assert.equal(await chat.getByText(question, {exact: true}).count(), 0);
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+
+  await page.getByRole("link", {name: "Zobacz wsparcie"}).click();
+  await open.click();
+  await chat.getByText("Ola · Wsparcie", {exact: true}).waitFor();
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await page.locator('a[href="/profil"]:visible').first().click();
+  await open.click();
+  await chat.getByText("Ola · Profil", {exact: true}).waitFor();
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  await page.locator('a[href="/dokumenty"]:visible').first().click();
+  await open.click();
+  await chat.getByText("Ola · Dokumenty", {exact: true}).waitFor();
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+
+  await page.getByRole("link", {name: "Urlop ojcowski", exact: true}).click();
+  await page.getByRole("button", {name: "Zapytaj o ten wniosek", exact: true}).click();
+  await chat.getByText("Ola · Urlop ojcowski", {exact: true}).waitFor();
+  const contextualQuestion = "Ile wcześniej pracownik musi złożyć wniosek?";
+  const request = page.waitForRequest(r => r.url().endsWith("/api/zusik/ask") && r.method() === "POST");
+  const contextual = await askInChat(page, contextualQuestion);
+  const payload = (await request).postDataJSON();
+  assert.deepEqual(payload.family, {planId: "ola", stopId: "urlop-ojcowski"});
+  assert.ok(contextual.turn.citations.some(c => c.fragmentId === "kp-1823-2"));
+  await page.reload();
+  await open.click();
+  await chat.getByText(contextualQuestion, {exact: true}).waitFor();
+  await chat.getByRole("button", {name: "Zwiń czat"}).click();
+  for (const other of ["planId=oczekiwane&stopId=urlop-ojcowski", "planId=ola", "planId=ola&stopId=rodzicielski"]) {
+    const isolated = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=ogolna&" + other);
+    assert.ok(!isolated.turns.some(saved => saved.requestId === contextual.turn.requestId), "Conversation isolated: " + other);
+  }
+  await page.goto(origin + "/app/sprawy");
+  await open.click();
+  await chat.getByText(question, {exact: true}).waitFor();
+  await chat.getByText("Zmień sprawę", {exact: true}).click();
+  await chat.getByRole("link", {name: /Marta i Paweł/}).click();
+  await page.waitForURL("**/app");
+  const view = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=marta");
+  assert.ok(!view.turns.some(turn => turn.question === question), "General conversation stays outside Marta's case");
+}
 async function testGreetings(page: Page) {
   // Reproduce a cold session while the parent is already typing the first message.
   let releaseSession!: () => void;
@@ -347,7 +433,7 @@ async function testGreetings(page: Page) {
 }
 async function run() {
   const browser=await chromium.launch({channel:"chrome", headless:true});
-  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false],["KONTEKST",testFollowUps,false]] as const;
+  const cases=[["M1",testMarta,false],["M2",testMarta,true],["K1",testKamil,false],["K2",testKamil,true],["D1",testSickness,false],["D2",testSickness,true],["RAG",testCitations,false],["NOWA",testNewQuestion,false],["CZAT",testGreetings,false],["KONTEKST",testFollowUps,false],["START",testLoginToChat,false]] as const;
   let failures=0;
   try {
     for (const [id,test,variation] of cases) {

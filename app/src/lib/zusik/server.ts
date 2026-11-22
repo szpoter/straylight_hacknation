@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import { CHECKPOINT_SCHEMA, ConfigError, DEFAULT_EMBED_MODEL, requireEnv } from "./config";
 import { SESSION_COOKIE } from "./constants";
 import { generateAnswer } from "../rag/answer";
+import { searchCorpus } from "../rag/corpus-search";
 import { loadCorpus } from "../rag/corpus-fs";
 import { qdrantKnowledgeSearch } from "../rag/retrieve";
 import { AskService } from "./ask-service";
@@ -81,6 +82,7 @@ export function askService(): AskService {
     corpus,
     selectCorpus: (name) => loadCorpus(name),
     suggestTopic,
+    searchCorpus,
     search: { search: input => qdrantKnowledgeSearch(knowledgeSettings()).search(input) },
     generate: (question, evidence, activeCorpus) => generateAnswer({ ...sherlockSettings(), queue: db }, activeCorpus, question, evidence),
   });

@@ -1,7 +1,8 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
+import { corpusFollowUp } from "../rag/corpus-search";
 import { relevantFragment } from "../rag/relevance";
-import { extractiveAnswer, needsStatutoryText } from "../rag/excerpt";
+import { extractiveAnswer, needsStatutoryText, withSourceException } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
@@ -11,8 +12,9 @@ import type { AskAnswer, AskTurn } from "./types";
 import type { MartaView } from "../marta/types";
 import { caseSources, previousSources, sourceIntent } from "./context-answer";
 
+import { familyTopic } from "./family-chat";
 import { resolveFollowUp } from "./retrieval-context";
-import { conversationInput, conversationOwner, type CaseName } from "./conversation";
+import { conversationInput, conversationOwner, type CaseName, type FamilyChatScope } from "./conversation";
 
 type Progress = (status: string) => void;
 
@@ -23,6 +25,7 @@ export interface AnswerDeps {
   search: KnowledgeSearch;
   /** Local-only fallback mapping the current utterance onto a reviewed public query. */
   suggestTopic?(text: string): PublicQuestion | null;
+  searchCorpus?(text: string, direct?: PublicQuestion | null): PublicQuestion | null;
   selectCorpus?(name: PublicQuestion["corpus"]): Corpus;
   /** Bielik via Sherlock. Receives only the sanitised question and public fragments. */
   generate(question: string, evidence: Fragment[], corpus: Corpus): Promise<GenerationResult>;
@@ -59,8 +62,12 @@ function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null 
   const direct = publicQuestion(text);
   const genericForm = direct?.question.startsWith("Jakie informacje należy zawrzeć") &&
     !/rodzicielsk/iu.test(text);
-  if ((direct && !genericForm) || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
-  return deps.suggestTopic?.(text) ?? direct;
+  if (direct?.clarify || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
+  const preset = (!direct || genericForm) ? deps.suggestTopic?.(text) : null;
+  // Preserve reviewed compound rules whose exceptions must travel with the main article.
+  if (preset || direct?.corpus === "oferta" || (direct?.corpus === "marta" && !genericForm) ||
+      ((direct?.locators?.length ?? 0) > 1 && !direct?.broad) || explicitLocatorKeys(text).length) return preset ?? direct;
+  return deps.searchCorpus?.(text, direct) ?? direct;
 }
 
 /** Resolve the public query locally before either provider receives it. */
@@ -74,7 +81,7 @@ export async function answerQuestion(
   const trace: AnswerTrace = {
     gate: null,
     contextRequestId,
-    sanitized,
+    sanitized: projected?.searchText ?? sanitized,
     expanded: null,
     vectorHits: [],
     vectorIds: [],
@@ -114,10 +121,10 @@ export async function answerQuestion(
   }
   if (!projected) return { answer: plain("insufficient_evidence",
     "Nie rozpoznałem tematu w bazie Zusika. O jakie świadczenie, dokument albo sytuację chcesz zapytać?"), trace };
-  trace.expanded = projected.corpus === "marta" ? expandQuery(sanitized) : null;
+  trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
-  const found = await deps.search.search({ query: sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
+  const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
   trace.search = found.status;
   if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   trace.vectorHits = found.hits;
@@ -160,6 +167,11 @@ export async function answerQuestion(
 
   const { answer, report } = validateAnswer(corpus, fragments, generated.output);
   trace.report = report;
+  const complete = withSourceException(projected, answer, fragments);
+  if (complete) {
+    trace.quoteReason = "statutory_conditions";
+    return { answer: complete, trace };
+  }
   if (answer.status === "insufficient_evidence" || (answer.status === "answered" && needsStatutoryText(projected, answer))) {
     const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
     if (quote) {
@@ -201,8 +213,8 @@ export function questionHash(question: string): string {
 export class AskService {
   constructor(private readonly deps: AskServiceDeps) {}
 
-  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void, scenario: CaseName = "marta"): Promise<AskResult> {
-    const demoCase = await this.deps.store.findOrCreate(conversationOwner(sessionId, scenario));
+  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void, scenario: CaseName = "marta", family?: FamilyChatScope): Promise<AskResult> {
+    const demoCase = await this.deps.store.findOrCreate(conversationOwner(sessionId, scenario, family));
     const threadId = demoCase.threadId;
     const hash = questionHash(question);
     const deadline = Date.now() + (this.deps.pendingWaitMs ?? 45_000);
@@ -236,9 +248,15 @@ export class AskService {
         result = { answer, trace: null };
       } else {
         const history = await this.deps.turns.list(threadId, requestId, 24);
-        const context = resolveFollowUp(text, history, this.deps.suggestTopic);
-        const projected = context?.plan ?? projectQuestion(this.deps, text);
-        result = await answerQuestion(this.deps, text, onProgress, projected, context?.requestId);
+        const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
+        const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
+        const topic = familyTopic(family?.stopId);
+        const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
+          : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
+        const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
+        const retrievalText = usePageTopic ? topic + ". " + text : text;
+        const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
+        result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
         if (projected?.question && result.answer.status !== "unavailable")
           result.answer.publicQuery = projected.question;
       }

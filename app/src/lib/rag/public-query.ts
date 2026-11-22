@@ -6,6 +6,11 @@ export interface PublicQuestion {
   corpus: "marta" | "publiczne" | "oferta";
   question: string;
   locators?: string[];
+  fragmentId?: string;
+  /** This catch-all identifies a broad subject and can miss a more specific provision. */
+  broad?: boolean;
+  /** Source words for vector search, without the generation instruction. */
+  searchText?: string;
   clarify?: string;
   /** A recognised follow-up for which the curated material has no matching search. */
   uncovered?: string;
@@ -87,7 +92,7 @@ function routeTopic(input: string): PublicQuestion | null {
       return generic("Jak długi jest okres wyczekiwania na zasiłek chorobowy przy obowiązkowym i dobrowolnym ubezpieczeniu?", ["uz:4"]);
     if (/ile dni|jak długo|maksymaln|okres zasiłkowy/iu.test(q))
       return generic("Jak długi jest okres zasiłkowy w chorobie i w okresie ciąży?", ["uz:8"]);
-    return generic("Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego i kiedy musi powstać niezdolność do pracy?", ["uz:6:1", "uz:7"]);
+    return { ...generic("Czy samo zwolnienie lekarskie wystarcza do zasiłku chorobowego i kiedy musi powstać niezdolność do pracy?", ["uz:6:1", "uz:7"]), broad: true };
   }
   if (/opiekuń|chore.{0,8}dziec/u.test(q)) return generic("Jakie dokumenty trzeba złożyć w sprawie zasiłku opiekuńczego na dziecko?");
   if (/wcześniak|uzupełniając|hospitaliz|szpital/u.test(q)) return generic("Kiedy rodzicom dziecka przysługuje uzupełniający urlop macierzyński?", ["kp:1802"]);
@@ -105,13 +110,13 @@ function routeTopic(input: string): PublicQuestion | null {
   }
   if (/wykorzystał|wykorzystan|poprzedni.{0,10}częś|skąd wiadomo/u.test(q)) return marta("Skąd wiadomo, ile części urlopu rodzicielskiego już wykorzystano?");
   if (/odda|przekaz|wyłączn|zarezerwowa|dziewięć|\b9\b/u.test(q)) return marta("Czy 9 tygodni urlopu rodzicielskiego zarezerwowanych dla jednego rodzica można przekazać drugiemu?");
-  if (/napisać o|wpisać|oświadcz|o drugim|o niej|tym czasie.{0,24}(napisać|wnios)/u.test(q))
+  if (/napisać o|wpisać|(?<!\p{L})oświadcz|o drugim|o niej|tym czasie.{0,24}(napisać|wnios)/u.test(q))
     return marta(/nie (bierze|korzysta|planuje)/u.test(q) ? "Co oświadczyć we wniosku, jeśli drugi rodzic nie korzysta z urlopu rodzicielskiego?" : "Co wpisać o drugim rodzicu, skoro też bierze urlop rodzicielski?");
   if (/zasił/iu.test(q) && /rodziciel/iu.test(q) && /w tym czasie|jednocze|wspólni|razem|może.*(?:urlop|korzystać)/iu.test(q)) {
     return { ...marta("Czy w okresie pobierania zasiłku macierzyńskiego za okres urlopu rodzicielskiego przez jednego rodzica drugi może korzystać z urlopu rodzicielskiego?"), locators: ["art182^1a§7"] };
   }
   if (/razem|jednocze|równocze|oboje|wspólni|samym (czasie|miesiącu)|tych samych|w tym czasie/u.test(q)) return marta("Czy oboje rodzice mogą być jednocześnie na urlopie rodzicielskim w tych samych tygodniach?");
-  if (/pół etatu|niepełn|łącz.{0,20}prac/u.test(q)) return marta("Jak połączyć pracę na pół etatu z urlopem rodzicielskim i kiedy złożyć wniosek?");
+  if (/pół etatu|niepełn\p{L}*\s+(?:wymiar|etat)|łącz.{0,20}prac/u.test(q)) return marta("Jak połączyć pracę na pół etatu z urlopem rodzicielskim i kiedy złożyć wniosek?");
   if (/wysłać.{0,20}elektr|elektronicz|mailem|przez internet|online/u.test(q)) return marta("Czy wniosek do pracodawcy o urlop rodzicielski można złożyć elektronicznie?");
   if (/odmówi|odmowa/u.test(q)) return marta("Czy pracodawca może odmówić udzielenia urlopu rodzicielskiego po złożeniu wniosku w terminie?");
   if (/podziel|kawał|częś|ile razy/u.test(q)) return marta("Na ile części można podzielić urlop rodzicielski?");
@@ -133,7 +138,7 @@ const OTHER_TOPICS: ReadonlyArray<readonly [RegExp, string]> = [
   [/podstaw[ayę] wymiaru/iu, "podstawa wymiaru zasiłku"], [/podwójn|drug(?:a|iej) prac|drug(?:i|iego) tytuł/iu, "kilka tytułów ubezpieczenia"],
   [/opiekuń|opieki nad/iu, "zasiłek opiekuńczy"], [/porzuce/iu, "porzucenie dziecka przez matkę"],
   [/hospitaliz|szpital/iu, "pobyt dziecka w szpitalu"], [/wcześniak|przedwcześnie urodz/iu, "urodzenie dziecka przed terminem"],
-  [/pół etatu|część etatu|niepełn/iu, "wykonywanie pracy w niepełnym wymiarze"],
+  [/pół etatu|część etatu|niepełn\p{L}*\s+(?:wymiar|etat)/iu, "wykonywanie pracy w niepełnym wymiarze"],
 ];
 export function asksAboutOwnEligibility(input: string): boolean {
   return /czy (?:mi |nam )(?:przysługuje|należy się)|czy (?:przysługuje|należy się) (?:mi|nam)\b|czy dostanę|czy mam prawo/iu.test(input);

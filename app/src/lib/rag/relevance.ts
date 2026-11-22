@@ -8,6 +8,7 @@ import type { PublicQuestion } from "./public-query";
  * directly cross-referenced to the provision in the curated corpus.
  */
 export function relevantFragment(plan: PublicQuestion, corpus: Corpus): (fragment: Fragment) => boolean {
+  if (plan.fragmentId) return fragment => fragment.logicalId === plan.fragmentId;
   if (!plan.locators?.length || plan.corpus === "marta") return () => true;
   const keys = new Set(plan.corpus === "oferta" ? plan.locators :
     plan.locators.flatMap((key) => [key, key.split(":").slice(0, 2).join(":")]));
