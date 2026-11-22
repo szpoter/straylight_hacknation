@@ -1,9 +1,16 @@
 # 17 · Z drugim butem w ręce
 
-**32–34 s.** Pełny plan kanapy obejmuje stopy. Paweł wysuwa stopę z jednego buta, pochyla się i ściąga drugi. Dostrzega druk przed sobą i zastyga z drugim butem zwisającym z ręki. [Poza końcowa](../../../referencje/kanapa-przed-fala-v1.png) · [Fazy](../../../v2/przyklady/fazy-ruchu.png)
+Autor planu: s17
 
-[Plansza firmowa](../../../referencje/kanapa-przed-fala-v1.png) · [Wspólna obsada](../../POSTACIE.md)
+**32–34 s.** Paweł mówi „Wezmę jutro wolne”. Sięga po but jak po powrocie do domu. Wzrok wraca mu do druku na kolanie Marty i na moment zapomina odłożyć but. Nieruchomy plan kanapy obejmuje wózek, obie twarze, dłonie i podłogę pod stopami. [Scenariusz](../../../../../PLAN-FILMU-DEMO.md) · [Poza z butem przy podłokietniku](../../../referencje/kanapa-przed-fala-v1.png)
 
-[Stickman · pozy w ruchu](../../../v2/przyklady/fazy-ruchu.png) · [Oryginał](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/approved-2026-10-23-motion-sheet.png) · [Stickman · gra postaci](../../../v2/przyklady/pozy-postaci.png) · [Oryginał](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/character-acting-reference.png)
+| Klatki | Co widzi widz |
+| --- | --- |
+| 0–14 | Paweł siedzi po prawej i zerka z formularza na stopy. Przytrzymuje drugim butem zapiętek pierwszego, bliższego Marcie. Wysuwa z niego piętę, potem palce. Jasna skarpeta staje obok pustego buta. |
+| 15–28 | Paweł opiera wolną dłoń o udo. Pochyla się z bioder w stronę podłokietnika i unosi drugie kolano. Łokieć wychodzi na zewnątrz, dłoń po tej samej stronie zakreśla łuk do zapiętka. Palce zaciskają się na jego krawędzi. |
+| 29–42 | Paweł prostuje kostkę i cofa stopę. But wyślizguje się z palców stopy i pozostaje w dłoni. Widać drugą jasną skarpetę. Opadający nosek obraca but wokół chwytu. |
+| 43–59 | Oczy Pawła wracają do nagłówka „ZASIŁEK”, głowa podąża za nimi. Ręka zatrzymuje się na zewnątrz kolana. Drugi but zwisa noskiem w dół. Marta dalej trzyma kartki na kolanach. |
 
-[Specyfikacja tego ujęcia](SPEC.md)
+Z arkusza faz bierzemy kolejność zmian podparcia. Na planszy gry postaci kierunek przedramienia wskazuje, który przedmiot zajmuje bohatera. Pod koniec naszego ujęcia kierunek dłoni nadal prowadzi do buta, a twarz i źrenice już do druku. [Stickman · fazy ruchu](../../../v2/przyklady/fazy-ruchu.png) · [Oryginał](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/approved-2026-10-23-motion-sheet.png) · [Stickman · gra postaci](../../../v2/przyklady/pozy-postaci.png) · [Oryginał](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/character-acting-reference.png)
+
+[Wspólna obsada](../../POSTACIE.md) · [Specyfikacja ujęcia](SPEC.md)
