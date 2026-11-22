@@ -1,6 +1,13 @@
 # 30 · Papiery wracają na miejsce
 
-**58–60 s.** Arkusz Marty cofa się w głąb; zgłoszenie urodzenia i wniosek ojcowski zbiegają się po jednej osi za Zusikiem. Na „dokumentem” papiery chowają się za jego pełnym obrysem. Wraca bohater, który zatrzymał pierwszą falę.
+Autor planu: s30
+
+**58–60 s.** Wraca bohater, który zatrzymał pierwszą falę papierów. Tym razem widz śledzi jeden wniosek Marty, potem dwa kolejne dokumenty porządkują się na tej samej osi.
+
+1. **0–9.** Powtórzyć ostatnią klatkę 29. „Wniosek o urlop rodzicielski”, odpis i „Pracodawca · Studio Lipa” należą do jednego arkusza. Cały arkusz rusza w głąb od klatki 1.
+2. **10–27.** Z dolnej krawędzi po tej samej drodze przechodzą „Zgłoszenie urodzenia dziecka” i „Wniosek o udzielenie urlopu ojcowskiego”. Najbliższy nagłówek jest największy. W głębi kartki prostują się i widać kolejność ich brzegów. Card Stack podpowiada, ile starszego arkusza zostawić nad nowym. Continuous Action prowadzi wzrok wzdłuż jednej osi przy zmianie dokumentu.
+3. **28–55.** Zusik wyłania się przed stosem. Rogi ostatniej kartki chowają się za jego ciałem. Na początku słowa „dokumentem” widać cały obrys z obiema dłońmi i cieniem. Zusik osiada, patrząc na widza.
+4. **56–59.** Utrzymać dokładnie ten sam kadr na czystej mięcie. Ostatnia klatka służy do spasowania pozycji postaci z pierwszą klatką osobnego nagrania landingu.
 
 [Design produktu](../../../../../DESIGN.md) · [Stany Zusika i przejścia](../../PRODUKT.md)
 
