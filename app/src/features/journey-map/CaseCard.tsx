@@ -10,7 +10,7 @@ import { Tag } from "@/components/ui/Tag";
 import { daysLeftLabel, formatLong } from "@/lib/demo/dates";
 import { STOP_DETAILS } from "@/lib/demo/stop-details";
 import type { Stop } from "@/lib/demo/types";
-import { isResolved, pathStatus } from "@/lib/plan/status";
+import { isHandoffEntry, isResolved, pathStatus } from "@/lib/plan/status";
 import { KIND_LABEL } from "./shared";
 
 /** Blok „Jak złożyć”: Co / Do kogo / Do kiedy / Załączniki. */
@@ -84,7 +84,7 @@ export function CaseCard({
   // oznaczyć jako załatwione albo zrezygnować ze sprawy dobrowolnej (SPEC „Jeden model statusów”).
   const official = stop.kind === "obowiazek" || stop.kind === "na-wniosek";
   // Wysyłka z formularza w Dokumentach to nie ręczne oznaczenie — wtedy bez „Cofnij oznaczenie”.
-  const sentFromForm = stop.doc?.events?.some((e) => e.title.startsWith("Wysłano")) ?? false;
+  const sentFromForm = stop.doc?.events?.some((e) => isHandoffEntry(e.title)) ?? false;
   const byParent = isPatched(stop.id) && !sentFromForm;
   const optional = stop.kind === "na-wniosek" || stop.doc?.optional;
   const open = official && !past && stop.state !== "zalatwione" && stop.state !== "nie-korzystam";

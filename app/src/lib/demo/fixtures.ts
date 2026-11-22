@@ -202,8 +202,8 @@ function olaStops(): Stop[] {
       doc: {
         goal: "urlopy",
         recipient: "Do pracodawcy",
-        lastEvent: "Przekazano 12 listopada 2026",
-        events: [{ date: "2026-11-12", title: "Wysłano w symulacji", detail: "Przekazano pracodawcy przez e-mail kadr." }],
+        lastEvent: "Wpis planu o przekazaniu z 12 listopada 2026",
+        events: [{ date: "2026-11-12", title: "Wcześniejszy wpis o przekazaniu", detail: "Wpis planu dotyczący wniosku do pracodawcy." }],
       },
     },
     {
@@ -277,10 +277,10 @@ function olaStops(): Stop[] {
       doc: {
         goal: "swiadczenia",
         recipient: "Do ZUS",
-        lastEvent: "Potwierdzono wpływ 15 listopada 2026",
+        lastEvent: "Wpis planu o przekazaniu z 15 listopada 2026",
         events: [
-          { date: "2026-11-15", title: "Wysłano w symulacji", detail: "Wniosek SW-R przez eZUS." },
-          { date: "2026-11-15", title: "Potwierdzenie wpływu", detail: "UPP z eZUS." },
+          { date: "2026-11-15", title: "Wcześniejszy wpis o przekazaniu", detail: "Wpis planu dotyczący wniosku SW-R." },
+          { date: "2026-11-15", title: "Wcześniejszy wpis planu o wpływie" },
         ],
       },
     },
@@ -439,7 +439,7 @@ function testStops(): Stop[] {
           from: "ZUS",
           due: "2026-12-05",
           text: "Prosimy o dołączenie zaświadczenia ze szpitala potwierdzającego datę urodzenia dziecka.",
-          tasks: ["Dołącz zaświadczenie ze szpitala wskazane w piśmie", "Sprawdź adresata i załączniki", "Wyślij uzupełnienie w symulacji"],
+          tasks: ["Dołącz zaświadczenie ze szpitala wskazane w piśmie", "Sprawdź adresata i załączniki", "Przekaż uzupełnienie odbiorcy"],
         },
         events: [
           ...(stop.doc!.events ?? []),

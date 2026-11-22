@@ -55,7 +55,7 @@ export function DraftForm({ savedChoice, pendingChoice, preview, mode, highlight
         <h1 className={s.title}>{DRAFT_TITLE}</h1>
         <span className={s.badge}>Szkic</span>
       </div>
-      <p className={s.muted}>Do pracodawcy · {RECIPIENT} · Dane demonstracyjne</p>
+      <p className={s.muted}>Do pracodawcy · {RECIPIENT}</p>
 
       <dl className={s.summary}>
         {PROFILE_ROWS.map((row) => (
@@ -66,22 +66,6 @@ export function DraftForm({ savedChoice, pendingChoice, preview, mode, highlight
           <StaticRow key={row.key} row={row} />
         ))}
       </dl>
-
-      <section className={s.formFooter} aria-labelledby="draft-next">
-        <h2 id="draft-next" className={s.subtitle}>
-          Zatwierdzenie i przekazanie
-        </h2>
-        <p className={s.muted} id="draft-next-note">
-          Zatwierdzenie, pobranie PDF i przekazanie pracodawcy w symulacji pojawią się razem z zapisem pełnego szkicu.
-        </p>
-        <div className={s.row8}>
-          {["Zatwierdź", "Pobierz PDF", "Przekaż pracodawcy w symulacji"].map((label) => (
-            <button key={label} type="button" className={s.secondaryButton} aria-disabled="true" aria-describedby="draft-next-note">
-              {label}
-            </button>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
