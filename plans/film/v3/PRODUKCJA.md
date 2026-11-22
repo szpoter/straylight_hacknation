@@ -26,7 +26,7 @@ Dźwięk: `media/*.flac` to przyjęty miks v2 (dialog, narrator, efekty, otoczen
 | --- | --- | --- | --- |
 | 19 | s19 | r1 | czeka na obsadę r1 |
 | 20 | s20 | r1 | czeka na 19 |
-| 27 | s27 | — (produkt) | w realizacji |
-| 28 | s28 | — (produkt) | w realizacji |
+| 27 | s27 | r0 (produkt) | oddane, odbiór autora i koordynatora OK |
+| 28 | s28 | r0 (produkt) | oddane po poprawce styku z 27 (pole dat zostaje nad plikami) |
 
 Pozostałe ujęcia czekają na ocenę Juliana po klipach 36–40 i 52–56 s.
