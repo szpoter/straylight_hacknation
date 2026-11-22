@@ -10,3 +10,7 @@ Autor planu: s25
 4. **40–59.** Daj widzowi czas na odczytanie „Kodeks pracy · art. 182¹a § 6”. Następna scena zaczyna się od tej samej pozy i tej samej kreski. W jej klatce 1 oryginalny Zusik zacznie przechodzić w stan `reading`. [Przejście w książkę](../26/SPEC.md) · [Fragment w korpusie Marty](../../../../../app/corpus/marta/fragments.jsonl#L6)
 
 [Pozycje i próba odbiorowa](SPEC.md)
+
+## Realizacja v3 (autor b24)
+
+Zusik nie jest już statycznym `<use>`: rysuje go filmowa instancja [`zusik-ruch.mjs`](zusik-ruch.mjs), która importuje geometrię wprost ze źródeł aplikacji (`geometry.ts`, `shapes.ts`, `travel.ts`) i odtwarza warstwy `mouth-open`, źrenice z blikami (1/5 drogi), przechył ciała i książkę. Zegar zastępuje numer klatki; bez losowych fal, mrugnięć i unoszenia. Kolejność gry jak w planszy Stickman: usta (0–11) → oczy (18–25) → ciało i kreska (26–39). Przykład animatora: [plansza gry postaci](../../../v2/przyklady/pozy-postaci.png), [Bang Motion · ruch produktu](../../../v2/przyklady/ruch-produktu.jpg) — nieruchome otoczenie jednego wyróżnianego linku.

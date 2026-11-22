@@ -14,3 +14,7 @@ Autor planu: s29
 W karcie Shotcraft tytuł, metki i cena mają odrębne miejsca w jednej jasnej ramie. Tak układamy tytuł, status i odbiorcę w szkicu Marty. W planszy Tallyfold liczba przyciąga wzrok wielkością, a etykieta nad nią wyjaśnia znaczenie. W dolnym wierszu naszego arkusza tę rolę mają nazwa firmy i krótka etykieta „Odbiorca”. [Video Shotcraft · budowa karty](../../../v2/przyklady/budowa-karty.jpg) · [Oryginał](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/product-card-progressive-assemble.jpg) · [Bang Motion · ruch w produkcie](../../../v2/przyklady/ruch-produktu.jpg) · [Oryginał](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/03-saas-ui-tour.jpg)
 
 [Design produktu](../../../../../DESIGN.md) · [Specyfikacja tego ujęcia](SPEC.md)
+
+## Realizacja v3 (autor b24)
+
+Punkt wyjścia to nowy układ 28 (`scene28(59)`): pole dat u góry (y=172–304), pliki y=436–544. Wiersz „Odbiorca” leży pod plikami (y=566–726 w układzie arkusza), więc odjazd v2 (skala 0,82, przesunięcie 115,2 / 51) wciąż mieści cały arkusz w kadrze. Wiersz ma ten sam język co pole „Okres urlopu”: miętowe tło, zielona belka, mała etykieta nad dużą wartością (zasada z planszy Tallyfold). Przykład animatora: [Video Shotcraft · budowa karty](../../../v2/przyklady/budowa-karty.jpg), [Bang Motion · ruch w produkcie](../../../v2/przyklady/ruch-produktu.jpg).

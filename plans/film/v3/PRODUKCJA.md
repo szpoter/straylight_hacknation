@@ -30,6 +30,6 @@ Na prośbę Juliana jeden autor dostaje blok kilku ujęć i odpowiada za cięcia
 | 07–12 | blok b07 | r1 | w realizacji |
 | 13–18 | blok b13 | r1 | w realizacji |
 | 19–23 | blok b19 (najpierw 19+20, klip 36–40 s) | r1 | w realizacji |
-| 24–26, 29–30 | blok b24 | r0/r1 (produkt) | w realizacji |
+| 24–26, 29–30 | blok b24 | r1 (produkt) | oddane; styk 23/24 do sprawdzenia po oddaniu 23 |
 | 27 | s27 | r0 (produkt) | oddane, odbiór autora i koordynatora OK |
 | 28 | s28 | r0 (produkt) | oddane po poprawce styku z 27 (pole dat zostaje nad plikami) |

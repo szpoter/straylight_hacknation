@@ -14,3 +14,7 @@ Autor planu: s24
 W przykładzie Bang Motion karta z wynikiem 87,5% zachowuje kontrast, podczas gdy dalsze wiersze interfejsu bledną. Tak samo potraktuj kartę Oli i dalsze podesty. W przykładzie Video Shotcraft nagłówek, opis i przycisk mają wspólną lewą oś w prawej kolumnie. Na tej zasadzie wyrównaj podpis „Marta”, początek pytania i tekst odpowiedzi po cięciu. [Bang Motion · SaaS UI Tour](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/03-saas-ui-tour.jpg) · [Kadr lokalny](../../../v2/przyklady/ruch-produktu.jpg) · [Video Shotcraft · Product Card Progressive Assemble](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/product-card-progressive-assemble.jpg) · [Kadr lokalny](../../../v2/przyklady/budowa-karty.jpg)
 
 [Specyfikacja ujęcia](SPEC.md) · [Klatki odniesienia](../../../v2/sceny/24/klatki.jpg)
+
+## Realizacja v3 (autor b24)
+
+Ruch v2 przyjęty bez zmian rytmu, bo spełnia SPEC: krawędź karty 990 → 427 w klatkach 0–25, pytanie wchodzi w 14–21 jednym ruchem. Mapa pochodzi ze wspólnego rysunku ujęć 22–23 (`drawMap(918, 1584)`, ten sam obraz co 23/59). Kod: [scene.mjs](scene.mjs). Przykład animatora: [Bang Motion · SaaS UI Tour](../../../v2/przyklady/ruch-produktu.jpg) — karta Oli zachowuje kontrast, reszta mapy blednie maską; [Video Shotcraft · budowa karty](../../../v2/przyklady/budowa-karty.jpg) — wspólna oś x=518 dla „Marta”, pytania i odpowiedzi w 25.

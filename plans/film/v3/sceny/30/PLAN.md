@@ -14,3 +14,7 @@ Autor planu: s30
 [Video Shotcraft · głębia stosu](../../../v2/przyklady/stos-kart.jpg) · [Oryginał](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/card-stack.jpg) · [Bang Motion · ciągłość gestu](../../../v2/przyklady/ciagly-ruch.jpg) · [Oryginał](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg)
 
 [Specyfikacja tego ujęcia](SPEC.md)
+
+## Realizacja v3 (autor b24)
+
+Układ v2 zachowany (stos wokół (640,360), Zusik wynurza się od dołu na tej samej osi, którą przyszły formularze), czasy formularzy przesunięte do 10–27 według planu. Postać to oryginalny statyczny SVG (`k.zusik`) — ten sam rysunek co na landingu. Przykład animatora: [Video Shotcraft · CardStack](../../../v2/przyklady/stos-kart.jpg) (głębia = kolejność zasłaniania + skala, obrót tylko przy krawędzi), [Bang Motion · ciągłość gestu](../../../v2/przyklady/ciagly-ruch.jpg).
