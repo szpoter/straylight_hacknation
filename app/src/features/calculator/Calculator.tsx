@@ -1,360 +1,409 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { usePlan } from "@/features/family/PlanProvider";
-import { Button, TextButton } from "@/components/ui/AppButton";
+import { Button, ButtonLink, TextButton } from "@/components/ui/AppButton";
 import { cn } from "@/components/ui/cn";
 import { Disclosure } from "@/components/ui/Disclosure";
+import { FieldError, TextField } from "@/components/ui/Field";
 import { Panel } from "@/components/ui/Panel";
-import { Segmented } from "@/components/ui/Segmented";
 import { Tag } from "@/components/ui/Tag";
-import { daysBetween, formatMoney, formatShort } from "@/lib/demo/dates";
-import type { CalculatorPlan, Parent } from "@/lib/demo/types";
-import { compareHeadline, poolState, summarize, type SegmentResult, type VariantSummary } from "./summary";
+import { DEMO_TODAY, daysBetween, formatLong, formatShort } from "@/lib/demo/dates";
+import type { Plan } from "@/lib/demo/types";
+import type { MartaView, Period } from "@/lib/marta/types";
+import {
+  MAX_WEEKS_EACH,
+  NOTICE_DAYS,
+  PARENTAL_SOURCE,
+  VARIANT_LABEL,
+  canSplit,
+  computeSplit,
+  deadlinePassed,
+  defaultInput,
+  differenceSentence,
+  formatPln,
+  parentalStop,
+  suggestedStart,
+  type LeaveSplit,
+  type SplitInput,
+  type SplitVariant,
+} from "@/lib/plan/leave-split";
 
-const KIND: Record<SegmentResult["kind"], string> = { macierzynski: "macierzyński", rodzicielski: "rodzicielski", ojcowski: "ojcowski" };
-const PARENT_BAR: Record<Parent["id"], string> = { ty: "bg-secondary", partner: "bg-tertiary" };
+/** Wpisy formularza jako tekst — stawka może być w trakcie pisania („140,”). */
+type Draft = { start: string; weeks: number; rates: [string, string] };
 
-/** Kalkulator „Ile czasu i jaki zasiłek?” (ui/MACIEJ.md, element 5). */
+const VARIANTS: SplitVariant[] = ["together", "sequential"];
+const VARIANT_HINT: Record<SplitVariant, string> = {
+  together: "Oboje od tego samego dnia",
+  sequential: "Najpierw Ty, potem drugi rodzic",
+};
+// Kolory rodziców jak na osi w poprzednim kalkulatorze: secondary — Ty, tertiary — drugi rodzic.
+const BAR = { first: "bg-secondary", second: "bg-tertiary" } as const;
+
+const toText = (rate: number | null) => (rate === null ? "" : String(rate).replace(".", ","));
+
+function toDraft(input: SplitInput): Draft {
+  return { start: input.start, weeks: input.weeks, rates: [toText(input.rates[0]), toText(input.rates[1])] };
+}
+
+/** „140”, „140,5”, „140,50” → liczba; puste → „nie wiem” (null); reszta → błąd. */
+function parseRate(text: string): { value: number | null; error?: string } {
+  const t = text.trim().replace(/\s/g, "").replace(",", ".");
+  if (!t) return { value: null };
+  if (!/^\d{1,6}(\.\d{1,2})?$/.test(t)) return { value: null, error: "Wpisz kwotę, np. 140 albo 140,50." };
+  return { value: Number(t) };
+}
+
+/** Kalkulator „Jak podzielić urlop rodzicielski?” — liczy reguła Juliana (`lib/marta`). */
 export function Calculator() {
-  const { plan } = usePlan();
-  const calc = plan.calculator;
-  const [compare, setCompare] = useState(false);
-  const [mobileVariant, setMobileVariant] = useState<"A" | "B">("A");
-  const [payment, setPayment] = useState<"815" | "100-70">("815");
-  const [saved, setSaved] = useState<string | null>(null);
-  const [editNote, setEditNote] = useState(false);
-
-  const summaries = useMemo(() => calc.variants.map((v) => ({ variant: v, summary: summarize(calc, v) })), [calc]);
-  const a = summaries[0];
-  const b = summaries[1];
-  const canCompare = Boolean(b);
-  const comparing = compare && canCompare;
-  const active = comparing && mobileVariant === "B" ? b! : a;
-  const pool = poolState(calc, a.summary);
-  const diff = comparing ? compareHeadline(a.summary, b!.summary) : null;
-  const scale = useMemo(() => timeScale(summaries.flatMap((s) => s.summary.segments)), [summaries]);
+  const { plan, leaveSplit } = usePlan();
+  const stop = parentalStop(plan);
+  if (!stop || stop.state === "minelo") return null;
 
   return (
     <section id="kalkulator" aria-labelledby="calc-title" className="scroll-mt-24">
-      <div className="mb-6">
+      <div className="mb-6 max-w-prose">
         <h2 id="calc-title" className="font-serif text-headline-mobile md:text-headline">
-          Ile czasu i jaki zasiłek?
+          Jak podzielić urlop rodzicielski?
         </h2>
-        <p className="mt-2 text-on-surface-variant">
-          {calc.scope}
-          {calc.planned && " · daty planowane"}
+        <p className="mt-2 text-lead text-on-surface-variant">
+          Porównaj dwa warianty: razem albo po kolei. Zobaczysz daty, termin wniosku do pracodawcy i kwotę zasiłku przy podanej stawce.
         </p>
       </div>
-
-      <Panel className="flex flex-col gap-6">
-        {/* Podsumowanie (różnica przy porównaniu) */}
-        {diff ? (
-          <div className="flex flex-col gap-3" aria-live="polite">
-            <p className="font-serif text-title">{diff.headline}</p>
-            <p className="text-on-surface-variant">{diff.sentence}</p>
-            <Segmented
-              label="Pokazany wariant"
-              className="md:hidden"
-              value={mobileVariant}
-              onChange={setMobileVariant}
-              options={[
-                { value: "A", label: "Wariant A" },
-                { value: "B", label: "Wariant B" },
-              ]}
-            />
-          </div>
-        ) : (
-          <SummaryNumbers summary={a.summary} />
-        )}
-
-        {/* Karta puli — na komputerze na górze, na telefonie pod odcinkami */}
-        <PoolCard calc={calc} summary={a.summary} headline={pool.headline} kind={pool.kind} className="order-3 md:order-none" />
-
-        <Disclosure
-          summary={
-            <span>
-              <span className="text-on-surface-variant">Założenia: </span>
-              {calc.assumptions} · <span className="underline underline-offset-4 decoration-outline">zmień</span>
-            </span>
-          }
-          className="order-4 rounded-sm border border-outline px-4 md:order-none"
-        >
-          <ul className="flex flex-col gap-1 text-meta">
-            <li>Liczba dzieci z jednego porodu: 1</li>
-            <li>Zaświadczenie „Za życiem”: nie</li>
-            <li>Hospitalizacja lub wcześniactwo: nie</li>
-          </ul>
-          <p className="mt-2 text-meta text-on-surface-variant">Zmiana założeń przeliczy wariant. {/* TODO(backend): lib/rules */}</p>
-        </Disclosure>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-label font-medium" id="payment-label">
-            Sposób wypłaty
+      {canSplit(plan) ? (
+        <SplitCalculator plan={plan} saved={leaveSplit} />
+      ) : (
+        <Panel className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <p>
+            {stop.state === "nie-korzystam"
+              ? "Zaznaczono, że nie korzystasz z urlopu rodzicielskiego w tym planie."
+              : "Kalkulator potrzebuje daty porodu, urodzenia albo przyjęcia dziecka."}
           </p>
-          <Segmented
-            label="Sposób wypłaty"
-            value={payment}
-            onChange={setPayment}
-            options={[
-              { value: "815", label: "81,5% przez cały okres" },
-              { value: "100-70", label: "100%, potem 70%" },
-            ]}
-          />
-          <p className="text-meta text-on-surface-variant">Wniosek o 81,5% składa się do 21 dni po porodzie. Stawki w przykładzie są już ustalone.</p>
-        </div>
-
-        {/* Osie rodziców: desktop wspólna skala, przy porównaniu dwie kolumny */}
-        <div className={cn("hidden gap-6 md:grid", comparing && "lg:grid-cols-2")}>
-          {(comparing ? summaries : [a]).map(({ variant, summary }) => (
-            <div key={variant.id}>
-              {comparing && (
-                <p className="mb-2 font-medium">
-                  Wariant {variant.id} · {variant.label}
-                </p>
-              )}
-              <Tracks summary={summary} calc={calc} scale={scale} />
-            </div>
-          ))}
-        </div>
-
-        {/* Telefon: uproszczona jedna oś i karty odcinków */}
-        <div className="flex flex-col gap-3 md:hidden">
-          <MiniAxis summary={active.summary} scale={scale} />
-          <ul className="flex flex-col gap-2">
-            {active.summary.segments.map((s) => (
-              <li key={s.id} className={cn("rounded-sm border p-4", s.draft ? "border-dashed border-on-surface-variant" : "border-outline")}>
-                <SegmentText s={s} />
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <Disclosure summary="Skąd ta kwota?" className="border-y border-outline">
-          <table className="w-full text-left text-meta">
-            <thead className="text-on-surface-variant">
-              <tr>
-                <th className="py-1 font-normal">Osoba</th>
-                <th className="py-1 font-normal">Stawka dzienna</th>
-                <th className="py-1 font-normal">Dni</th>
-                <th className="py-1 text-right font-normal">Suma</th>
-              </tr>
-            </thead>
-            <tbody>
-              {active.summary.segments
-                .filter((s) => s.kind === "rodzicielski")
-                .map((s) => (
-                  <tr key={s.id} className="border-t border-outline">
-                    <td className="py-2">{s.parent.label}</td>
-                    <td className="py-2">{s.parent.dailyRate ? formatMoney(s.parent.dailyRate) : "brak podstawy"}</td>
-                    <td className="py-2">{s.days}</td>
-                    <td className="py-2 text-right">{s.amount !== undefined ? formatMoney(s.amount) : "—"}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-          <p className="mt-2 text-meta text-on-surface-variant">Źródło: przykładowe stawki brutto z danych demo. Kwota dzienna to 1/30 miesięcznego zasiłku.</p>
-        </Disclosure>
-
-        <div className="order-5 flex flex-col gap-3 md:order-none md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" size="sm" onClick={() => setEditNote((v) => !v)} aria-expanded={editNote}>
-              Zmień wariant
-            </Button>
-            {canCompare && (
-              <Button variant="secondary" size="sm" onClick={() => setCompare((v) => !v)} aria-pressed={comparing}>
-                {comparing ? "Pokaż jeden wariant" : "Porównaj wariant"}
-              </Button>
-            )}
-          </div>
-          <Button
-            onClick={() => setSaved(`Zapisano wariant ${active.variant.id} w planie ${plan.name}. Terminy na ścieżce zaktualizują się po podłączeniu reguł.`)}
-            disabled={pool.kind === "over"}
-          >
-            Użyj tego wariantu w planie
-          </Button>
-        </div>
-        {editNote && (
-          <p className="order-5 rounded-sm bg-background p-4 text-meta md:order-none">
-            Edycja odcinków (osoba, początek, długość, „Kolejno” / „W tym samym czasie”) pojawi się po podłączeniu kalkulatora reguł. {/* TODO(backend) */}
-          </p>
-        )}
-        {saved && (
-          <p role="status" className="order-5 rounded-sm bg-secondary p-4 md:order-none">
-            {saved}
-          </p>
-        )}
-      </Panel>
+          {stop.state !== "nie-korzystam" && (
+            <ButtonLink href="/start" variant="secondary" size="sm">
+              Dodaj dziecko albo ciążę
+            </ButtonLink>
+          )}
+        </Panel>
+      )}
     </section>
   );
 }
 
-function SummaryNumbers({ summary }: { summary: VariantSummary }) {
-  const weeks = Math.round(summary.calendarDays / 7);
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div>
-        <p className="text-meta text-on-surface-variant">Czas opieki w kalendarzu</p>
-        <p className="font-serif text-headline-mobile">
-          {weeks} tyg. <span className="text-title text-on-surface-variant">· {summary.calendarDays} dni</span>
-        </p>
-      </div>
-      <div>
-        <p className="text-meta text-on-surface-variant">Szacowany zasiłek łącznie · brutto</p>
-        <p className="font-serif text-headline-mobile">{formatMoney(summary.total)}</p>
-        {!summary.complete && <p className="text-meta text-on-surface-variant">Znana część. Suma rodziny czeka na komplet danych.</p>}
-      </div>
-    </div>
+function SplitCalculator({ plan, saved }: { plan: Plan; saved?: LeaveSplit }) {
+  const { saveLeaveSplit, clearLeaveSplit } = usePlan();
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  // Bez własnych zmian formularz pokazuje zapisany wybór albo podpowiedzi z planu (także po wczytaniu zapisu).
+  const form = draft ?? toDraft(defaultInput(plan, saved));
+  const update = (patch: Partial<Draft>) => {
+    setDraft({ ...form, ...patch });
+    setStatus(null);
+  };
+
+  const rate0 = parseRate(form.rates[0]);
+  const rate1 = parseRate(form.rates[1]);
+  const input: SplitInput = { start: form.start, weeks: form.weeks, rates: [rate0.value, rate1.value] };
+  const result = useMemo(
+    () => (rate0.error || rate1.error ? null : computeSplit(input, plan.name)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- liczymy z wartości, nie z tożsamości obiektu
+    [form.start, form.weeks, rate0.value, rate1.value, rate0.error, rate1.error, plan.name],
   );
-}
+  const suggested = suggestedStart(plan);
+  const showForm = editing || !saved;
 
-function PoolCard({
-  calc,
-  summary,
-  headline,
-  kind,
-  className,
-}: {
-  calc: CalculatorPlan;
-  summary: VariantSummary;
-  headline: string;
-  kind: "left" | "full" | "over";
-  className?: string;
-}) {
-  const total = calc.poolWeeks;
-  const pct = (w: number) => `${Math.max(0, Math.min(100, (w / total) * 100))}%`;
-  const shared = total - calc.reservedWeeksEach * 2;
-  return (
-    <div className={cn("rounded-sm border border-outline p-4", kind === "over" && "border-2 border-on-surface", className)}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-medium">{headline}</p>
-        {kind === "over" && <Tag tone="accent">Popraw odcinek</Tag>}
-        <p className="text-meta text-on-surface-variant">Pula urlopu rodzicielskiego: {total} tyg.</p>
+  const choose = (variant: SplitVariant) => {
+    if (!result?.ok) return;
+    saveLeaveSplit({ ...input, variant });
+    setEditing(false);
+    setDraft(null);
+    const v = result.view.variants[variant];
+    setStatus(
+      `Zapisano wariant „${VARIANT_LABEL[variant]}”. Termin wniosku (${formatLong(v.first.deadline <= v.second.deadline ? v.first.deadline : v.second.deadline)}) jest teraz na ścieżce przy sprawie „Urlop rodzicielski”.`,
+    );
+  };
+
+  if (!showForm && saved) {
+    return (
+      <div className="flex flex-col gap-4">
+        <SavedSplit plan={plan} saved={saved} onEdit={() => {
+            setEditing(true);
+            setStatus(null);
+          }}
+          onClear={() => {
+            clearLeaveSplit();
+            setStatus(null);
+            setDraft(null);
+          }} />
+        {status && (
+          <p role="status" className="rounded-sm bg-secondary p-4">
+            {status}
+          </p>
+        )}
       </div>
-      <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-background" aria-hidden>
-        <span className="bg-on-surface-variant" style={{ width: pct(calc.usedWeeks) }} />
-        <span className="bg-secondary" style={{ width: pct(summary.plannedWeeksBy.ty) }} />
-        <span className="bg-tertiary" style={{ width: pct(summary.plannedWeeksBy.partner) }} />
-      </div>
-      <Disclosure summary="Jak dzieli się pula" className="mt-1">
-        <ul className="flex flex-col gap-1 text-meta">
-          <li>Zarezerwowane dla Ciebie: {calc.reservedWeeksEach} tyg. · w wariancie {summary.plannedWeeksBy.ty} tyg.</li>
-          <li>Zarezerwowane dla drugiego rodzica: {calc.reservedWeeksEach} tyg. · w wariancie {summary.plannedWeeksBy.partner} tyg.</li>
-          <li>Wspólne: {shared} tyg.</li>
-          <li>Wykorzystano wcześniej: {calc.usedWeeks} tyg.</li>
-          <li>Urlop ojcowski ma osobny tor i nie zużywa puli.</li>
-        </ul>
-      </Disclosure>
-    </div>
-  );
-}
-
-type Scale = { start: string; days: number; months: Array<{ iso: string; label: string }> };
-
-const MONTH_SHORT = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
-
-function timeScale(segments: SegmentResult[]): Scale {
-  const starts = segments.map((s) => s.start).sort();
-  const ends = segments.map((s) => s.end).sort();
-  const first = starts[0] ?? "2026-01-01";
-  const start = `${first.slice(0, 7)}-01`;
-  const lastEnd = ends[ends.length - 1] ?? first;
-  const [ly, lm] = lastEnd.split("-").map(Number);
-  const endIso = lm === 12 ? `${ly + 1}-01-01` : `${ly}-${String(lm + 1).padStart(2, "0")}-01`;
-  const months: Scale["months"] = [];
-  let [y, m] = start.split("-").map(Number);
-  while (`${y}-${String(m).padStart(2, "0")}-01` < endIso) {
-    months.push({ iso: `${y}-${String(m).padStart(2, "0")}-01`, label: MONTH_SHORT[m - 1] + (m === 1 ? ` ${y}` : "") });
-    m += 1;
-    if (m > 12) {
-      m = 1;
-      y += 1;
-    }
+    );
   }
-  return { start, days: daysBetween(start, endIso), months };
-}
 
-const pos = (scale: Scale, iso: string) => `${(daysBetween(scale.start, iso) / scale.days) * 100}%`;
-
-/** Dwie osie rodziców na wspólnej skali miesięcy; ojcowski na osobnym torze. */
-function Tracks({ summary, calc, scale }: { summary: VariantSummary; calc: CalculatorPlan; scale: Scale }) {
-  const tracks = calc.parents.flatMap((p) => {
-    const own = summary.segments.filter((s) => s.parentId === p.id);
-    const main = own.filter((s) => s.kind !== "ojcowski");
-    const paternal = own.filter((s) => s.kind === "ojcowski");
-    return [
-      ...(main.length ? [{ key: `${p.id}-main`, label: p.label, segments: main }] : []),
-      ...(paternal.length ? [{ key: `${p.id}-ojc`, label: `${p.label} · ojcowski`, segments: paternal }] : []),
-    ];
-  });
   return (
-    <div className="flex flex-col gap-1">
-      <div className="relative ml-36 h-6 border-b border-outline text-meta text-on-surface-variant">
-        {scale.months.map((m) => (
-          <span key={m.iso} className="absolute top-0 border-l border-outline pl-1" style={{ left: pos(scale, m.iso) }}>
-            {m.label}
-          </span>
-        ))}
-      </div>
-      {tracks.map((t) => (
-        <div key={t.key} className="flex items-start gap-0 border-b border-outline py-4">
-          <span className="w-36 shrink-0 pr-3 text-meta font-medium">{t.label}</span>
-          <div className="relative min-h-20 flex-1">
-            {t.segments.map((s) => {
-              const startPct = daysBetween(scale.start, s.start) / scale.days;
-              // Odcinek w prawej połowie osi: podpis wyrównany do jego prawego końca, żeby nie wychodził poza kartę.
-              const alignRight = startPct > 0.5;
-              return (
-                <div key={s.id} className="absolute top-0" style={{ left: pos(scale, s.start), width: `max(${(s.days / scale.days) * 100}%, 8px)` }}>
-                  <div className={cn("h-3 rounded-full", s.draft ? "border border-dashed border-on-surface-variant bg-surface" : PARENT_BAR[s.parentId])} />
-                  <div className={cn("absolute top-full mt-2 w-max max-w-72", alignRight ? "right-0 text-right" : "left-0")}>
-                    <SegmentText s={s} compact />
-                  </div>
-                </div>
-              );
-            })}
+    <div className="flex flex-col gap-6">
+      <Panel className="flex flex-col gap-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <TextField
+              label="Od kiedy zaczynacie?"
+              type="date"
+              value={form.start}
+              onChange={(e) => update({ start: e.target.value })}
+              hint={suggested ? `Podpowiedź: ${formatLong(suggested)} — dzień po końcu urlopu macierzyńskiego w tym planie. Możesz wybrać inny dzień.` : undefined}
+            />
+            {suggested && form.start !== suggested && (
+              <TextButton className="self-start" onClick={() => update({ start: suggested })}>
+                Wróć do podpowiedzi
+              </TextButton>
+            )}
+          </div>
+          <WeeksStepper weeks={form.weeks} onChange={(weeks) => update({ weeks })} />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <TextField
+            label="Twoja stawka dzienna (zł)"
+            inputMode="decimal"
+            autoComplete="off"
+            value={form.rates[0]}
+            onChange={(e) => update({ rates: [e.target.value, form.rates[1]] })}
+            hint="Założenie z danych demo. Puste pole — policzymy same daty."
+            error={rate0.error}
+          />
+          <TextField
+            label="Stawka dzienna drugiego rodzica (zł)"
+            inputMode="decimal"
+            autoComplete="off"
+            value={form.rates[1]}
+            onChange={(e) => update({ rates: [form.rates[0], e.target.value] })}
+            hint="Założenie z danych demo. Puste pole — policzymy same daty."
+            error={rate1.error}
+          />
+        </div>
+        {saved && (
+          <TextButton className="self-start" onClick={() => {
+              setEditing(false);
+              setDraft(null);
+            }}>
+            Anuluj zmiany
+          </TextButton>
+        )}
+      </Panel>
+
+      {result && !result.ok && <FieldError id="calc-error">{result.error}</FieldError>}
+
+      {result?.ok && (
+        <div className="flex flex-col gap-4" aria-live="polite">
+          <p className="max-w-prose">{differenceSentence(result.view)}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {VARIANTS.map((variant) => (
+              <VariantCard key={variant} view={result.view} variant={variant} selected={saved?.variant === variant && !draft} onChoose={() => choose(variant)} />
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function MiniAxis({ summary, scale }: { summary: VariantSummary; scale: Scale }) {
-  return (
-    <div>
-      <div className="relative h-3 rounded-full bg-background" aria-hidden>
-        {summary.segments.map((s) => (
-          <span
-            key={s.id}
-            className={cn("absolute top-0 h-3 rounded-full", s.draft ? "border border-dashed border-on-surface-variant" : PARENT_BAR[s.parentId], s.parentId === "partner" && !s.draft && "opacity-90")}
-            style={{ left: pos(scale, s.start), width: `${(s.days / scale.days) * 100}%` }}
-          />
-        ))}
-      </div>
-      <div className="mt-1 flex justify-between text-meta text-on-surface-variant">
-        <span>{scale.months[0]?.label}</span>
-        <span>{scale.months[scale.months.length - 1]?.label}</span>
-      </div>
-    </div>
-  );
-}
-
-function SegmentText({ s, compact }: { s: SegmentResult; compact?: boolean }) {
-  const weeks = s.days / 7;
-  return (
-    <p className={cn("text-meta", compact && "leading-snug")}>
-      {!compact && <span className="font-medium">{s.parent.label} · </span>}
-      <span className={cn(compact && "font-medium")}>{KIND[s.kind]}</span> · <span className="whitespace-nowrap">{formatShort(s.start)}–{formatShort(s.end)}</span> ·{" "}
-      <span className="whitespace-nowrap">{weeks} tyg.</span>
-      {compact ? <br /> : " · "}
-      {s.draft ? (
-        <span className="text-on-surface-variant">{s.note}</span>
-      ) : s.amount !== undefined ? (
-        formatMoney(s.amount)
-      ) : (
-        <TextButton className="text-meta">Uzupełnij podstawę</TextButton>
       )}
-    </p>
+
+      <HowCalculated />
+    </div>
+  );
+}
+
+function WeeksStepper({ weeks, onChange }: { weeks: number; onChange: (weeks: number) => void }) {
+  const set = (n: number) => onChange(Math.min(MAX_WEEKS_EACH, Math.max(1, n)));
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p id="weeks-label" className="text-label font-medium">
+        Ile tygodni bierze każde z Was?
+      </p>
+      <p id="weeks-hint" className="text-meta text-on-surface-variant">
+        W kalkulatorze oboje bierzecie tyle samo, od 1 do {MAX_WEEKS_EACH} tygodni.
+      </p>
+      <div role="group" aria-labelledby="weeks-label" aria-describedby="weeks-hint" className="flex items-center gap-3">
+        <Button variant="secondary" size="sm" onClick={() => set(weeks - 1)} disabled={weeks <= 1} aria-label="Mniej o tydzień" className="w-10 px-0!">
+          −
+        </Button>
+        <p className="min-w-32 text-center" aria-live="polite">
+          <span className="font-serif text-title">{weeks} tyg.</span> <span className="text-meta text-on-surface-variant">· {weeks * 7} dni</span>
+        </p>
+        <Button variant="secondary" size="sm" onClick={() => set(weeks + 1)} disabled={weeks >= MAX_WEEKS_EACH} aria-label="Więcej o tydzień" className="w-10 px-0!">
+          +
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function VariantCard({ view, variant, selected, onChoose }: { view: MartaView; variant: SplitVariant; selected: boolean; onChoose: () => void }) {
+  const v = view.variants[variant];
+  // Wspólna skala dla obu kart: od startu do końca wariantu „Po kolei” (najdłuższego).
+  const scaleStart = view.inputs.firstStart;
+  const scaleDays = daysBetween(scaleStart, view.variants.sequential.second.to) + 1;
+  const passed = [v.first, v.second].filter((p) => deadlinePassed(p.deadline, DEMO_TODAY));
+  return (
+    <article className={cn("flex flex-col gap-5 rounded-lg border p-gutter-mobile md:p-card", selected ? "border-2 border-on-surface" : "border-outline")}>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-serif text-title">{VARIANT_LABEL[variant]}</h3>
+          <p className="text-meta text-on-surface-variant">{VARIANT_HINT[variant]}</p>
+        </div>
+        {selected && <Tag tone="ink">Wybrany</Tag>}
+      </header>
+
+      <div className="flex flex-col gap-2" aria-hidden="true">
+        <Bar label="Ty" period={v.first} start={scaleStart} total={scaleDays} tone={BAR.first} />
+        <Bar label="Drugi rodzic" period={v.second} start={scaleStart} total={scaleDays} tone={BAR.second} />
+      </div>
+
+      <dl className="flex flex-col divide-y divide-outline border-y border-outline">
+        <PeriodRow who="Ty" period={v.first} />
+        <PeriodRow who="Drugi rodzic" period={v.second} />
+        <div className="flex items-baseline justify-between gap-3 py-3">
+          <dt className="text-on-surface-variant">Z dzieckiem w domu</dt>
+          <dd className="font-medium">{v.calendarDays} dni</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3 py-3">
+          <dt className="text-on-surface-variant">Zasiłek łącznie</dt>
+          <dd className="font-serif text-title">{v.total === null ? "—" : formatPln(v.total)}</dd>
+        </div>
+      </dl>
+      {v.total === null && <p className="-mt-3 text-meta text-on-surface-variant">Bez stawki obojga nie liczymy kwoty łącznej.</p>}
+      {passed.length > 0 && (
+        <p className="rounded-sm bg-tertiary p-3 text-meta">
+          Termin wniosku {passed.map((p) => formatLong(p.deadline)).filter((d, i, a) => a.indexOf(d) === i).join(" i ")} już minął. Wybierz późniejszą datę startu.
+        </p>
+      )}
+      <Button className="mt-auto" variant={selected ? "secondary" : "primary"} onClick={onChoose}>
+        {selected ? "Zostaw ten wariant" : "Wybieram ten wariant"}
+      </Button>
+    </article>
+  );
+}
+
+function Bar({ label, period, start, total, tone }: { label: string; period: Period; start: string; total: number; tone: string }) {
+  const left = (daysBetween(start, period.from) / total) * 100;
+  const width = ((daysBetween(period.from, period.to) + 1) / total) * 100;
+  return (
+    <div className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-meta">
+      <span className="text-on-surface-variant">{label}</span>
+      <div className="relative h-3 rounded-full bg-surface">
+        <div className={cn("absolute inset-y-0 rounded-full", tone)} style={{ left: `${left}%`, width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function PeriodRow({ who, period }: { who: string; period: Period }) {
+  return (
+    <div className="flex flex-col gap-1 py-3">
+      <dt className="flex items-baseline justify-between gap-3">
+        <span className="font-medium">{who}</span>
+        <span className="text-on-surface-variant">{period.amount === null ? "brak stawki" : formatPln(period.amount)}</span>
+      </dt>
+      <dd className="text-meta text-on-surface-variant">
+        {formatShort(period.from, true)}–{formatShort(period.to, true)} · wniosek do {formatLong(period.deadline)}
+      </dd>
+    </div>
+  );
+}
+
+function SavedSplit({ plan, saved, onEdit, onClear }: { plan: Plan; saved: LeaveSplit; onEdit: () => void; onClear: () => void }) {
+  const result = computeSplit(saved, plan.name);
+  const stop = parentalStop(plan);
+  if (!result.ok) {
+    return (
+      <Panel className="flex flex-col gap-4">
+        <p>Zapisany podział ma niepoprawne dane. Policz go jeszcze raz.</p>
+        <Button className="self-start" variant="secondary" size="sm" onClick={onClear}>
+          Policz od nowa
+        </Button>
+      </Panel>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <VariantCardStatic view={result.view} variant={saved.variant} />
+        <Panel className="flex flex-col gap-4">
+          <h3 className="text-label font-medium">Co dalej</h3>
+          <ul className="flex flex-col gap-2">
+            <li>Termin wniosku jest na ścieżce przy sprawie „Urlop rodzicielski”.</li>
+            <li>Wniosek składa się pracodawcy co najmniej {NOTICE_DAYS} dni przed rozpoczęciem urlopu.</li>
+          </ul>
+          <div className="mt-auto flex flex-wrap gap-3">
+            {stop?.doc && (
+              <ButtonLink href={`/dokumenty/${stop.id}`} size="sm">
+                Zobacz w Dokumentach
+              </ButtonLink>
+            )}
+            <Button variant="secondary" size="sm" onClick={onEdit}>
+              Zmień podział
+            </Button>
+            <TextButton onClick={onClear}>Usuń wybór</TextButton>
+          </div>
+        </Panel>
+      </div>
+      <HowCalculated />
+    </div>
+  );
+}
+
+/** Wybrany wariant bez przycisku wyboru (widok po zapisaniu). */
+function VariantCardStatic({ view, variant }: { view: MartaView; variant: SplitVariant }) {
+  const v = view.variants[variant];
+  const scaleStart = view.inputs.firstStart;
+  const scaleDays = daysBetween(scaleStart, v.second.to) + 1;
+  return (
+    <article className="flex flex-col gap-5 rounded-lg border-2 border-on-surface p-gutter-mobile md:p-card">
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-serif text-title">{VARIANT_LABEL[variant]}</h3>
+          <p className="text-meta text-on-surface-variant">
+            {VARIANT_HINT[variant]} · {view.inputs.days / 7} tyg. każde
+          </p>
+        </div>
+        <Tag tone="ink">Wybrany</Tag>
+      </header>
+      <div className="flex flex-col gap-2" aria-hidden="true">
+        <Bar label="Ty" period={v.first} start={scaleStart} total={scaleDays} tone={BAR.first} />
+        <Bar label="Drugi rodzic" period={v.second} start={scaleStart} total={scaleDays} tone={BAR.second} />
+      </div>
+      <dl className="flex flex-col divide-y divide-outline border-y border-outline">
+        <PeriodRow who="Ty" period={v.first} />
+        <PeriodRow who="Drugi rodzic" period={v.second} />
+        <div className="flex items-baseline justify-between gap-3 py-3">
+          <dt className="text-on-surface-variant">Zasiłek łącznie</dt>
+          <dd className="font-serif text-title">{v.total === null ? "—" : formatPln(v.total)}</dd>
+        </div>
+      </dl>
+    </article>
+  );
+}
+
+function HowCalculated() {
+  return (
+    <Disclosure summary="Skąd te liczby?" className="border-y border-outline">
+      <ul className="flex max-w-prose list-disc flex-col gap-2 pl-5">
+        <li>Okres: od daty startu przez podaną liczbę dni. W wariancie „Po kolei” drugi rodzic zaczyna dzień po Twoim ostatnim dniu urlopu.</li>
+        <li>Termin wniosku: {NOTICE_DAYS} dni przed startem. Wniosek składa się pracodawcy „w terminie nie krótszym niż 21 dni przed rozpoczęciem” urlopu.</li>
+        <li>Oboje rodzice mogą korzystać z urlopu rodzicielskiego jednocześnie.</li>
+        <li>Każdemu z rodziców przysługuje 9 tygodni urlopu rodzicielskiego, których nie można przenieść na drugiego rodzica.</li>
+        <li>Kwota: stawka dzienna × liczba dni. Stawka to założenie — w wersji demo przykładowa, nie wyliczona z Twojego wynagrodzenia.</li>
+        <li>Te same wyliczenia robi Zusik w rozmowie.</li>
+      </ul>
+      <p className="mt-3 text-meta text-on-surface-variant">
+        Źródło:{" "}
+        <Link href={PARENTAL_SOURCE.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+          {PARENTAL_SOURCE.label}
+          <span className="sr-only"> (otwiera się w nowej karcie)</span>
+        </Link>
+      </p>
+    </Disclosure>
   );
 }

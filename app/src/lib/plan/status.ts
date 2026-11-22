@@ -1,7 +1,7 @@
 import type { CaseState, Stop } from "../demo/types";
 
 /** Skrót statusu na ścieżce („Jeden model statusów”). */
-export type PathStatus = "Przed Tobą" | "Do zrobienia" | "W trakcie" | "Wysłane" | "Wymaga uwagi" | "Załatwione";
+export type PathStatus = "Przed Tobą" | "Do zrobienia" | "W trakcie" | "Wysłane" | "Wymaga uwagi" | "Załatwione" | "Za Tobą";
 
 export type DocGroup = "do-zalatwienia" | "wyslane" | "na-pozniej" | "zakonczone";
 
@@ -23,6 +23,7 @@ const PATH: Record<CaseState, PathStatus> = {
   "odmowa-w-terminie": "Wymaga uwagi",
   zalatwione: "Załatwione",
   "nie-korzystam": "Załatwione",
+  minelo: "Za Tobą",
 };
 
 const DOC: Record<CaseState, { group: DocGroup; label: string }> = {
@@ -36,9 +37,11 @@ const DOC: Record<CaseState, { group: DocGroup; label: string }> = {
   "odmowa-w-terminie": { group: "zakonczone", label: "Odmowa · wymaga uwagi" },
   zalatwione: { group: "zakonczone", label: "Zakończone" },
   "nie-korzystam": { group: "zakonczone", label: "Nie korzystasz" },
+  minelo: { group: "zakonczone", label: "Minęło · nie dotyczy" },
 };
 
 export function pathStatus(stop: Stop): PathStatus | "Odhaczone" | "Nic nie musisz robić" | "Informacja" {
+  if (stop.state === "minelo") return "Za Tobą";
   if (stop.kind === "informacja" || stop.kind === "program-zdrowotny") {
     return stop.checked ? "Odhaczone" : "Informacja";
   }
@@ -52,6 +55,7 @@ export function docStatus(state: CaseState): { group: DocGroup; label: string } 
 
 /** Sprawa, przy której rodzic nie ma już nic do zrobienia (blokuje pionka, gdy false). */
 export function isResolved(stop: Stop): boolean {
+  if (stop.state === "minelo") return true;
   if (stop.kind === "informacja" || stop.kind === "program-zdrowotny") return Boolean(stop.checked);
   if (stop.kind === "dzieje-sie-samo") return true;
   return stop.state === "zalatwione" || stop.state === "nie-korzystam" || stop.state === "wyslano";

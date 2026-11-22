@@ -1,9 +1,11 @@
 /** Opisy przystanków na podstawie oficjalnych źródeł (sprawdzone 21.11.2026). */
 export type StopDetails = { paragraphs: string[]; sources: Array<{ label: string; url: string }>; checked: string; uwagi?: string };
 
-const CHECKED = "2026-11-21";
+export const CHECKED = "2026-11-21";
 
-const S = {
+export const S = {
+  govParentBenefit: { label: "gov.pl · Uzyskaj świadczenie rodzicielskie", url: "https://www.gov.pl/web/gov/uzyskaj-swiadczenie-rodzicielskie" },
+  zielonaLinia: { label: "zielonalinia.gov.pl · Uprawnienia związane z rodzicielstwem", url: "https://zielonalinia.gov.pl/uprawnienia-zwiazane-z-rodzicielstwem/" },
   usc: { label: "gov.pl · Zgłoś urodzenie dziecka", url: "https://www.gov.pl/web/gov/zglos-urodzenie-dziecka" },
   odpisInfo: { label: "gov.pl · Odpis aktu stanu cywilnego — informacje ogólne", url: "https://www.gov.pl/web/gov/odpis-aktu-stanu-cywilnego-informacje-ogolne" },
   zusKomu: { label: "zus.pl · Zasiłek macierzyński — komu przysługuje", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/komu-przysluguje" },

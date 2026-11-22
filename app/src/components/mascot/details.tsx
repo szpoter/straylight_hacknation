@@ -7,7 +7,9 @@
 import { BOOK, CALCULATOR, CLOSED_FOLDER, COVER_PATHS, DOT, FOLDER, PENCIL, pencilPoint } from "./shapes";
 import type { Point } from "./geometry";
 
-const fmt = (points: readonly Point[]) => points.map(([x, y]) => `${x} ${y}`).join(" L ");
+// Zaokrąglenie do 0,1: Math.cos/sin w Node i w przeglądarce różnią się na ostatnich cyfrach, co psuło hydrację.
+const fmt = (points: readonly Point[]) => points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L ");
+const r1 = (v: number) => Math.round(v * 10) / 10;
 const mirror = (x: number) => 2 * BOOK.spine - x;
 
 /** Index cards behind the folder; only their tops peek out over its edge. */
@@ -97,10 +99,10 @@ export function DetailsFront() {
         {[-half + w + 40, -half + w + 110].map((along) => (
           <line
             key={along}
-            x1={pencilPoint(along, w)[0]}
-            y1={pencilPoint(along, w)[1]}
-            x2={pencilPoint(along, -w)[0]}
-            y2={pencilPoint(along, -w)[1]}
+            x1={r1(pencilPoint(along, w)[0])}
+            y1={r1(pencilPoint(along, w)[1])}
+            x2={r1(pencilPoint(along, -w)[0])}
+            y2={r1(pencilPoint(along, -w)[1])}
             strokeWidth={26}
             className="stroke-babelek-rim"
           />

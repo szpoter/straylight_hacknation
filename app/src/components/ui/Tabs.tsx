@@ -32,12 +32,12 @@ export function PillTabs<T extends string>({
             onClick={() => onChange(item.value)}
             className={cn(
               "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-meta font-medium transition-colors duration-150",
-              active ? "border-on-surface bg-on-surface text-on-primary" : "border-outline bg-surface text-on-surface hover:border-on-surface",
+              active ? "border-on-surface bg-on-surface text-on-primary" : "border-outline bg-background text-on-surface hover:border-on-surface",
             )}
           >
             {item.label}
             {item.count !== undefined && (
-              <span className={cn("rounded-full px-1.5 text-meta", active ? "bg-surface text-on-surface" : "bg-background")}>{item.count}</span>
+              <span className={cn("rounded-full px-1.5 text-meta", active ? "bg-background text-on-surface" : "bg-surface")}>{item.count}</span>
             )}
           </button>
         );

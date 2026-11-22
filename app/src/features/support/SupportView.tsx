@@ -13,7 +13,7 @@ export function SupportView() {
         <ul className="flex flex-wrap gap-2">
           {SITUATIONS.map((s) => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className="inline-flex h-10 items-center rounded-full border border-outline bg-surface px-4 text-meta font-medium hover:border-on-surface">
+              <a href={`#${s.id}`} className="inline-flex h-10 items-center rounded-full border border-outline bg-background px-4 text-meta font-medium hover:border-on-surface">
                 {s.title}
               </a>
             </li>
@@ -51,7 +51,18 @@ export function SupportView() {
             <h3 className="mb-2 mt-6 font-sans text-label font-medium">Sprawy formalne</h3>
             <ul className="flex list-disc flex-col gap-1 pl-5 text-on-surface-variant">
               {s.formal.map((f) => (
-                <li key={f}>{f}</li>
+                <li key={f.text}>
+                  {f.text}
+                  {f.source && (
+                    <>
+                      {" "}
+                      <a href={f.source.url} target="_blank" rel="noopener noreferrer" className="text-meta underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+                        Źródło: {f.source.label}
+                        <span className="sr-only"> (otwiera się w nowej karcie)</span>
+                      </a>
+                    </>
+                  )}
+                </li>
               ))}
             </ul>
           </Panel>

@@ -56,7 +56,7 @@ function AskZus() {
 
   if (sent)
     return (
-      <div role="status" className="rounded-sm border border-outline bg-background p-4">
+      <div role="status" className="rounded-sm border border-outline bg-surface p-4">
         <p className="font-medium">Wysłano w symulacji.</p>
         <p className="text-on-surface-variant">W prawdziwej usłudze odpowiedź przyjdzie do skrzynki eZUS. Wiadomość znajdziesz w korespondencji w „Dokumentach i wnioskach”.</p>
         <button type="button" className="mt-2 underline underline-offset-4 decoration-outline hover:decoration-on-surface" onClick={() => { setSent(false); setText(""); }}>
@@ -91,7 +91,7 @@ function AskZus() {
           setText(e.target.value);
           setError(null);
         }}
-        className="w-full rounded-sm border border-outline bg-surface p-4 text-body focus:border-on-surface focus:outline-none"
+        className="w-full rounded-sm border border-outline bg-background p-4 text-body focus:border-on-surface focus:outline-none"
       />
       <Button type="submit" variant="secondary" className="self-start">
         Wyślij do ZUS

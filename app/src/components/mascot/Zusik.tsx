@@ -5,9 +5,10 @@ import type { BabelekProps } from "./babelek/types";
 /**
  * Zusik — maskotka Bąbelek przeniesiona z maskotka_kod/components/mascot (kopia w ./babelek).
  * Bez `animated` to statyczny SVG renderowany na serwerze. Animacje dostarcza zespół maskotki.
+ * `overflow-visible`: ramiona i kształty wychodzą poza viewBox, nie mogą być przycinane.
  */
 export function Zusik({ size = 56, className, ...rest }: Omit<BabelekProps, "size"> & { size?: number }) {
-  return <Babelek size={size} className={cn("shrink-0", className)} {...rest} />;
+  return <Babelek size={size} className={cn("shrink-0 overflow-visible", className)} {...rest} />;
 }
 
 /** Dymek Zusika. `id` pozwala ustawić fokus na pytaniu po zmianie ekranu. */
@@ -32,8 +33,8 @@ export function SpeechBubble({
       id={id}
       tabIndex={tabIndex}
       className={cn(
-        "relative rounded-lg border border-outline bg-surface px-5 py-4 focus:outline-none",
-        "before:absolute before:size-3 before:rotate-45 before:border-outline before:bg-surface",
+        "relative rounded-lg border border-outline bg-background px-5 py-4 focus:outline-none",
+        "before:absolute before:size-3 before:rotate-45 before:border-outline before:bg-background",
         tail === "left" ? "before:-left-[7px] before:top-6 before:border-b before:border-l" : "before:-bottom-[7px] before:left-1/2 before:-ml-1.5 before:border-b before:border-r",
         className,
       )}

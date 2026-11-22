@@ -16,8 +16,17 @@ function KindMark({ plan }: { plan: Plan }) {
           <LockIcon size={14} /> dane z rejestru
         </span>
       );
-    case "planowane":
-      return <span className="text-meta text-on-surface-variant">planowane</span>;
+    case "planowane": {
+      // Plan z onboardingu: urodzone dziecko to nie „planowane” — dane podał rodzic.
+      const own = plan.situation && plan.situation !== "ciaza" && plan.situation !== "planuje";
+      const siblings = plan.family?.names.filter((n) => n !== plan.name) ?? [];
+      return (
+        <span className="text-meta text-on-surface-variant">
+          {own ? "dodane przez Ciebie" : "planowane"}
+          {siblings.length > 0 ? ` · ${plan.family?.label === "bliźnięta" ? "bliźnię" : "rodzeństwo"}: ${siblings.join(", ")}` : ""}
+        </span>
+      );
+    }
     case "test":
       return <Tag tone="accent">Test</Tag>;
     case "przyklad":
@@ -60,7 +69,7 @@ export function ChildSelector({ className }: { className?: string }) {
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 items-center gap-2 rounded-full px-3 py-1 text-left hover:bg-background"
+        className="flex min-h-11 items-center gap-2 rounded-full px-3 py-1 text-left hover:bg-surface"
       >
         <span className="flex flex-col leading-tight">
           <span className="font-serif text-title leading-none">{displayName}</span>
@@ -71,7 +80,7 @@ export function ChildSelector({ className }: { className?: string }) {
       </button>
 
       {open && (
-        <div id={listId} className="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-32px))] rounded-lg border border-outline bg-surface p-2">
+        <div id={listId} className="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-32px))] rounded-lg border border-outline bg-background p-2">
           <ul className="flex flex-col">
             {plans.map((p) => {
               const active = p.id === plan.id;
@@ -85,7 +94,7 @@ export function ChildSelector({ className }: { className?: string }) {
                       setOpen(false);
                       buttonRef.current?.focus();
                     }}
-                    className={cn("flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left hover:bg-background", active && "bg-background")}
+                    className={cn("flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left hover:bg-surface", active && "bg-surface")}
                   >
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="font-medium">{p.kind === "test" || p.kind === "przyklad" ? p.name : `${p.name} · ${p.shortInfo}`}</span>
@@ -98,10 +107,10 @@ export function ChildSelector({ className }: { className?: string }) {
             })}
           </ul>
           <div className="mt-1 flex flex-col border-t border-outline pt-1">
-            <Link href="/start" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-background" onClick={() => setOpen(false)}>
-              <PlusIcon size={18} /> Dodaj dziecko lub plan
+            <Link href="/start" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-surface" onClick={() => setOpen(false)}>
+              <PlusIcon size={18} /> Dodaj dziecko albo ciążę
             </Link>
-            <Link href="/profil/sprawa-testowa" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-background" onClick={() => setOpen(false)}>
+            <Link href="/profil/sprawa-testowa" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-surface" onClick={() => setOpen(false)}>
               <PlusIcon size={18} /> Wczytaj przykładową sprawę
             </Link>
           </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ButtonLink, Page, PageTitle, Panel, SectionTitle } from "@/components/ui";
 import { MyData } from "@/features/family/profile/MyData";
 import { PlansSection } from "@/features/family/profile/PlansSection";
+import { ResetDemo } from "@/features/family/profile/ResetDemo";
 import { ZusAccount } from "@/features/family/profile/ZusAccount";
 
 export const metadata: Metadata = { title: "Profil rodziny · Zusik" };
@@ -25,6 +26,7 @@ export default function ProfilePage() {
             Wczytaj przykładową sprawę
           </ButtonLink>
         </Panel>
+        <ResetDemo />
       </div>
     </Page>
   );

@@ -44,8 +44,8 @@ describe("wiersz i pliki", () => {
     expect(sorted[0].id).toBe("800plus");
     expect(rowAction(sorted[0]).label).toBe("Otwórz wezwanie");
   });
-  it("szkic z Zusikiem", () => {
-    expect(rowAction(cases.find((c) => c.id === "urlop-ojcowski")!)).toEqual({ label: "Dokończ z Zusikiem", kind: "zusik" });
+  it("szkic prowadzi do wniosku do samodzielnej edycji", () => {
+    expect(rowAction(cases.find((c) => c.id === "urlop-ojcowski")!)).toEqual({ label: "Uzupełnij wniosek", kind: "link", step: "wniosek" });
   });
   it("pliki dziecka: kopia, UPP i pismo", () => {
     const types = childFiles(cases).map((f) => f.type);

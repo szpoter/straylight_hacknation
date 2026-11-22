@@ -28,6 +28,9 @@ export function DocumentsList() {
     <Page>
       <p className="text-meta text-on-surface-variant">{plan.name}</p>
       <PageTitle>Dokumenty i wnioski</PageTitle>
+      <p className="mt-3 max-w-prose text-lead text-on-surface-variant">
+        Wszystkie wnioski i pisma z planu w jednym miejscu: co trzeba złożyć, co już wysłane i jak urząd odpowiedział. Kliknij sprawę, żeby zobaczyć jej przebieg, pliki i następny krok.
+      </p>
 
       {summons?.doc.summons && (
         // Brak tokenu koloru ostrzeżenia: akcent bursztynowy — do weryfikacji.
@@ -127,5 +130,5 @@ export function DocumentsList() {
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="rounded-lg border border-outline bg-surface p-card font-serif text-title">{text}</p>;
+  return <p className="rounded-lg border border-outline bg-background p-card font-serif text-title">{text}</p>;
 }

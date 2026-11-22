@@ -4,22 +4,25 @@ import { docStatus, type DocGroup } from "@/lib/plan/status";
 
 export type DocCase = Stop & { doc: NonNullable<Stop["doc"]>; state: NonNullable<Stop["state"]> };
 
-export type RowAction = { label: string; kind: "zusik" | "link" };
+export type RowAction = { label: string; kind: "zusik" | "link"; /** Krok wniosku w adresie sprawy (`?krok=`). */ step?: "wniosek" | "sprawdz" | "przekaz" };
 
-/** Jedno działanie w wierszu sprawy, zależne od stanu (tabela grup w SPEC-PO-LOGOWANIU). */
+/**
+ * Jedno działanie w wierszu sprawy, zależne od stanu (tabela grup w SPEC-PO-LOGOWANIU).
+ * Wniosek rodzic wypełnia sam (krok „wniosek”); Zusik pomaga z poziomu szczegółów sprawy.
+ */
 export function rowAction(c: DocCase): RowAction {
   if (c.state === "wezwanie") return { label: "Otwórz wezwanie", kind: "link" };
-  if (c.doc.hasDraft && (c.state === "szkic" || c.state === "aktualna")) return { label: "Dokończ z Zusikiem", kind: "zusik" };
   switch (c.state) {
     case "aktualna":
-      return { label: "Rozpocznij", kind: "link" };
+      return { label: "Rozpocznij", kind: "link", step: "wniosek" };
     case "szkic":
+      return { label: "Uzupełnij wniosek", kind: "link", step: "wniosek" };
     case "wypelniony":
-      return { label: "Sprawdź i zatwierdź", kind: "link" };
+      return { label: "Sprawdź i zatwierdź", kind: "link", step: "sprawdz" };
     case "zatwierdzony":
-      return { label: "Przekaż", kind: "link" };
+      return { label: "Przekaż", kind: "link", step: "przekaz" };
     case "wyslano":
-      return { label: "Zobacz przebieg sprawy", kind: "link" };
+      return { label: "Zobacz przebieg", kind: "link" };
     case "warunek":
       return { label: "Zobacz, co przygotować", kind: "link" };
     default:

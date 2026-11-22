@@ -73,10 +73,10 @@ export function TestCaseWizard() {
                   onClick={() => goTo(s)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-full border px-3 py-2 text-meta font-medium disabled:cursor-not-allowed disabled:text-on-surface-variant",
-                    current ? "border-on-surface bg-on-surface text-on-primary" : "border-outline bg-surface",
+                    current ? "border-on-surface bg-on-surface text-on-primary" : "border-outline bg-background",
                   )}
                 >
-                  <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full text-meta", current ? "bg-surface text-on-surface" : done ? "bg-primary text-on-primary" : "bg-background")}>
+                  <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full text-meta", current ? "bg-background text-on-surface" : done ? "bg-primary text-on-primary" : "bg-surface")}>
                     {done ? <CheckIcon size={12} strokeWidth={3} /> : i + 1}
                   </span>
                   <span className="truncate">{label}</span>
@@ -112,7 +112,7 @@ export function TestCaseWizard() {
 }
 
 function StickyNext({ children }: { children: React.ReactNode }) {
-  return <div className="fixed inset-x-0 bottom-16 z-30 border-t border-outline bg-surface p-gutter-mobile md:static md:border-0 md:bg-transparent md:p-0 md:flex md:justify-end">{children}</div>;
+  return <div className="fixed inset-x-0 bottom-16 z-30 border-t border-outline bg-background p-gutter-mobile md:static md:border-0 md:bg-transparent md:p-0 md:flex md:justify-end">{children}</div>;
 }
 
 function UploadStep({
@@ -155,7 +155,7 @@ function UploadStep({
           }}
           className={cn(
             "flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center has-focus-visible:outline-2 has-focus-visible:outline-on-surface",
-            over ? "border-primary bg-background" : "border-on-surface-variant bg-surface",
+            over ? "border-primary bg-surface" : "border-on-surface-variant bg-background",
           )}
         >
           <UploadIcon size={28} />
@@ -165,7 +165,7 @@ function UploadStep({
         </label>
       )}
       {pending && (
-        <Panel role="alertdialog" aria-label="Podmienić plik?" className="flex flex-col gap-3 bg-background">
+        <Panel role="alertdialog" aria-label="Podmienić plik?" className="flex flex-col gap-3 bg-surface">
           <p>
             Podmienić „{file?.name}” na „{pending.name}”? Twoje poprawki odczytanych danych zostaną utracone.
           </p>

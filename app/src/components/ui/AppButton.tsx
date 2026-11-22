@@ -6,7 +6,7 @@ type Variant = "primary" | "secondary" | "ink" | "quiet";
 
 const VARIANT: Record<Variant, string> = {
   primary: "bg-primary text-on-primary hover:bg-on-surface disabled:bg-outline disabled:text-on-surface-variant",
-  secondary: "bg-surface text-on-surface border border-on-surface hover:bg-background disabled:border-outline disabled:text-on-surface-variant",
+  secondary: "bg-background text-on-surface border border-on-surface hover:bg-surface disabled:border-outline disabled:text-on-surface-variant",
   ink: "bg-on-surface text-on-primary hover:bg-primary",
   quiet: "bg-transparent text-on-surface underline underline-offset-4 decoration-outline hover:decoration-on-surface px-0! h-auto!",
 };

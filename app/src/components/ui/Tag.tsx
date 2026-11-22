@@ -4,7 +4,7 @@ import { CheckIcon, LockIcon } from "./icons";
 type Tone = "neutral" | "accent" | "brand" | "ink";
 
 const TONE: Record<Tone, string> = {
-  neutral: "bg-surface border border-outline text-on-surface",
+  neutral: "bg-background border border-outline text-on-surface",
   accent: "bg-tertiary text-on-surface",
   brand: "bg-secondary text-on-surface",
   ink: "bg-on-surface text-on-primary",

@@ -16,7 +16,7 @@ export function TopBar() {
 
   return (
     <header className="sticky top-2 z-40 px-gutter-mobile md:px-gutter-desktop">
-      <div className="mx-auto flex h-14 max-w-page items-center gap-2 rounded-full border border-outline bg-surface pl-2 pr-2 md:gap-4 md:pl-5">
+      <div className="mx-auto flex h-14 max-w-page items-center gap-2 rounded-full border border-outline bg-background pl-2 pr-2 md:gap-4 md:pl-5">
         <Link href="/plan" className="hidden font-serif text-title md:block" aria-label="Zusik — Mój plan">
           Zusik
         </Link>
@@ -33,12 +33,12 @@ export function TopBar() {
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "inline-flex h-10 items-center gap-2 rounded-full px-4 text-meta font-medium transition-colors duration-150",
-                      active ? "bg-on-surface text-on-primary" : "hover:bg-background",
+                      active ? "bg-on-surface text-on-primary" : "hover:bg-surface",
                     )}
                   >
                     {item.label}
                     {item.href === "/dokumenty" && todo > 0 && (
-                      <span className={cn("rounded-full px-1.5", active ? "bg-surface text-on-surface" : "bg-tertiary")}>
+                      <span className={cn("rounded-full px-1.5", active ? "bg-background text-on-surface" : "bg-tertiary")}>
                         {todo}
                         <span className="sr-only"> do załatwienia</span>
                       </span>

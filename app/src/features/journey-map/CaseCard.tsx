@@ -10,11 +10,11 @@ import { Tag } from "@/components/ui/Tag";
 import { daysLeftLabel, formatLong } from "@/lib/demo/dates";
 import { STOP_DETAILS } from "@/lib/demo/stop-details";
 import type { Stop } from "@/lib/demo/types";
-import { pathStatus } from "@/lib/plan/status";
+import { isResolved, pathStatus } from "@/lib/plan/status";
 import { KIND_LABEL } from "./shared";
 
 /** Blok „Jak złożyć”: Co / Do kogo / Do kiedy / Załączniki. */
-export function HowToBlock({ howTo }: { howTo: NonNullable<Stop["howTo"]> }) {
+export function HowToBlock({ howTo, hideTitle }: { howTo: NonNullable<Stop["howTo"]>; hideTitle?: boolean }) {
   const rows: Array<[string, string]> = [
     ["Co", howTo.co],
     ["Do kogo", howTo.doKogo],
@@ -23,8 +23,8 @@ export function HowToBlock({ howTo }: { howTo: NonNullable<Stop["howTo"]> }) {
   ];
   return (
     <div>
-      <h3 className="mb-4 text-label font-medium">Jak złożyć</h3>
-      <dl className="divide-y divide-outline border-y border-outline">
+      {!hideTitle && <h3 className="mb-4 text-label font-medium">Jak złożyć</h3>}
+      <dl className={cn("divide-y divide-outline", !hideTitle && "border-y border-outline")}>
         {rows.map(([label, value]) => (
           <div key={label} className="grid gap-1 py-3 md:grid-cols-[9rem_1fr] md:gap-4">
             <dt className="text-meta text-on-surface-variant">{label}</dt>
@@ -47,6 +47,7 @@ export function CaseCard({
   headingId,
   compact,
   headingLevel = "h2",
+  onLeave,
 }: {
   stop?: Stop;
   isNearest: boolean;
@@ -56,6 +57,8 @@ export function CaseCard({
   compact?: boolean;
   /** „none” — tytuł jest już widoczny wyżej (np. w wierszu listy). */
   headingLevel?: "h2" | "none";
+  /** Zamyka panel przystanku przed przejściem do sekcji na stronie (np. „#kalkulator”). */
+  onLeave?: () => void;
 }) {
   const { plan, patchStop, resetStop, isPatched, openZusik } = usePlan();
 
@@ -74,35 +77,70 @@ export function CaseCard({
   const status = pathStatus(stop);
   // Pełny opis z oficjalnych źródeł: w panelu przystanku i w widoku listy (nie w karcie „Najbliższa sprawa”).
   const details = compact ? STOP_DETAILS[stop.id.replace(/^e-/, "")] : undefined;
-  const checkable = stop.kind === "informacja" || stop.kind === "program-zdrowotny";
+  // Etap, który rodzic miał za sobą przy zakładaniu planu: bez działań, tylko wyjaśnienie.
+  const past = stop.state === "minelo";
+  const checkable = !past && (stop.kind === "informacja" || stop.kind === "program-zdrowotny");
   // Sprawy urzędowe zmieniają stan zdarzeniami (wysyłka, decyzja). Rodzic może je jednak sam
   // oznaczyć jako załatwione albo zrezygnować ze sprawy dobrowolnej (SPEC „Jeden model statusów”).
   const official = stop.kind === "obowiazek" || stop.kind === "na-wniosek";
-  const byParent = isPatched(stop.id);
+  // Wysyłka z formularza w Dokumentach to nie ręczne oznaczenie — wtedy bez „Cofnij oznaczenie”.
+  const sentFromForm = stop.doc?.events?.some((e) => e.title.startsWith("Wysłano")) ?? false;
+  const byParent = isPatched(stop.id) && !sentFromForm;
   const optional = stop.kind === "na-wniosek" || stop.doc?.optional;
-  const open = official && stop.state !== "zalatwione" && stop.state !== "nie-korzystam";
+  const open = official && !past && stop.state !== "zalatwione" && stop.state !== "nie-korzystam";
   const summons = stop.doc?.summons;
 
+  // Przy sprawie za rodzicem główne działanie przestaje być zielone — nic już nie ponagla.
+  const actionVariant = isResolved(stop) ? "secondary" : "primary";
   const action = () => {
     const { label, href } = stop.action;
     if (label.startsWith("Dokończ z Zusikiem") || stop.state === "wezwanie") {
       return (
-        <Button onClick={() => openZusik({ planId: plan.id, place: "Mój plan", stopId: stop.id, field: stop.doc?.note, returnTo: "/plan" })}>
+        <Button variant={actionVariant} onClick={() => openZusik({ planId: plan.id, place: "Mój plan", stopId: stop.id, field: stop.doc?.note, returnTo: "/plan" })}>
           {stop.state === "wezwanie" ? "Uzupełnij z Zusikiem" : label}
         </Button>
       );
     }
-    if (href?.startsWith("#") || href?.startsWith("/")) return <ButtonLink href={href}>{label}</ButtonLink>;
+    if (href?.startsWith("#")) {
+      // Kotwica na tej samej stronie: najpierw zamknij panel, potem przewiń do sekcji.
+      const goTo = () => {
+        onLeave?.();
+        window.setTimeout(() => {
+          document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.replaceState(null, "", href);
+        }, 50);
+      };
+      return (
+        <Button variant={actionVariant} onClick={goTo}>
+          {label}
+        </Button>
+      );
+    }
+    if (href?.startsWith("/")) return (
+        <ButtonLink variant={actionVariant} href={href}>
+          {label}
+        </ButtonLink>
+      );
     return (
-      <ButtonLink href={stop.source.url} target="_blank" rel="noopener noreferrer">
+      <ButtonLink variant={actionVariant} href={stop.source.url} target="_blank" rel="noopener noreferrer">
         {label}
         <span className="sr-only"> (otwiera się w nowej karcie)</span>
       </ButtonLink>
     );
   };
 
+  const done = isResolved(stop);
+  const due = stop.due && !done ? `${formatLong(stop.due)} · ${daysLeftLabel(stop.due)}` : stop.due ? formatLong(stop.due) : undefined;
+  const basis = [stop.condition && stop.state === "warunek" ? stop.condition : undefined, stop.dueBasis].filter(Boolean).join(". ");
+  const facts: Array<[string, string]> = [
+    ...(due ? ([["Termin", due]] as Array<[string, string]>) : []),
+    ...(basis ? ([[stop.due ? "Od czego liczymy" : "Kiedy", basis]] as Array<[string, string]>) : []),
+    [stop.kind === "dzieje-sie-samo" ? "Kto to zrobi" : "Gdzie", stop.kind === "dzieje-sie-samo" ? (stop.whoDoesIt ?? stop.institution) : stop.institution],
+    ["Dla kogo", stop.forWhom],
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div className={cn(headingLevel === "none" && "hidden")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           {!compact && <p className="text-meta text-on-surface-variant">{isNearest ? "Najbliższa sprawa" : "Wybrany przystanek"}</p>}
@@ -115,19 +153,51 @@ export function CaseCard({
         {headingLevel === "h2" && (
           <h2 id={headingId} className="mt-1 font-serif text-title">
             {stop.title}
-            {stop.due ? ` · do ${formatLong(stop.due)}` : ""}
           </h2>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {stop.due && stop.state !== "zalatwione" && stop.state !== "wyslano" && <Tag tone="accent">{daysLeftLabel(stop.due)}</Tag>}
-          <Tag>{byParent && official ? `${status} · oznaczone przez Ciebie` : status}</Tag>
+          <Tag tone={done ? "brand" : stop.due ? "accent" : "neutral"}>{byParent && official ? `${status} · oznaczone przez Ciebie` : status}</Tag>
           <Tag>{KIND_LABEL[stop.kind]}</Tag>
           {stop.doc?.optional && <Tag>Jeśli chcesz skorzystać</Tag>}
         </div>
-        <p className="mt-3 text-meta text-on-surface-variant">
-          {stop.institution} · {stop.forWhom}
-        </p>
       </div>
+
+      {/* Najpierw jedno zdanie „po co”, potem najważniejsze fakty w jednym miejscu. */}
+      <p className="max-w-prose text-lead">{stop.why}</p>
+
+      <dl className="grid gap-x-6 gap-y-3 rounded-sm bg-surface p-4 sm:grid-cols-2">
+        {facts.map(([label, value]) => (
+          <div key={label} className="flex min-w-0 flex-col gap-0.5">
+            <dt className="text-meta text-on-surface-variant">{label}</dt>
+            <dd className={cn(label === "Termin" && !done && "font-medium")}>{value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      {stop.sharedGroup && plan.family && (
+        <p className="rounded-sm bg-surface p-4">
+          <span className="font-medium">Wspólna sprawa: {plan.family.names.join(" i ")}.</span> To jeden wniosek — gdy go oznaczysz, zmieni się we
+          wszystkich planach.
+        </p>
+      )}
+
+      {stop.notes?.map((note) => (
+        <div key={note.text} className="flex flex-col gap-1 border-l-2 border-primary pl-4">
+          <p>{note.text}</p>
+          <p className="text-meta text-on-surface-variant">
+            Źródło:{" "}
+            {note.sources.map((src, i) => (
+              <span key={src.url}>
+                {i > 0 && " · "}
+                <Link href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+                  {src.label}
+                  <span className="sr-only"> (otwiera się w nowej karcie)</span>
+                </Link>
+              </span>
+            ))}
+          </p>
+        </div>
+      ))}
 
       {summons && (
         <div className="rounded-sm border border-on-surface bg-tertiary p-4">
@@ -143,87 +213,114 @@ export function CaseCard({
           <div>
             <p className="font-medium">{stop.risk.title}</p>
             <p className="mt-1">{stop.risk.detail}</p>
-            <TextButton className="mt-2">{stop.risk.action}</TextButton>
+            {stop.risk.sources?.[0] ? (
+              <Link
+                href={stop.risk.sources[0].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block font-medium underline underline-offset-4 decoration-on-surface-variant hover:decoration-on-surface"
+              >
+                {stop.risk.action}
+                <span className="sr-only"> (otwiera się w nowej karcie)</span>
+              </Link>
+            ) : (
+              <TextButton className="mt-2">{stop.risk.action}</TextButton>
+            )}
+            {stop.risk.sources?.[0] && <p className="mt-1 text-meta">Źródło: {stop.risk.sources[0].label}</p>}
           </div>
         </div>
       )}
 
-      <p className="max-w-prose">{stop.why}</p>
-
-      {details && (
-        <section aria-label="O co chodzi" className="flex max-w-prose flex-col gap-3">
-          <h3 className="text-label font-medium">O co chodzi</h3>
-          {details.paragraphs.map((p) => (
-            <p key={p} className="text-on-surface">
-              {p}
-            </p>
-          ))}
-        </section>
+      {past && (
+        <p className="rounded-sm bg-surface p-4">
+          <span className="font-medium">Ten etap masz już za sobą.</span> Pokazujemy go, żeby było widać całą drogę. Jeśli coś z niego wciąż Cię dotyczy, zapytaj Zusika.
+        </p>
       )}
 
-      {stop.kind === "dzieje-sie-samo" && (
-        <p className="rounded-sm bg-background p-4">
+      {stop.kind === "dzieje-sie-samo" && !past && (
+        <p>
           <span className="font-medium">Nic nie musisz robić.</span> Zrobi to: {stop.whoDoesIt ?? stop.institution}.
         </p>
       )}
 
-      {(stop.due || stop.dueBasis || stop.condition) && (
-        <p className="text-meta">
-          <span className="text-on-surface-variant">Od czego liczymy: </span>
-          {stop.condition && stop.state === "warunek" ? `${stop.condition}. ` : ""}
-          {stop.dueBasis ?? ""}
-        </p>
-      )}
+      {/* Działania: wszystkie tej samej wielkości; na telefonie jeden pod drugim na całą szerokość. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap [&>*]:justify-center">
+        {!past && action()}
+        {checkable && (
+          <Button variant="secondary" onClick={() => patchStop(stop.id, { checked: !stop.checked })}>
+            {stop.checked ? "Cofnij odhaczenie" : "Odhacz"}
+          </Button>
+        )}
+        {open && (
+          <Button variant="secondary" onClick={() => patchStop(stop.id, { state: "zalatwione" })}>
+            Oznacz jako załatwione
+          </Button>
+        )}
+        {open && optional && (
+          <Button variant="secondary" onClick={() => patchStop(stop.id, { state: "nie-korzystam" })}>
+            Nie korzystam
+          </Button>
+        )}
+        {official && byParent && (
+          <Button variant="secondary" onClick={() => resetStop(stop.id)}>
+            Cofnij oznaczenie
+          </Button>
+        )}
+      </div>
 
-      {stop.prepare && stop.prepare.length > 0 && (
-        <Disclosure summary="Przygotuj" className="border-y border-outline">
-          <ul className="list-disc space-y-1 pl-5">
-            {stop.prepare.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-        </Disclosure>
-      )}
-
-      {stop.howTo && <HowToBlock howTo={stop.howTo} />}
-
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-          {action()}
-          {checkable && (
-            <Button variant="secondary" onClick={() => patchStop(stop.id, { checked: !stop.checked })}>
-              {stop.checked ? "Cofnij odhaczenie" : "Odhacz"}
-            </Button>
-          )}
-          {open && (
-            <Button variant="secondary" onClick={() => patchStop(stop.id, { state: "zalatwione" })}>
-              Oznacz jako załatwione
-            </Button>
-          )}
-          {open && optional && (
-            <Button variant="secondary" onClick={() => patchStop(stop.id, { state: "nie-korzystam" })}>
-              Nie korzystam
-            </Button>
-          )}
-          {official && byParent && (
-            <Button variant="secondary" onClick={() => resetStop(stop.id)}>
-              Cofnij oznaczenie
-            </Button>
-          )}
-        </div>
-        <div className="text-meta text-on-surface-variant">
-          <p>{details ? `Podstawa (sprawdzone ${formatLong(details.checked)}):` : "Źródło:"}</p>
-          <ul className="mt-1 flex flex-col gap-1">
-            {(details?.sources ?? [stop.source]).map((src) => (
-              <li key={src.url}>
-                <Link href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
-                  {src.label}
-                  <span className="sr-only"> (otwiera się w nowej karcie)</span>
-                </Link>
+      {details && (
+        <section aria-label="O co chodzi" className="flex max-w-prose flex-col gap-3 border-t border-outline pt-6">
+          <h3 className="font-serif text-title">O co chodzi</h3>
+          <ul className="flex flex-col gap-3">
+            {details.paragraphs.map((p) => (
+              <li key={p} className="flex gap-3">
+                <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{p}</span>
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {((stop.prepare && stop.prepare.length > 0) || stop.howTo) && (
+        <div className="flex flex-col">
+          {stop.prepare && stop.prepare.length > 0 && (
+            <Disclosure summary="Co przygotować" className="border-t border-outline">
+              <ul className="list-disc space-y-1 pl-5">
+                {stop.prepare.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+            </Disclosure>
+          )}
+          {stop.howTo && (
+            <Disclosure summary="Jak złożyć" className="border-y border-outline" defaultOpen={!compact}>
+              <HowToBlock howTo={stop.howTo} hideTitle />
+            </Disclosure>
+          )}
         </div>
+      )}
+
+      <div className="text-meta text-on-surface-variant">
+        {compact && (
+          <p className="mb-3">
+            Trudna sytuacja?{" "}
+            <Link href="/wsparcie" className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+              Zobacz wsparcie
+            </Link>
+          </p>
+        )}
+        <p>{details ? `Podstawa (sprawdzone ${formatLong(details.checked)}):` : "Źródło:"}</p>
+        <ul className="mt-1 flex flex-col gap-1">
+          {(details?.sources ?? [stop.source]).map((src) => (
+            <li key={src.url}>
+              <Link href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+                {src.label}
+                <span className="sr-only"> (otwiera się w nowej karcie)</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

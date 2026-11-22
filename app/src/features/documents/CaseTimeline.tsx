@@ -11,7 +11,7 @@ function StageMark({ stage, index }: { stage: TimelineStage; index: number }) {
     <span
       className={cn(
         "flex size-8 shrink-0 items-center justify-center rounded-full border text-meta font-medium",
-        stage.status === "current" ? "border-2 border-primary bg-surface" : "border-outline bg-surface text-on-surface-variant",
+        stage.status === "current" ? "border-2 border-primary bg-background" : "border-outline bg-background text-on-surface-variant",
       )}
     >
       {index + 1}

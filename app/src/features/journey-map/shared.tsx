@@ -38,9 +38,9 @@ export function nodeTone(stop: Stop, onPawnRow: boolean): NodeTone {
 
 const LOOK: Record<NodeTone, { top: string; side: string; icon: string; dashed?: boolean }> = {
   done: { top: "fill-secondary stroke-primary", side: "fill-primary stroke-primary", icon: "text-on-surface" },
-  pawn: { top: "fill-surface stroke-primary", side: "fill-secondary stroke-primary", icon: "text-primary" },
-  future: { top: "fill-surface stroke-on-surface-variant", side: "fill-outline stroke-on-surface-variant", icon: "text-on-surface-variant" },
-  nothing: { top: "fill-surface stroke-on-surface-variant", side: "fill-background stroke-on-surface-variant", icon: "text-on-surface-variant", dashed: true },
+  pawn: { top: "fill-background stroke-primary", side: "fill-secondary stroke-primary", icon: "text-primary" },
+  future: { top: "fill-background stroke-on-surface-variant", side: "fill-outline stroke-on-surface-variant", icon: "text-on-surface-variant" },
+  nothing: { top: "fill-background stroke-on-surface-variant", side: "fill-surface stroke-on-surface-variant", icon: "text-on-surface-variant", dashed: true },
 };
 
 export function pedestalGeometry(size: number) {
@@ -126,17 +126,20 @@ export function StopNode({
   );
 }
 
-/** Podpis przystanku: nazwa, status, termin — zawsze widoczny. */
+/**
+ * Podpis przystanku: nazwa (najwyżej 2 wiersze, pełna w podpowiedzi), status, a pod nim termin
+ * albo warunek — każdy w osobnym wierszu, żeby dłuższe nazwy nie mieszały się ze stanem.
+ */
 export function StopLabel({ stop, align = "center", className }: { stop: Stop; align?: "center" | "left" | "right"; className?: string }) {
   const status = pathStatus(stop);
   const due = stop.due ? `do ${formatShort(stop.due)}` : stop.condition;
   return (
     <span className={cn("flex flex-col gap-0.5", align === "center" && "items-center text-center", align === "right" && "items-end text-right", className)}>
-      <span className="text-meta font-medium leading-snug text-on-surface">{stop.title}</span>
-      <span className="text-meta text-on-surface-variant">
-        {status}
-        {due ? ` · ${due}` : ""}
+      <span className="line-clamp-2 text-meta font-medium leading-snug text-on-surface" title={stop.title}>
+        {stop.title}
       </span>
+      <span className="text-meta leading-snug text-on-surface-variant">{status}</span>
+      {due && <span title={due} className={cn("line-clamp-2 text-meta leading-snug", stop.due && !isResolved(stop) ? "text-on-surface" : "text-on-surface-variant")}>{due}</span>}
     </span>
   );
 }
@@ -149,7 +152,7 @@ export function sprawy(n: number): string {
   return `${n} spraw`;
 }
 
-/** Zwinięty etap (np. „Przed narodzinami”, gdy rodzic jest już dalej) — też jako podest. */
+/** Zwinięty etap (np. „Planowanie”, gdy rodzic jest już dalej) — też jako podest. */
 export function CollapsedStage({
   item,
   onExpand,
@@ -173,7 +176,7 @@ export function CollapsedStage({
       <span className={cn("absolute left-1/2 flex w-48 -translate-x-1/2 flex-col items-center text-center", labelClassName)}>
         <span className="text-meta font-medium">
           {sprawy(item.count)}
-          {item.allDone ? " · załatwione" : ""}
+          {item.allDone ? " · za Tobą" : ""}
         </span>
         <button type="button" onClick={() => onExpand(item.stage)} className="text-meta underline underline-offset-4 decoration-outline hover:decoration-on-surface">
           Pokaż etap
@@ -181,4 +184,13 @@ export function CollapsedStage({
       </span>
     </>
   );
+}
+
+/**
+ * Tekst dymka nad pionkiem. Gdy pionek stoi na sprawie z warunkiem (np. „Po nadaniu numeru PESEL”),
+ * mówimy, na co czekamy — inaczej dymek „Następny krok” przeczyłby karcie „Na dziś masz wszystko załatwione”.
+ */
+export function pawnBubble(stop: Stop): { lead: string; text: string } {
+  if (stop.state === "warunek") return { lead: "Czekamy:", text: `${stop.condition ?? "na swój czas"}. Potem: ${stop.title}` };
+  return { lead: "Następny krok:", text: `${stop.title}${stop.due ? ` · do ${formatLong(stop.due, false)}` : ""}` };
 }

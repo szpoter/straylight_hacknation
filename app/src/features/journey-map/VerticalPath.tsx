@@ -4,16 +4,19 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { SpeechBubble } from "@/components/mascot/Zusik";
 import { cn } from "@/components/ui/cn";
 import { ArrowUpIcon, ListIcon } from "@/components/ui/icons";
-import { formatLong } from "@/lib/demo/dates";
 import type { StageId, Stop } from "@/lib/demo/types";
 import { STAGE_ORDER } from "@/lib/plan/path";
-import { smoothPath, wave, type PathItem } from "./layout";
-import { CollapsedStage, StopLabel, StopNode, nodeTone, pedestalGeometry } from "./shared";
+import { type PathItem } from "./layout";
+import { CollapsedStage, StopLabel, StopNode, nodeTone, pawnBubble, pedestalGeometry } from "./shared";
 import { TravellingZusik } from "./TravellingZusik";
 
 const ROW = 132;
 const STAGE_ROW = 64;
 const AMP = 24; // w procentach szerokości
+const PERIOD = 150; // px na radian — łagodna fala w dół, równe zakręty
+
+/** Fala zależna od wysokości (jak na komputerze od x): węzły leżą na jednej gładkiej krzywej. */
+const xAt = (y: number) => 50 + (Math.round(Math.sin(y / PERIOD + 0.4) * 1000) / 1000) * AMP;
 
 type Line = { kind: "stage"; stage: StageId; y: number } | { kind: "item"; item: PathItem; i: number; y: number; x: number };
 
@@ -61,7 +64,7 @@ export function VerticalPath({
     }
     const isPawnRow = item.type === "row" && item.index === pawnIndex;
     if (isPawnRow) y += 140; // miejsce na dymek i lewitującego Bąbelka
-    lines.push({ kind: "item", item, i, y: y + ROW / 2, x: 50 + wave(i) * AMP });
+    lines.push({ kind: "item", item, i, y: y + ROW / 2, x: xAt(y + ROW / 2) });
     y += ROW;
   });
   const height = y + 16;
@@ -72,7 +75,16 @@ export function VerticalPath({
   const pawnX = !pawnLine ? 50 : pawnPair && pawnLine.item.type === "row" ? (pawnLine.item.stops[1].id === pawnStop?.id ? 75 : 25) : pawnLine.x;
   const pedestal = pedestalGeometry(64).height;
   const pawnY = pawnLine ? pawnLine.y - pedestal / 2 - 8 : 0;
-  const points = lines.filter((l): l is Extract<Line, { kind: "item" }> => l.kind === "item").map<[number, number]>((l) => [l.item.type === "row" && l.item.stops.length === 2 ? 50 : l.x, l.y]);
+  const itemYs = lines.filter((l) => l.kind === "item").map((l) => l.y);
+  const waveD = (() => {
+    if (itemYs.length === 0) return "";
+    const from = itemYs[0];
+    const to = itemYs[itemYs.length - 1];
+    const pts: string[] = [];
+    for (let yy = from; yy < to; yy += 8) pts.push(`${xAt(yy).toFixed(2)} ${yy}`);
+    pts.push(`${xAt(to).toFixed(2)} ${to}`);
+    return `M ${pts.join(" L ")}`;
+  })();
 
   useEffect(() => {
     const el = pawnRef.current;
@@ -102,7 +114,7 @@ export function VerticalPath({
   return (
     <div className="relative">
       {/* Przyklejony baner etapu */}
-      <div className="sticky top-[72px] z-30 -mx-gutter-mobile mb-2 bg-surface px-gutter-mobile py-2">
+      <div className="sticky top-[72px] z-30 -mx-gutter-mobile mb-2 bg-background px-gutter-mobile py-2">
         <div className="flex items-center gap-3 rounded-full bg-secondary py-1.5 pl-5 pr-1.5">
           <p className="min-w-0 flex-1 truncate text-meta" aria-live="polite">
             <span className="font-medium">
@@ -110,7 +122,7 @@ export function VerticalPath({
             </span>
             {open > 0 ? ` · ${open} ${open === 1 ? "sprawa" : open < 5 ? "sprawy" : "spraw"} do zrobienia` : ""}
           </p>
-          <button type="button" onClick={onList} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-meta font-medium">
+          <button type="button" onClick={onList} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-background px-4 text-meta font-medium">
             <ListIcon size={16} /> Lista
           </button>
         </div>
@@ -118,7 +130,7 @@ export function VerticalPath({
 
       <div className="relative" style={{ height }}>
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" aria-hidden>
-          <path d={smoothPath(points, "vertical")} className="fill-none stroke-outline" strokeWidth={6} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+          <path d={waveD} className="fill-none stroke-outline" strokeWidth={6} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
         </svg>
 
         {lines.map((line) => {
@@ -132,7 +144,7 @@ export function VerticalPath({
                 className="absolute inset-x-0 flex items-center justify-center"
                 style={{ top: line.y, height: STAGE_ROW }}
               >
-                <h3 className="rounded-full bg-surface px-4 font-serif text-title">{stageLabels[line.stage]}</h3>
+                <h3 className="rounded-full bg-background px-4 font-serif text-title">{stageLabels[line.stage]}</h3>
               </div>
             );
           }
@@ -150,10 +162,9 @@ export function VerticalPath({
             <Fragment key={`r-${item.index}`}>
               {onPawnRow && pawnStop && (
                 <div ref={pawnRef} className="absolute inset-x-0 z-10 px-2" style={{ top: line.y - ROW / 2 - 132 }}>
-                  <button type="button" onClick={onPawn} className="mx-auto block w-full max-w-72 text-left" aria-label={`Następny krok: ${pawnStop.title}. Otwórz czat z Zusikiem`}>
+                  <button type="button" onClick={onPawn} className="mx-auto block w-full max-w-72 text-left" aria-label={`${pawnBubble(pawnStop).lead} ${pawnBubble(pawnStop).text}. Otwórz czat z Zusikiem`}>
                     <SpeechBubble tail="bottom" className="px-4 py-2.5 text-meta">
-                      <span className="font-medium">Następny krok:</span> {pawnStop.title}
-                      {pawnStop.due ? ` · do ${formatLong(pawnStop.due, false)}` : ""}
+                      <span className="font-medium">{pawnBubble(pawnStop).lead}</span> {pawnBubble(pawnStop).text}
                     </SpeechBubble>
                   </button>
                 </div>
@@ -162,7 +173,7 @@ export function VerticalPath({
                 <div className="absolute inset-x-0 grid -translate-y-1/2 grid-cols-[1fr_auto_1fr] items-center" style={{ top: line.y }}>
                   {item.stops.map((stop, k) => (
                     <Fragment key={stop.id}>
-                      {k === 1 && <span className="rounded-full border border-outline bg-surface px-2 text-meta font-medium">i</span>}
+                      {k === 1 && <span className="rounded-full border border-outline bg-background px-2 text-meta font-medium">i</span>}
                       <div className="relative flex justify-center px-1">
                         <StopNode stop={stop} tone={nodeTone(stop, onPawnRow)} selected={selectedId === stop.id} onSelect={() => onSelect(stop)} size={64} />
                         <StopLabel stop={stop} className="absolute inset-x-1 top-full mt-2" />

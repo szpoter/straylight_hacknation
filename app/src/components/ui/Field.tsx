@@ -4,7 +4,7 @@ import { useId, type ComponentProps } from "react";
 import { cn } from "./cn";
 
 const INPUT =
-  "h-12 md:h-14 w-full rounded-sm border border-outline bg-surface px-4 text-body text-on-surface placeholder:text-on-surface-variant focus:border-on-surface focus:outline-none aria-invalid:border-2 aria-invalid:border-on-surface";
+  "h-12 md:h-14 w-full rounded-sm border border-outline bg-background px-4 text-body text-on-surface placeholder:text-on-surface-variant focus:border-on-surface focus:outline-none aria-invalid:border-2 aria-invalid:border-on-surface";
 
 /** Pole formularza z widoczną etykietą, podpowiedzią i błędem przy polu. */
 export function TextField({

@@ -24,7 +24,7 @@ export function Disclosure({
         )}
       >
         <span>{summary}</span>
-        <ChevronDownIcon className="shrink-0 transition-transform duration-200 group-open:rotate-180" />
+        <ChevronDownIcon className="mr-2 shrink-0 transition-transform duration-200 group-open:rotate-180" />
       </summary>
       <div className="pb-3">{children}</div>
     </details>

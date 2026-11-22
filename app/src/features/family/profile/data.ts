@@ -16,14 +16,14 @@ export const ZUS_ACCOUNT: Array<{ title: string; rows: ProfileRow[] }> = [
     title: "Podstawy składek",
     rows: [
       { label: "Średnia z 12 miesięcy", value: "7 894,20 zł brutto", source: "zus", editable: false },
-      { label: "Szacowana podstawa zasiłku", value: "6 812,40 zł · szacunek (minus 13,71%)", source: "zus", editable: false },
+      { label: "Szacowana podstawa zasiłku", value: "6 812,40 zł · szacunek", source: "zus", editable: false },
     ],
   },
   {
     title: "Rodzina i świadczenia",
     rows: [
       { label: "Zgłoszeni do ubezpieczenia zdrowotnego", value: "Brak członków rodziny", source: "zus", editable: false },
-      { label: "e-ZLA", value: "1 zwolnienie z kodem „B” · 12 sierpnia – 30 września 2026", source: "zus", editable: false },
+      { label: "e-ZLA", value: "1 zwolnienie lekarskie w ciąży · 12 sierpnia – 30 września 2026", source: "zus", editable: false },
       { label: "Przyznane świadczenia", value: "Zasiłek chorobowy w ciąży · wypłacony", source: "zus", editable: false },
       { label: "Zadłużenie składkowe", value: "Brak", source: "zus", editable: false },
     ],

@@ -19,11 +19,12 @@ export type CaseState =
   | "wezwanie"
   | "odmowa-w-terminie"
   | "zalatwione"
-  | "nie-korzystam";
+  | "nie-korzystam"
+  | "minelo"; // etap, który rodzic ma za sobą przed założeniem planu (np. ciąża przy urodzonym dziecku)
 
 export type DocGoal = "urlopy" | "swiadczenia" | "rejestracja" | "zdrowie";
 
-export type ValueSource = "zus" | "rejestr" | "rodzic" | "demo" | "zalozenie";
+export type ValueSource = "zus" | "rejestr" | "rodzic" | "demo" | "zalozenie" | "login";
 
 export type HowTo = {
   co: string;
@@ -66,7 +67,14 @@ export type Stop = {
   action: { label: string; href?: string };
   /** „Nic nie musisz robić” — kto to zrobi. */
   whoDoesIt?: string;
-  risk?: { title: string; detail: string; action: string };
+  risk?: { title: string; detail: string; action: string; sources?: Array<{ label: string; url: string }> };
+  /**
+   * Zdania dopisane do sprawy przez budowanie planu (np. długość urlopu przy bliźniętach) —
+   * każde ze źródłem. Bez źródła nie dopisujemy niczego.
+   */
+  notes?: Array<{ text: string; sources: Array<{ label: string; url: string }> }>;
+  /** Sprawa wspólna dla rodzeństwa (urlopy, zasiłek): ten sam stan we wszystkich planach grupy. */
+  sharedGroup?: string;
   /** Wiersz w „Dokumentach i wnioskach”; brak = przystanek bez dokumentu. */
   doc?: {
     goal: DocGoal;
@@ -91,6 +99,21 @@ export type Plan = {
   shortInfo: string;
   /** Data kluczowa pod nazwą w pasku, np. „Urodzona 10 listopada”. */
   keyDateLabel: string;
+  /** Data urodzenia albo planowany termin porodu (ISO); od niej liczą się terminy przystanków. */
+  keyDate?: string;
+  /** Sytuacja z onboardingu — dobiera podpisy dat (termin porodu, urodzenie, przyjęcie). */
+  situation?: "planuje" | "ciaza" | "urodzone" | "adopcja" | "piecza";
+  /**
+   * Rodzeństwo z jednego porodu lub przyjęte razem: osobny plan dla każdego dziecka, wspólne
+   * sprawy rodzica (urlopy, zasiłek) tylko w planie `primaryPlanId`.
+   */
+  family?: { groupId: string; label: string; primaryPlanId: string; primaryName: string; names: string[] };
+  /**
+   * Skąd plan powstał (onboarding): odpowiedzi i dzień budowy. Zapisany plan odbudowujemy z nich
+   * przy każdym wczytaniu, więc poprawki katalogu (nazwy etapów, teksty, źródła) docierają
+   * do planów już dodanych. Postęp rodzica (odhaczenia, wnioski) jest osobno i zostaje.
+   */
+  origin?: { answers: Record<string, unknown>; idBase: string; builtOn: string };
   stage: StageId;
   stages: Record<StageId, { label: string; variant?: string }>;
   stops: Stop[];

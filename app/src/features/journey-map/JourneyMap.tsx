@@ -8,7 +8,7 @@ import { cn } from "@/components/ui/cn";
 import { ChevronDownIcon, ListIcon, MapIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 import { formatShort } from "@/lib/demo/dates";
-import type { StageId, Stop } from "@/lib/demo/types";
+import type { Plan, StageId, Stop } from "@/lib/demo/types";
 import { STAGE_ORDER, nearestStop, openCountInStage } from "@/lib/plan/path";
 import { isResolved, pathStatus } from "@/lib/plan/status";
 import { CheckIcon } from "@/components/ui/icons";
@@ -22,28 +22,51 @@ import { VerticalPath } from "./VerticalPath";
  * „Mój plan”: ścieżka z pionkiem, pod nią karta najbliższej sprawy. Kliknięcie przystanku
  * otwiera jego szczegóły w panelu (z prawej na komputerze, od dołu na telefonie), więc ścieżka
  * i najbliższa sprawa zostają na miejscu.
+ *
+ * Póki panel jest otwarty, ścieżka pokazuje stan z chwili otwarcia: po „Oznacz jako załatwione”
+ * Bąbelek rusza na nowe pole dopiero po zamknięciu panelu, na oczach rodzica.
  */
 export function JourneyMap() {
   const { plan, openZusik } = usePlan();
-  const { pawn, blocks, pawnStop } = useStageRows(plan);
-  const nearest = useMemo(() => nearestStop(plan.stops), [plan.stops]);
-
   const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [frozen, setFrozen] = useState<Plan | null>(null);
+  const shown = frozen && frozen.id === plan.id ? frozen : plan;
+
+  const { pawn, blocks, pawnStop } = useStageRows(shown);
+  const nearest = useMemo(() => nearestStop(plan.stops), [plan.stops]);
+  const pawnStage = pawnStop?.stage ?? plan.stage;
+
   const [listView, setListView] = useState(false);
   // Etap widoczny na ścieżce (licznik „Etap N z 4” podąża za przewijaniem).
-  const [viewStage, setViewStage] = useState<StageId>(plan.stage);
+  const [viewStage, setViewStage] = useState<StageId>(pawnStage);
   const [focusPawn, setFocusPawn] = useState(0);
   const onViewStage = useCallback((stage: StageId) => setViewStage(stage), []);
-  // Etap „Przed narodzinami” zwinięty, gdy rodzic jest już dalej (SPEC, „Etapy i katalog przystanków”).
-  const [collapsed, setCollapsed] = useState<Set<StageId>>(() => new Set(plan.stage === "przed" ? [] : (["przed"] as StageId[])));
-
-  const items = useMemo(() => toItems(blocks, collapsed, isResolved), [blocks, collapsed]);
+  // Etapy przed etapem pionka, w których wszystko jest za rodzicem (np. „Planowanie” i „Ciąża”
+  // przy urodzonym dziecku), startują zwinięte — widać je jako „N spraw · za Tobą”, można rozwinąć.
+  const [collapsed, setCollapsed] = useState<Set<StageId>>(
+    () =>
+      new Set(
+        STAGE_ORDER.slice(0, STAGE_ORDER.indexOf(pawnStage)).filter((st) => {
+          const inStage = plan.stops.filter((s) => s.stage === st);
+          return inStage.length > 0 && inStage.every(isResolved);
+        }),
+      ),
+  );
+  // Etapu z pionkiem nigdy nie zwijamy — inaczej Bąbelek nie miałby gdzie stanąć.
+  const items = useMemo(() => toItems(blocks, new Set([...collapsed].filter((s) => s !== pawnStage)), isResolved), [blocks, collapsed, pawnStage]);
   const selected = plan.stops.find((s) => s.id === selectedId);
 
   const stageLabels = Object.fromEntries(STAGE_ORDER.map((s) => [s, plan.stages[s].label])) as Record<StageId, string>;
   const openCounts = Object.fromEntries(STAGE_ORDER.map((s) => [s, openCountInStage(plan.stops, s)])) as Record<StageId, number>;
 
-  const select = (stop: Stop) => setSelectedId(stop.id);
+  const select = (stop: Stop) => {
+    setFrozen((f) => f ?? plan);
+    setSelectedId(stop.id);
+  };
+  const closeSheet = () => {
+    setSelectedId(undefined);
+    setFrozen(null);
+  };
   const expand = (stage: StageId) => setCollapsed((prev) => new Set([...prev].filter((s) => s !== stage)));
   const onPawn = () => openZusik({ planId: plan.id, place: "Mój plan", stopId: pawnStop?.id, returnTo: "/plan" });
 
@@ -53,16 +76,16 @@ export function JourneyMap() {
         <h2 className="sr-only">Ścieżka planu</h2>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-on-surface-variant" aria-live="polite">
           <span>
-            Etap {STAGE_ORDER.indexOf(listView ? plan.stage : viewStage) + 1} z 4 ·{" "}
-            <span className="text-on-surface">{plan.stages[listView ? plan.stage : viewStage].label}</span>
+            Etap {STAGE_ORDER.indexOf(listView ? pawnStage : viewStage) + 1} z 4 ·{" "}
+            <span className="text-on-surface">{plan.stages[listView ? pawnStage : viewStage].label}</span>
           </span>
-          {!listView && viewStage !== plan.stage && (
+          {!listView && viewStage !== pawnStage && (
             <button
               type="button"
               onClick={() => setFocusPawn((n) => n + 1)}
               className="hidden text-meta underline underline-offset-4 decoration-outline hover:decoration-on-surface md:inline"
             >
-              Teraz jesteś na etapie: {plan.stages[plan.stage].label} · wróć
+              Teraz jesteś na etapie: {plan.stages[pawnStage].label} · wróć
             </button>
           )}
         </p>
@@ -73,7 +96,11 @@ export function JourneyMap() {
       </div>
 
       {listView ? (
-        <StopList stops={plan.stops} stageLabels={stageLabels} pawnStopId={pawnStop?.id} />
+        <>
+          {/* W widoku listy najbliższa sprawa stoi nad listą; na ścieżce — pod nią. */}
+          <NearestPanel stop={nearest} upcoming={pawnStop} onOpen={select} />
+          <StopList stops={plan.stops} stageLabels={stageLabels} pawnStopId={pawnStop?.id} />
+        </>
       ) : (
         <>
           <div className="hidden md:block">
@@ -107,19 +134,46 @@ export function JourneyMap() {
         </>
       )}
 
-      <Panel aria-labelledby="case-card-title">
-        <CaseCard stop={nearest} isNearest headingId="case-card-title" />
-      </Panel>
+      {!listView && <NearestPanel stop={nearest} upcoming={pawnStop} onOpen={select} />}
 
       <BottomSheet
         open={Boolean(selected)}
-        onClose={() => setSelectedId(undefined)}
+        onClose={closeSheet}
         title={selected?.title ?? "Przystanek"}
         eyebrow={selected ? `${plan.stages[selected.stage].label}${selected.id === nearest?.id ? " · najbliższa sprawa" : ""}` : undefined}
       >
-        {selected && <CaseCard stop={selected} isNearest={selected.id === nearest?.id} compact />}
+        {selected && <CaseCard stop={selected} isNearest={selected.id === nearest?.id} compact onLeave={closeSheet} />}
       </BottomSheet>
     </div>
+  );
+}
+
+/**
+ * Karta „Najbliższa sprawa”. Gdy nic nie czeka na rodzica, a pionek stoi na sprawie z warunkiem,
+ * karta mówi, co będzie następne i od czego to zależy — tak jak dymek nad Bąbelkiem.
+ */
+function NearestPanel({ stop, upcoming, onOpen }: { stop?: Stop; upcoming?: Stop; onOpen: (stop: Stop) => void }) {
+  if (!stop && upcoming && !isResolved(upcoming)) {
+    return (
+      <Panel aria-labelledby="case-card-title">
+        <p className="text-meta text-on-surface-variant">Najbliższa sprawa</p>
+        <h2 id="case-card-title" className="mt-1 font-serif text-title">
+          Na dziś masz wszystko załatwione
+        </h2>
+        <p className="mt-3 max-w-prose">
+          Następna sprawa: <span className="font-medium">{upcoming.title}</span>
+          {upcoming.condition ? ` — ${upcoming.condition.charAt(0).toLowerCase()}${upcoming.condition.slice(1)}.` : "."}
+        </p>
+        <Button variant="secondary" className="mt-5" onClick={() => onOpen(upcoming)}>
+          Zobacz, co przygotować
+        </Button>
+      </Panel>
+    );
+  }
+  return (
+    <Panel aria-labelledby="case-card-title">
+      <CaseCard stop={stop} isNearest headingId="case-card-title" />
+    </Panel>
   );
 }
 
@@ -148,7 +202,7 @@ function StopList({ stops, stageLabels, pawnStopId }: { stops: Stop[]; stageLabe
                           {s.due ? ` · do ${formatShort(s.due)}` : s.condition ? ` · ${s.condition}` : ""}
                         </span>
                       </span>
-                      <ChevronDownIcon className="shrink-0 transition-transform duration-200 group-open:rotate-180" />
+                      <ChevronDownIcon className="mr-2 shrink-0 transition-transform duration-200 group-open:rotate-180" />
                     </summary>
                     <div className="pb-6 pt-1 pl-10">
                       <CaseCard stop={s} isNearest={false} compact headingLevel="none" />
@@ -174,5 +228,5 @@ function StatusDot({ stop }: { stop: Stop }) {
     );
   }
   const now = stop.state && stop.state !== "warunek";
-  return <span aria-hidden className={cn("size-6 shrink-0 rounded-full border-2", now ? "border-primary bg-surface" : "border-outline bg-surface")} />;
+  return <span aria-hidden className={cn("size-6 shrink-0 rounded-full border-2", now ? "border-primary bg-background" : "border-outline bg-background")} />;
 }

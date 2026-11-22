@@ -6,7 +6,7 @@
 import type { CalculatorPlan, Plan, ProfileRow, StageId, Stop } from "./types";
 
 const STAGES: Plan["stages"] = {
-  przed: { label: "Przed narodzinami" },
+  przed: { label: "Planowanie" },
   ciaza: { label: "Ciąża" },
   narodziny: { label: "Narodziny" },
   po: { label: "Po narodzinach" },
@@ -30,7 +30,7 @@ const SRC = {
 
 function olaStops(): Stop[] {
   return [
-    // Przed narodzinami
+    // Planowanie (przed ciążą)
     {
       id: "ubezpieczenie",
       stage: "przed",
@@ -53,7 +53,7 @@ function olaStops(): Stop[] {
       forWhom: "Dla Ciebie",
       why: "Szacunek z Twoich podstaw składek w ZUS. Przy umowie o pracę składniki wynagrodzenia poda pracodawca w Z-3.",
       source: SRC.zusAmount,
-      action: { label: "Otwórz kalkulator", href: "#kalkulator" },
+      action: { label: "Jak ZUS liczy zasiłek" },
     },
     // Ciąża
     {
@@ -78,7 +78,7 @@ function olaStops(): Stop[] {
       state: "zalatwione",
       institution: "ZUS",
       forWhom: "Dla Ciebie",
-      why: "Zwolnienie z kodem „B” daje zasiłek 100% przez okres zasiłkowy do 270 dni.",
+      why: "Za niezdolność do pracy w ciąży zasiłek chorobowy wynosi 100% podstawy, najdłużej przez 270 dni.",
       source: SRC.zusDocs,
       action: { label: "Zobacz szczegóły" },
       doc: { goal: "swiadczenia", recipient: "ZUS", result: "Świadczenie wypłacone", lastEvent: "Wypłacono 30 września 2026" },
@@ -107,7 +107,7 @@ function olaStops(): Stop[] {
       forWhom: "Dla Was obojga",
       why: "Wniosek o wypłatę 81,5% za cały okres składa się do 21 dni po porodzie.",
       source: SRC.zusAmount,
-      action: { label: "Otwórz kalkulator", href: "#kalkulator" },
+      action: { label: "Policz podział urlopu", href: "#kalkulator" },
     },
     // Narodziny
     {
@@ -308,7 +308,7 @@ function olaStops(): Stop[] {
       forWhom: "Dla Was obojga",
       why: "41 tygodni dla rodziców, po 9 tygodni zastrzeżone dla każdego z Was.",
       source: SRC.parental,
-      action: { label: "Otwórz kalkulator", href: "#kalkulator" },
+      action: { label: "Policz podział urlopu", href: "#kalkulator" },
       doc: { goal: "urlopy", recipient: "Do pracodawcy", note: "Wniosek do 9 marca 2027" },
     },
     {
@@ -413,8 +413,10 @@ function expectedStops(): Stop[] {
     action: { label: "Zobacz szczegóły" },
     risk: {
       title: "Umowa kończy się przed terminem porodu",
-      detail: "Twoja umowa kończy się 31 marca 2027. Jeśli przedłuży się do porodu, zachowasz prawo do zasiłku.",
-      action: "Sprawdź, co zrobić",
+      detail: "Twoja umowa kończy się 31 marca 2027. Umowa na czas określony, która skończyłaby się po 3. miesiącu ciąży, przedłuża się do dnia porodu (nie dotyczy umowy na zastępstwo).",
+      action: "Sprawdź, co mówią przepisy",
+      // Umowa na czas określony, która skończyłaby się po 3. miesiącu ciąży, przedłuża się do dnia porodu.
+      sources: [{ label: "zielonalinia.gov.pl · Uprawnienia związane z rodzicielstwem", url: "https://zielonalinia.gov.pl/uprawnienia-zwiazane-z-rodzicielstwem/" }],
     },
   };
   const at = base.findIndex((s) => s.id === "e-badania-prenatalne") + 1;
@@ -510,6 +512,7 @@ export const PLANS: Plan[] = [
     kind: "rejestr",
     shortInfo: "11 dni",
     keyDateLabel: "Urodzona 10 listopada",
+    keyDate: "2026-11-10",
     stage: "narodziny",
     stages: birthStages(),
     stops: olaStops(),
@@ -521,6 +524,7 @@ export const PLANS: Plan[] = [
     kind: "planowane",
     shortInfo: "maj 2027",
     keyDateLabel: "Termin 14 maja 2027",
+    keyDate: "2027-05-14",
     stage: "ciaza",
     stages: birthStages(),
     stops: expectedStops(),
@@ -532,6 +536,7 @@ export const PLANS: Plan[] = [
     kind: "test",
     shortInfo: "Alicja T.",
     keyDateLabel: "Urodzone 10 listopada",
+    keyDate: "2026-11-10",
     stage: "narodziny",
     stages: birthStages(),
     stops: testStops(),
@@ -558,11 +563,16 @@ export function getPlan(id: string): Plan {
 
 export const STAGE_IDS: StageId[] = ["przed", "ciaza", "narodziny", "po"];
 
-/** Fikcyjny rodzic z symulacji logowania. */
+/**
+ * Fikcyjny rodzic z symulacji logowania. Imię, ubezpieczenie i jego początek jak w profilu demo
+ * logowania (`features/auth/demo-session.ts`, DEMO_PROFILE) i w SPEC.md „Dane z ZUS · przykład”
+ * — test `tests/profile-consistency.test.ts` pilnuje zgodności. Pracodawca: tylko w tej symulacji.
+ */
 export const PARENT_PROFILE: ProfileRow[] = [
-  { label: "Imię i nazwisko", value: "Anna Nowak", source: "demo", editable: false },
+  { label: "Imię i nazwisko", value: "Anna Przykładowa", source: "login", editable: false },
   { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "zus", editable: false },
-  { label: "Ubezpieczenie chorobowe", value: "Obowiązkowe, od 1 marca 2021", source: "zus", editable: false },
+  { label: "Ubezpieczenie chorobowe", value: "Aktywne", source: "zus", editable: false },
+  { label: "Początek okresu ubezpieczenia", value: "1 marca 2025 r.", source: "zus", editable: false },
   { label: "Pracodawca", value: "Kwiatek sp. z o.o. · do 20 ubezpieczonych", source: "zus", editable: false },
   { label: "Rola w planie", value: "Urodziłam dziecko", source: "rodzic", editable: true, options: ["Urodziłam dziecko", "Jestem drugim rodzicem"] },
   { label: "Zmiana pracy przed porodem", value: "Nie", source: "rodzic", editable: true, options: ["Tak", "Nie", "Nie wiem"] },
@@ -574,4 +584,19 @@ export const SOURCE_LABEL: Record<ProfileRow["source"], string> = {
   rodzic: "Podane przez Ciebie",
   demo: "Profil demonstracyjny",
   zalozenie: "Moje założenie",
+  login: "mObywatel · login.gov.pl",
+};
+
+/**
+ * Katalog przystanków do budowania planu z onboardingu (`lib/plan/build.ts`). Daty w katalogu
+ * są liczone od dat kluczowych przykładu: urodzenie Oli i termin oczekiwanego dziecka.
+ */
+export const CATALOG = {
+  born: olaStops,
+  expected: expectedStops,
+  bornKeyDate: "2026-11-10",
+  expectedKeyDate: "2027-05-14",
+  bornCalculator: OLA_CALC,
+  expectedCalculator: EXPECTED_CALC,
+  stages: (): Plan["stages"] => ({ ...STAGES }),
 };

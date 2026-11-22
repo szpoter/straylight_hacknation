@@ -43,3 +43,21 @@ export function smoothPath(points: Array<[number, number]>, orientation: "horizo
   }
   return d;
 }
+
+/**
+ * Pozioma ścieżka jako jedna łagodna sinusoida: wysokość zależy od położenia x, nie od numeru
+ * przystanku, więc zakręty są równe i nie łamią się przy podwójnych rzędach. Zwraca −1…1.
+ */
+export const WAVE_PERIOD = 360; // px na radian — jeden pełny zakręt to ok. 2260 px
+export function waveAt(x: number): number {
+  return Math.round(Math.sin(x / WAVE_PERIOD + 0.6) * 1000) / 1000;
+}
+
+/** Linia SVG fali od x0 do x1, próbkowana co `step` px (wygląda jak gładka krzywa). */
+export function wavePath(x0: number, x1: number, mid: number, amp: number, step = 12): string {
+  if (x1 <= x0) return "";
+  const pts: string[] = [];
+  for (let x = x0; x < x1; x += step) pts.push(`${Math.round(x)} ${Math.round((mid + waveAt(x) * amp) * 10) / 10}`);
+  pts.push(`${Math.round(x1)} ${Math.round((mid + waveAt(x1) * amp) * 10) / 10}`);
+  return `M ${pts.join(" L ")}`;
+}

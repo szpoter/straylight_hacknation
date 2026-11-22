@@ -1,14 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertIcon, ArrowLeftIcon, Button, ButtonLink, CheckIcon, Page, PageTitle, Panel, SectionTitle, Tag } from "@/components/ui";
 import { usePlan } from "@/features/family/PlanProvider";
-import { daysLeftLabel, formatLong } from "@/lib/demo/dates";
+import { DEMO_TODAY, daysLeftLabel, formatLong } from "@/lib/demo/dates";
+import { formFor, prefillContext, type Channel, type FormDef } from "@/lib/demo/forms";
 import { docStatus } from "@/lib/plan/status";
 import type { DocCase } from "./model";
 import { GROUP_TONE } from "./model";
 import { Timeline } from "./CaseTimeline";
+import { FormEditor } from "./FormEditor";
+import { CheckAnswers, SendStep } from "./FormReview";
+import { canEdit, demoProfile, initialValues, nextState, progress, sendEvents, validate, type Values } from "./flow";
 import { buildTimeline } from "./timeline";
+
+/** Krok sprawy w adresie (`?krok=`), żeby wiersz listy mógł prowadzić prosto do wniosku. */
+export type Step = "wniosek" | "sprawdz" | "przekaz" | "podglad";
+const STEP_TITLE: Record<Step, string> = { wniosek: "Wniosek", sprawdz: "Sprawdź odpowiedzi", przekaz: "Przekaż wniosek", podglad: "Wysłany wniosek" };
+const CORRECTION = "_korekta";
 
 function BackLink() {
   return (
@@ -19,8 +30,27 @@ function BackLink() {
 }
 
 export function CaseDetail({ id }: { id: string }) {
-  const { plan, openZusik } = usePlan();
+  const { plan, openZusik, patchStop, formValues, setFormValues } = usePlan();
   const stop = plan.stops.find((s) => s.id === id);
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const step = (params.get("krok") as Step | null) ?? undefined;
+  const [focusField, setFocusField] = useState<string | undefined>();
+  const [notice, setNotice] = useState<string | undefined>();
+  const def = formFor(id);
+  const saved = formValues(id);
+  const values = useMemo(() => (def ? initialValues(def, prefillContext(plan, demoProfile()), saved) : {}), [def, plan, saved]);
+  const top = useRef<HTMLDivElement>(null);
+
+  const go = (next?: Step, field?: string) => {
+    setFocusField(field);
+    router.replace(next ? `${pathname}?krok=${next}` : pathname, { scroll: false });
+  };
+  useEffect(() => {
+    if (!focusField) top.current?.scrollIntoView({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   if (!stop || !stop.doc || !stop.state) {
     return (
@@ -38,8 +68,101 @@ export function CaseDetail({ id }: { id: string }) {
   const sentOrLater = stages[0].status === "done";
   const zusik = (field?: string) => openZusik({ planId: plan.id, place: "Dokumenty", stopId: c.id, field, returnTo: `/dokumenty/${c.id}` });
 
+  // Kroki wniosku: każdy zapisuje wartości i stan sprawy przez wspólny plan, więc ścieżka
+  // na „Moim planie” i lista dokumentów zmieniają się razem z nim.
+  const saveValues = (next: Values) => setFormValues(c.id, next);
+  const commitDraft = (d: FormDef) => {
+    const valid = Object.keys(validate(d, values)).length === 0;
+    const { done, total } = progress(d, values);
+    // Sprawa „warunek” może być przygotowana wcześniej — stan zmieni się dopiero, gdy warunek zajdzie.
+    const state = c.state === "warunek" ? c.state : nextState(c.state, "save", valid);
+    patchStop(c.id, {
+      state,
+      doc: { hasDraft: true, note: valid ? "Wniosek uzupełniony — sprawdź i zatwierdź" : `Uzupełnione ${done} z ${total} pól`, lastEvent: `Szkic zapisany ${formatLong(DEMO_TODAY)}` },
+    });
+    return valid;
+  };
+  const approve = () => {
+    patchStop(c.id, { state: "zatwierdzony", doc: { note: "Zatwierdzony — gotowy do przekazania", lastEvent: `Zatwierdzony ${formatLong(DEMO_TODAY)}` } });
+    go("przekaz");
+  };
+  const send = (channel: Channel) => {
+    const correction = values[CORRECTION] === "1";
+    patchStop(c.id, {
+      state: nextState("zatwierdzony", "send", true),
+      doc: { events: sendEvents(c.doc.events, channel, c.doc.recipient, DEMO_TODAY, correction), lastEvent: `Wysłano ${formatLong(DEMO_TODAY)}`, note: undefined, hasDraft: false },
+    });
+    saveValues({ ...values, [CORRECTION]: "" });
+    setNotice(correction ? "Korekta wysłana. Potwierdzenie wpływu jest w przebiegu sprawy." : "Wniosek wysłany. Potwierdzenie wpływu jest w przebiegu sprawy.");
+    go();
+  };
+  const startCorrection = () => {
+    saveValues({ ...values, [CORRECTION]: "1" });
+    patchStop(c.id, { state: nextState(c.state, "correct", true), doc: { hasDraft: true, note: "Korekta wysłanego wniosku", lastEvent: `Korekta rozpoczęta ${formatLong(DEMO_TODAY)}` } });
+    go("wniosek");
+  };
+
+  if (def && step && step !== "podglad" && !(step === "wniosek" ? canEdit(c.state) || c.state === "warunek" : step === "sprawdz" ? canEdit(c.state) : c.state === "zatwierdzony")) {
+    // Nieaktualny krok w adresie (np. po wysłaniu) — wracamy do przeglądu.
+    return <StaleStep onBack={() => go()} />;
+  }
+
+  if (def && step) {
+    return (
+      <Page className="pb-section-mobile md:pb-section">
+        <div ref={top} className="scroll-mt-24" />
+        <button type="button" onClick={() => go(step === "przekaz" ? "sprawdz" : undefined)} className="inline-flex items-center gap-2 text-label underline decoration-outline underline-offset-4 hover:decoration-on-surface">
+          <ArrowLeftIcon size={18} /> {step === "przekaz" ? "Wróć do sprawdzania" : "Wróć do sprawy"}
+        </button>
+        <div className="mx-auto mt-stack flex max-w-column flex-col gap-stack">
+          <header className="flex flex-col gap-2">
+            <p className="text-meta text-on-surface-variant">
+              {c.title} · {STEP_TITLE[step]}
+            </p>
+            <PageTitle>{def.name}</PageTitle>
+            <p className="text-meta text-on-surface-variant">{def.fidelity}</p>
+            {values[CORRECTION] === "1" && <p className="rounded-sm bg-tertiary p-3">Korekta: zmień, co trzeba, i wyślij wniosek ponownie. Poprzednia wersja zostaje w przebiegu sprawy.</p>}
+          </header>
+          {step === "wniosek" && (
+            <>
+              {c.doc.hasDraft && (
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-on-surface-variant">
+                  Wolisz krok po kroku?
+                  <button type="button" onClick={() => zusik(c.doc.note)} className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+                    Dokończ z Zusikiem
+                  </button>
+                </p>
+              )}
+              <FormEditor
+                def={def}
+                values={values}
+                onChange={saveValues}
+                focusField={focusField}
+                submitLabel={c.state === "warunek" ? "Zapisz przygotowany wniosek" : "Zapisz i sprawdź"}
+                onSubmit={() => {
+                  commitDraft(def);
+                  go(c.state === "warunek" ? undefined : "sprawdz");
+                  if (c.state === "warunek") setNotice("Wniosek przygotowany. Złożysz go, gdy sprawa stanie się aktualna.");
+                }}
+                onSaveDraft={() => {
+                  commitDraft(def);
+                  setNotice("Szkic zapisany. Wrócisz do niego w każdej chwili.");
+                  go();
+                }}
+              />
+            </>
+          )}
+          {step === "sprawdz" && <CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} />}
+          {step === "przekaz" && <SendStep channels={def.channels} recipient={c.doc.recipient} onSend={send} onBack={() => go()} />}
+          {step === "podglad" && <CheckAnswers def={def} values={values} onBack={() => go()} readOnly />}
+        </div>
+      </Page>
+    );
+  }
+
   return (
     <Page className="pb-section-mobile md:pb-section">
+      <div ref={top} className="scroll-mt-24" />
       <BackLink />
       <header className="mt-stack flex flex-col gap-2">
         <p className="text-meta text-on-surface-variant">{plan.name}</p>
@@ -52,9 +175,15 @@ export function CaseDetail({ id }: { id: string }) {
         </div>
       </header>
 
+      {notice && (
+        <p role="status" className="mt-stack flex max-w-prose items-start gap-2 rounded-lg bg-secondary p-4">
+          <CheckIcon className="mt-0.5 shrink-0" /> {notice}
+        </p>
+      )}
+
       <Panel className="mt-stack max-w-prose" aria-labelledby="teraz">
         <SectionTitle id="teraz">Czy mam teraz coś zrobić?</SectionTitle>
-        <NowCard c={c} onZusik={zusik} />
+        <NowCard c={c} def={def} filled={def ? progress(def, values) : undefined} onZusik={zusik} onStep={(s) => go(s)} onCorrect={startCorrection} />
       </Panel>
 
       {c.howTo && (
@@ -99,7 +228,38 @@ export function CaseDetail({ id }: { id: string }) {
   );
 }
 
-function NowCard({ c, onZusik }: { c: DocCase; onZusik: (field?: string) => void }) {
+function StaleStep({ onBack }: { onBack: () => void }) {
+  return (
+    <Page>
+      <PageTitle className="mt-stack">Ten krok jest już za Tobą</PageTitle>
+      <p className="mt-4 max-w-prose text-on-surface-variant">Stan sprawy się zmienił, np. wniosek został już wysłany.</p>
+      <Button variant="secondary" className="mt-stack" onClick={onBack}>
+        Wróć do sprawy
+      </Button>
+    </Page>
+  );
+}
+
+/** Przyciski kroku: główny i (opcjonalnie) drugorzędny, jednej szerokości. */
+function Actions({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap [&>*]:justify-center">{children}</div>;
+}
+
+function NowCard({
+  c,
+  def,
+  filled,
+  onZusik,
+  onStep,
+  onCorrect,
+}: {
+  c: DocCase;
+  def?: FormDef;
+  filled?: { done: number; total: number };
+  onZusik: (field?: string) => void;
+  onStep: (step: Step) => void;
+  onCorrect: () => void;
+}) {
   const summons = c.doc.summons;
   if (c.state === "wezwanie" && summons) {
     return (
@@ -120,9 +280,14 @@ function NowCard({ c, onZusik }: { c: DocCase; onZusik: (field?: string) => void
             </li>
           ))}
         </ul>
-        <Button className="self-start" onClick={() => onZusik("Uzupełnienie po wezwaniu")}>
-          Uzupełnij z Zusikiem
-        </Button>
+        <Actions>
+          <Button onClick={() => onZusik("Uzupełnienie po wezwaniu")}>Uzupełnij z Zusikiem</Button>
+          {def && (
+            <Button variant="secondary" onClick={() => onStep("wniosek")}>
+              Popraw wniosek samodzielnie
+            </Button>
+          )}
+        </Actions>
       </div>
     );
   }
@@ -143,13 +308,34 @@ function NowCard({ c, onZusik }: { c: DocCase; onZusik: (field?: string) => void
               </span>
             )}
           </p>
-          {c.doc.hasDraft ? (
+          {filled && c.state !== "zatwierdzony" && (
+            <p className="text-meta text-on-surface-variant">
+              Uzupełnione {filled.done} z {filled.total} wymaganych pól. Część danych podstawiliśmy z planu i profilu — sprawdzisz je przed wysłaniem.
+            </p>
+          )}
+          {def ? (
+            <Actions>
+              {c.state === "aktualna" && <Button onClick={() => onStep("wniosek")}>Rozpocznij wniosek</Button>}
+              {c.state === "szkic" && <Button onClick={() => onStep("wniosek")}>Uzupełnij wniosek</Button>}
+              {c.state === "wypelniony" && <Button onClick={() => onStep("sprawdz")}>Sprawdź i zatwierdź</Button>}
+              {c.state === "zatwierdzony" && <Button onClick={() => onStep("przekaz")}>Przekaż</Button>}
+              {(c.state === "wypelniony" || c.state === "zatwierdzony") && (
+                <Button variant="secondary" onClick={() => onStep("wniosek")}>
+                  Edytuj wniosek
+                </Button>
+              )}
+              {c.doc.hasDraft && (c.state === "aktualna" || c.state === "szkic") && (
+                <Button variant="secondary" onClick={() => onZusik(c.doc.note)}>
+                  Dokończ z Zusikiem
+                </Button>
+              )}
+            </Actions>
+          ) : c.doc.hasDraft ? (
             <Button className="self-start" onClick={() => onZusik(c.doc.note)}>
               Dokończ z Zusikiem
             </Button>
           ) : (
-            // TODO(backend): utworzenie szkicu sprawy.
-            <Button className="self-start">{c.state === "aktualna" ? "Rozpocznij" : c.state === "zatwierdzony" ? "Przekaż" : "Sprawdź i zatwierdź"}</Button>
+            <p className="text-on-surface-variant">Tę sprawę załatwiasz poza Zusikiem — szczegóły w „Jak złożyć” poniżej.</p>
           )}
         </div>
       );
@@ -161,15 +347,27 @@ function NowCard({ c, onZusik }: { c: DocCase; onZusik: (field?: string) => void
             <CheckIcon className="mt-0.5 shrink-0 text-primary" />
             {received ? `Wniosek dotarł do odbiorcy (${c.doc.recipient.replace(/^Do /, "")}). Na razie nic nie musisz robić.` : "Wniosek został przekazany. Czekamy na potwierdzenie wpływu, na razie nic nie musisz robić."}
           </p>
-          {received ? (
-            <ButtonLink href="#etap-wplyw" variant="secondary" className="self-start">
-              Zobacz potwierdzenie
-            </ButtonLink>
-          ) : (
-            <ButtonLink href="#przebieg" variant="secondary" className="self-start">
-              Zobacz przebieg sprawy
-            </ButtonLink>
-          )}
+          <Actions>
+            {received ? (
+              <ButtonLink href="#etap-wplyw" variant="secondary">
+                Zobacz potwierdzenie
+              </ButtonLink>
+            ) : (
+              <ButtonLink href="#przebieg" variant="secondary">
+                Zobacz przebieg sprawy
+              </ButtonLink>
+            )}
+            {def && (
+              <Button variant="secondary" onClick={() => onStep("podglad")}>
+                Zobacz wysłany wniosek
+              </Button>
+            )}
+            {def && (
+              <Button variant="quiet" onClick={onCorrect}>
+                Edytuj i wyślij korektę
+              </Button>
+            )}
+          </Actions>
         </div>
       );
     }
@@ -193,6 +391,11 @@ function NowCard({ c, onZusik }: { c: DocCase; onZusik: (field?: string) => void
             </div>
           ) : (
             c.dueBasis && <p className="text-on-surface-variant">Termin: {c.dueBasis}.</p>
+          )}
+          {def && (
+            <Button variant="secondary" className="self-start" onClick={() => onStep("wniosek")}>
+              {c.doc.hasDraft ? "Wróć do przygotowanego wniosku" : "Przygotuj wniosek wcześniej"}
+            </Button>
           )}
         </div>
       );

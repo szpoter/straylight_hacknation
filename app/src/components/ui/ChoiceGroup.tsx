@@ -38,9 +38,9 @@ export function ChoiceGroup({
             <label
               key={choice.value}
               className={cn(
-                "relative flex min-h-16 cursor-pointer items-center gap-3 rounded-lg border bg-surface px-5 py-4 transition-colors duration-150",
+                "relative flex min-h-16 cursor-pointer items-center gap-3 rounded-lg border bg-background px-5 py-4 transition-colors duration-150",
                 "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-on-surface",
-                checked ? "border-2 border-primary bg-background" : "border-outline hover:border-on-surface-variant",
+                checked ? "border-2 border-primary bg-surface" : "border-outline hover:border-on-surface-variant",
               )}
             >
               <input
@@ -55,7 +55,7 @@ export function ChoiceGroup({
                 aria-hidden
                 className={cn(
                   "flex size-6 shrink-0 items-center justify-center rounded-full border",
-                  checked ? "border-primary bg-primary text-on-primary" : "border-outline bg-surface",
+                  checked ? "border-primary bg-primary text-on-primary" : "border-outline bg-background",
                 )}
               >
                 {checked && <CheckIcon size={16} strokeWidth={2.5} />}
