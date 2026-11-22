@@ -89,8 +89,23 @@ export function CheckAnswers({
   );
 }
 
-/** „Przekaż”: wybór kanału i symulowana wysyłka. */
-export function SendStep({ channels, recipient, onSend, onBack }: { channels: Channel[]; recipient: string; onSend: (channel: Channel) => void; onBack: () => void }) {
+/**
+ * „Przekaż”: wybór kanału i symulowana wysyłka. Przy „E-mailem jako PDF” pokazujemy plik
+ * do pobrania (`pdf`), bo ten kanał rodzic obsługuje sam.
+ */
+export function SendStep({
+  channels,
+  recipient,
+  pdf,
+  onSend,
+  onBack,
+}: {
+  channels: Channel[];
+  recipient: string;
+  pdf?: React.ReactNode;
+  onSend: (channel: Channel) => void;
+  onBack: () => void;
+}) {
   const [channel, setChannel] = useState<Channel>(channels[0]);
   return (
     <div className="flex flex-col gap-stack">
@@ -101,6 +116,15 @@ export function SendStep({ channels, recipient, onSend, onBack }: { channels: Ch
         onChange={(v) => setChannel(v as Channel)}
         columns={2}
       />
+      {channel === "email" && pdf && (
+        <section aria-labelledby="plik-pdf" className="flex max-w-prose flex-col gap-3 rounded-sm border border-outline p-4">
+          <h3 id="plik-pdf" className="font-medium">
+            Wniosek jako PDF
+          </h3>
+          <p className="text-on-surface-variant">Pobierz plik z Twoimi danymi i wyślij go sam(a), np. do kadr. Potem kliknij „Przekaż wniosek”, żeby zapisać wysyłkę w przebiegu sprawy.</p>
+          {pdf}
+        </section>
+      )}
       <p className="max-w-prose rounded-sm bg-surface p-4 text-on-surface-variant">
         To wersja demonstracyjna: wysyłka jest symulacją. Wniosek nie trafi do urzędu ani pracodawcy — w przebiegu sprawy zobaczysz, jak wyglądałoby potwierdzenie.
       </p>
