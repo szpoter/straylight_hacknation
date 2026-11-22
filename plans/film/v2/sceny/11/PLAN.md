@@ -1,0 +1,7 @@
+# 11 · Ich numerek
+
+Po zbliżeniu na druki wracamy do pełnych sylwetek z końca ujęcia 09. Marta i wózek są po lewej, Paweł z teczką po prawej, nad blatem w głębi świeci numer. Postacie i kierunek wejścia do okienka odpowiadają [planszy poczekalni](../../../referencje/kolejka-zus-v1.png) oraz [scenariuszowi 20–22 s](../../../../../PLAN-FILMU-DEMO.md).
+
+1. W czasie ostatniego zdania Pawła zmienia się numer przy okienku. Oczy rodziców reagują na początek dźwięku, brody podnoszą się chwilę później. Tak jak krótki atak tonu w [recepcie Earshot](https://github.com/Leonxlnx/earshot/blob/7a7f7c5c70d4a763a1eca4b3666af7c77e313f97/earshot/forge/recipes/notify.py), zmiana na tablicy ma jeden wyraźny początek. Korzystamy z [nagranego sygnału](../../../montaz/assets/numerek.wav).
+2. Skrajny druk ześlizguje się lewym rogiem z teczki. Marta pochyla bark, wyciąga prawą rękę i zaciska palce. Wstrzymuje opadanie kartki, po czym unosi ją do dłoni Pawła. Odstęp pomiędzy sylwetkami zostawia miejsce na papier. Wychylenie ciała za ruchem ręki pochodzi z [póz Stickman](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/approved-2026-10-23-motion-sheet.png), dostępnych także na [lokalnym arkuszu](../../przyklady/fazy-ruchu.png).
+3. Podczas przekazania Marta przytrzymuje jeden róg, dopóki Paweł nie zaciśnie palców na przeciwległym brzegu. Wsuwa rękę z powrotem na rączkę. Rodzice podchodzą do stanowiska, koła ruszają z nimi. Kolejne cięcie zastaje druk w ręku Pawła po stronie pracownicy.

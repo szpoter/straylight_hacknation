@@ -1,0 +1,6 @@
+# 10 · Trzy podkreślenia
+
+1. Cięcie ze spojrzenia Pawła na detal jego rąk nad otwartą teczką. Zachować położenie obu wydruków ze [sceny 09](../09/SPEC.md), piaskową okładkę ze zdjęciem i granatowy rękaw z [planszy kolejki](../../../referencje/kolejka-zus-v1.png).
+2. Palec przesuwa ku prawej odwrócony druk o urlopie. Nad brzegiem okładki pojawia się zakreślony „Okres”. Palec odrywa się, przeskakuje na lewy arkusz i wyciąga go w lewo i do góry. Widać zaznaczenie przy słowie „Podstawa”. Oddzielenie sięgnięcia od kontaktu wzorujemy na ręce Mei poruszającej filiżankę. [Ruch `reach` w Stickman](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/examples/b5-mei-event-relay/stage.cjs#L26)
+3. Skrajne kartki tworzą dwa osobne brzegi. Między nimi palec wyciąga potwierdzenie z podkreśloną datą. Każdy arkusz zachowuje swój kontur i rzuca cienki cień na kolejny, podobnie jak osobne kartki na [lokalnej klatce Shotcraft](../../przyklady/stos-kart.jpg). [Oryginalny kadr Card Stack](https://github.com/Vincentwei1021/video-shotcraft/blob/59f3e9b9e936ff2bce0e18446226d770a3f2f61f/gallery/media/poster/card-stack.jpg)
+4. Przytrzymać wachlarz na urwanej kwestii. Lewy arkusz zaczyna opadać w stronę Marty. W szerszym ujęciu 11 może go złapać. [Scenariusz, 18–22 s](../../../../../PLAN-FILMU-DEMO.md)
