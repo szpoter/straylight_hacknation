@@ -5,6 +5,8 @@ import { usePlan } from "@/features/family/PlanProvider";
 import { Button, TextButton } from "@/components/ui/AppButton";
 import { Page, PageTitle } from "@/components/ui/Page";
 import { computeForm, formFromPlan, otherVariant, type CalcForm } from "@/lib/plan/benefit-form";
+import type { RuleSchedule } from "@/lib/rules/parameters";
+import { Payer } from "./Payer";
 import { CasePdf } from "./CasePdf";
 import { BENEFIT_PRESETS } from "@/lib/plan/benefit-presets";
 import { pln } from "./ui";
@@ -17,7 +19,7 @@ import { Deadlines, HowCalculated, MonthlyTable, Periods, Problems, Summary, Tim
  * urodzenie / adopcja / rodzina zastępcza, oboje rodzice, łączenie z pracą, „Za życiem”,
  * wcześniak, indywidualna podstawa.
  */
-export function BenefitCalculator() {
+export function BenefitCalculator({ schedule }: { schedule: RuleSchedule }) {
   const family = usePlan();
   const [draft, setDraft] = useState<CalcForm | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -69,6 +71,8 @@ export function BenefitCalculator() {
         <div className="flex min-w-0 flex-col gap-6 md:gap-8">
           <SituationSection form={form} update={update} problems={problems} />
           <BasisSection form={form} update={update} problems={problems} basisA={result?.basis.A ?? null} basisB={result?.basis.B ?? null} />
+          <Payer key={`A-${form.date}-${form.A.title}`} parent="Pierwszy rodzic" date={form.date} title={form.A.title} schedule={schedule} />
+          {form.hasB && <Payer key={`B-${form.date}-${form.B.title}`} parent="Drugi rodzic" date={form.date} title={form.B.title} schedule={schedule} />}
           <SplitSection form={form} update={update} />
         </div>
 
