@@ -88,6 +88,18 @@ it("preserves all children in a multiple birth and replaces stale conditional id
   for (const key of ["full_leave_intent", "bank_account", "father_pesel", "mother_pesel", "certificate_check"] as const) expect(slotText(pages, key)).toBe("");
 });
 
+it.each(["Tak", "Nie"])("full-leave intent %s changes page 2 while page 5 keeps only applicable entries", async (choice) => {
+  useTemplate();
+  const original = await pdfText(template);
+  const filled = await pdfText(await renderFormPdf(zam, { ...values, caly_okres: choice }, options, fonts));
+  expect(slotText(filled, "maternity_check")).toBe("X");
+  expect(slotText(filled, "full_leave_intent")).toBe(choice === "Tak" ? "X" : "");
+  // Above the second parent's details (y=413) are hospital discharge, paternity and parental/supplementary requests.
+  expect(filled[4].filter(item => item.y > 413)).toEqual(original[4].filter(item => item.y > 413));
+  expect(slotText(filled, "mother_last_name")).toBe("LIS");
+  expect(slotText(filled, "sign_date")).toBe("22112026");
+});
+
 it("checks the 21-day deadline with weekends and holidays, periods and sibling data", () => {
   expect(averagedDeadline("2026-12-03")).toBe("2026-12-28");
   expect(averagedDeadline("2026-03-16")).toBe("2026-04-07");
