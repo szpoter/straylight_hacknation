@@ -11,6 +11,7 @@ import { daysLeftLabel, formatLong } from "@/lib/demo/dates";
 import { STOP_DETAILS } from "@/lib/demo/stop-details";
 import type { Stop } from "@/lib/demo/types";
 import { isResolved, pathStatus } from "@/lib/plan/status";
+import { rowAction, type DocCase } from "@/features/documents/model";
 import { KIND_LABEL } from "./shared";
 
 /** Blok „Jak złożyć”: Co / Do kogo / Do kiedy / Załączniki. */
@@ -94,7 +95,9 @@ export function CaseCard({
   const actionVariant = isResolved(stop) ? "secondary" : "primary";
   const action = () => {
     const { label, href } = stop.action;
-    if (label.startsWith("Dokończ z Zusikiem") || stop.state === "wezwanie") {
+    // Szkic zaczęty z Zusikiem i wezwanie: rozmowa przy tej sprawie (SPEC „Dokończ z Zusikiem”).
+    // Decyduje stan sprawy, nie etykieta — etykiety z przykładu Oli nie pasują do nowych planów.
+    if (stop.state === "wezwanie" || (stop.state === "szkic" && stop.doc?.hasDraft)) {
       return (
         <Button variant={actionVariant} onClick={() => {
           onLeave?.();
@@ -102,6 +105,19 @@ export function CaseCard({
         }}>
           {stop.state === "wezwanie" ? "Zapytaj o wezwanie" : "Zapytaj o ten wniosek"}
         </Button>
+      );
+    }
+    // Sprawa z wnioskiem: działanie wynika ze stanu, tak samo jak w wierszu Dokumentów
+    // („Rozpocznij”, „Uzupełnij wniosek”, „Zobacz przebieg”…). Przy warunku, który nie zaszedł,
+    // „Zobacz, co przygotować” prowadzi do sprawy, gdzie jest warunek i lista rzeczy do przygotowania.
+    // Wyjątek: kotwica na tej stronie przy sprawie na później (np. „Policz podział urlopu”).
+    const anchor = href?.startsWith("#") && (!official || !stop.doc || stop.state === "warunek");
+    if (official && stop.doc && stop.state && !anchor) {
+      const a = rowAction(stop as DocCase);
+      return (
+        <ButtonLink variant={actionVariant} href={`/dokumenty/${stop.id}${a.step ? `?krok=${a.step}` : ""}`}>
+          {a.label}
+        </ButtonLink>
       );
     }
     if (href?.startsWith("#")) {

@@ -128,7 +128,10 @@ const CHILDREN_GEN = ["", "jednego dziecka", "dwojga dzieci", "trojga dzieci", "
 /** Świeży stan przystanku: bez postępu z przykładu Oli. Etap, który rodzic ma za sobą → „Za Tobą”. */
 function fresh(stop: Stop, expected: boolean, past: boolean): Stop {
   const isInfo = stop.kind === "informacja" || stop.kind === "program-zdrowotny";
-  const doc = stop.doc && { goal: stop.doc.goal, recipient: stop.doc.recipient, note: stop.condition ?? stop.doc.note, optional: stop.doc.optional };
+  // Notatka szkicu z przykładu („Brakuje numeru PESEL Oli”) nie dotyczy nowego planu — bez szkicu jej nie ma.
+  // Przycisk sprawy wynika ze stanu (CaseCard → rowAction), więc etykieta `action` z przykładu nie przecieka.
+  const note = stop.condition ?? (stop.doc?.hasDraft ? undefined : stop.doc?.note);
+  const doc = stop.doc && { goal: stop.doc.goal, recipient: stop.doc.recipient, note, optional: stop.doc.optional };
   if (past) return { ...stop, state: "minelo", checked: undefined, due: undefined, doc, risk: undefined };
   if (isInfo) return { ...stop, state: undefined, checked: false, doc };
   if (stop.kind === "dzieje-sie-samo") return { ...stop, state: undefined, checked: undefined, doc };
