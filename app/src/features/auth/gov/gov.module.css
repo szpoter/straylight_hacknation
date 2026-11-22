@@ -23,6 +23,11 @@
   font-family: var(--font-gov), "Open Sans", Arial, sans-serif;
 }
 
+/* globals.css (warstwa base) daje h1–h3 szeryfowy krój strony; tu nagłówki zostają w Open Sans */
+.page :where(h1, h2, h3) {
+  font-family: inherit;
+}
+
 .layout {
   display: grid;
   flex: 1;
