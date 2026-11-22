@@ -82,17 +82,18 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
   });
   it("explains the saved calculator inputs, separates the legal deadline and preserves missing rates", async () => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-10", days: 3,
-      firstDaily: 123.45, secondDaily: null, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
-    const w = world({ readMarta: async session => ({ view: session === "calculator" ? view : null }) });
+      firstDaily: 123.45, secondDaily: null, firstName: "Marta Lis", secondName: "Paweł Lis", childName: "Ola Lis" }).view;
+    const foreign = view && { ...view, firstName: "Anna", childName: "Iga" };
+    const w = world({ readMarta: async session => ({ view: session === "calculator" ? view : foreign }) });
     const result = await w.ask().ask("calculator", "Skąd są te dane?", "req-case-context");
     const message = result.turn?.message.replace(/\s/g, " ");
-    expect(message).toContain("Anna — 3 dni × 123,45 zł dziennie = 370,35 zł brutto");
-    expect(message).toContain("Jan — brakuje stawki");
+    expect(message).toContain("Marta Lis — 3 dni × 123,45 zł dziennie = 370,35 zł brutto");
+    expect(message).toContain("Paweł Lis — brakuje stawki");
     expect(message).toContain("2027-02-10");
     expect(result.turn?.citations.map(c => c.fragmentId)).toEqual(["kp-art182-1d-par1"]);
     expect(result.turn?.claims.map(c => c.text).join(" ")).not.toMatch(/123|370|brutto/u);
     const fresh = await w.ask().ask("fresh", "Skąd te kwoty?", "req-case-context");
-    expect(fresh.turn?.message).toMatch(/przykładowe dane rodziny/u);
+    expect(fresh.turn?.message).toMatch(/profilu rodziny Oli/u);
     expect(fresh.turn?.message).not.toContain("Anna");
     expect(w.calls).toEqual({ sherlock: 0, qdrant: 0 });
   });
@@ -113,7 +114,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
 
   it("explains a calculator total requested explicitly after a legal answer, including a zero rate", async () => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-01-11", days: 4,
-      firstDaily: 0, secondDaily: 51.25, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
+      firstDaily: 0, secondDaily: 51.25, firstName: "Marta Lis", secondName: "Paweł Lis", childName: "Ola Lis" }).view;
     const w = world({ readMarta: async () => ({ view }) });
     await w.ask().ask("m", Q_ODPIS, "req-law");
     const { turn } = await w.ask().ask("m", "Skąd są te kwoty?", "req-total");
@@ -128,7 +129,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     ["Pokaż źródła z poprzedniej odpowiedzi", 1, "previous"],
   ] as const)("resolves %s with a checkpoint offset of %d ms to %s", async (question, offset, expected) => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-01", days: 2,
-      firstDaily: 101, secondDaily: 99, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
+      firstDaily: 101, secondDaily: 99, firstName: "Marta Lis", secondName: "Paweł Lis", childName: "Ola Lis" }).view;
     const snapshot = { view, savedAt: "" };
     const w = world({ readMarta: async () => snapshot });
     const law = await w.ask().ask("m", Q_ODPIS, "req-law");
