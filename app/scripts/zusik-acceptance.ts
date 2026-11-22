@@ -360,14 +360,20 @@ async function testLoginToChat(page: Page) {
   await chat.getByRole("button", {name: "Zwiń czat"}).click();
 
   await page.getByRole("link", {name: "Zobacz wsparcie"}).click();
+  await page.waitForURL("**/wsparcie");
   await open.click();
   await chat.getByText("Ola · Wsparcie", {exact: true}).waitFor();
   await chat.getByRole("button", {name: "Zwiń czat"}).click();
-  await page.locator('a[href="/profil"]:visible').first().click();
+  const profileTab = page.locator('a[href="/profil"]:visible').first();
+  await profileTab.click();
+  await page.waitForURL("**/profil");
+  await page.locator('nav a[href="/profil"][aria-current="page"]:visible').waitFor();
   await open.click();
   await chat.getByText("Ola · Profil", {exact: true}).waitFor();
   await chat.getByRole("button", {name: "Zwiń czat"}).click();
   await page.locator('a[href="/dokumenty"]:visible').first().click();
+  await page.waitForURL("**/dokumenty");
+  await page.locator('nav a[href="/dokumenty"][aria-current="page"]:visible').waitFor();
   await open.click();
   await chat.getByText("Ola · Dokumenty", {exact: true}).waitFor();
   await chat.getByRole("button", {name: "Zwiń czat"}).click();

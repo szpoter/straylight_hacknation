@@ -81,7 +81,7 @@ type PlanContextValue = {
   closeZusik: () => void;
 };
 
-export type ZusikContext = { planId: string; place: string; stopId?: string; field?: string; returnTo?: string; collapsed?: boolean };
+export type ZusikContext = { planId: string; place: string; stopId?: string; field?: string; returnTo?: string; followsPage?: boolean; collapsed?: boolean };
 
 const PlanContext = createContext<PlanContextValue | null>(null);
 
