@@ -157,7 +157,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       <div className={s.caseLayout}>
         {!fullscreen && documents && <aside className={s.caseDocuments} aria-label="Dokumenty sprawy">{documents}</aside>}
         <section className={`${s.chat} ${s.caseWindow}`} aria-label="Czat z Zusikiem">
-          <ChatHeader scenario={scenario} label={label} fullscreen={controls?.fullscreen ?? fullscreen} onCollapse={controls?.onCollapse}
+          <ChatHeader label={label} fullscreen={controls?.fullscreen ?? fullscreen} onCollapse={controls?.onCollapse}
             onFullscreen={controls?.onFullscreen ?? (documents ? () => setFullscreen(value => !value) : undefined)} />
           <div ref={thread} className={s.thread} onScroll={event => {
             const viewport = event.currentTarget;

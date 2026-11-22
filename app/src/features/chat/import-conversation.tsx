@@ -316,7 +316,7 @@ export function ImportConversation() {
   return <main className={s.root} data-zusik-workspace style={phone && viewport ? { height: viewport.height } : undefined}
     onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (!busy && f) pick(f); }}>
     <section className={s.chat + " " + s.caseWindow} aria-label="Czat z Zusikiem">
-      <ChatHeader label="Rozmowa ogólna" scenario="ogolna" />
+      <ChatHeader label="Rozmowa ogólna" />
       <details className={s.caseHistory}><summary>Historia rozmów</summary>
         <a href="?nowa=1">Nowa rozmowa</a>
         {history.map(c => <a key={c.id} href={"?sprawa=" + encodeURIComponent(c.id)}>Sprawa z {new Date(c.createdAt).toLocaleString("pl-PL")} · {c.id.slice(-6)}</a>)}

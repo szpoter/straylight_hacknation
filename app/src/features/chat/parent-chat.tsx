@@ -31,7 +31,19 @@ export function ParentChat({ children, panel: familyPanel, topLauncher = false }
   };
   const viewport = useVisualViewport();
   const phone = usePhone();
-  const panelHeight = viewport ? Math.round(viewport.height * (mode === "full" ? 1 : 0.7)) : 0;
+  // Telefon: czat zajmuje całą widoczną wysokość (nad klawiaturą, gdy jest otwarta) — duże,
+  // łatwe w obsłudze okno zamiast paska na 70% ekranu, który z klawiaturą kurczył się do kilku linii.
+  const panelHeight = viewport ? Math.round(viewport.height) : 0;
+  const modal = full || phone;
+
+  // Telefon: strona pod czatem nie przewija się razem z rozmową.
+  useEffect(() => {
+    if (!phone || !expanded) return;
+    const html = document.documentElement;
+    const previous = html.style.overflow;
+    html.style.overflow = "hidden";
+    return () => { html.style.overflow = previous; };
+  }, [phone, expanded]);
 
   useEffect(() => {
     const panel = dialog.current;
@@ -45,10 +57,11 @@ export function ParentChat({ children, panel: familyPanel, topLauncher = false }
       return;
     }
     if (panel.open) panel.close();
-    if (full) panel.showModal();
+    if (modal) panel.showModal();
     else panel.show();
-    panel.querySelector("textarea")?.focus({preventScroll: true});
-  }, [expanded, full, familyPanel?.family?.planId, familyPanel?.family?.stopId]);
+    // Na telefonie nie otwieramy od razu klawiatury — zasłoniłaby połowę rozmowy.
+    if (!phone) panel.querySelector("textarea")?.focus({preventScroll: true});
+  }, [expanded, modal, phone, familyPanel?.family?.planId, familyPanel?.family?.stopId]);
 
   return (
     <div className={styles.layout} data-split={expanded && !full || undefined}
@@ -60,7 +73,7 @@ export function ParentChat({ children, panel: familyPanel, topLauncher = false }
         aria-label="Otwórz czat z Zusikiem" aria-controls={id} aria-expanded={expanded} onClick={() => setMode("split")}>
         <span aria-hidden="true"><Babelek state="available" /></span>Zapytaj Zusika
       </button>}
-      <dialog ref={dialog} id={id} className={styles.panel} aria-label="Rozmowa z Zusikiem" data-full={full || undefined}
+      <dialog ref={dialog} id={id} className={styles.panel} aria-label="Rozmowa z Zusikiem" data-full={full || undefined} data-phone={phone || undefined}
         style={phone && viewport ? {height: panelHeight, top: viewport.top + viewport.height - panelHeight, bottom: "auto"} : undefined}
         onCancel={event => { event.preventDefault(); close(); }}
         onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); close(); } }}>

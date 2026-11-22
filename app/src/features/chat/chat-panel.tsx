@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ScenarioMenu } from "./scenario-nav";
-import type { CaseName } from "@/lib/zusik/conversation";
 import { CASE_LABEL } from "./case-data";
 import { CaseSteps, type CaseStepsProps } from "./case-steps";
 import { TurnView } from "./turn-view";
@@ -33,15 +31,14 @@ type Props = {
 export function ChatPanel(props: Props) {
   return (
     <section className={s.chat} aria-label="Czat z Zusikiem">
-      <ChatHeader label={CASE_LABEL} scenario="marta" fullscreen={props.fullscreen} onFullscreen={props.onFullscreen} onCollapse={props.onCollapse} />
+      <ChatHeader label={CASE_LABEL} fullscreen={props.fullscreen} onFullscreen={props.onFullscreen} onCollapse={props.onCollapse} />
       <Thread {...props} />
     </section>
   );
 }
 
-export function ChatHeader({ label, scenario, fullscreen, onFullscreen, onCollapse }: {
+export function ChatHeader({ label, fullscreen, onFullscreen, onCollapse }: {
   label: string;
-  scenario: CaseName;
   fullscreen?: boolean;
   onFullscreen?: () => void;
   onCollapse?: () => void;
@@ -52,12 +49,13 @@ export function ChatHeader({ label, scenario, fullscreen, onFullscreen, onCollap
         <p className={s.chatName}>Zusik · asystent AI</p>
         <p className={s.chatCase}>{label}</p>
       </div>
-      <ScenarioMenu current={scenario} label="Zmień sprawę" />
-      {onFullscreen && <button type="button" className={s.iconButton} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
+      {/* Na telefonie czat i tak zajmuje cały ekran, więc przełącznik pełnego ekranu znika. */}
+      {onFullscreen && <button type="button" className={`${s.iconButton} ${s.fullscreenToggle}`} aria-label={fullscreen ? "Podziel ekran" : "Pełny ekran"} onClick={onFullscreen}>
         {fullscreen ? <SplitIcon /> : <ExpandIcon />}
       </button>}
-      {onCollapse && <button type="button" className={s.iconButton} aria-label="Zwiń czat" onClick={onCollapse}>
-        <MinusIcon />
+      {onCollapse && <button type="button" className={`${s.iconButton} ${s.closeButton}`} aria-label="Zamknij czat" onClick={onCollapse}>
+        <span className={s.desktopOnly}><MinusIcon /></span>
+        <span className={s.phoneOnly}><CloseIcon /></span>
       </button>}
     </header>
   );
@@ -199,6 +197,13 @@ function SplitIcon() {
     <svg {...iconProps}>
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <path d="M12 4v16" />
+    </svg>
+  );
+}
+function CloseIcon() {
+  return (
+    <svg {...iconProps} width={24} height={24}>
+      <path d="M6 6l12 12M18 6L6 18" />
     </svg>
   );
 }

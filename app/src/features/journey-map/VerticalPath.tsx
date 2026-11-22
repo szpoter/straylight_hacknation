@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { SpeechBubble } from "@/components/mascot/Zusik";
 import { cn } from "@/components/ui/cn";
 import { ArrowUpIcon, ListIcon } from "@/components/ui/icons";
@@ -59,7 +59,7 @@ type Line = { kind: "stage"; stage: StageId; y: number } | { kind: "item"; item:
  * pływający „↑ Teraz”, gdy pionek zniknie z ekranu.
  */
 export function VerticalPath({
-  items,
+  items: rawItems,
   pawnIndex,
   pawnStop,
   stageLabels,
@@ -81,6 +81,21 @@ export function VerticalPath({
   onPawn: () => void;
   onList: () => void;
 }) {
+  // Na wąskim ekranie para przystanków równoległych (np. dwa terminy tego samego dnia) stała
+  // obok siebie na 25% i 75% szerokości, czyli poza linią. Rozkładamy ją na kolejne pola tej
+  // samej fali, w stałej kolejności alfabetycznej. Oba pola dzielą numer rzędu (`index`).
+  const items = useMemo(
+    () =>
+      rawItems.flatMap((item): PathItem[] =>
+        item.type === "row" && item.stops.length > 1
+          ? [...item.stops].sort((a, b) => a.title.localeCompare(b.title, "pl")).map((stop) => ({ ...item, stops: [stop] }))
+          : [item],
+      ),
+    [rawItems],
+  );
+  // Pionek stoi na konkretnym polu: w rozłożonej parze tylko na tym z przystankiem pionka.
+  const isPawnItem = (item: PathItem) =>
+    item.type === "row" && item.index === pawnIndex && (!pawnStop || item.stops.some((s) => s.id === pawnStop.id));
   const pawnRef = useRef<HTMLDivElement>(null);
   const stageRefs = useRef<Partial<Record<StageId, HTMLDivElement | null>>>({});
   const [pawnVisible, setPawnVisible] = useState(true);
@@ -100,9 +115,9 @@ export function VerticalPath({
       prevBottom = top + STAGE_ROW;
       lastStage = item.stage;
     }
-    const { above, below } = extent(item, item.type === "row" && item.index === pawnIndex);
+    const { above, below } = extent(item, isPawnItem(item));
     // Rząd pionka: dodatkowe 140 px na dymek i lewitującego Bąbelka (jak dotąd).
-    const extra = item.type === "row" && item.index === pawnIndex ? 140 : 0;
+    const extra = isPawnItem(item) ? 140 : 0;
     const center = Math.max(prevCenter + ROW + extra, prevBottom + GAP + above);
     lines.push({ kind: "item", item, i, y: center, x: xAt(center) });
     prevCenter = center;
@@ -111,7 +126,7 @@ export function VerticalPath({
   const height = Math.max(prevCenter + ROW / 2, prevBottom) + 16;
 
   // Pozycja Bąbelka-pionka: nad podestem pionka (w parze: lewa ≈ 25%, prawa ≈ 75% szerokości).
-  const pawnLine = lines.find((l): l is Extract<Line, { kind: "item" }> => l.kind === "item" && l.item.type === "row" && l.item.index === pawnIndex);
+  const pawnLine = lines.find((l): l is Extract<Line, { kind: "item" }> => l.kind === "item" && isPawnItem(l.item));
   const pawnPair = pawnLine?.item.type === "row" && pawnLine.item.stops.length === 2;
   const pawnX = !pawnLine ? 50 : pawnPair && pawnLine.item.type === "row" ? (pawnLine.item.stops[1].id === pawnStop?.id ? 75 : 25) : pawnLine.x;
   const pedestal = pedestalGeometry(64).height;
@@ -163,7 +178,7 @@ export function VerticalPath({
             </span>
             {open > 0 ? ` · ${open} ${open === 1 ? "sprawa" : open < 5 ? "sprawy" : "spraw"} do zrobienia` : ""}
           </p>
-          <button type="button" onClick={onList} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-background px-4 text-meta font-medium">
+          <button type="button" onClick={onList} data-tour="path-view" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-background px-4 text-meta font-medium">
             <ListIcon size={16} /> Lista
           </button>
         </div>
@@ -200,8 +215,8 @@ export function VerticalPath({
           const onPawnRow = item.index === pawnIndex;
           const pair = item.stops.length === 2;
           return (
-            <Fragment key={`r-${item.index}`}>
-              {onPawnRow && pawnStop && (
+            <Fragment key={`r-${item.stops[0].id}`}>
+              {isPawnItem(item) && pawnStop && (
                 <div ref={pawnRef} className="absolute inset-x-0 z-10 px-2" style={{ top: line.y - ROW / 2 - 132 }}>
                   <button type="button" onClick={onPawn} className="mx-auto block w-full max-w-72 text-left" aria-label={`${pawnBubble(pawnStop).lead} ${pawnBubble(pawnStop).text}. Otwórz czat z Zusikiem`}>
                     <SpeechBubble tail="bottom" className="px-4 py-2.5 text-meta">

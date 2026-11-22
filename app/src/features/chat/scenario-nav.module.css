@@ -95,3 +95,26 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* Telefon: jeden przewijany rząd podpowiedzi zamiast trzech wysokich kafli. */
+@media (max-width: 767px) {
+  .shortcuts {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding-block: 2px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .shortcuts::-webkit-scrollbar { display: none; }
+  .shortcuts button {
+    flex: none;
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 9999px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    scroll-snap-align: start;
+  }
+}

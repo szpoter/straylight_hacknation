@@ -89,10 +89,14 @@ export function JourneyMap() {
             </button>
           )}
         </p>
-        <Button variant="secondary" size="sm" className={cn(!listView && "hidden md:inline-flex")} onClick={() => setListView((v) => !v)} aria-pressed={listView} data-tour="path-view">
-          {listView ? <MapIcon size={18} /> : <ListIcon size={18} />}
-          {listView ? "Ścieżka" : "Lista"}
-        </Button>
+        {/* Na telefonie „Lista” jest w zielonym pasku etapu; tu zostaje tylko powrót do ścieżki.
+            Opakowanie, bo `cn` nie scala klas i `hidden` przegrywał z `inline-flex` przycisku. */}
+        <div className={cn("shrink-0", !listView && "hidden md:block")}>
+          <Button variant="secondary" size="sm" onClick={() => setListView((v) => !v)} aria-pressed={listView} data-tour="path-view">
+            {listView ? <MapIcon size={18} /> : <ListIcon size={18} />}
+            {listView ? "Ścieżka" : "Lista"}
+          </Button>
+        </div>
       </div>
 
       {(listView || !pawnStop) && <Button variant="secondary" size="sm" onClick={onPawn}
