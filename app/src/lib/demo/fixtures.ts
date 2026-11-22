@@ -3,6 +3,8 @@
  * Ola urodzona 10.11.2026, etap „Narodziny”. Wyłącznie dane fikcyjne.
  * TODO(backend): zastąpić danymi z API, zachowując typy z `types.ts`.
  */
+import { OLA } from "../family/ola";
+import { formatLong } from "./dates";
 import type { CalculatorPlan, Plan, ProfileRow, StageId, Stop } from "./types";
 
 const STAGES: Plan["stages"] = {
@@ -510,9 +512,9 @@ export const PLANS: Plan[] = [
     id: "ola",
     name: "Ola",
     kind: "rejestr",
-    shortInfo: "11 dni",
-    keyDateLabel: "Urodzona 10 listopada",
-    keyDate: "2026-11-10",
+    shortInfo: "Ola Lis",
+    keyDateLabel: `ur. ${formatLong(OLA.birthDate)}`,
+    keyDate: OLA.birthDate,
     stage: "narodziny",
     stages: birthStages(),
     stops: olaStops(),
@@ -563,28 +565,20 @@ export function getPlan(id: string): Plan {
 
 export const STAGE_IDS: StageId[] = ["przed", "ciaza", "narodziny", "po"];
 
-/**
- * Fikcyjny rodzic z symulacji logowania. Imię, ubezpieczenie i jego początek jak w profilu demo
- * logowania (`features/auth/demo-session.ts`, DEMO_PROFILE) i w SPEC.md „Dane z ZUS · przykład”
- * — test `tests/profile-consistency.test.ts` pilnuje zgodności. Pracodawca: tylko w tej symulacji.
- */
 export const PARENT_PROFILE: ProfileRow[] = [
-  { label: "Imię i nazwisko", value: "Anna Przykładowa", source: "login", editable: false },
-  { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "zus", editable: false },
-  { label: "Ubezpieczenie chorobowe", value: "Aktywne", source: "zus", editable: false },
-  { label: "Początek okresu ubezpieczenia", value: "1 marca 2025 r.", source: "zus", editable: false },
-  { label: "Pracodawca", value: "Kwiatek sp. z o.o. · do 20 ubezpieczonych", source: "zus", editable: false },
-  { label: "Rola w planie", value: "Urodziłam dziecko", source: "rodzic", editable: true, options: ["Urodziłam dziecko", "Jestem drugim rodzicem"] },
-  { label: "Zmiana pracy przed porodem", value: "Nie", source: "rodzic", editable: true, options: ["Tak", "Nie", "Nie wiem"] },
+  { label: "Imię i nazwisko", value: OLA.mother, source: "rodzic", editable: false },
+  { label: "Drugi rodzic", value: OLA.father, source: "rodzic", editable: false },
+  { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "rodzic", editable: false },
+  { label: "Pracodawca", value: OLA.employer, source: "rodzic", editable: false },
 ];
 
 export const SOURCE_LABEL: Record<ProfileRow["source"], string> = {
-  zus: "ZUS · symulacja",
-  rejestr: "Rejestr",
-  rodzic: "Podane przez Ciebie",
-  demo: "Profil demonstracyjny",
+  zus: "Dokumenty rodziny",
+  rejestr: "Profil rodziny",
+  rodzic: "Podane przez rodzinę",
+  demo: "Profil rodziny",
   zalozenie: "Moje założenie",
-  login: "mObywatel · login.gov.pl",
+  login: "Profil rodziny",
 };
 
 /**
