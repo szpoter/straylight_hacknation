@@ -1,5 +1,7 @@
 import { citationUrl, isValidOn, normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { listOpportunities } from "../plan/opportunities";
+import type { PublicTaskInput } from "../rag/model-tasks";
+import type { runPublicModelTask } from "../rag/local-queue";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { corpusFollowUp } from "../rag/corpus-search";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
@@ -25,6 +27,7 @@ export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Sprób
 
 export interface AnswerDeps {
   deadlineMs?: number;
+  publicTask?(input: PublicTaskInput, deadline: number): ReturnType<typeof runPublicModelTask>;
   readOfficial?: typeof fetchOfficialEvidence;
   discoverOfficial?: typeof discoverOfficialEvidence;
   corpus: Corpus;
@@ -41,6 +44,7 @@ export interface AnswerDeps {
 
 /** Ids, statuses and timings; logs keep only the id fields, never question text. */
 export interface AnswerTrace {
+  advisory?: { kind: PublicTaskInput["kind"]; status: string; attemptId: string | null; backend: string | null; ms: number };
   officialFetches?: number;
   gate: "amount" | "clarify" | null;
   sanitized: string;
@@ -89,7 +93,9 @@ function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null 
 async function discoverOpportunities(deps: AnswerDeps, text: string, progress?: Progress) {
   const fullCatalog = /(?:cał[ayąe]|pełn[yąae]|wszystki[e])\s+(?:katalog|list|ofert|program|możliwoś|świadczeni)/iu.test(text);
   if (!deps.selectCorpus || /(?<!\d)(?:19|20)\d{2}(?!\d)|kiedyś|dawniej|zeszł|ubiegł/iu.test(text)) return null;
-  if (!fullCatalog && !/co (?:warto|mogę|możemy|można)|co (?:mi|nam) (?:przysługuje|się należy)|(?:jakie|jaką|jakiego) (?:są |mam |mamy )?(?:możliwoś|opcje|wsparci|pomoc|świadczeni)|z czego|porównaj|jakie programy|nie wiem.{0,20}zapytać|jednak.{0,25}(?:babci|w domu)/iu.test(text)) return null;
+  const describesCare = !/[?]|(?:kiedy|ile|czy |jaki|komu|kwot|wniosek|załącznik)/iu.test(text)
+    && /babci|dziadk|inkubator|zamknęli.{0,20}żłob|zaczyna.{0,20}(?:szkoł|podstawówk)/iu.test(text);
+  if (!fullCatalog && !describesCare && !/co (?:warto|mogę|możemy|można)|co (?:mi|nam) (?:przysługuje|się należy)|(?:jakie|jaką|jakiego) (?:są |mam |mamy )?(?:możliwoś|opcje|wsparci|pomoc|świadczeni)|z czego|porównaj|jakie programy|nie wiem.{0,20}zapytać|jednak.{0,25}(?:babci|w domu)/iu.test(text)) return null;
   const asOf = (deps.asOf ?? today)();
   const catalog = listOpportunities({ text, asOf, fullCatalog });
   const corpus = deps.selectCorpus("oferta");
@@ -114,9 +120,21 @@ async function discoverOpportunities(deps: AnswerDeps, text: string, progress?: 
   trace.rankings = found.rankings;
   trace.vectorIds = found.hits.map(hit => hit.logicalId);
   if (found.status === "error") return { answer: { ...answer, status: "unavailable" as const, message: UNAVAILABLE_MESSAGE }, trace };
-  for (const { card, fragment, doc } of candidates) {
-    const confirmed = found.hits.some(h => h.corpusVersion === version && h.logicalId === fragment.logicalId && h.fragmentSha256 === fragment.fragmentSha256);
-    if (!confirmed) continue;
+  const matching = candidates.filter(({ fragment }) => found.hits.some(h =>
+    h.corpusVersion === version && h.logicalId === fragment.logicalId && h.fragmentSha256 === fragment.fragmentSha256));
+  if (!fullCatalog && matching.length > 1 && deps.publicTask && deps.deadlineMs && deps.deadlineMs - Date.now() >= 9_000) {
+    const input: PublicTaskInput = { kind: "plan_public", aspect: /porówna/iu.test(text) ? "comparison" : "overview",
+      candidates: matching.map(c => c.fragment.logicalId), missing: [] };
+    const plan = await deps.publicTask(input, deps.deadlineMs);
+    const { status, attemptId, backend, ms } = plan;
+    trace.advisory = { kind: input.kind, status, attemptId, backend, ms };
+    if (plan.output && "nextTool" in plan.output && plan.output.nextTool === "listOpportunities") {
+      const preferred = plan.output.evidenceIds;
+      const rank = (id: string) => preferred.includes(id) ? preferred.indexOf(id) : preferred.length;
+      matching.sort((a, b) => rank(a.fragment.logicalId) - rank(b.fragment.logicalId));
+    }
+  }
+  for (const { card, fragment, doc } of matching) {
     const id = "c" + (answer.citations.length + 1);
     answer.citations.push({ id, fragmentId: fragment.logicalId, sourceId: doc.id, hash: fragment.fragmentSha256,
       origin: "corpus", retrievedAt: doc.retrievedAt, title: doc.title, locator: fragment.locator, url: citationUrl(corpus, fragment),
@@ -129,7 +147,7 @@ async function discoverOpportunities(deps: AnswerDeps, text: string, progress?: 
     const group = answer.opportunities?.filter(c => c.exclusiveGroup);
     const alternatives = group?.some((c, i) => group.slice(i + 1).some(other => other.exclusiveGroup === c.exclusiveGroup));
     answer.message = [alternatives ? "Warianty programu Aktywny Rodzic można rozważyć jako alternatywy." : "",
-      answer.opportunities?.[0].id === candidates[0].card.id ? catalog.nextQuestion : ""].filter(Boolean).join(" ");
+      matching.some(c => c.card.id === candidates[0].card.id) ? catalog.nextQuestion : ""].filter(Boolean).join(" ");
   }
   trace.evidenceIds = answer.citations.map(c => c.fragmentId);
   return { answer, trace };
@@ -231,6 +249,17 @@ export async function answerQuestion(
 
   const { answer, report } = validateAnswer(corpus, fragments, generated.output);
   trace.report = report;
+  // An optional second opinion checks different public units only while the turn still has time.
+  const target = projected.fragmentId;
+  if (deps.publicTask && deps.deadlineMs && deps.deadlineMs - Date.now() >= 9_000 && target &&
+      answer.status === "answered" && answer.citations.length && !answer.citations.some(c => c.fragmentId === target)) {
+    const check = await deps.publicTask({ kind: "verify_claim", aspect: "overview", claimUnit: target,
+      candidates: [...new Set(answer.citations.map(c => c.fragmentId))].slice(0, 5) }, deps.deadlineMs);
+    const { status, attemptId, backend, ms } = check;
+    trace.advisory = { kind: "verify_claim", status, attemptId, backend, ms };
+    if (check.output && "verdict" in check.output && check.output.verdict !== "supported")
+      return { answer: plain("insufficient_evidence", NO_BASIS_MESSAGE), trace };
+  }
   const complete = withSourceException(projected, answer, fragments);
   if (complete) {
     trace.quoteReason = "statutory_conditions";

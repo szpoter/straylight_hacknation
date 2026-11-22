@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import { CHECKPOINT_SCHEMA, ConfigError, DEFAULT_EMBED_MODEL, requireEnv } from "./config";
 import { SESSION_COOKIE } from "./constants";
 import { generateAnswer } from "../rag/answer";
+import { runPublicModelTask } from "../rag/local-queue";
 import { searchCorpus } from "../rag/corpus-search";
 import { discoverOfficialEvidence } from "../rag/official-fetch";
 import { loadCorpus } from "../rag/corpus-fs";
@@ -83,6 +84,9 @@ export function askService(deadlineMs?: number): AskService {
     },
     corpus,
     selectCorpus: (name) => loadCorpus(name),
+    publicTask: process.env.ZUSIK_PLANNER_MODEL || process.env.ZUSIK_VERIFIER_MODEL
+      ? (input, deadline) => runPublicModelTask(db, input, deadline).catch(() =>
+        ({ status: "unavailable", attemptId: null, backend: null, output: null, ms: 0 })) : undefined,
     suggestTopic,
     searchCorpus,
     discoverOfficial: discoverOfficialEvidence,

@@ -401,6 +401,13 @@ describe("catalog discovery through the saved conversation", () => {
     const oferta = loadCorpus("oferta");
     const ask = (match: boolean) => new AskService({
       store: w.store, turns: w.turns, corpus, selectCorpus: () => oferta,
+      deadlineMs: Date.now() + 55_000,
+      publicTask: async input => {
+        expect(input.kind).toBe("plan_public");
+        expect(JSON.stringify(input)).not.toContain("Ewa");
+        return { status: "ok", attemptId: "034ce6d0-1a15-4cc5-b3f2-2241c43be5d0", backend: "local-pllum", ms: 3,
+          output: { intent: "discover", nextTool: "listOpportunities", requiredFacts: [], evidenceIds: input.candidates.slice().reverse() } };
+      },
       asOf: () => "2026-11-22", generate: async () => { throw Error("Unexpected generation"); },
       search: { search: async input => {
         expect(input.query).not.toContain("babcia Ewa");
@@ -412,6 +419,7 @@ describe("catalog discovery through the saved conversation", () => {
     const question = "Małą zajmie się babcia Ewa. Jakie opcje warto sprawdzić?";
     const result = await ask(true).ask("visitor", question, "cards");
     expect(result.turn?.opportunities?.length).toBeGreaterThan(0);
+    expect(result.trace?.advisory?.attemptId).toBe("034ce6d0-1a15-4cc5-b3f2-2241c43be5d0");
     expect(result.turn?.opportunities?.every(c => c.citationIds.length && c.missingFacts.length)).toBe(true);
     const replay = await ask(false).ask("visitor", question, "cards");
     expect(replay.turn).toEqual(result.turn);
