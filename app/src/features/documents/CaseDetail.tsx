@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AlertIcon, ArrowLeftIcon, Button, ButtonLink, CheckIcon, Page, PageTitle, Panel, SectionTitle, Tag } from "@/components/ui";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
+import { parameterOn } from "@/lib/rules/parameters";
 import { useDemoSession } from "@/features/auth/demo-session";
 import { OLA } from "@/lib/family/ola";
 import { usePlan } from "@/features/family/PlanProvider";
@@ -42,6 +44,8 @@ export function CaseDetail({ id }: { id: string }) {
   const [focusField, setFocusField] = useState<string | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
   const def = formFor(id);
+  const schedule = useRuleSchedule();
+  const withdrawn = id.replace(/^e-/, "") === "zasilek-macierzynski" && parameterOn(schedule, "form.ZAM", todayInPoland()).value === 0;
   const { key: draftKey, values: saved } = documentDraft(plan.id, id, formValues);
   const family = useDemoSession()?.family ?? OLA;
   const context = prefillContext(plan, {
@@ -135,6 +139,11 @@ export function CaseDetail({ id }: { id: string }) {
     go("wniosek");
   };
 
+  if (withdrawn && step && step !== "podglad") {
+    return <Page><BackLink /><PageTitle>Formularz ZAM został wycofany</PageTitle>
+      <p>Sprawdź aktualny druk w ZUS. Zapisane dane i historia sprawy są dostępne w planie.</p></Page>;
+  }
+
   if (def && step && step !== "podglad" && !(step === "wniosek" ? canEdit(c.state) || c.state === "warunek" : step === "sprawdz" ? canEdit(c.state) : c.state === "zatwierdzony")) {
     // Nieaktualny krok w adresie (np. po wysłaniu) — wracamy do przeglądu.
     return <StaleStep onBack={() => go()} />;
@@ -225,7 +234,8 @@ export function CaseDetail({ id }: { id: string }) {
 
       <Panel className="mt-stack max-w-prose" aria-labelledby="teraz">
         <SectionTitle id="teraz">Czy mam teraz coś zrobić?</SectionTitle>
-        <NowCard
+        {withdrawn ? <div className="mt-3 grid gap-2"><p>Formularz ZAM został wycofany. Sprawdź aktualny druk w ZUS.</p>
+          {(c.doc.hasDraft || sentOrLater) && <Button variant="secondary" onClick={() => go("podglad")}>Podgląd zapisanego wniosku</Button>}</div> : <NowCard
           c={c}
           def={def}
           filled={def ? progress(def, values) : undefined}
@@ -233,7 +243,7 @@ export function CaseDetail({ id }: { id: string }) {
           onZusik={zusik}
           onStep={(s) => go(s)}
           onCorrect={startCorrection}
-        />
+        />}
       </Panel>
 
       {c.howTo && (

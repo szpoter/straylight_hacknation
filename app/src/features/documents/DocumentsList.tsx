@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { AlertIcon, ButtonLink, FileIcon, Page, PageTitle, PillTabs, SectionTitle } from "@/components/ui";
 import { usePlan } from "@/features/family/PlanProvider";
-import { formatLong } from "@/lib/demo/dates";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
+import { formatValue, parameterOn, RULE_PARAMETERS, type RuleParameterId } from "@/lib/rules/parameters";
+import { formatLong, todayInPoland } from "@/lib/demo/dates";
 import { GOAL_LABEL, GOAL_ORDER, countByGroup, docCases } from "@/lib/plan/docs";
 import { DOC_GROUP_LABEL, docStatus, type DocGroup } from "@/lib/plan/status";
 import { CaseRow } from "./CaseRow";
@@ -14,6 +16,8 @@ type View = "sprawy" | "pliki";
 const GROUPS: DocGroup[] = ["do-zalatwienia", "wyslane", "na-pozniej", "zakonczone"];
 
 export function DocumentsList() {
+  const schedule = useRuleSchedule();
+  const today = todayInPoland();
   const { plan } = usePlan();
   const [view, setView] = useState<View>("sprawy");
   const [filter, setFilter] = useState<DocGroup | undefined>();
@@ -125,6 +129,13 @@ export function DocumentsList() {
           })}
         </div>
       )}
+      <details className="my-stack rounded-lg border border-outline p-gutter-mobile">
+        <summary>Obowiązujące druki ZUS na {formatLong(today)}</summary>
+        <ul className="mt-3 grid gap-2">
+          {(Object.keys(RULE_PARAMETERS) as RuleParameterId[]).filter(id => id.startsWith("form.")).map(id =>
+            <li key={id}>{RULE_PARAMETERS[id].label} · {formatValue(id, parameterOn(schedule, id, today).value)}</li>)}
+        </ul>
+      </details>
     </Page>
   );
 }
