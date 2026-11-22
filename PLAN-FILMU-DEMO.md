@@ -36,27 +36,29 @@ Przyjmuję początek realnego nagrania w okolicy **1:00 od początku filmu**. Do
 | 20–22 s | Pod nim kartka o zasiłku, potwierdzenie sprawy 800+ i własna ilustracja odpisu aktu urodzenia. | **Marta** „Czekaj, gdzieś to zapisałam…” |
 | 22–24 s | Wzrok Marty przeskakuje między okresem, podstawą wymiaru i datą złożenia. | Dwa szelesty, dwa ciche tony w tle. |
 | 24–26 s | W wyobraźni Pawła kartki spadają stosem. Oboje odruchowo osłaniają wózek. | **Marta** „Chcę tylko wiedzieć, czy nas na to stać.” |
-| 26–28 s | Kciuk Pawła naciska skuwkę długopisu. Kartka zawisa nad dłonią. W rogu widać zdjęcie Oli. | Klik ucina muzykę i szelest. Po nim westchnienie Oli. |
-| 28–30 s | Spod zatrzymanej kartki wyglądają oczy Zusika. | **Zusik** „Odłóżmy na chwilę te kartki.” |
-| 30–32 s | Półzbliżenie Marty bez zasłoniętej twarzy. Zusik czeka na jej spojrzenie. | **Zusik** „Chcecie zostać z Olą razem. Zobaczmy, ile wam wtedy przysługuje.” |
-| 32–34 s | Z góry na trójkę nad kartką. Marta przytakuje. Zusik odgina róg, pod nim ukazuje się pierwszy wyraz nazwy. | Koniec „przysługuje”. Pojedynczy ciepły ton. |
-| 34–36 s | Makro zagięcia. Kartka rozwija się na szerokość kadru. Pod zagięciem odsłania się „Przewodnik Rodzica”. | **Zusik** „Właśnie dlatego przygotowaliśmy Przewodnik Rodzica.” |
-| 36–38 s | Niższy kadr z krawędzi kartki. Zusik przytrzymuje ją łapką. Ołówek Marty wjeżdża do kadru z lewej. | Wybrzmiewa nazwa. Rysik dotyka papieru dopiero po słowie „Rodzica”. |
-| 38–40 s | Z góry. Marta rysuje poziomy pasek długości czterech tygodni. Paweł układa obok drugi, tej samej długości. | **Marta** „Oboje planujemy po cztery tygodnie.” |
-| 40–42 s | Kadr z końca obu pasków. Marta zrównuje ich początki, Paweł przytrzymuje palcem wspólny koniec. | **Marta**, po krótkim wdechu: „Możemy zacząć razem?” |
-| 42–44 s | Detal wspólnego początku. Spojrzenie bloba biegnie wzdłuż pasków. Jeden ruch ołówka zamyka nawias obejmujący cztery tygodnie. | **Zusik** „Możecie. Wtedy oboje wracacie do pracy po czterech tygodniach.” |
-| 44–46 s | Szerszy widok z boku. Oboje rodzice stoją przy tym samym końcu osi. Widać podpis „4 tygodnie razem”. | Ta sama wypowiedź przechodzi przez cięcie. Muzyka zostawia miejsce na „czterech”. |
-| 46–48 s | Zbliżenie na palce Pawła. Przesuwa swój pasek tak, żeby zaczynał się na końcu paska Marty. Pierwszy zostaje nieruchomy. | **Paweł** „A jak zacznę po tobie?” |
-| 48–50 s | Widok z góry w tej samej skali. Nawias wydłuża się do końca drugiego paska. Widać podpis „8 tygodni po kolei”. | **Marta** „To przez osiem tygodni któreś z nas będzie z Olą.” |
-| 50–52 s | Z poziomu papieru. Na papierze maleńki rysunek wózka jedzie wzdłuż nawiasu za palcem Marty. Jego koło ma kształt koła z poczekalni. | Ciąg dalszy wypowiedzi. Miękki ruch koła, jak w poczekalni. |
-| 52–54 s | Blisko na twarze. Paweł spogląda na Olę. Zusik daje rodzicom chwilę. | **Zusik** „Dokładnie.” Po nim słychać tylko oddech dziecka. |
-| 54–56 s | Dłonie rodziców. Paweł układa swój pasek z powrotem przy pasku Marty. | **Paweł** „Wolę te cztery tygodnie razem.” |
-| 56–58 s | Półzbliżenie Marty. Ręką zatrzymuje pasek w wybranym miejscu. Obok na papierze zostaje przestrzeń na wynik. | **Marta** „Ja też. A ile wtedy dostaniemy?” |
-| 58–60 s | Ostatni detal. Palec Marty przy wspólnym początku, w rogu kartki oko Zusika. Podnosi wzrok. Krawędź papieru wyznacza miejsce pierwszego rzeczywistego kadru po 1:00. | **Zusik** „Sprawdźmy.” Ostatnie pół sekundy zostawić na oddech przed demonstracją. |
+| 26–28 s | **Detal dłoni Pawła.** Klik długopisu. Kartka zastyga tuż nad jego palcami. Pod folią teczki wciąż widać zdjęcie Oli. | Szelest urywa się. Ola wzdycha przez sen. |
+| 28–30 s | **Spod kartki.** Jej zagięty róg lekko się unosi. Zusik wygląda spod niego prosto na Martę. | **Zusik, cicho** „Policzmy, ile wyniesie wasz zasiłek.” |
+| 30–32 s | **Na Martę.** Po raz pierwszy od chwili wejścia do kolejki podnosi wzrok znad druków. Zusik zerka na wystający z teczki kalendarz. | Po krótkim oddechu **Zusik** „Pokażesz mi ten kalendarz?” |
+| 32–34 s | **Z góry.** Marta wysuwa kalendarz właśnie spod kartki o zasiłku. Paweł odruchowo przytrzymuje pozostałe papiery przedramieniem. | **Marta** „Tu. Od jedenastego stycznia.” |
+| 34–36 s | **Na wysokości blatu.** Palec Marty zatrzymuje się na jedenastce. Tuż obok Paweł kładzie swój. | **Paweł** „Oboje od poniedziałku.” |
+| 36–38 s | **Przez ramię Marty.** Zusik siada na brzegu otwartej teczki. Na jej wewnętrznej stronie po raz pierwszy czytelna jest nazwa „Przewodnik Rodzica”. Wzrok Zusika biegnie wzdłuż zaznaczonych dni. | **Zusik** „Na jak długo?” |
+| 38–40 s | **Blisko na ołówek.** Marta obwodzi swój zapis. Pod spodem Paweł wcześniej zaznaczył dokładnie ten sam okres. | **Marta** „Po cztery tygodnie.” |
+| 40–42 s | **Pełna rozkładówka.** Widać styczeń i luty. Obie kreski zaczynają się 11 stycznia i kończą 7 lutego. Paweł pierwszy raz widzi oba imiona obok siebie. | Krótka cisza na odczytanie dat. |
+| 42–44 s | **Półzbliżenie Pawła.** Jedną ręką dalej kołysze wózek. Drugą przesuwa po obu imionach. | **Paweł** „I dla każdego wyjdzie tyle samo?” |
+| 44–46 s | **Na Zusika.** Przytrzymuje kalendarz, żeby nie zamknął się Marcie. Patrzy na Pawła. | **Zusik** „Każde z was ma swoją stawkę.” |
+| 46–48 s | **Widok spod dłoni Marty.** Podwija luźny formularz. Znów widać jej „Marta” i jego „Paweł”. | **Zusik**, tym samym głosem „Policzę twój zasiłek i Marty. Zobaczycie też, ile wychodzi razem.” |
+| 48–50 s | **Z boku.** Paweł składa resztę dokumentów i wsuwa je pod gumkę. Na pierwszym planie zostaje otwarty kalendarz. | Wybrzmiewa „ile wychodzi razem”. Cichy stuk teczki o blat. |
+| 50–52 s | **Na Martę.** Wraca wzrokiem do małego wpisu „czynsz”. | **Marta** „To będzie na rękę?” |
+| 52–54 s | **Wspólny kadr.** Zusik odpowiada od razu. Marta trzyma palec przy początku urlopu. | **Zusik** „Brutto. Przed podatkiem.” |
+| 54–56 s | **Detal rąk.** Marta podaje Pawłowi rączkę wózka. Tym razem od razu chwyta za właściwą rzecz. Oboje patrzą na kalendarz. | **Marta** „Dobra. Pokaż.” |
+| 56–58 s | **Znad ramienia rodziców.** Kamera zbliża się do początku obu kresek. Brzeg teczki i dłonie naturalnie wychodzą poza kadr. | Zostaje tarcie ołówka o papier. |
+| 58–60 s | **Makro „11 stycznia”.** Kamera wyhamowuje. Data ma tę samą pozycję i wielkość co w wybranym kadrze prawdziwego nagrania. Na granicy **1:00** cięcie po dacie, z papieru do aplikacji. | Pół sekundy ciszy. Pierwszy dźwięk interakcji należy do nagrania demo. |
+
+**Przejście w 1:00.** Najpierw wybieramy rzeczywisty kadr z datą rozpoczęcia wspólnego urlopu. Według niego ustawiamy napis na papierze. Dzięki temu po cięciu widz wciąż patrzy na tę samą informację. Kursor rusza dopiero, gdy data da się przeczytać. Kolejnym zadaniem demo jest pokazanie wyniku dla Marty i Pawła z wyraźnym oznaczeniem brutto. [Dane przykładu i oczekiwany wynik](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
 
 ## Dialog do ElevenLabs · czytanie ciągłe
 
-Każdą kwestię nagrać w całości. Podział na ujęcia dotyczy obrazu. Marta mówi do partnera na wyciągnięcie ręki. Paweł ścisza głos w kolejce, żeby nie obudzić córki. Zusik wchodzi jak ktoś, kto dosłyszał pytanie. Przy nazwie produktu utrzymuje tę samą głośność. Numery i wskazówki wykonawcze zostają poza tekstem mówionym.
+Każdą kwestię nagrać w całości. Podział na ujęcia dotyczy obrazu. Marta mówi do partnera na wyciągnięcie ręki. Paweł ścisza głos w kolejce, żeby nie obudzić córki. Zusik wchodzi jak ktoś, kto dosłyszał pytanie. Nazwę produktu czytamy na teczce. Numery i wskazówki wykonawcze zostają poza tekstem mówionym.
 
 - **Marta** — Zrób mi takie zdjęcie.
 - **Marta** — Przytrzymasz? Wózek.
@@ -66,16 +68,16 @@ Każdą kwestię nagrać w całości. Podział na ujęcia dotyczy obrazu. Marta 
 - **Paweł** — Ten mam zanieść do kadr.
 - **Marta** — Czekaj, gdzieś to zapisałam… Chcę tylko wiedzieć, czy nas na to stać.
 
-- **Zusik** — Odłóżmy na chwilę te kartki. Chcecie zostać z Olą razem. Zobaczmy, ile wam wtedy przysługuje. Właśnie dlatego przygotowaliśmy Przewodnik Rodzica.
-
-- **Marta** — Oboje planujemy po cztery tygodnie. Możemy zacząć razem?
-- **Zusik** — Możecie. Wtedy oboje wracacie do pracy po czterech tygodniach.
-- **Paweł** — A jak zacznę po tobie?
-- **Marta** — To przez osiem tygodni któreś z nas będzie z Olą.
-- **Zusik** — Dokładnie.
-- **Paweł** — Wolę te cztery tygodnie razem.
-- **Marta** — Ja też. A ile wtedy dostaniemy?
-- **Zusik** — Sprawdźmy.
+- **Zusik** — Policzmy, ile wyniesie wasz zasiłek. Pokażesz mi ten kalendarz?
+- **Marta** — Tu. Od jedenastego stycznia.
+- **Paweł** — Oboje od poniedziałku.
+- **Zusik** — Na jak długo?
+- **Marta** — Po cztery tygodnie.
+- **Paweł** — I dla każdego wyjdzie tyle samo?
+- **Zusik** — Każde z was ma swoją stawkę. Policzę twój zasiłek i Marty. Zobaczycie też, ile wychodzi razem.
+- **Marta** — To będzie na rękę?
+- **Zusik** — Brutto. Przed podatkiem.
+- **Marta** — Dobra. Pokaż.
 
 ## Muzyka, efekty i miks pierwszej minuty
 
@@ -86,12 +88,12 @@ Każdą kwestię nagrać w całości. Podział na ujęcia dotyczy obrazu. Marta 
 | 00–22 s | Oddech, migawka, kółko wózka. Jeden odległy sygnał kolejki. Przestrzeń zmienia się w chwili przejścia ze zdjęcia do poczekalni. |
 | 22–27 s | Dwa przytłumione tony pianina. Na ich tle papier przechodzi od suchego pojedynczego szelestu do wachlarza. Słowa Marty zostają na pierwszym planie. |
 | 27–32 s | Klik w ujęciu 26–28 s ucina tło. Oddech Oli, a później pierwszy bliski głos Zusika. |
-| 32–54 s | Fortepian wraca ciepłym dwudźwiękiem D–A, potem pojawia się pojedyncze E. Pod ruchem pasków słychać grafit i lekkie tarcie papieru. Instrumenty zostawiają wolne miejsce pod słowami „czterech” i „osiem”. |
-| 54–60 s | Pod decyzją Pawła jeden długi ciepły ton. Wygasa przed pytaniem Marty. „Sprawdźmy” zostaje samo. Od 1:00 dźwięk prawdziwego kliknięcia może należeć już do demonstracji. |
+| 32–54 s | Fortepian wraca ciepłym dwudźwiękiem D–A, potem pojawia się pojedyncze E. Pod ruchem ołówka słychać grafit i lekkie tarcie papieru. Instrumenty ustępują przy pytaniu o kwotę na rękę. |
+| 54–60 s | Przy przekazaniu wózka wygasa długi ciepły ton. „Dobra. Pokaż” zostaje na pierwszym planie. Od 1:00 dźwięk prawdziwego kliknięcia może należeć już do demonstracji. |
 
 **Punkt startowy miksu.** Pod wypowiedzią ustawić muzykę około 18–22 dB ciszej od mowy i ocenić ją na głośniku telefonu. Szelesty pod słowami ściszyć, ich początki zostawić w przerwach. W centrum są trzy głosy. Lekki pogłos ma sala, nie Zusik. Najgłośniejszym efektem może być klik, ale powinien być cichszy od akcentowanego słowa. Jeśli na telefonie ginie „czy nas na to stać”, pierwsza korekta to ściszenie papieru. Ostateczne czasy wejść dźwięku dopasujemy do odsłuchu; obraz zachowuje dwusekundową siatkę.
 
-**Znaczenie liczb.** Rodzice planują na później po 28 dni urlopu rodzicielskiego. Przy wspólnym początku spędzają razem cztery tygodnie. Przy kolejnych rozpoczęciach Ola ma osiem tygodni opieki z jednym z nich. To okresy tej fikcyjnej rodziny. Wysokość zasiłku pozostaje pytaniem do prawdziwego demo. [Przypadek Marty i Pawła](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
+**Znaczenie liczb.** Rodzice planują na później po 28 dni urlopu rodzicielskiego. W tym przebiegu zaczynają razem w poniedziałek 11 stycznia 2027 r. i kończą 7 lutego. To okresy tej fikcyjnej rodziny. Wysokość zasiłku pozostaje pytaniem do prawdziwego demo. [Przypadek Marty i Pawła](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
 
 ## Od pierwszej minuty · co ma udowodnić realne demo
 
@@ -117,7 +119,7 @@ Wagi pochodzą z opisu zadania. Regulamin w § 2 wskazuje, że jury ocenia proje
 - **Stickman Video Director** do rodziny, poczekalni i krótkich powrotów. Zachować rysunek postaci, proporcje, wygląd teczki i kierunek patrzenia. Szelest papieru narasta najwyżej w trzech rytmach, żeby nie zasłonić dialogu. [Stickman Video Director](https://github.com/kaomei/stickman-video-director)
 - **Motionmaxxing i Bang Motion** do fragmentu od wejścia Zusika do pierwszego ruchu kursora. Motionmaxxing jako odniesienie dla rytmu i prowadzenia wzroku, Bang Motion dla choreografii typografii i przejść. Wspólnym elementem pozostaje kartka. Ma ciężar w poczekalni, staje się linią czasu, a w końcu kadrem aplikacji. [Motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing) · [Bang Motion](https://github.com/bangtutorial/bang-motion)
 - **HyperFrames** proponuję jako jedną oś montażową dla animacji, obrazu aplikacji i nagrania głosu. Własną animację bloba utrwalamy w ciągłym przebiegu, aby zachować jej naturalne falowanie. Hierarchię zapewnią nasze kolory, krój Literata i napisy w Interze. Veo zostaje opcją do późniejszej decyzji, jeżeli wybrane ujęcie będzie go wymagało. [HyperFrames](https://github.com/heygen-com/hyperframes) · [Ruch bloba](maskotka_kod/docs/mascot/02-tech-stack.md) · [Styl projektu](DESIGN.md)
-- **ElevenLabs** do trzech polskich głosów. Marta mówi półgłosem i praktycznie. Paweł czyta wolniej dopiero przy „ile nam wtedy wpłynie na konto?”. Zusik ma głos dorosły, ciepły, zwyczajny. Pierwszą kwestię kieruje do zmęczonych rodziców. Przy „cztery” i „osiem” zostawia oddech na zmianę obrazu. Klik i pauzę umieszczamy w montażu. Pliki dla lektora będą zawierać wyłącznie wypowiadane słowa. [ElevenLabs Studio](https://elevenlabs.io/docs/eleven-creative/products/studio)
+- **ElevenLabs** do trzech polskich głosów. Marta mówi półgłosem i praktycznie. Paweł czyta wolniej dopiero przy „ile nam wtedy wpłynie na konto?”. Zusik ma głos dorosły, ciepły, zwyczajny. Pierwszą kwestię kieruje do zmęczonych rodziców. Po „cztery tygodnie” zostaje chwila na odczytanie dat. Klik i pauzę umieszczamy w montażu. Pliki dla lektora będą zawierać wyłącznie wypowiadane słowa. [ElevenLabs Studio](https://elevenlabs.io/docs/eleven-creative/products/studio)
 - **Trzy wskazane filmy.** W kadrach podglądowych Slacka ludzie pozostają czytelni pośród kolorowych elementów. U nas tę rolę zachowuje rodzina przy wózku. W Notion szczegóły interfejsu sąsiadują z prostą typografią i dużą ilością bieli. Przyda się to po kliknięciu. W ElevenLabs skupiony ciemny punkt kontrastuje z jasną kompozycją przykładów. U nas moment skupienia tworzą zatrzymana kartka, cisza i pierwszy głos Zusika. To wnioski z publicznych kadrów podglądowych, bez pomiaru oryginalnych przejść i miksu. [Slack](https://www.youtube.com/watch?v=EDATYbzYGiE) · [Notion](https://www.youtube.com/watch?v=3HLMH9t1Q-g) · [ElevenLabs](https://www.youtube.com/watch?v=TlclS4wLWgY)
 
 ## Mapa narzędzi do filmu
@@ -196,4 +198,4 @@ Wagi pochodzą z opisu zadania. Regulamin w § 2 wskazuje, że jury ocenia proje
 
 Mapa opiera się na publicznych opisach narzędzi i przykładach twórców. Zastosowania do Oli i Zusika to wybory reżyserskie zespołu. Jakość proceduralnego dźwięku i zgodność bibliotek na jednej osi czasu wymagają późniejszej próby produkcyjnej.
 
-**Do następnej rozmowy:** pierwsza odpowiedź Zusika po „czy nas na to stać?”. Od niej zależy, którą kwotę jury powinno zobaczyć przy wejściu do realnego demo.
+**Do następnej rozmowy:** pierwsze sekundy prawdziwego nagrania od daty wspólnego startu do wyniku brutto.
