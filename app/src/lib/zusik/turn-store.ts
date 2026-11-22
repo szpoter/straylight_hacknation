@@ -54,6 +54,7 @@ function toTurn(row: TurnRow): AskTurn {
     claims: response.claims,
     citations: response.citations,
     corpusVersion: response.corpusVersion,
+    ...(response.opportunities ? { opportunities: response.opportunities } : {}),
     ...(response.publicQuery ? { publicQuery: response.publicQuery } : {}),
   };
 }

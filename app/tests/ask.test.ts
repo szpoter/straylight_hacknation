@@ -394,3 +394,28 @@ describe("public searches in a continuing case", () => {
     expect(result.turn?.status).toBe("insufficient_evidence");
   });
 });
+
+describe("catalog discovery through the saved conversation", () => {
+  it("only publishes a candidate backed by the active remote release", async () => {
+    const w = world();
+    const oferta = loadCorpus("oferta");
+    const ask = (match: boolean) => new AskService({
+      store: w.store, turns: w.turns, corpus, selectCorpus: () => oferta,
+      asOf: () => "2026-11-22", generate: async () => { throw Error("Unexpected generation"); },
+      search: { search: async input => {
+        expect(input.query).not.toContain("babcia Ewa");
+        expect(input.lexical?.length).toBeGreaterThan(0);
+        return { status: "ok", ms: 1, hits: (input.lexical ?? []).map(h => ({ ...h,
+          fragmentSha256: match ? h.fragmentSha256 : "stale", score: 1 })) };
+      } },
+    });
+    const question = "Małą zajmie się babcia Ewa. Jakie opcje warto sprawdzić?";
+    const result = await ask(true).ask("visitor", question, "cards");
+    expect(result.turn?.opportunities?.length).toBeGreaterThan(0);
+    expect(result.turn?.opportunities?.every(c => c.citationIds.length && c.missingFacts.length)).toBe(true);
+    const replay = await ask(false).ask("visitor", question, "cards");
+    expect(replay.turn).toEqual(result.turn);
+    const missing = await ask(false).ask("other", question, "cards-missing");
+    expect(missing.turn).toMatchObject({ status: "insufficient_evidence", citations: [], opportunities: [] });
+  });
+});

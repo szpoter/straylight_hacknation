@@ -1,4 +1,5 @@
-import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
+import { citationUrl, isValidOn, normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
+import { listOpportunities } from "../plan/opportunities";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { corpusFollowUp } from "../rag/corpus-search";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
@@ -83,6 +84,55 @@ function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null 
   if (preset || direct?.corpus === "oferta" || (direct?.corpus === "marta" && !genericForm) ||
       ((direct?.locators?.length ?? 0) > 1 && !direct?.broad) || explicitLocatorKeys(text).length) return preset ?? direct;
   return deps.searchCorpus?.(text, direct) ?? direct;
+}
+
+async function discoverOpportunities(deps: AnswerDeps, text: string, progress?: Progress) {
+  const fullCatalog = /(?:cał[ayąe]|pełn[yąae]|wszystki[e])\s+(?:katalog|list|ofert|program|możliwoś|świadczeni)/iu.test(text);
+  if (!deps.selectCorpus || /(?<!\d)(?:19|20)\d{2}(?!\d)|kiedyś|dawniej|zeszł|ubiegł/iu.test(text)) return null;
+  if (!fullCatalog && !/co (?:warto|mogę|możemy|można)|co (?:mi|nam) (?:przysługuje|się należy)|(?:jakie|jaką|jakiego) (?:są |mam |mamy )?(?:możliwoś|opcje|wsparci|pomoc|świadczeni)|z czego|porównaj|jakie programy|nie wiem.{0,20}zapytać|jednak.{0,25}(?:babci|w domu)/iu.test(text)) return null;
+  const asOf = (deps.asOf ?? today)();
+  const catalog = listOpportunities({ text, asOf, fullCatalog });
+  const corpus = deps.selectCorpus("oferta");
+  const version = corpus.manifest.corpusVersion;
+  const candidates = catalog.candidates.flatMap(card => {
+    const fragment = corpus.fragments.get(card.evidence.fragmentId);
+    const doc = fragment && corpus.documents.get(fragment.documentId);
+    return fragment && doc && isValidOn(corpus, fragment, asOf) ? [{ card, fragment, doc }] : [];
+  });
+  if (!candidates.length) return null;
+  const query = candidates.map(({ card }) => card.title).join(". ");
+  const trace = newTrace(query, null);
+  const answer: AskAnswer = { status: "insufficient_evidence", publicQuery: query, corpusVersion: version,
+    message: "Nie udało się potwierdzić podstawy proponowanych świadczeń.", claims: [], citations: [], opportunities: [] };
+  progress?.("Sprawdzam podstawy proponowanych świadczeń…");
+  const found = await deps.search.search({ query, expanded: null, corpusVersion: version, limit: candidates.length + TOP_K,
+    lexical: candidates.map(({ fragment }) => ({ logicalId: fragment.logicalId, fragmentSha256: fragment.fragmentSha256, corpusVersion: version })),
+    asOf, deadlineMs: deps.deadlineMs });
+  trace.calls.qdrant = 1;
+  trace.search = found.status;
+  trace.vectorHits = found.hits;
+  trace.rankings = found.rankings;
+  trace.vectorIds = found.hits.map(hit => hit.logicalId);
+  if (found.status === "error") return { answer: { ...answer, status: "unavailable" as const, message: UNAVAILABLE_MESSAGE }, trace };
+  for (const { card, fragment, doc } of candidates) {
+    const confirmed = found.hits.some(h => h.corpusVersion === version && h.logicalId === fragment.logicalId && h.fragmentSha256 === fragment.fragmentSha256);
+    if (!confirmed) continue;
+    const id = "c" + (answer.citations.length + 1);
+    answer.citations.push({ id, fragmentId: fragment.logicalId, sourceId: doc.id, hash: fragment.fragmentSha256,
+      origin: "corpus", retrievedAt: doc.retrievedAt, title: doc.title, locator: fragment.locator, url: citationUrl(corpus, fragment),
+      quote: fragment.sourceText, page: fragment.page, headingPath: fragment.headingPath, authority: doc.authority, corpusVersion: version });
+    answer.claims.push({ text: card.title + ". " + card.reason, citationIds: [id] });
+    answer.opportunities?.push({ id: card.id, title: card.title, citationIds: [id], missingFacts: card.missingFacts, exclusiveGroup: card.exclusiveGroup });
+  }
+  if (answer.claims.length) {
+    answer.status = "answered";
+    const group = answer.opportunities?.filter(c => c.exclusiveGroup);
+    const alternatives = group?.some((c, i) => group.slice(i + 1).some(other => other.exclusiveGroup === c.exclusiveGroup));
+    answer.message = [alternatives ? "Warianty programu Aktywny Rodzic można rozważyć jako alternatywy." : "",
+      answer.opportunities?.[0].id === candidates[0].card.id ? catalog.nextQuestion : ""].filter(Boolean).join(" ");
+  }
+  trace.evidenceIds = answer.citations.map(c => c.fragmentId);
+  return { answer, trace };
 }
 
 /** Resolve the public query locally before either provider receives it. */
@@ -274,18 +324,28 @@ export class AskService {
           trace.search = resolved.unavailable && !resolved.fetches ? "error" : "ok";
           trace.officialFetches = resolved.fetches;
           trace.evidenceIds = answer.citations.map(c => c.fragmentId);
+          if (section === "care" && answer.citations.length) {
+            const card = listOpportunities({ text, asOf: (this.deps.asOf ?? today)() }).candidates
+              .find(c => c.evidence.fragmentId === "zlobek-opieka");
+            if (card) answer.opportunities = [{ id: card.id, title: card.title, citationIds: [answer.citations[0].id],
+              missingFacts: card.missingFacts, exclusiveGroup: card.exclusiveGroup }];
+          }
           result = { answer, trace };
         } else {
-          const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
-          const topic = familyTopic(family?.stopId);
-          const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
-            : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
-          const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
-          const retrievalText = usePageTopic ? topic + ". " + text : text;
-          const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
-          result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
-          if (projected?.question && result.answer.status !== "unavailable")
-            result.answer.publicQuery = projected.question;
+          const opportunities = await discoverOpportunities(this.deps, text, onProgress);
+          if (opportunities) result = opportunities;
+          else {
+            const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
+            const topic = familyTopic(family?.stopId);
+            const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
+              : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
+            const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
+            const retrievalText = usePageTopic ? topic + ". " + text : text;
+            const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
+            result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
+            if (projected?.question && result.answer.status !== "unavailable")
+              result.answer.publicQuery = projected.question;
+          }
         }
       }
     } catch (error) {
