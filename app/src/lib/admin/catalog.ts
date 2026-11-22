@@ -194,7 +194,7 @@ function rateParameters(corpus: Corpus | null, state: RuleVersionsState, today: 
     { id: "rate.parental", unit: "uz-31-1", usedIn: "Kwota zasiłku za urlop rodzicielski (przykład +280 zł)" },
     { id: "rate.averaged", unit: "uz-31-2", usedIn: "Kwota zasiłku przy wniosku matki do 21 dni po porodzie" },
   ] as const;
-  return kinds.map(
+  const rates = kinds.map(
     ({ id, unit, usedIn }): Parameter => ({
       id: catalogIdFor(id),
       group: "Stawki",
@@ -209,10 +209,32 @@ function rateParameters(corpus: Corpus | null, state: RuleVersionsState, today: 
       appSource: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
       details: [
         { label: "O wartości decyduje", value: RULE_PARAMETERS[id].event },
-        { label: "Jeszcze nie uwzględnione", value: "podwyższenie do kwoty świadczenia rodzicielskiego (art. 31 ust. 3a)" },
+        { label: "Najniższa kwota", value: "zasiłek podwyższa się do kwoty świadczenia rodzicielskiego (art. 31 ust. 3a)" },
       ],
     }),
   );
+  const minimumId = "benefit.parentalMinimum";
+  const art31 = statute(corpus, "uz-31-2");
+  const minimum: Parameter = {
+    id: catalogIdFor(minimumId),
+    group: "Stawki",
+    name: RULE_PARAMETERS[minimumId].label,
+    state: "Obowiązuje",
+    ...versioned(state, minimumId, today),
+    source: "Ustawa o świadczeniach rodzinnych (Dz.U. 2025 poz. 1208), art. 17c ust. 5",
+    sourceUrl: "https://eli.gov.pl/eli/DU/2025/1208/ogl",
+    quote: "Świadczenie rodzicielskie przysługuje w wysokości 1000,00 zł miesięcznie, z uwzględnieniem ust. 6.",
+    usedIn: "Podwyższenie zasiłku macierzyńskiego do kwoty świadczenia rodzicielskiego. Reguła gotowa dla kalkulatora rodzica",
+    scope: "Miesiące zasiłku od daty obowiązywania; za część miesiąca proporcjonalnie (1/30 za dzień)",
+    origin: "app",
+    appSource: `lib/rules/rates.ts · ${RATES_RULES_VERSION}`,
+    details: [
+      { label: "Podwyższenie", value: art31 ? `${art31.source} (ust. 3a i 3c)` : "art. 31 ust. 3a i 3c ustawy zasiłkowej" },
+      { label: "Porównuje się", value: "zasiłek po potrąceniu zaliczki na podatek (poradnik ZUS, s. 20)" },
+      { label: "O wartości decyduje", value: RULE_PARAMETERS[minimumId].event },
+    ],
+  };
+  return [...rates, minimum];
 }
 
 /** Parameters the application applies, read from its code, with versions published in this demo session. */

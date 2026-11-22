@@ -2,9 +2,9 @@ import { addDays, formatShort } from "../rules/dates";
 import { assessArrears } from "../rules/arrears";
 import { RULE_PARAMETERS, formatValue, parameterOn, weeksLabel, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
 import { benefitPayer } from "../rules/payer";
-import { RATE_LABEL, benefitForPeriod, dailyBenefitGrosze, formatGrosze, type RateKind } from "../rules/rates";
+import { RATE_LABEL, benefitForPeriod, dailyBenefitGrosze, formatGrosze, parentalMinimumTopUp, type RateKind } from "../rules/rates";
 import { checkPaternityLimit, limitImpact, type CheckRow, type ImpactRow } from "./change-checks";
-import { RATE_SCENARIOS, rateScenarioOutcome } from "./scenarios";
+import { RATE_SCENARIOS, TOPUP_SCENARIOS, rateScenarioOutcome, topUpScenarioOutcome } from "./scenarios";
 
 /**
  * Every parameter the admin panel can change for real (ZUS task p. 14), with how it is typed in,
@@ -180,6 +180,66 @@ function rateSpec(kind: RateKind): ChangeSpec {
   };
 }
 
+/* ---------- parental benefit amount (podwyższenie, art. 31 ust. 3a) ---------- */
+
+const DEMO_NET_GROSZE = 82000; // benefit after the tax advance in the impact example
+
+const MINIMUM: ChangeSpec = {
+  parameter: "benefit.parentalMinimum",
+  catalogId: "app-parental-minimum",
+  group: "Stawki",
+  input: "integer",
+  suffix: "zł",
+  hint: "Miesięczna kwota w pełnych złotych (dziś 1000 zł, art. 17c ust. 5 ustawy o świadczeniach rodzinnych).",
+  scope: "Miesiące zasiłku od tej daty. Za część miesiąca podwyższenie liczy się proporcjonalnie, 1/30 kwoty za dzień.",
+  parentView: null,
+  impactNote: `Rodzic z zasiłkiem ${formatGrosze(DEMO_NET_GROSZE)} miesięcznie po zaliczce na podatek, cały miesiąc od dnia zmiany.`,
+  toValue: integer,
+  toText: (value) => String(value),
+  impact: (published, draft) => {
+    const next = withDraftFor(published, "benefit.parentalMinimum", draft);
+    const month = (s: RuleSchedule) => parentalMinimumTopUp({ netGrosze: DEMO_NET_GROSZE, firstDay: draft.validFrom, days: "whole", schedule: s });
+    const before = month(published);
+    const after = month(next);
+    const diff = after.paidGrosze - before.paidGrosze;
+    return [
+      { label: "Kwota świadczenia rodzicielskiego", before: formatGrosze(before.minimumGrosze), after: formatGrosze(after.minimumGrosze) },
+      { label: "Podwyższenie", before: formatGrosze(before.topUpGrosze), after: formatGrosze(after.topUpGrosze) },
+      { label: "Wypłata za miesiąc", before: formatGrosze(before.paidGrosze), after: formatGrosze(after.paidGrosze) },
+      { label: "Różnica", before: "—", after: `${diff >= 0 ? "+" : "−"}${formatGrosze(Math.abs(diff))}` },
+    ];
+  },
+  checks: (published, draft) => {
+    const next = withDraftFor(published, "benefit.parentalMinimum", draft);
+    const dayBefore = addDays(draft.validFrom, -1);
+    const monthly = draft.value * 100;
+    const old = parameterOn(published, "benefit.parentalMinimum", dayBefore).value * 100;
+    const topUp = (net: number, firstDay: string, days: number | "whole" = "whole") =>
+      formatGrosze(parentalMinimumTopUp({ netGrosze: net, firstDay, days, schedule: next }).topUpGrosze);
+    const rows: CheckRow[] = [
+      row(`Zasiłek równy nowej kwocie (${formatGrosze(monthly)}), miesiąc od ${formatShort(draft.validFrom)}`, formatGrosze(0), topUp(monthly, draft.validFrom)),
+      row(`Zasiłek o 1 zł niższy (${formatGrosze(monthly - 100)})`, formatGrosze(100), topUp(monthly - 100, draft.validFrom)),
+      row(
+        `Ten sam zasiłek w miesiącu od ${formatShort(dayBefore)}: obowiązuje ${formatGrosze(old)}`,
+        formatGrosze(Math.max(0, old - (monthly - 100))),
+        topUp(monthly - 100, dayBefore),
+      ),
+      row(
+        `Część miesiąca: 15 dni od ${formatShort(draft.validFrom)}, zasiłek ${formatGrosze(0)}`,
+        formatGrosze(Math.round((monthly * 15) / 30)),
+        topUp(0, draft.validFrom, 15),
+      ),
+    ];
+    for (const s of TOPUP_SCENARIOS) {
+      const before = topUpScenarioOutcome(s, published);
+      const after = topUpScenarioOutcome(s, next);
+      if (before !== after) rows.push({ name: `${s.id}: ${s.title}`, expected: before, result: after, status: "informacja" });
+    }
+    rows.push(sourceRow(draft.source));
+    return rows;
+  },
+};
+
 /* ---------- payer threshold (próg płatnika) ---------- */
 
 const payerLabel = (p: "employer" | "zus" | null) => (p === "employer" ? "pracodawca" : p === "zus" ? "ZUS" : "do ustalenia");
@@ -346,6 +406,7 @@ export const CHANGE_SPECS: ChangeSpec[] = [
   rateSpec("maternity"),
   rateSpec("parental"),
   rateSpec("averaged"),
+  MINIMUM,
   PAYER,
   WAGE,
   ...FORM_IDS.map(formSpec),

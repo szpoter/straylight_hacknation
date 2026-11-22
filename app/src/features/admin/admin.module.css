@@ -901,6 +901,13 @@ button.tileActive:hover {
   text-align: left;
 }
 
+/* Amounts stay on one line; the label column takes the wrapping. */
+.compare th:not(:first-child),
+.compare td:not(:first-child) {
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
 .compare thead th {
   font-size: 13px;
   font-weight: 500;

@@ -75,6 +75,16 @@ export const RULE_PARAMETERS = {
     max: 1000,
     step: 1,
   },
+  /** Art. 17c ust. 5 ustawy o świadczeniach rodzinnych: 1000 zł a month. Art. 31 ust. 3a ustawy
+   * zasiłkowej raises a lower maternity benefit (after the income-tax advance) to this amount. */
+  "benefit.parentalMinimum": {
+    label: "Kwota świadczenia rodzicielskiego: najniższy miesięczny zasiłek macierzyński",
+    unit: "pln",
+    event: "Miesiąc, za który przysługuje zasiłek",
+    min: 100,
+    max: 10000,
+    step: 1,
+  },
   /** Art. 61 ust. 1 ustawy zasiłkowej: above this number of insured the payer pays benefits itself. */
   "payer.insuredThreshold": {
     label: "Próg płatnika wypłacającego zasiłki: liczba ubezpieczonych",
@@ -119,13 +129,14 @@ export const ALWAYS = "1900-01-01";
 
 /**
  * Values written in the code, with the day each applies from. Sources: ZUS task pp. 7–9 and 12,
- * art. 61 ustawy zasiłkowej, minimum wage regulations (2027: Dz.U. 2026 poz. 1213).
+ * art. 17c ust. 5 ustawy o świadczeniach rodzinnych, art. 61 ustawy zasiłkowej, minimum wage regulations (2027: Dz.U. 2026 poz. 1213).
  */
 export const DEFAULTS: Record<RuleParameterId, readonly ScheduledValue[]> = {
   "paternity.totalDays": [{ value: 14, validFrom: ALWAYS }],
   "rate.maternity": [{ value: 1000, validFrom: ALWAYS }],
   "rate.parental": [{ value: 700, validFrom: ALWAYS }],
   "rate.averaged": [{ value: 815, validFrom: ALWAYS }],
+  "benefit.parentalMinimum": [{ value: 1000, validFrom: ALWAYS }],
   "payer.insuredThreshold": [{ value: 20, validFrom: ALWAYS }],
   "wage.minimum": [
     { value: 4666, validFrom: "2025-01-01" },
