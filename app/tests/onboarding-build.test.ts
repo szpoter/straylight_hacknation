@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPlan, buildPlans, declineName, employmentRisk, leaveWeeks, planHighlights, shiftTextDates } from "@/lib/plan/build";
+import { buildPlan, buildPlans, declineName, employmentRisk, leaveWeeks, planHighlights, refreshSavedLeavePlan, shiftTextDates } from "@/lib/plan/build";
 import { STOP_DETAILS } from "@/lib/demo/stop-details";
 import { isResolved } from "@/lib/plan/status";
 
@@ -29,8 +29,25 @@ describe("plan z onboardingu", () => {
     const plan = buildPlan({ situation: "ciaza", role: "w-ciazy", date: "2027-06-14" }, "p3");
     expect(plan.stage).toBe("ciaza");
     expect(plan.stops.find((s) => s.id === "e-zaplanuj-urlopy")!.due).toBe("2027-07-05");
-    expect(plan.stops.find((s) => s.id === "e-macierzynski-przed")!.condition).toContain("3 maja 2027");
+    expect(plan.stops.find((s) => s.id === "e-macierzynski-przed")!.dueBasis).toContain("3 maja 2027");
     expect(plan.shortInfo).toBe("czerwiec 2027");
+  });
+
+  it("odświeża zapisane plany także bez odpowiedzi onboardingowych i zachowuje szkice urlopowe", () => {
+    const current = buildPlan({ situation: "urodzone", date: "2026-11-15", name: "Maja", employment: "etat" }, "stary");
+    const stops = current.stops.filter(s => s.id !== "rodzicielski-praca").map(s => {
+      if (s.id === "urlop-macierzynski") return { ...s, kind: "na-wniosek" as const, doc: { goal: "urlopy" as const, recipient: "Kadry" } };
+      if (s.id === "urlop-ojcowski") return { ...s, state: "szkic" as const, doc: { ...s.doc!, hasDraft: true, note: "Moje dane" } };
+      return s;
+    });
+    for (const origin of [current.origin, undefined]) {
+      const plan = refreshSavedLeavePlan({ ...current, origin, stops });
+      expect(plan.stops.find(s => s.id === "urlop-macierzynski")?.doc).toBeUndefined();
+      expect(plan.stops.find(s => s.id === "rodzicielski-praca")?.doc).toBeDefined();
+      expect(plan.stops.find(s => s.id === "urlop-ojcowski")?.doc?.note).toBe("Moje dane");
+      expect(plan.stops.find(s => s.id === "800plus")).toBe(stops.find(s => s.id === "800plus"));
+      expect(refreshSavedLeavePlan(plan)).toBe(plan);
+    }
   });
 
   it("drugi rodzic nie widzi spraw osoby, która rodzi", () => {

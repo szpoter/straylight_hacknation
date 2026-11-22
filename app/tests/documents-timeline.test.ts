@@ -15,9 +15,15 @@ describe("przebieg sprawy", () => {
   });
 
   it("bez UPP bieżący jest etap 2 „Oczekujemy na potwierdzenie”", () => {
-    const t = buildTimeline(find("ola", "urlop-macierzynski"));
+    const t = buildTimeline({ ...find("ola", "urlop-ojcowski"), state: "wyslano", doc: {
+      goal: "urlopy", recipient: "Do pracodawcy", events: [{ date: "2026-11-22", title: "Rodzic oznaczył przekazanie" }],
+    } });
     expect(t.map((s) => s.status)).toEqual(["done", "current", "future", "future"]);
     expect(t[1].detail).toBe("Sprawdź potwierdzenie u odbiorcy.");
+  });
+
+  it("po porodzie plan nie przypisuje matce historycznej wysyłki wniosku urlopowego", () => {
+    expect(docCases(getPlan("ola").stops).map(stop => stop.id)).not.toContain("urlop-macierzynski");
   });
 
   it("wezwanie jest wpisem pod etapem 3", () => {

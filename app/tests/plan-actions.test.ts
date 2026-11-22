@@ -9,10 +9,18 @@ describe("przycisk sprawy w nowym planie", () => {
   const plan = buildPlan({ situation: "urodzone", role: "urodzilam", date: "2026-11-15", name: "Maja" }, "p1");
 
   it("niewysłany wniosek nie pokazuje przebiegu z przykładu Oli", () => {
-    for (const id of ["800plus", "urlop-macierzynski"]) {
+    for (const id of ["800plus", "rodzicielski", "rodzicielski-praca"]) {
       expect(plan.stops.find((s) => s.id === id)!.state).toBe("aktualna");
       expect(actionFor(plan, id)).toMatchObject({ label: "Rozpocznij", step: "wniosek" });
     }
+  });
+
+  it("po porodzie urlop macierzyński jest informacją, a w ciąży można złożyć pismo z wyprzedzeniem", () => {
+    const after = plan.stops.find(s => s.id === "urlop-macierzynski");
+    expect(after?.kind).toBe("informacja");
+    expect(after?.doc).toBeUndefined();
+    const before = buildPlan({ situation: "ciaza", date: "2027-06-14", employment: "etat" }, "before");
+    expect(actionFor(before, "e-macierzynski-przed")).toMatchObject({ step: "wniosek" });
   });
 
   it("sprawa czekająca na warunek nie zaprasza do złożenia wniosku", () => {
