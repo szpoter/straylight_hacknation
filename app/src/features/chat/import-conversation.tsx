@@ -8,14 +8,26 @@ import { ApiError, caseApi, loadCase, type AssessmentInput, type CaseView, type 
 import { ChatHeader } from "./chat-panel";
 import { findCasePassages } from "./find-case-passages";
 import { clearCaseReadProgress } from "./case-read-progress";
+import { SimulatedAccount } from "./simulated-account";
 import { Composer } from "./composer";
 import { ChatStarters } from "./scenario-nav";
-import { DecisionCard, DocumentReview, Evidence, FactForm, labels, valueLabel, type FactDraft, type LocalPdf } from "./case-review";
+import { DecisionCard, DocumentReview, Evidence, FactForm, labels, valueLabel, type FactDraft, type LocalPdf, type ManualSource } from "./case-review";
 import { usePhone, useVisualViewport } from "./use-chat-viewport";
 import s from "./zusik.module.css";
 
 const id = () => crypto.randomUUID();
-const messageLabel = (m: MessageInput) => m.intent === "public_question" ? m.publicQuestion : m.intent === "explain_result" ? "Skąd ten wynik?" : m.intent === "hypothetical" ? "Wariant symulacji" : m.intent === "read_context" ? "Dane w sprawie" : "Sprawdź moją sprawę";
+function messageLabel(input: MessageInput) {
+  switch (input.intent) {
+    case "public_question": return input.publicQuestion;
+    case "link_account": return "Powiąż symulowane konto z " + input.subjectId;
+    case "read_account": return "Odczytaj symulowane konto · " + input.subjectId + " · " + input.from + " – " + input.to;
+    case "declare_fact": return "Potwierdzam " + labels[input.fact.field] + " · " + valueLabel(input.fact.value);
+    case "explain_result": return "Skąd ten wynik?";
+    case "hypothetical": return "Wariant symulacji";
+    case "read_context": return "Dane w sprawie";
+    case "ask_case": return "Sprawdź moją sprawę";
+  }
+}
 
 export function ImportConversation() {
   const [view, setView] = useState<CaseView | null>(null);
@@ -31,7 +43,7 @@ export function ImportConversation() {
   const [local, setLocal] = useState(new Map<string, LocalPdf>());
   const urls = useRef(new Set<string>());
   const [originals, setOriginals] = useState(new Map<string, string>());
-  const [form, setForm] = useState<FactDraft | "new" | null>(null);
+  const [form, setForm] = useState<FactDraft | { manual: ManualSource } | "new" | null>(null);
   const [benefit, setBenefit] = useState("maternity");
   const [asOf, setAsOf] = useState("");
   const [subject, setSubject] = useState("");
@@ -126,7 +138,10 @@ export function ImportConversation() {
     });
     if ("clarify" in routed) { setNotice(routed.clarify); return; }
     if ("correction" in routed) { setNotice("Wybierz „Popraw” przy polu i okresie, którego dotyczy zmiana."); return; }
-    const input = routed.input;
+    const variantSubject = routed.input.intent === "hypothetical" ? routed.input.subjectId : undefined;
+    const lastAssessment = view?.assessments.findLast(a => a.input.subjectId === variantSubject);
+    const input = routed.input.intent === "hypothetical" && !routed.input.validAt && lastAssessment
+      ? { ...routed.input, validAt: lastAssessment.input.asOf } : routed.input;
     const key = id();
     sticky.current = true;
     setDraft(question);
@@ -201,6 +216,14 @@ export function ImportConversation() {
       location.replace("?nowa=1");
     });
   }
+  function sendAccount(input: MessageInput) {
+    if (!view) return;
+    const key = id();
+    void run(async () => {
+      await caseApi.message(view.file.id, input, key);
+      setView(await loadCase(view.file.id));
+    });
+  }
   function pick(selected: File) {
     if (view?.documents.length) setPendingFile(selected); else attach(selected);
   }
@@ -266,7 +289,8 @@ export function ImportConversation() {
       <details className={s.caseHistory}><summary>Historia rozmów</summary>
         <a href="?nowa=1">Nowa rozmowa</a>
         {history.map(c => <a key={c.id} href={"?sprawa=" + encodeURIComponent(c.id)}>Sprawa z {new Date(c.createdAt).toLocaleString("pl-PL")} · {c.id.slice(-6)}</a>)}
-        <a href="?historia=1">Wcześniejsze rozmowy</a>
+        <a href="?historia=1">Wcześniejsze rozmowy ogólne</a>
+        <a href="/app">Sprawa urlopu rodzicielskiego</a><a href="?historia=kamil">Sprawa urlopu ojcowskiego</a><a href="?historia=chorobowe">Sprawa chorobowego w ciąży</a>
         {view && (deleting ? <div><p>Usunąć tę sprawę wraz z jej wiadomościami, ocenami i dokumentami?</p>
           <button disabled={busy} onClick={erase}>Tak, usuń sprawę</button> <button onClick={() => setDeleting(false)}>Anuluj</button></div>
           : <button disabled={busy} onClick={() => setDeleting(true)}>Usuń tę sprawę</button>)}</details>
@@ -281,6 +305,11 @@ export function ImportConversation() {
                 findCasePassages(pdf.read.pages.map(p => p.text), originals.get(m.id) ?? "").map(hit =>
                   <details className={s.source} key={key + hit.page}><summary>Zapis w PDF · strona {hit.page}</summary><blockquote>{hit.excerpt}</blockquote>
                     <a href={pdf.url + "#page=" + hit.page} target="_blank" rel="noreferrer">Otwórz wskazaną stronę</a></details>))}
+              {m.account?.facts.map(f => <button key={f.source.referenceId} type="button" className={s.secondaryButton}
+                disabled={busy || view.facts.some(saved => saved.fact.source.referenceId === f.source.referenceId)}
+                onClick={() => sendAccount({ intent: "declare_fact", fact: f, basisProfileRevision: view.profile.revision })}>
+                Potwierdź z konta · {labels[f.field]} · {valueLabel(f.value)} · {f.asOf ?? f.validFrom}
+              </button>)}
               <Evidence citations={m.citations} documents={view.documents} local={local} />
               {m.input.intent === "public_question" && m.input.publicQuestion === chatStarters[1].prompt && <a href="/app/kalkulator" target="_blank" rel="noreferrer">Otwórz kalkulator dla swojej sprawy</a>}
             </div></div>)}
@@ -291,8 +320,11 @@ export function ImportConversation() {
               return <section key={doc.id} className={s.aiMessage}><strong>{pdf?.name ?? "Dokument sprawy"}</strong>
                 <p>Liczba stron: {doc.metadata.pages}.</p>
                 {pdf ? <><a href={pdf.url} target="_blank" rel="noreferrer">Otwórz własny PDF</a>
+                  {pdf.read.pages.every(page => !page.candidates.length) && <p>Brak automatycznie rozpoznanych pól. Otwórz stronę i potwierdź widoczny na niej zapis.</p>}
                   {pdf.read.pages.map(page => <details key={page.page} className={s.source}><summary>Strona {page.page}{page.status === "excluded" ? " · poza obliczeniem" : page.status === "manual" ? " · sprawdź ręcznie" : ""}</summary>
-                    <p className={s.sourceQuote}>{page.text || "Sprawdź obraz strony w oryginale."}</p><a href={pdf.url + "#page=" + page.page} target="_blank" rel="noreferrer">Otwórz stronę {page.page} w PDF</a></details>)}
+                    <p className={s.sourceQuote}>{page.text || "Sprawdź obraz strony w oryginale."}</p><a href={pdf.url + "#page=" + page.page} target="_blank" rel="noreferrer">Otwórz stronę {page.page} w PDF</a>
+                    {page.status !== "excluded" && page.status !== "blank" && page.kind !== "decision" && <button className={s.secondaryButton} type="button" onClick={() =>
+                      setForm({ manual: { referenceId: doc.id, page: page.page, url: pdf.url, kind: page.kind } })}>Przepisz pole ze strony {page.page}</button>}</details>)}
                   <DocumentReview pdf={pdf} document={doc} date={view.assessments.at(-1)?.input.asOf} onConfirm={confirmDocument} />
                   {pdf.read.pages.flatMap(page => page.candidates.map((c, i) =>
                     <button type="button" key={page.page + "-" + i} className={s.secondaryButton} onClick={() => setForm({ choice: { document: pdf.read, registered: doc, candidate: c }, fact: { subjectId: c.field === "birthDate" ? "child-A" : "person-A", field: c.field, value: c.value, validFrom: c.validFrom, asOf: c.asOf ?? (c.value.kind === "date" ? c.value.date : undefined), validTo: c.validTo,
@@ -308,9 +340,10 @@ export function ImportConversation() {
             {view.proposals.filter(p => p.status === "pending").map(p => <div key={p.id} className={s.aiMessage}>Proponowana wartość · {labels[p.fact.field]} · {valueLabel(p.fact.value)} · {p.fact.subjectId} · {p.fact.validFrom ?? p.fact.asOf}
               <button className={s.secondaryButton} onClick={() => change({ changes: [{ action: "accept_proposal", proposalId: p.id }] }, "Potwierdzono " + valueLabel(p.fact.value))}>Potwierdź propozycję</button></div>)}
             {lastChange && <p role="status">{lastChange}</p>}
-            {form ? <FactForm key={form === "new" ? "new" : JSON.stringify(form)} draft={form === "new" ? undefined : form} save={save} cancel={() => setForm(null)} />
+            {form ? <FactForm key={form === "new" ? "new" : JSON.stringify(form)} draft={form !== "new" && "fact" in form ? form : undefined} manual={form !== "new" && "manual" in form ? form.manual : undefined} save={save} cancel={() => setForm(null)} />
               : <button className={s.secondaryButton} onClick={() => setForm("new")}>Podaj fakt do sprawy</button>}
             {view.assessments.map((a, index) => <DecisionCard prior={view.assessments.slice(0, index)} key={a.id} assessment={a} historical={a.stale || a.input.profileRevision !== view.profile.revision || a.input.caseRevision !== view.file.revision} documents={view.documents} local={local} />)}
+            {view.profile.subjects.length > 0 && <SimulatedAccount view={view} send={sendAccount} />}
             {view.profile.subjects.length > 0 && <form className={s.reviewForm} onSubmit={e => { e.preventDefault(); assess(); }}>
               <label>Osoba do oceny<select required value={subject} onChange={e => setSubject(e.target.value)}><option value="">Wybierz osobę</option>{view.profile.subjects.map(v => <option key={v}>{v}</option>)}</select></label>
               <label>Świadczenie<select value={benefit} onChange={e => setBenefit(e.target.value)}><option value="maternity">Zasiłek macierzyński</option><option value="paternity">Za okres ojcowski</option><option value="sickness">Zasiłek chorobowy</option></select></label>

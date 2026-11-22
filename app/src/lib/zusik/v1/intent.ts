@@ -37,14 +37,22 @@ function payVariant(q: string, ctx: Context): Result {
 export function routeCaseQuestion(question: string, ctx: Context): Result {
   const text = question.trim();
   const prior = ctx.lastMessage;
+  const privateContext = Boolean(ctx.hasDocuments || ctx.facts.length || ctx.assessmentId ||
+    (prior && prior.input.intent !== "public_question"));
   const date = /\b\d{4}-\d{2}-\d{2}\b/u.exec(text)?.[0];
   const starter = chatStarters.find(s=>s.prompt===text);
-  if (starter) return {input:{intent:"public_question",publicQuestion:starter.prompt}};
+  if (starter && !privateContext) return {input:{intent:"public_question",publicQuestion:starter.prompt}};
   if (/gdyby|hipotetycz|co jeśli|co by było/iu.test(text)) return payVariant(text,ctx);
+  const changeTopic = /^(?:nie[, ]+)?(?:chodzi(?:ło)? mi o|chodzi o|pytam o|mam na myśli) (?:program )?(dobry start|300\s*(?:plus|\+)|aktywnie w żłobku|żłobek)[?!. ]*$/iu.exec(text);
+  if (changeTopic && prior?.input.intent === "public_question") {
+    const topic = /żłob/iu.test(changeTopic[1]) ? "Aktywnie w żłobku" : "Dobry Start";
+    return {input:{intent:"public_question",publicQuestion:"Chodzi mi o " + topic + ".",replyTo:prior.id}};
+  }
   if (/^(?:nie[, ]+)?(?:popraw|sprostuj|korekt|jednak|zmień|pomyli)/iu.test(text) && ctx.facts.length) return {correction:true};
   if (/skąd|dlaczego|pokaż źródło|na jakiej podstawie/iu.test(text)) {
-    const assessmentId = prior?.citations.find(c=>c.kind==="assessment")?.ref ?? ctx.assessmentId;
-    if (prior?.input.intent === "public_question") return {input:{intent:"public_question",publicQuestion:"Skąd to wiesz?",replyTo:prior.id}};
+    const assessmentId = prior ? prior.citations.find(c=>c.kind==="assessment")?.ref : ctx.assessmentId;
+    if (prior?.input.intent === "public_question" && (!privateContext || /^(?:skąd to wiesz|dlaczego|pokaż źródło|na jakiej podstawie)[?!. ]*$/iu.test(text)))
+      return {input:{intent:"public_question",publicQuestion:"Skąd to wiesz?",replyTo:prior.id}};
     if (assessmentId) return {input:{intent:"explain_result",assessmentId}};
     if (prior) return {input:{intent:"ask_case",topic:"previous_sources",replyTo:prior.id}};
   }
@@ -54,14 +62,17 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
     /czy (?:mam|miał[ae]m|był[ae]m).{0,15}ubezpiecz/iu.test(text) ? "sicknessCoverage" : undefined;
   const nursery = /żłob|zlob/iu.test(text) && /komu|kto .*(?:dosta|otrzy)|czyje konto|czyj rachunek/iu.test(text);
   if (topic) return {input:{intent:"read_context",topic,subjectId:ctx.subjectId || undefined,validAt:date,...(nursery ? {publicTopic:"nursery_recipient" as const} : {})}};
-  if (nursery || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto[?!. ]*$/iu.test(text)))
-    return {input:{intent:"public_question",publicQuestion:nursery ? recipient : "Na czyje konto?",replyTo:prior?.id}};
+  const generalNursery = /^(?:komu (?:zus )?(?:wypłaca|przekazuje)|na czyje konto (?:zus )?(?:przelewa|wypłaca)) (?:świadczenie )?[„"]?aktywnie w żłobku[”"?!. ]*$/iu.test(text);
+  if ((nursery && (!privateContext || generalNursery)) || (prior?.input.intent === "public_question" && /^(?:a |i )?na czyje konto[?!. ]*$/iu.test(text)))
+    return {input:{intent:"public_question",publicQuestion:nursery ? recipient : "Na czyje konto?",replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
   if (/^(?:hej|cześć|co umiesz|jak możesz mi pomóc)[?!. ]*$/iu.test(text)) return {input:{intent:"public_question",publicQuestion:"Co umiesz?"}};
   const direct = publicQuestion(text);
-  if (direct?.question && !direct.clarify && !(ctx.hasDocuments && /moj|moj[ąe]|mi przysługuje|dostanę|wylicz|ile mam/iu.test(text))) {
+  const explicitlyGeneral = /^(?:ogólnie\b|jakie są ogólne zasady\b|co (?:mówią|stanowią) przepisy\b)/iu.test(text);
+  if (direct?.question && !direct.clarify && (!privateContext || explicitlyGeneral || text === direct.question)) {
     return {input:{intent:"public_question",publicQuestion:direct.question,replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};
   }
-  if (direct?.clarify && !ctx.facts.length && !ctx.hasDocuments) return {clarify:direct.clarify};
-  if (!ctx.facts.length && !ctx.hasDocuments) return {clarify:"Którego świadczenia, wniosku lub okresu dotyczy pytanie?"};
+  if (prior?.input.intent === "public_question" && /^(?:(?:a |i )?(?:jakie dokumenty|do kiedy|ile dni|jak długo|ile tygodni|gdzie złożyć|w jakim terminie))[?!. ]*$/iu.test(text))
+    return {input:{intent:"public_question",publicQuestion:text,replyTo:prior.id}};
+  if (!privateContext) return {clarify:direct?.clarify ?? "Którego świadczenia, wniosku lub okresu dotyczy pytanie?"};
   return {input:{intent:"ask_case",subjectId:ctx.subjectId || undefined,validAt:date}};
 }

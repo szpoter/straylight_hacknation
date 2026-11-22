@@ -16,12 +16,14 @@ async function run() {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     page.setDefaultTimeout(20000);
     const writes: string[] = [];
+    const intents: string[] = [];
     page.on("request", r => {
       if (r.method() === "GET") return;
       const path = new URL(r.url()).pathname;
       if (path.startsWith("/api/")) {
         assert.doesNotMatch(r.postData() ?? "", /PRIVATE-SYNTHETIC-MARKER|neutralny\.pdf|Zestawienie wynagrodzen|%PDF/);
         writes.push(r.method() + " " + path);
+        if (path.endsWith("/messages")) intents.push(r.postDataJSON().intent);
       }
     });
     await page.goto(new URL("/app/rozmowa", origin).href);
@@ -66,13 +68,28 @@ async function run() {
     await other.goto(saved.href);
     await other.getByText(/Ta sprawa jest niedostępna/).waitFor();
     assert.equal(await other.getByText(/6\s?500,00/).count(), 0);
+    assert.ok(!intents.includes("link_account"));
+    await page.getByText("Sprawdź symulowane konto ZUS",{exact:true}).click();
+    await page.getByLabel("Osoba na koncie").selectOption("person-A");
+    await page.getByLabel("Scenariusz konta").selectOption("business-settlement");
+    await page.getByRole("button",{name:"Powiąż konto z osobą"}).click();
+    await page.getByLabel("Rejestr").selectOption("balance");
+    await page.getByLabel("Początek odczytu").fill("2026-05-19");
+    await page.getByLabel("Koniec odczytu").fill("2026-05-19");
+    await page.getByRole("button",{name:"Odczytaj z konta"}).click();
+    const accept = page.getByRole("button",{name:/Potwierdź z konta · Zadłużenie składkowe · 0,00/});
+    await accept.click();
+    await page.getByText("Symulowane konto ZUS",{exact:true}).waitFor();
+    await page.reload();
+    await page.getByText(/Zadłużenie składkowe · 0,00/).first().waitFor();
+    assert.deepEqual(intents.slice(-3), ["link_account","read_account","declare_fact"]);
     await page.getByText("Historia rozmów",{exact:true}).click();
     await page.getByRole("button",{name:"Usuń tę sprawę"}).click();
     await page.getByRole("button",{name:"Tak, usuń sprawę"}).click();
     await page.waitForURL("**/app/rozmowa?nowa=1");
     const erased = await page.request.get(new URL("/api/v1/cases/" + saved.searchParams.get("sprawa"),origin).href);
     assert.equal(erased.status(),404);
-    console.log("PASS 390 · PDF → 600000 gr → dowód strony 1 → ocena → drugi PDF → konflikt → 650000 gr → F5 bez zapisów → drugie cookie bez danych → usunięta sprawa 404");
+    console.log("PASS 390 · PDF → 600000 gr → dowód strony 1 → ocena → drugi PDF → konflikt → 650000 gr → F5 bez zapisów → drugie cookie bez danych → jawne konto, saldo 0 gr z 19 maja → usunięta sprawa 404");
   } finally { await browser.close(); }
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

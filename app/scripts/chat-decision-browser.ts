@@ -60,6 +60,15 @@ async function run() {
           await page.getByRole("textbox",{name:"Wiadomość do Zusika"}).fill("Skąd ta kwota?");
           await page.getByRole("button",{name:"Wyślij"}).click();
           await page.getByRole("log").getByText("Skąd ta kwota?",{exact:true}).waitFor();
+          const variant = "A gdyby w lutym 2026 po potrąceniu składek było 6377,40 zł?";
+          await page.getByRole("textbox",{name:"Wiadomość do Zusika"}).fill(variant);
+          const variantResponse = page.waitForResponse(r => r.request().method() === "POST" && r.url().endsWith("/messages") && r.request().postDataJSON().intent === "hypothetical");
+          await page.getByRole("button",{name:"Wyślij"}).click();
+          const response = await variantResponse;
+          assert.equal(response.status(),201);
+          assert.match((await response.json()).answer,/2\s?462,74/);
+          await page.locator("[data-knowledge-turn]").filter({has: page.getByText(variant,{exact:true})}).getByText(/Różnica.*46,62/).waitFor();
+          await current.getByText(/Kwota: 2\s?416,12.*brutto/).waitFor();
           const revised = await PDFDocument.create();
           revised.addPage().drawText("Zestawienie wynagrodzen\nMiesiac | Brutto\n2026-02 | 6500,00", { size: 12, x: 40, y: 700 });
           const chooser = page.waitForEvent("filechooser");
@@ -78,7 +87,7 @@ async function run() {
           await cards.last().getByText(/Zmiana kwoty:.*19,46/).waitFor();
           assert.ok(await page.getByText(/Ocena historyczna/).count());
         }
-        console.log("PASS",kind,kind === "excluded" ? "odmowa · źródło str. 3 · decyzja str. 4 poza oceną" : "prawo bez płacy → drugi PDF → 241612 gr · podstawa 517740 · 14 × 17258 · korekta → 243558 gr · F5");
+        console.log("PASS",kind,kind === "excluded" ? "odmowa · źródło str. 3 · decyzja str. 4 poza oceną" : "prawo bez płacy → drugi PDF → 241612 gr · podstawa 517740 · 14 × 17258 · wariant 246274 gr · korekta → 243558 gr · F5");
       } finally { await context.close(); }
     }
   } finally { await browser.close(); }

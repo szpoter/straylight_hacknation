@@ -186,6 +186,13 @@ async function run() {
   });
   assert.ok(denied);
   const origin = process.env.QA_JUROR_ORIGIN;
+  const local = new URL(origin);
+  assert.ok(local.protocol === "http:" && local.hostname === "127.0.0.1" && local.port && local.origin === origin);
+  const forbiddenRequest = (url, data) => ({ url: () => url, postData: () => data, headers: () => ({}), method: () => "POST" });
+  assert.equal(permitted(forbiddenRequest("https://example.invalid/api/v1/sessions", ""), origin), false);
+  assert.equal(permitted(forbiddenRequest(origin + "/api/v1/sessions?file=" + marker, ""), origin), false);
+  assert.equal(permitted(forbiddenRequest(origin + "/api/v1/cases/" + "a".repeat(36) + "/messages",
+    JSON.stringify({intent:"public_question", publicQuestion:marker})), origin), false);
   const browser = await chromium.launch({channel:"chrome", args:["--disable-background-networking"]});
   try {
     const pdf = await PDFDocument.create();

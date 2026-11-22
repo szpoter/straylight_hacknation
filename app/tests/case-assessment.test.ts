@@ -140,3 +140,69 @@ it("separates repayment after the assessment date from repayment made on time", 
   expect(verdict([...business, entry("debtSettlement", code("unpaid"), "insurance", {asOf:input.asOf})]).paymentStatus).toBe("withheld");
   expect(verdict([...business, entry("debtSettlement", code("2026-07-10"), "insurance", {asOf:input.asOf})]).paymentStatus).toBe("needs_information");
 });
+
+it("requires the dated employment, pregnancy and cause to award maternity after the job ended", () => {
+  const lastDay = "2026-05-31";
+  const asAtEnd = { asOf: lastDay };
+  const facts = [right[0], right[1], entry("sicknessCoverage", code("ended"), "insurance", { validFrom: "2026-06-01" }),
+    entry("sicknessCoverage", code("covered"), "insurance", { validFrom: "2025-01-01", validTo: lastDay }),
+    entry("insuranceTitle", code("employee"), "insurance", asAtEnd), entry("sicknessCertificate", code("pregnancy"), "certificate", asAtEnd)];
+  const cause = entry("postInsuranceException", code("employer_liquidation"), "certificate", asAtEnd);
+  expect(verdict([...facts, cause])).toMatchObject({ status: "eligible", payer: "zus", amountStatus: "needs_review", reasonCode: "entitled_after_employment_ended" });
+  const judicial = entry("postInsuranceException", code("unlawful_termination_final_judgment"), "certificate", { validFrom: lastDay, asOf: input.asOf });
+  expect(verdict([...facts, judicial]).status).toBe("eligible");
+  for (const invalid of [entry("postInsuranceException", code("employer_liquidation"), "decision", asAtEnd),
+    { ...judicial, fact: { ...judicial.fact, asOf: "2027-01-01" } }]) {
+    expect(verdict([...facts, invalid])).toMatchObject({ status: "needs_information", needed: [{ field: "postInsuranceException", request: expect.any(String) }] });
+  }
+  expect(verdict([...facts.filter(e => e.fact.field !== "sicknessCertificate"), cause]).status).toBe("needs_information");
+  expect(verdict([...facts, entry("postInsuranceException", code("alleged_unlawful_termination"), "certificate", asAtEnd)]).status).toBe("needs_review");
+});
+
+describe("sickness in pregnancy with historical evidence", () => {
+  const request = { validFrom: "2026-06-01", validTo: "2026-07-05" };
+  const insurance = { validFrom: "2026-01-01", validTo: request.validTo };
+  const facts = [
+    entry("benefitRequest", code("sickness"), "application", request),
+    entry("sicknessCertificate", code("pregnancy_new_spell"), "certificate", request),
+    entry("sicknessCoverage", code("covered"), "insurance", insurance),
+    entry("insuranceTitle", code("employee"), "insurance", insurance),
+    entry("birthDate", {kind:"date",date:"1976-01-01"}, "certificate"),
+    entry("benefitHistory", code("no_sickness_days"), "payroll", {validFrom: "2026-01-01", validTo: "2026-05-31"}),
+    paid[1],
+  ];
+  const assess = (rows: Evidence[]) => assessCase({...input, benefit:"sickness"}, { ...input, documents, facts: rows });
+  it("separates 33 employer days and two benefit days; the lower threshold starts the year after age 50", () => {
+    expect(assess(facts)).toMatchObject([
+      {benefit:"sickness_salary",status:"eligible",from:"2026-06-01",to:"2026-07-03",payer:"employer"},
+      {benefit:"sickness",status:"eligible",from:"2026-07-04",to:"2026-07-05",payer:"employer",amountStatus:"needs_information"},
+    ]);
+    const older = facts.map(e => e.fact.field === "birthDate" ? entry("birthDate", {kind:"date",date:"1975-12-31"}, "certificate") : e);
+    expect(assess(older)[1].from).toBe("2026-06-15");
+    expect(assess(facts.filter(e => e.fact.field !== "benefitHistory"))[0].needed?.[0].field).toBe("benefitHistory");
+  });
+  it("pays a contractor from the first day and checks the full ninety days and disputed evidence", () => {
+    const contractor = facts.filter(e => e.fact.field !== "insuranceTitle").concat(entry("insuranceTitle", code("contract"), "insurance", insurance));
+    expect(assess(contractor)).toMatchObject([{benefit:"sickness",status:"eligible",from:"2026-06-01",to:"2026-07-05"}]);
+    const late = contractor.map(e => e.fact.field === "sicknessCoverage" ? {...e, fact:{...e.fact, validFrom:"2026-04-01"}} : e);
+    expect(assess(late)[0]).toMatchObject({status:"needs_information",needed:[{field:"sicknessCoverage",request:expect.stringContaining("90")}]});
+    expect(assess([...contractor, entry("sicknessCoverage", code("excluded"), "insurance", {asOf:"2026-06-04"})])[0].status).toBe("needs_review");
+  });
+  it("requires proof excluding earlier protection and other titles before denial", () => {
+    const excluded = [facts[0], facts[1], entry("sicknessCoverage", code("excluded"), "insurance", request),
+      entry("otherCoverage", code("none"), "insurance", request),entry("postInsuranceException", code("none"), "insurance", request)];
+    expect(assess(excluded)[0]).toMatchObject({status:"ineligible",amountStatus:"not_applicable"});
+    expect(assess(excluded.slice(0,-1))[0].status).toBe("needs_information");
+    expect(assess([...excluded, entry("sicknessCoverage", code("covered"), "insurance", {asOf:"2026-06-04",titleRef:"other"})])[0].status).toBe("needs_review");
+  });
+});
+
+it("requires an explicit benefit claim even when the leave period and complete pay are known", () => {
+  const leave = entry("submissionStatus", code("maternity_leave_requested"), "application", period);
+  const partial = verdict([leave, ...right.slice(1), ...paid]);
+  expect(partial).toMatchObject({status:"needs_information",needed:[{field:"benefitRequest",request:expect.any(String)}]});
+  expect(partial).not.toHaveProperty("grossAmountGrosze");
+  expect(partial).not.toHaveProperty("from");
+  expect(partial.citations.some(c => c.kind === "document")).toBe(false);
+  expect(verdict([leave, ...right, ...paid])).toMatchObject({status:"eligible",grossAmountGrosze:241612});
+});

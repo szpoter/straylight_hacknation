@@ -8,7 +8,7 @@ type Metadata = { logicalId?: string; corpusVersion?: string; fragmentSha256?: s
 type Point = { id: string; payload?: Metadata };
 
 /** Reads metadata only, including unexpected versions. Nonzero exit signals a failed release gate. */
-export async function auditCollection(collection: string) {
+export async function auditCollection(collection: string, mode?: "build") {
   const base = requireEnv("QDRANT_URL").replace(/\/$/, "") + "/collections/" + encodeURIComponent(collection);
   const headers = { "api-key": requireEnv("QDRANT_KNOWLEDGE_READ_KEY"), "content-type": "application/json" };
   async function request(path: string, body?: object) {
@@ -68,7 +68,7 @@ export async function auditCollection(collection: string) {
   });
   const missing = versions.reduce((sum, version) => sum + version.missing, 0);
   const ok = compatible && !extra && !duplicates && !changed && !missing;
-  return { commit: execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim(), collection,
+  return { commit: mode === "build" ? "build" : execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim(), collection,
     modelConfigured: process.env.QDRANT_EMBED_MODEL || DEFAULT_EMBED_MODEL, compatible, manifests:versions, counts,
     matched: matched.size, missing, extra, duplicates, changed, ok };
 }

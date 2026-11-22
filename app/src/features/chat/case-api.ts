@@ -1,12 +1,12 @@
-import type { MessageInput as WireMessageInput } from "@/lib/zusik/v1/conversation";
+import type { Message, MessageInput as WireMessageInput } from "@/lib/zusik/v1/conversation";
 import type { CaseDocument, CaseFile, DocInput, EvidenceFact, Patch, Profile, Proposal } from "@/lib/zusik/memory/contract";
 
 export type MessageInput = WireMessageInput;
 
-export type Citation = { kind: "public_source" | "fact" | "document" | "assessment" | "workflow"; ref: string; version: string; page?: number; publicUrl?: string };
-export type CaseMessage = { id: string; input: MessageInput; state: "completed" | "processing" | "failed"; answer?: string; errorCode?: string; citations: Citation[]; caseRevision: number; profileRevision: number };
+export type Citation = Message["citations"][number];
+export type CaseMessage = Omit<Message, "state"> & { state: "completed" | "processing" | "failed"; errorCode?: string };
 export type AssessmentInput = { subjectId: string; benefit: string; asOf: string; caseRevision: number; profileRevision: number };
-type DecisionTrace = Pick<import("@/lib/rules/case-assessment").DecisionResult, "segments" | "titleRef" | "payerRef">;
+type DecisionTrace = Pick<import("@/lib/rules/case-assessment").DecisionResult, "segments" | "titleRef" | "payerRef" | "payer" | "paymentStatus">;
 export type Decision = DecisionTrace & { status: "eligible" | "ineligible" | "needs_information" | "needs_review" | "unsupported"; subjectId: string; benefit: string;
   from?: string; to?: string; reasonCode: string; amountStatus: "calculated" | "needs_information" | "needs_review" | "not_applicable" | "unsupported";
   grossAmountGrosze?: number; amountPeriod?: "total" | "monthly" | "daily"; citations: Citation[]; needed?: { field: string; request: string }[] };

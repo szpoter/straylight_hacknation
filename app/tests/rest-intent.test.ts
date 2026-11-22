@@ -21,3 +21,26 @@ it("preserves a public follow-up and the source of a private answer",()=>{
   expect(routeCaseQuestion("Na czyje konto?",{facts:[],lastMessage})).toMatchObject({input:{intent:"public_question",replyTo:"m"}});
   expect(routeCaseQuestion("Dlaczego?",{facts:[],lastMessage:{...lastMessage,input:{intent:"read_context"}}})).toMatchObject({input:{intent:"ask_case",topic:"previous_sources",replyTo:"m"}});
 });
+
+it("retains the change of public programme across the browser and HTTP boundary",()=>{
+  const lastMessage = {id:"prior",input:{intent:"public_question"},citations:[]};
+  expect(routeCaseQuestion("Nie, chodzi mi o Dobry Start.",{facts:[],lastMessage})).toEqual({
+    input:{intent:"public_question",publicQuestion:"Chodzi mi o Dobry Start.",replyTo:"prior"}});
+});
+
+const privateHistory = {id:"private",input:{intent:"ask_case"},citations:[]};
+it.each([
+  ["Jakie świadczenie wynika z załączonych dokumentów?", {facts:[],hasDocuments:true}],
+  ["Czy zasiłek macierzyński przysługuje?", {facts:[],lastMessage:privateHistory}],
+  ["Na czyje konto pójdzie przelew za żłobek w tej sprawie?", {facts:[fact]}],
+])("keeps ambiguous case questions local: %s",(question,context)=>{
+  expect(routeCaseQuestion(question as string,context as Parameters<typeof routeCaseQuestion>[1])).toMatchObject({input:{intent:"ask_case"}});
+});
+it("can explicitly ask about public rules in an open private case",()=>{
+  const ctx = {facts:[fact],hasDocuments:true,lastMessage:privateHistory};
+  for (const question of ["Komu ZUS wypłaca świadczenie aktywnie w żłobku?", "Ogólnie, jak długo trwa urlop ojcowski?"]) {
+    const result = routeCaseQuestion(question,ctx);
+    expect(result).toMatchObject({input:{intent:"public_question"}});
+    expect(JSON.stringify(result)).not.toContain(privateHistory.id);
+  }
+});
