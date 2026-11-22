@@ -6,7 +6,7 @@
 
 | Miejsce w briefie | Co musi dać się zrobić | Jak pokażemy to w zwykłym czacie |
 |---|---|---|
-| Materiały dla zespołu, s. 12–13 | Z akt można ustalić, o co ubiega się osoba, co złożyła i czy ZUS przyznał świadczenie. Akta przeznaczono do pracy konkursowej. | Prywatny test używa oryginału na urządzeniu jurora lub testera. Publiczny przycisk przykładu otwiera wymyśloną sprawę przygotowaną przez zespół. |
+| Materiały dla zespołu, s. 12–13 | Z akt można ustalić, o co ubiega się osoba, co złożyła i czy ZUS przyznał świadczenie. Akta przeznaczono do pracy konkursowej. | Prywatny test używa oryginału na urządzeniu jurora lub testera. Przy publicznych próbach używamy własnych syntetycznych plików. Kafelki czatu uruchamiają zwykłe pytanie bez wczytania danych przykładowej rodziny. |
 | Rozdz. 3 a, h | Rozpoznać świadczenia związane z ciążą, brak uprawnień i ryzyka. | Rodzic dostaje osobny wynik za każdy oceniany okres oraz przyczynę odmowy, wskazanie braku lub informację o dalszym świadczeniu. |
 | Rozdz. 3 b–f i j | Policzyć okres i kwotę według danych tej osoby. Uwzględnić oboje rodziców, liczbę i wiek dzieci, „Za życiem”, pracę, adopcję i pieczę. | Użytkownik widzi podstawę, okres, stawkę, rachunek i oba warianty na życzenie. Jedna sprawa może zawierać kilka świadczeń i kilka odrębnych wyników. |
 | Rozdz. 3 g, i | Wyjaśnić dokumenty, termin, właściwego odbiorcę i w szczególnych sytuacjach wskazać wsparcie. | Pytanie „co teraz?” korzysta z tego samego wyniku, wskazuje właściwy formularz i odbiorcę, a w trudnej sytuacji daje możliwość otwarcia istniejącego katalogu pomocy. |

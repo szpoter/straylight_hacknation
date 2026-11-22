@@ -12,7 +12,7 @@ Rodzic wybiera formularz albo pełny pakiet skanów bezpośrednio w oknie rozmow
 | [Lokalny indeks akt](../../app/scripts/private-case-index.py) | Na komputerze testera PDFKit i Vision wydobywają tekst i numer strony. SQLite pomaga odnaleźć materiał do ręcznego opisu i porównać błędy OCR. | Kod wymaga macOS i operuje na prywatnym katalogu. Wdrożenie na Vercelu nie może zależeć od obecności tego komputera, bazy SQLite ani Ollamy. |
 | [Zasoby OCR](../../app/scripts/copy-ocr-assets.mjs), [opis wdrożenia](../../app/ARCHITECTURE.md) | Istnieją worker PDF, worker OCR i polski model dostarczane przez aplikację | Próba odbiorowa musi objąć zimne otwarcie i pobranie zasobów z rzeczywistego demo. |
 
-Przed modyfikacją zachować testy istniejących formatów. Wprowadzić osobny tryb odczytu całej sprawy, korzystający ze wspólnych funkcji PDF/OCR. Zmiana samego limitu w jednym miejscu nadal zostawiłaby parser demonstracyjny, limit w API i ryzyko utraty dalszych stron.
+W zwykłej rozmowie działa [lokalny czytnik całego PDF](../../app/src/features/chat/read-case-pdf.ts) i [wyszukiwanie fragmentów](../../app/src/features/chat/find-case-passages.ts). Obecne granice to 128 stron i 20 MiB. Czytnik próbuje uzyskać tekst, a na stronach z ubogą warstwą tekstową uruchamia OCR. Przy dalszej pracy zachować ten punkt wejścia oraz testy specjalistycznych formatów. Następny krok to strukturalne dane z dokumentu z oznaczeniem pochodzenia i roli każdej strony. Zmiana samego limitu w jednym miejscu nadal zostawiłaby parser demonstracyjny, limit w API i ryzyko utraty dalszych stron.
 
 ## Kolejność wdrożenia
 

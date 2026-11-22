@@ -9,6 +9,12 @@
 3. Losowanie z utrwalonym ziarnem wykonuje osoba przygotowująca test; zbiór i klucz pozostają prywatne. Każdy pakiet trafia finalnie do pełnego przebiegu regresji. Jeśli zespół dostroił aplikację po obejrzeniu odłożonego błędu, następny pomiar na tym przykładzie jest regresją. Jako nową próbę wykorzystujemy nadal niewidziane rodziny albo nowe syntetyczne dokumenty zweryfikowane przez drugą osobę.
 4. Dla każdej rodziny przygotować dwa pytania bez podpowiedzi nazwy świadczenia, jedno o konkretną kwotę lub okres i naturalny follow-up, np. „dlaczego?”, „od kiedy?”, „co mam dołączyć?”. Oddzielnie ocenić zadanie „wyjaśnij załączoną decyzję” i „policz na podstawie wniosku”. W drugim trybie wyłączyć decyzję i końcowe rozliczenie z wejścia; uwzględniać wcześniejsze zdarzenia będące legalnym dowodem historii.
 
+**Znane dane z nowego kalkulatora.** Trzy presety i dwa dalsze przykłady liczbowe opisane w dokumentacji służą regresji istniejącego silnika. Oznaczyć odpowiadające im pakiety jako znane. Przy tych samych potwierdzonych danych porównać wynik czatu i strony kalkulatora dla osoby, okresu, kwoty miesięcznej, brutto i założeń. Zbadać odrębnie odczyt z nowego PDF bez danych demo i ochronę przed użyciem kwot domyślnych. [Opis pięciu przykładów](../../ui/KALKULATOR.md) · [Test formularza](../../app/tests/benefit-form.test.ts)
+
+**Pięć dróg do rozmowy.** W osobnych, świeżych sesjach uruchomić każdy z trzech kafelków, wysłać odrębną wiadomość i dołączyć sam PDF. Dla kafelka sprawdzić treść wiadomości, pojedyncze wywołanie, pozostanie w czacie oraz brak danych imiennej rodziny. Dla pliku sprawdzić też pytanie dopisane przed dołączeniem, ponowne otwarcie i późniejsze uzupełnienie. Powtórzyć na desktopie i telefonie.
+
+**Punkt odniesienia po integracji 2d0b137.** W pełnym lokalnym buildzie trzy pierwsze wiadomości przeszły zwykłym API i zwróciły odpowiedź w tej samej rozmowie. W świeżej sesji bez logowania działają /app/rozmowa oraz pusty /app/kalkulator. Chrome odczytał kwotę 9352,48 zł ze sztucznego tekstowego PDF i 2847,91 zł z syntetycznego skanu. W obu przypadkach wskazana była właściwa strona, a plik i pytanie o jego zawartość pozostały lokalne. Przeszło 419 testów repozytorium, lint oraz build. Te dwie kwoty pochodziły z tekstu dokumentów. Niezależne obliczenie kwoty z akt pozostaje osobną próbą odbiorową.
+
 ## Warstwy testu i kolejność wykonania
 
 | Kolejność i właściciel | Próba | Co zapisać przy rozbieżności |
