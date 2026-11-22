@@ -10,6 +10,7 @@ const plausible: Record<string, { value: number; validFrom: string }> = {
   "rate.averaged": { value: 800, validFrom: "2027-01-01" },
   "payer.insuredThreshold": { value: 30, validFrom: "2027-01-01" },
   "wage.minimum": { value: 5000, validFrom: "2027-01-01" },
+  "benefit.parentalMinimum": { value: 1200, validFrom: "2027-01-01" },
   "form.ZAM": { value: 0, validFrom: "2027-03-01" },
   "form.ZUR": { value: 1, validFrom: "2027-01-01" },
 };
@@ -58,7 +59,10 @@ describe("amount test cases", () => {
       ["R-05", "brak-danych"],
     ]);
     const after = rateTestCases({ "rate.parental": [{ value: 750, validFrom: "2027-01-01" }] });
-    expect(after[0].status).toBe("niezgodna");
+    expect(after[0].status).toBe("do-aktualizacji");
+    expect(after[0].outdatedBy).toContain("75% od 01.01.2027");
+    // Maternity cases do not depend on the parental rate.
+    expect(after[1].status).toBe("zgodna");
     expect(after[0].result.at(-1)?.value.replace(/ /g, " ")).toBe("4 200,00 zł");
   });
 });

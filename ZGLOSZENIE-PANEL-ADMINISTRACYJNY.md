@@ -23,7 +23,7 @@ Panel pozwala osobie odpowiedzialnej za zasady wyliczania świadczeń zmienić p
 3. Ustaw 1 tydzień od 01.12.2026, wpisz podstawę, kliknij „Zapisz szkic” i „Sprawdź zmianę”. Wszystkie przypadki są zgodne.
 4. Kliknij „Zaplanuj zmianę od 01.12.2026”. Zmiana pojawia się w „Historii zmian” z autorem, datą i podstawą.
 5. W tej samej przeglądarce otwórz `/app/kamil` i poproś o dwa tygodnie od 8 grudnia. Asystent odpowiada „Zostało Ci 7 dni”, a bez zmiany przyznaje 8–21 grudnia.
-6. Przykład z treści zadania: „Reguły świadczeń” → „Stawki” → „Zasiłek macierzyński za okres urlopu rodzicielskiego: stawka” → „Przygotuj zmianę”. Wpisz 75% od 01.01.2027. Wpływ pokazuje 3 920,00 zł → 4 200,00 zł, czyli +280,00 zł.
+6. Przykład z treści zadania: „Reguły świadczeń” → „Stawki” → „Zasiłek macierzyński za okres urlopu rodzicielskiego: stawka” → „Przygotuj zmianę”. Wpisz 75% od 01.01.2027. Wpływ pokazuje 3 920,00 zł → 4 200,00 zł, czyli +280,00 zł. Po publikacji „Sprawy testowe” oznaczają R-01 i R-04 jako „Do aktualizacji” i podają, która zmiana zmieniła ich wynik.
 7. „Historia zmian” → „Przywróć wartości początkowe”. Kolejna sesja i tak zaczyna od wartości z kodu.
 
 ## Sztuczna inteligencja
@@ -48,6 +48,7 @@ Panel nie używa AI. Wartości, sprawdzenia i wyniki spraw testowych liczy kod r
 
 ## Czego jeszcze nie ma
 
-- Zmieniona stawka, próg płatnika i statusy formularzy działają w regułach i panelu, ale ekrany rodzica (kalkulator, dokumenty) jeszcze z nich nie korzystają.
+- Zmieniona stawka, kwota świadczenia rodzicielskiego, próg płatnika, statusy formularzy i organizacje wsparcia działają w regułach i panelu, ale ekrany rodzica (kalkulator, dokumenty, wsparcie) jeszcze z nich nie korzystają.
+- Reguła podwyższenia nie liczy zaliczki na podatek: przyjmuje zasiłek po zaliczce jako daną.
 - Odczyt wgranego wniosku PDF w „Sprawach testowych”.
 - Zmiana parametrów urlopu rodzicielskiego tym samym mechanizmem.

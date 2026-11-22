@@ -187,7 +187,8 @@ describe("catalogue after publication", () => {
     const k07 = (schedule = {}) => paternityTestCases(schedule).find((c) => c.id === "K-07");
     expect(k07()?.status).toBe("zgodna");
     const changed = k07(scheduleOf(published(21, "2026-12-01")));
-    expect(changed?.status).toBe("niezgodna");
+    expect(changed?.status).toBe("do-aktualizacji");
+    expect(changed?.outdatedBy).toContain("21 dni od 01.12.2026");
     expect(changed?.result[0]).toEqual({ label: "Wynik", value: "przysługuje" });
   });
 });

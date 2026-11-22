@@ -81,7 +81,7 @@ export function searchItems<T>(items: readonly T[], query: string, fields: (item
 
 /** Searchable fields of a test case, shared by the view and the tests. */
 export function caseSearchFields(c: TestCase): SearchField[] {
-  const statusLabel = { zgodna: "zgodna", niezgodna: "niezgodna", "brak-danych": "brak danych" }[c.status];
+  const statusLabel = { zgodna: "zgodna", niezgodna: "niezgodna", "do-aktualizacji": "do aktualizacji", "brak-danych": "brak danych" }[c.status];
   return [
     { text: c.id, weight: 5 },
     { text: c.title, weight: 4 },

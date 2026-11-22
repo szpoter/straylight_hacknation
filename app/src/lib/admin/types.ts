@@ -56,7 +56,8 @@ export interface Parameter {
   details?: { label: string; value: string }[];
 }
 
-export type CaseStatus = "zgodna" | "niezgodna" | "brak-danych";
+/** "do-aktualizacji": matches on the initial values, differs only because of a change published in this session. */
+export type CaseStatus = "zgodna" | "niezgodna" | "do-aktualizacji" | "brak-danych";
 
 export interface TestCase {
   id: string;
@@ -67,6 +68,8 @@ export interface TestCase {
   expected: { label: string; value: string }[];
   result: { label: string; value: string }[];
   missing?: string;
+  /** For "do-aktualizacji": the published change that moved the result away from the expectation. */
+  outdatedBy?: string;
   /** Reasons returned by the rule, in order. */
   reasons?: string[];
   /** Rule and version that produced the result. */
