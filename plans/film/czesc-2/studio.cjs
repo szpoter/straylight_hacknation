@@ -37,7 +37,10 @@ async function openStudio() {
     last=await page.screenshot({type:'jpeg',quality:94});
     recording=name; frames=0; zero=performance.now(); marks=[];
     active=true;
-    capture=(async()=>{while(active){const shot=await lens.screenshot({type:'jpeg',quality:94,timeout:15000}); flush(); last=shot;}})();
+    capture=(async()=>{while(active){const current=lens;
+      try {const shot=await current.screenshot({type:'jpeg',quality:94,timeout:4500});flush();last=shot;}
+      catch(error){if(page.isClosed())throw error;flush();await wait(65);}
+    }})();
     await wait(2050);
   }
   async function stop() {

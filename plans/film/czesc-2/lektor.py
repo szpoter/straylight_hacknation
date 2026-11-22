@@ -13,13 +13,15 @@ voice = run_path(str(HERE.parent / "montaz/glosy.py"))["VOICES"]["narrator"]
 lines = {"proba-a": "Za listopad trzy tysiące czterysta dwadzieścia trzy złote.",
          "proba-b": "Przełączmy. Teraz cztery tysiące dwieście."}
 table = (ROOT / "PLAN-FILMU-DEMO.md").read_text().split("### Scenopis nagrania i polski lektor")[1].split("**Próba")[0]
-for n, sentence in enumerate(re.findall(r'\| „(.+)” \|', table), 1):
+for n, sentence in enumerate(re.findall(r'\| „([^|]+)” \|', table), 1):
     lines[f"{n:02}"] = sentence
 assert len(lines) == 12
+# The recorded first answer has no citation. The follow-up cites the application requirements.
+lines["04"] = "Marta pyta Zusika: przy sześciu tysiącach podstawy, ile dostanę za listopad w obu wariantach? Zusik nie wylicza kwoty. Po dodatkowym pytaniu pokazuje przepis o tym, co powinien zawierać wniosek."
 key = next(row.split("=", 1)[1].strip().strip("\"'") for row in (ROOT / ".env.elevenlabs.local").read_text().splitlines() if row.startswith("ELEVENLABS_API_KEY="))
 for name in sys.argv[1:]:
     out = HERE / "glos" / (name + ".mp3")
-    if out.exists():
+    if out.exists() and out.with_suffix('.json').exists() and ''.join(json.loads(out.with_suffix('.json').read_text())['characters']) == lines[name]:
         continue
     body = dict(text=lines[name], language_code="pl", model_id="eleven_multilingual_v2",
                 voice_settings=dict(stability=.59, similarity_boost=.76, speed=1.05))
