@@ -1,0 +1,16 @@
+{
+  "name": "przewodnik-rodzica-film",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "animejs": "^4.0.0",
+    "gsap": "^3.13.0",
+    "konva": "^10.0.0",
+    "planck": "^1.4.0",
+    "scenejs": "^1.10.0",
+    "remotion": "^4.0.0",
+    "@remotion/player": "^4.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}
