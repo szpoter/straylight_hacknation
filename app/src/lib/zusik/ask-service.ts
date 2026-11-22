@@ -1,7 +1,7 @@
 import { citationUrl, isValidOn, normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { cardPrefix, catalogPrompt, listOpportunities, opportunityQuestion } from "../plan/opportunities";
 import type { ChatModelOptions } from "./chat-model";
-import { localModelIds, type PublicTaskInput } from "../rag/model-tasks";
+import type { PublicTaskInput } from "../rag/model-tasks";
 import type { runPublicModelTask } from "../rag/local-queue";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { checkCitedSources } from "../rag/source-check";
@@ -311,8 +311,6 @@ export async function answerQuestion(
   trace.proposedStatus = generated.output?.status ?? null;
   trace.finishReason = generated.finishReason ?? null;
   if (generated.status !== "ok" || !generated.output) {
-    if (generated.model === "qwen-27b")
-      return { answer: plain("unavailable", "Qwen 3.8 27B (LM Studio) nie wygenerował odpowiedzi. Możesz ponowić próbę."), trace };
     // An unusable generation can still leave an exact, reviewed statute already retrieved.
     const quote = extractiveAnswer(corpus, projected, fragments, [...confirmed], evidence.vectorIds);
     if (quote) trace.quoteReason = "model_unavailable";
@@ -353,10 +351,6 @@ export async function answerPublicTurn(deps: AnswerDeps, text: string, history: 
   const result = await resolvePublicTurn(deps, text, history, onProgress, family);
   const { answer, trace } = result;
   const notes = [];
-  if (trace.modelId === localModelIds["qwen-27b"] && trace.model === "ok")
-    notes.push(`Źródła przeanalizował ${trace.modelId} w LM Studio.`);
-  else if (deps.selectedModel === "qwen-27b" && trace.model === "skipped" && answer.citations.length)
-    notes.push("Odpowiedź pochodzi bezpośrednio ze źródeł. Model nie był wywoływany.");
   if (trace.modelId === "pllum" && trace.model !== "ok" && answer.citations.length)
     notes.push("PLLuM nie wygenerował tej odpowiedzi. Pokazuję sprawdzone fragmenty źródeł.");
   if (deps.extraVerification && answer.citations.length && deps.selectCorpus) {
@@ -459,7 +453,7 @@ export class AskService {
       if (claim.kind === "claimed") token = claim.token;
       else if (claim.kind === "done") return { status: 200, turn: claim.turn, trace: null };
       else if (claim.kind === "conflict") return { status: 409, turn: null, trace: null };
-      else if (this.deps.selectedModel === "qwen-27b" || Date.now() >= deadline) return { status: 202, turn: null, trace: null };
+      else if (Date.now() >= deadline) return { status: 202, turn: null, trace: null };
       else await sleep(200);
     }
 

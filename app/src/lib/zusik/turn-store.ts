@@ -60,7 +60,7 @@ function toTurn(row: TurnRow): AskTurn {
 }
 
 export class PgTurnStore implements TurnStore {
-  constructor(private readonly pool: Pool, private readonly leaseSeconds = TURN_LEASE_SECONDS) {}
+  constructor(private readonly pool: Pool) {}
 
   async claim(threadId: string, requestId: string, questionHash: string, question: string): Promise<ClaimResult> {
     const token = newTurnToken();
@@ -68,7 +68,7 @@ export class PgTurnStore implements TurnStore {
       `INSERT INTO ${T} (thread_id, request_id, question_hash, question, status, op_token, lease_until)
        VALUES ($1, $2, $3, $4, 'pending', $5, now() + make_interval(secs => $6))
        ON CONFLICT (thread_id, request_id) DO NOTHING RETURNING id`,
-      [threadId, requestId, questionHash, question, token, this.leaseSeconds],
+      [threadId, requestId, questionHash, question, token, TURN_LEASE_SECONDS],
     );
     if (inserted.rowCount === 1) return { kind: "claimed", token };
 
@@ -86,7 +86,7 @@ export class PgTurnStore implements TurnStore {
     const taken = await this.pool.query(
       `UPDATE ${T} SET op_token = $3, lease_until = now() + make_interval(secs => $4)
        WHERE thread_id = $1 AND request_id = $2 AND status = 'pending' AND lease_until < now()`,
-      [threadId, requestId, token, this.leaseSeconds],
+      [threadId, requestId, token, TURN_LEASE_SECONDS],
     );
     return taken.rowCount === 1 ? { kind: "claimed", token } : { kind: "pending" };
   }

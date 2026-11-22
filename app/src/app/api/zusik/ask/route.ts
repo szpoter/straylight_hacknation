@@ -1,4 +1,4 @@
-import { chatModelOptions, publicTurnBudgetMs } from "@/lib/zusik/chat-model";
+import { chatModelOptions } from "@/lib/zusik/chat-model";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { MAX_QUESTION_LENGTH } from "@/lib/rag/query";
@@ -10,7 +10,8 @@ import { caseNames } from "@/lib/zusik/conversation";
 import { isSameOrigin } from "@/lib/zusik/session";
 
 export const runtime = "nodejs";
-export const maxDuration = 125;
+// Bielik needs up to ~40 s for a cited answer (see ASK_TIMEOUT_MS).
+export const maxDuration = 60;
 
 // Unknown fields (e.g. a threadId sent by the browser) are stripped and ignored.
 const bodySchema = z.object({
@@ -39,7 +40,8 @@ export async function POST(request: Request) {
   try {
     const sessionId = await currentSessionId();
     if (!sessionId) return Response.json({ error: "no_session" }, { status: 401, headers: NO_STORE });
-    const service = askService(started + publicTurnBudgetMs(parsed.data.modelOptions?.model, 55_000), parsed.data.modelOptions);
+    // Keep five seconds of the function budget for committing the turn and returning the stream.
+    const service = askService(started + (maxDuration - 5) * 1000, parsed.data.modelOptions);
     const { question, requestId } = parsed.data;
     const run = async (progress?: (value: string) => void, verified?: (turn: AskTurn) => void) => {
       const result = await service.ask(sessionId, question, requestId, progress, verified, parsed.data.scenario, parsed.data.family);
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
         advisory: trace.advisory,
         evidence: trace.evidenceIds,
         backend: trace.backend ?? null,
-        model: trace.modelId === "qwen-27b" ? null : trace.modelId ?? null,
+        model: trace.modelId ?? null,
         attemptId: trace.attemptId ?? null,
         quoteReason: trace.quoteReason,
       } : null;

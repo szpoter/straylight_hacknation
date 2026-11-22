@@ -49,7 +49,7 @@ function world(options: { search?: VectorSearchResult; model?: GenerationResult;
     if (options.slowModelMs) await new Promise((r) => setTimeout(r, options.slowModelMs));
     return options.model ?? { status: "ok", output: ODPIS_MODEL, model: "bielik-test", ms: 30 };
   };
-  const ask = (selectedModel?: AskServiceDeps["selectedModel"]) => new AskService({ store, turns, corpus, search, generate, selectedModel, readMarta: options.readMarta, asOf: () => "2026-11-21", pendingWaitMs: 2_000 });
+  const ask = () => new AskService({ store, turns, corpus, search, generate, readMarta: options.readMarta, asOf: () => "2026-11-21", pendingWaitMs: 2_000 });
   const probe = () => {
     const fake = fakeProviders();
     return new ProbeService({ store, turns, checkpointer: saver, providers: fake.providers, leaseWaitMs: 2_000 });
@@ -199,19 +199,6 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     const [a, b] = await Promise.all([service.ask("s", Q_ODPIS, "req-dbl-00001"), service.ask("s", Q_ODPIS, "req-dbl-00001")]);
     expect([a.status, b.status]).toEqual([200, 200]);
     expect(a.turn).toEqual(b.turn);
-    expect(w.calls.sherlock).toBe(1);
-  });
-
-  it("returns a pending Qwen duplicate immediately and replays its owner's saved turn", async () => {
-    const w = world({ slowModelMs: 150 });
-    const service = w.ask("qwen-27b");
-    const [owner, duplicate] = await Promise.all([
-      service.ask("s", Q_ODPIS, "req-qwen-retry"),
-      service.ask("s", Q_ODPIS, "req-qwen-retry"),
-    ]);
-    expect(duplicate).toMatchObject({ status: 202, turn: null });
-    expect(owner.status).toBe(200);
-    expect((await service.ask("s", Q_ODPIS, "req-qwen-retry")).turn).toEqual(owner.turn);
     expect(w.calls.sherlock).toBe(1);
   });
 

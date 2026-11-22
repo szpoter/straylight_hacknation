@@ -80,7 +80,7 @@ it("retains the second facet even when one confirmed provision answers both ques
   expect(plan?.searchText).toMatch(/formie/iu);
 });
 
-it("queues both facets for the selected Qwen and cites their shared source from either input", async () => {
+it("queues both facets for the selected PLLuM and cites their shared source from either input", async () => {
   const text = "Kiedy można złożyć wniosek na kolejny okres 800+ oraz które miesiące obejmuje ten okres?";
   const wire = projectPublicPair(text)?.question ?? "";
   const corpus = loadCorpus("oferta");
@@ -94,12 +94,12 @@ it("queues both facets for the selected Qwen and cites their shared source from 
     const {answer, trace} = await answerQuestion({
       corpus, selectCorpus:loadCorpus, searchCorpus,
       search:{search:async () => ({status:"ok",ms:0,hits:[{...source,score:1}]})},
-      generate:(q, evidence, pack) => generateAnswer({selectedModel:"qwen-27b", queue,
+      generate:(q, evidence, pack) => generateAnswer({selectedModel:"pllum", queue,
         hosted:() => { throw Error("Unexpected hosted model"); }}, pack, q, evidence),
     }, question);
     expect(client.query.mock.calls[0]).toEqual(["select zusik_model.submit($1,$2,$3)",
-      [expect.any(String), "qwen-27b", expect.stringContaining(wire)]]);
-    expect(trace).toMatchObject({backend:"local-qwen-27b", modelId:"qwen/qwen3.8-27b", attemptId:expect.any(String)});
+      [expect.any(String), "pllum", expect.stringContaining(wire)]]);
+    expect(trace).toMatchObject({backend:"local-pllum", modelId:"pllum", attemptId:expect.any(String)});
     expect(trace.calls).toEqual({qdrant:1,sherlock:1});
     expect(trace.model).toBe("ok");
     expect(trace.report?.removedClaims).toBe(0);

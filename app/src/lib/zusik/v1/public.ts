@@ -1,4 +1,4 @@
-import { publicTurnBudgetMs, type ChatModelOptions } from "../chat-model";
+import { type ChatModelOptions } from "../chat-model";
 import sources from "../../../../corpus/official-sources.json";
 import { publicQuestion } from "../../rag/public-query";
 import { isReviewedProjection, publicLookupTitle, type PublicLookup } from "../../rag/ranked-lookup";
@@ -11,7 +11,7 @@ import { sourceIntent } from "../context-answer";
 import { ApiProblem } from "./http";
 import type { Message } from "./conversation";
 
-export async function publicReply(question: string, previous?: Message, options?: ChatModelOptions, lookup?: PublicLookup, requestStarted = Date.now()) {
+export async function publicReply(question: string, previous?: Message, options?: ChatModelOptions, lookup?: PublicLookup) {
   if (lookup && ((!isReviewedProjection(question) && publicLookupTitle(lookup) !== question) || !knownPublicLookup(lookup.ids, lookup.terms))) {
     throw new ApiProblem(422, "invalid_public_evidence");
   }
@@ -23,8 +23,7 @@ export async function publicReply(question: string, previous?: Message, options?
   const {text,reply} = conversationInput(question,"ogolna");
   if (reply) return {answer:reply,citations:[], ...(previous?.input.intent === "public_question" && !chatStarters.some(s => s.prompt === text)
     ? {contextMessageId:previous.id} : {})};
-  const start = options?.model === "qwen-27b" ? requestStarted : Date.now();
-  const deps = {...publicAnswerDeps(start + publicTurnBudgetMs(options?.model, 48_000), options), publicLookup:lookup};
+  const deps = {...publicAnswerDeps(Date.now() + 48_000, options), publicLookup:lookup};
   const history: AskTurn[] = [];
   if (previous?.input.intent === "public_question") {
     const citations = previous.citations.flatMap(c => {
@@ -36,9 +35,9 @@ export async function publicReply(question: string, previous?: Message, options?
     history.push({requestId:previous.id,question:projected ?? "",publicQuery:projected,status:citations.length ? "answered":"needs_clarification",
       message:"",citations,claims:[],createdAt:"",corpusVersion:citations[0]?.corpusVersion ?? ""});
   }
-  const {answer, trace} = await answerPublicTurn(deps,text,history);
+  const {answer} = await answerPublicTurn(deps,text,history);
   if (answer.status === "unavailable")
-    throw new ApiProblem(503, trace.modelId === "qwen-27b" ? "selected_model_unavailable" : "public_source_unavailable");
+    throw new ApiProblem(503, "public_source_unavailable");
   const opportunities = answer.opportunities?.flatMap(card => {
     const citationIds = answer.citations.filter(c=>card.citationIds.includes(c.id)).map(c=>c.fragmentId);
     return citationIds.length ? [{...card,citationIds}] : [];

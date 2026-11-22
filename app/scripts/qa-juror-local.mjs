@@ -58,7 +58,7 @@ async function start() {
       server.stdout.on("data", chunk => { if (chunk.toString().includes("Ready")) { clear(); ok(); } });
     });
     const profile = noIP + '(allow network-outbound (remote ip "localhost:' + port + '"))';
-    const child = spawnSync(sandbox, ["-p", profile, process.execPath, script, switchName], {cwd:app,
+    const child = spawnSync(sandbox, ["-p", profile, process.execPath, script, switchName, builtApp], {cwd:app,
       stdio:"inherit", env:{ PATH:process.env.PATH, HOME:homedir(), TMPDIR:process.env.TMPDIR || "/tmp", QA_JUROR_ORIGIN:origin }});
     process.exitCode = child.status ?? 1;
   } finally { server.kill(); }
@@ -89,12 +89,31 @@ async function privateDraw() {
   return bytes;
 }
 
-function permitted(request, origin, headers = request.headers()) {
+// Only replay route chunks already requested while opening this chat, before attaching a file.
+async function localRouteScript(pathname, builtApp) {
+  const decoded = pathname.replace(/%(?:28|29|5b|5d)/gi, code => decodeURIComponent(code));
+  const prefix = "/_next/static/";
+  if (!decoded.startsWith(prefix + "chunks/app/") || !/[()[\]]/.test(decoded)) return null;
+  const parts = decoded.slice(prefix.length).split("/");
+  if (!parts.every(part => /^[\w()[\].-]+$/.test(part) && part !== "." && part !== "..") ||
+    !/^[\w.-]+-[a-f0-9]+\.js$/.test(parts.at(-1))) return null;
+  const file = path.join(builtApp, ".next/static", ...parts);
+  try {
+    if (await realpath(file) !== file || !(await lstat(file)).isFile()) return null;
+    return await readFile(file);
+  } catch (error) {
+    if (error.code === "ENOENT" || error.code === "ENOTDIR") return null;
+    throw error;
+  }
+}
+
+function permitted(request, origin, headers = request.headers(), localScripts) {
   const url = new URL(request.url()), method = request.method(), body = request.postData() || "";
   const wire = request.url() + body + JSON.stringify(headers);
   if (url.origin !== origin || /QA-JUROR-FICTION|%PDF-|JVBERi0|public_question|publicQuestion/i.test(wire)) return false;
   const p = url.pathname;
   if (method === "GET") {
+    if (localScripts?.has(p) && !url.search && url.hostname === "127.0.0.1" && request.resourceType() === "script") return true;
     if (p.startsWith("/_next/static/") && /^\?dpl=dpl_[a-zA-Z0-9]+$/.test(url.search)) return /^[\w./-]+$/.test(p);
     if (url.search && !(p === "/app/rozmowa" && uuid.test(url.searchParams.get("sprawa") || "") &&
       Array.from(url.searchParams.keys()).length === 1)) return false;
@@ -119,6 +138,7 @@ async function exercise(browser, origin, buffer, real, cookies = []) {
   const context = await browser.newContext({viewport:{width:1365,height:880}, serviceWorkers:"block", acceptDownloads:false});
   let requests = 0, blocked = 0, workers = 0, active = false;
   const assets = new Set();
+  const localScripts = new Map();
   let toolbarSuppressed = 0;
   const relay = remote ? previewRelay(context,origin,cookies,createHash("sha256").update(buffer).digest()) : null;
   try {
@@ -131,10 +151,17 @@ async function exercise(browser, origin, buffer, real, cookies = []) {
         toolbarSuppressed++;
         return route.abort();
       }
-      if (target.origin !== origin || (active || remote && target.pathname.startsWith("/api/")) && !permitted(request,origin,await request.allHeaders())) {
+      if (!remote && !active && target.origin === origin && request.method() === "GET" && request.resourceType() === "script" && !target.search) {
+        const bytes = await localRouteScript(target.pathname, process.argv[3]);
+        if (bytes) localScripts.set(target.pathname, bytes);
+      }
+      if (target.origin !== origin || (active || remote && target.pathname.startsWith("/api/")) && !permitted(request,origin,await request.allHeaders(),localScripts)) {
         if (!real) console.error("Synthetic preflight blocked", request.method(), request.resourceType(),
           target.origin === origin ? "same origin" : target.hostname === "vercel.live" ? "Vercel toolbar" : "other origin", active ? "during trial" : "before attachment");
         blocked++; return route.abort();
+      }
+      if (localScripts.has(target.pathname) && !target.search && request.method() === "GET" && request.resourceType() === "script") {
+        return route.fulfill({ contentType: "application/javascript", body: localScripts.get(target.pathname) });
       }
       if (target.pathname.startsWith("/ocr/") || target.pathname.startsWith("/pdfjs/")) assets.add(target.pathname);
       requests++;
@@ -268,6 +295,15 @@ async function run() {
   assert.equal(permitted(forbiddenRequest(origin + "/api/v1/sessions?file=" + marker, ""), origin), false);
   assert.equal(permitted(forbiddenRequest(origin + "/api/v1/cases/" + "a".repeat(36) + "/messages",
     JSON.stringify({intent:"public_question", publicQuestion:marker})), origin), false);
+  const routePath = "/_next/static/chunks/app/(parent)/%5Bslug%5D/page-abc123.js";
+  const seen = new Set([routePath]);
+  const scriptRequest = url => ({ ...forbiddenRequest(url, ""), method: () => "GET", resourceType: () => "script" });
+  assert.ok(permitted(scriptRequest(origin + routePath), origin, {}, seen));
+  assert.ok(!permitted(scriptRequest(origin + routePath + "?extra=1"), origin, {}, seen));
+  assert.ok(!permitted(scriptRequest(origin + routePath), origin, {}, new Set()));
+  assert.ok(!permitted(scriptRequest(origin + routePath), origin, { "x-test":marker }, seen));
+  assert.ok(!permitted(scriptRequest("https://example.invalid" + routePath), "https://example.invalid", {}, seen));
+  assert.equal(await localRouteScript("/_next/static/chunks/app/(parent)/%2e%2e/not-in-build-aaa.js", process.argv[3]), null);
   const browser = await chromium.launch({channel:"chrome", args:["--disable-background-networking"]});
   try {
     const preflight = await exercise(browser,origin,await syntheticPacket(browser),false);

@@ -5,7 +5,7 @@ import {
 } from "./model-selection";
 import s from "./zusik.module.css";
 
-const models = { pllum: "PLLuM", bielik: "Bielik", "qwen-27b": "Qwen 3.8 27B" } as const;
+const models = { pllum: "PLLuM", bielik: "Bielik" } as const;
 const verifications = { standard: "Standardowa", extra: "Dodatkowa" } as const;
 type Option = ChatModelChoice | ChatVerification | ChatEffort;
 
@@ -83,7 +83,6 @@ export function ModelPicker() {
         <div role="group" aria-label="Model">
           {option("pllum", models.pllum, selected === "pllum", () => setChatModel("pllum"))}
           {option("bielik", models.bielik, selected === "bielik", () => setChatModel("bielik"))}
-          {option("qwen-27b", "Qwen 3.8 27B (LM Studio)", selected === "qwen-27b", () => setChatModel("qwen-27b"))}
         </div>
         {selected === "bielik" && <>
           <div role="group" aria-labelledby={menuId + "-effort"} className={s.modelSettingsGroup}>

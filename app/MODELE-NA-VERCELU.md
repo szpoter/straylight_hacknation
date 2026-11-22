@@ -10,20 +10,6 @@ Kolejka przyjmuje pytanie, które dokładnie odpowiada wynikowi ponownej projekc
 
 Worker pobiera zadanie atomowo, odnawia 9-sekundową dzierżawę i może ponowić pracę najwyżej raz. Dla Bielika i PLLuM wynik wygasa po 42 sekundach. Odczytany wynik aplikacja usuwa od razu. Osierocone wpisy usuwa kolejny odbiór lub zapis. Oczekiwanie na wolnego workera trwa około 3,5 sekundy, a próba lokalnego Bielika lub PLLuM ma limit 38 sekund. Wczesna awaria pozostawia czas na hostowanego Bielika. Po późnej awarii aplikacja używa dotychczasowej ścieżki cytatu źródłowego lub informuje o niedostępności. Model lokalny i hostowany dzielą budżet 45 sekund i przechodzą ten sam walidator cytatów.
 
-### Qwen 3.8 27B w Preview
-
-W obu wejściach czatu można wybrać **Qwen 3.8 27B (LM Studio)** do sformułowania odpowiedzi z publicznych źródeł. Do modelu trafiają zatwierdzona publiczna wersja pytania i fragmenty źródeł. Wygenerowane twierdzenia i cytaty przechodzą ten sam walidator co odpowiedzi polskich modeli. Przy awarii użytkownik może ponowić próbę. Gdy reguła zwraca sam przepis, aplikacja może odpowiedzieć bez wywoływania modelu.
-
-Przy ręcznym wyborze Qwena pełna generacja trwa do 90 s. Aplikacja czeka na kolejkę do 100 s, a zadanie wygasa po 105 s od wstawienia. Worker odnawia dzierżawę co 3 s. Upływ czasu generacji kończy próbę. Przy aktualizacji zatrzymaj poprzedni proces Qwena w Preview przed uruchomieniem nowego workera.
-
-Na bazie **Preview** z rolami aplikacji i workera zastosuj migrację `app/workers/queue.sql`. W chronionym pliku JSON na Macu (prawa `0600`) ustaw `url` na adres połączenia do tej samej bazy dla roli `zusik_model_worker` z weryfikacją TLS. Jeżeli lokalne LM Studio wymaga tokenu, dodaj `lmStudioToken`. Włącz serwer LM Studio pod `127.0.0.1:1234` i sprawdź, czy `GET /v1/models` wymienia `qwen/qwen3.8-27b`. Z katalogu `app`, z zainstalowanymi zależnościami i Node 24, uruchom osobny proces:
-
-```sh
-node --import tsx workers/ollama.mjs "$HOME/.config/zusik/preview-worker.json" --lmstudio-qwen-27b
-```
-
-Proces rezerwuje tylko zadania `qwen-27b`. Generację zleca przez `POST /api/v1/chat` z `reasoning: "off"` i `store: false`. Akceptuje odpowiedź po sprawdzeniu identyfikatora instancji. Kod i komunikat o niedostępności można sprawdzić, zatrzymując wyłącznie ten proces i ponawiając pytanie wymagające generacji. [API modeli LM Studio](https://lmstudio.ai/docs/developer/openai-compat/models) · [Parametry generacji i identyfikator instancji](https://lmstudio.ai/docs/developer/rest/chat)
-
 ### Zadania planera i weryfikatora
 
 Każdy nowy worker akceptuje trzy rodzaje zadań. Wcześniejsze rekordy kolejki mają rodzaj `answer_evidence`. Serwer rozwiązuje identyfikatory wcześniejszego fragmentu i kandydatów w aktywnych publicznych pakietach. Do planera przekazuje publiczny aspekt, listę brakujących pól oraz tekst wybranych jednostek. Weryfikator w tym wydaniu porównuje wskazaną publiczną jednostkę z innymi jednostkami korpusu. Odpowiedź każdego modelu musi przejść walidację schematu, a wskazane dowody muszą należeć do przekazanej listy.

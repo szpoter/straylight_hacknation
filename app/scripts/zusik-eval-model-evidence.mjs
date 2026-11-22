@@ -1,15 +1,14 @@
-// From app/: node --import tsx scripts/zusik-eval-model-evidence.mjs qwen-27b|hosted-bielik|pllum
+// From app/: node --import tsx scripts/zusik-eval-model-evidence.mjs hosted-bielik|pllum
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { buildPrompt, parseModelAnswer, SYSTEM_PROMPT, validateAnswer } from "../src/lib/rag/answer.ts";
 import { loadCorpus } from "../src/lib/rag/corpus-fs.ts";
 import { localModelIds, taskSpecs } from "../src/lib/rag/model-tasks.ts";
-import { lmStudioCompletion } from "../workers/lmstudio.ts";
 import { ragAssertions } from "./zusik-eval-g7.ts";
 
 const provider = process.argv[2];
-assert(["qwen-27b", "hosted-bielik", "pllum"].includes(provider), "Choose qwen-27b, hosted-bielik or pllum");
+assert(["hosted-bielik", "pllum"].includes(provider), "Choose hosted-bielik or pllum");
 const source = readFileSync("tests/fixtures/zusik-acceptance/g7.jsonl", "utf8");
 assert.equal(createHash("sha256").update(source).digest("hex"), "51ca95e212e91b7541369e327e70d467ed14ab6e02e590f2cadc9387e6b63781");
 const trials = source.trim().split("\n").map(line => JSON.parse(line));
@@ -27,12 +26,6 @@ for (const [question, evidence] of [[0, 3], [7, 5]]) {
 const { timeout, tokens } = taskSpecs.answer_evidence;
 async function generate(prompt) {
   const signal = AbortSignal.timeout(timeout);
-  if (provider === "qwen-27b") {
-    const result = await lmStudioCompletion("answer_evidence", undefined, prompt, signal, process.env.LM_API_TOKEN);
-    assert.equal(result.model, localModelIds["qwen-27b"]);
-    assert.equal(typeof result.content, "string", result.reason);
-    return result.content;
-  }
   const messages = [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }];
   const hosted = provider === "hosted-bielik";
   const model = hosted ? "arklabsai/Bielik-11B-v3.1-Instruct" : localModelIds.pllum;

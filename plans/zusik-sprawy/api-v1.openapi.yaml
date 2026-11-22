@@ -1307,7 +1307,7 @@ components:
             additionalProperties: false
             required: [model]
             properties:
-              model: {enum: [pllum, qwen-27b]}
+              model: {const: pllum}
         child: {enum: [child, daughter, son]}
         months: {type: integer, minimum: 0, maximum: 216}
         publicQuestion:

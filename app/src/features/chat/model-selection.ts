@@ -1,5 +1,6 @@
-import { publicTurnBudgetMs, type ChatModelOptions } from "@/lib/zusik/chat-model";
-export type ChatModelChoice = ChatModelOptions["model"];
+import type { ChatModelOptions } from "@/lib/zusik/chat-model";
+export type ChatModelChoice = "bielik" | "pllum";
+export type RememberedModelOptions = ChatModelOptions | { model: "qwen-27b" };
 export type ChatVerification = "standard" | "extra";
 export type ChatEffort = "default" | "low" | "high";
 
@@ -30,8 +31,7 @@ function write(key: string, value: string) {
 }
 
 export function getChatModel(): ChatModelChoice {
-  const selected = read(modelKey);
-  return selected === "pllum" || selected === "qwen-27b" ? selected : "bielik";
+  return read(modelKey) === "pllum" ? "pllum" : "bielik";
 }
 
 export function setChatModel(choice: ChatModelChoice) {
@@ -60,16 +60,18 @@ export function subscribeChatModel(notify: () => void) {
   return () => { listeners.delete(notify); };
 }
 
-export function publicChatTimeoutMs(model?: ChatModelChoice) {
-  // Allow time for the server to save the turn and the browser to consume the response.
-  return publicTurnBudgetMs(model, 55_000) + 15_000;
-}
-
-export function getChatModelOptions(): ChatModelOptions {
-  const model = getChatModel();
-  if (model !== "bielik") return { model };
+function bielikOptions(): ChatModelOptions {
   const options: ChatModelOptions = { model: "bielik", verification: getChatVerification() };
   const effort = getChatEffort();
   if (effort !== "default") options.effort = effort;
   return options;
+}
+
+export function getChatModelOptions(): ChatModelOptions {
+  return getChatModel() === "pllum" ? { model: "pllum" } : bielikOptions();
+}
+
+/** Pending turns from before a model was retired can outlive the picker preference. */
+export function modelOptionsForRetry(saved: RememberedModelOptions): ChatModelOptions {
+  return saved.model === "qwen-27b" ? bielikOptions() : saved;
 }

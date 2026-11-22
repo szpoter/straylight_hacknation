@@ -1,9 +1,11 @@
 import type { Message, MessageInput as WireMessageInput } from "@/lib/zusik/v1/conversation";
 import type { CaseDocument, CaseFile, DocInput, EvidenceFact, Patch, Profile, Proposal } from "@/lib/zusik/memory/contract";
-import { publicChatTimeoutMs } from "./model-selection";
+import { modelOptionsForRetry, type RememberedModelOptions } from "./model-selection";
 import { etag } from "@/lib/zusik/v1/etag";
 
 export type MessageInput = WireMessageInput;
+type PublicQuestion = Extract<MessageInput, { intent: "public_question" }>;
+type PendingMessage = Exclude<MessageInput, PublicQuestion> | (Omit<PublicQuestion, "modelOptions"> & { modelOptions?: RememberedModelOptions });
 
 export type Citation = Message["citations"][number];
 export type CaseMessage = Omit<Message, "state"> & { state: "completed" | "processing" | "failed"; errorCode?: string };
@@ -17,12 +19,12 @@ export type Assessment = { id: string; stale: boolean; ruleVersion: string; inpu
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code?: string) { super("HTTP " + status); }
 }
-async function request<T>(path: string, method = "GET", body?: unknown, key?: string, etag?: string, timeoutMs = 70_000) {
+async function request<T>(path: string, method = "GET", body?: unknown, key?: string, etag?: string) {
   const headers = new Headers();
   if (body !== undefined) headers.set("Content-Type", "application/json");
   if (key) headers.set("Idempotency-Key", key);
   if (etag) headers.set("If-Match", etag);
-  const res = await fetch("/api/v1/" + path, { method, headers, body: JSON.stringify(body), credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
+  const res = await fetch("/api/v1/" + path, { method, headers, body: JSON.stringify(body), credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(70_000) });
   if (!res.ok) {
     const problem = await res.json().catch(() => null);
     throw new ApiError(res.status, typeof problem?.code === "string" ? problem.code : undefined);
@@ -61,8 +63,11 @@ export const caseApi = {
   documents: (id: string) => list<CaseDocument>(c(id) + "/documents"),
   register: (id: string, metadata: DocInput, key: string) => request<CaseDocument>(c(id) + "/documents", "POST", metadata, key),
   messages: (id: string) => list<CaseMessage>(c(id) + "/messages"),
-  message: (id: string, input: MessageInput, key: string) => request<CaseMessage>(c(id) + "/messages", "POST", input, key, undefined,
-    publicChatTimeoutMs(input.intent === "public_question" ? input.modelOptions?.model : undefined)),
+  message: (id: string, input: PendingMessage, key: string) => {
+    const body = input.intent === "public_question" && input.modelOptions
+      ? { ...input, modelOptions: modelOptionsForRetry(input.modelOptions) } : input;
+    return request<CaseMessage>(c(id) + "/messages", "POST", body, key);
+  },
   erase: (id: string, etag: string) => request<void>(c(id), "DELETE", undefined, undefined, etag),
   assess: (id: string, input: AssessmentInput, key: string) => request<Assessment>(c(id) + "/assessments", "POST", input, key),
   assessment: (id: string, aid: string) => request<Assessment>(c(id) + "/assessments/" + encodeURIComponent(aid)),

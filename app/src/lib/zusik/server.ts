@@ -105,7 +105,7 @@ export function askService(deadlineMs?: number, options?: ChatModelOptions): Ask
   return new AskService({
     ...publicAnswerDeps(deadlineMs, options),
     store: new PgCaseStore(db),
-    turns: new PgTurnStore(db, options?.model === "qwen-27b" ? 125 : undefined),
+    turns: new PgTurnStore(db),
     readMarta: async (sessionId) => {
       const { readMarta } = await import("../marta/server");
       return readMarta(sessionId);

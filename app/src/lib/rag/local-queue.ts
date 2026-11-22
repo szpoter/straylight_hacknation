@@ -7,7 +7,7 @@ import { compoundQuestion } from "./compound";
 import { corpusKeywords, searchCorpus } from "./corpus-search";
 import { statutoryListIds } from "./relevance";
 import { publicPairPrefix, publicQuestion } from "./public-query";
-import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, QWEN_QUEUE_TIMEOUT_MS, TYPED_CONTEXT_TOKENS, type localModelIds, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
+import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, TYPED_CONTEXT_TOKENS, localModelIds, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
 import { modelForTask } from "../zusik/model-provider";
 
 /** Verify against shipped public material at the last boundary before persistence. */
@@ -39,7 +39,8 @@ export async function localCompletion(db: Pool, model: LocalModel, prompt: strin
   let client: PoolClient | undefined;
   let expired = false;
   const timeout = { id, status: "timeout" as const };
-  const maximum = model === "qwen-27b" && kind === "answer_evidence" ? QWEN_QUEUE_TIMEOUT_MS : taskSpecs[kind].timeout;
+  if (!Object.hasOwn(localModelIds, model)) throw new Error("Unsupported queue model");
+  const maximum = taskSpecs[kind].timeout;
   const budget = budgetMs ?? maximum;
   if (!Number.isFinite(budget) || budget <= 0) return timeout;
   const cap = Math.min(maximum, budget);

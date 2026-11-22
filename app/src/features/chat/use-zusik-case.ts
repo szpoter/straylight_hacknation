@@ -1,7 +1,6 @@
 "use client";
 
-import { getChatModelOptions, publicChatTimeoutMs } from "./model-selection";
-import type { ChatModelOptions } from "@/lib/zusik/chat-model";
+import { getChatModelOptions, modelOptionsForRetry, type RememberedModelOptions } from "./model-selection";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CaseName, FamilyChatScope } from "@/lib/zusik/conversation";
 import { ASK_STREAM, readAskStream } from "@/lib/zusik/ask-stream";
@@ -20,7 +19,7 @@ export type Phase = "restoring" | "ready" | "starting" | "saving" | "error";
 
 /** A question asked in this tab that is not (yet) in view.turns. */
 export type LocalAsk = {
-  modelOptions?: ChatModelOptions;
+  modelOptions?: RememberedModelOptions;
   requestId: string;
   question: string;
   state: "sending" | "lost" | "done";
@@ -39,6 +38,7 @@ export type ConversationItem = { requestId: string; createdAt?: string; question
 
 type Payload = { documentCache?:string; view?: ClientView; error?: string; variable?: string };
 
+const ASK_TIMEOUT_MS = 70_000;
 const POLL_MS = 1_500;
 const POLL_LIMIT = 20;
 
@@ -222,7 +222,8 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
 
   /** Sends (or re-sends with the same requestId) a question to the knowledge base. */
   const send = useCallback(
-    async (requestId: string, question: string, modelOptions = getChatModelOptions()): Promise<AskOutcome> => {
+    async (requestId: string, question: string, savedOptions?: RememberedModelOptions): Promise<AskOutcome> => {
+      const modelOptions = savedOptions ? modelOptionsForRetry(savedOptions) : getChatModelOptions();
       if (activeRequest.current || asking.current.has(requestId)) return { kind: "lost" };
       asking.current.add(requestId);
       const createdAt = new Date().toISOString();
@@ -233,7 +234,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
             : [...list, { requestId, question, modelOptions, createdAt, state: "sending", ...patch }],
         );
       const drop = () => setAsks((list) => list.filter((item) => item.requestId !== requestId));
-      upsert({ state: "sending", answer: undefined });
+      upsert({ state: "sending", answer: undefined, modelOptions });
       const controller = new AbortController();
       activeRequest.current = controller;
       setActivity("Wysyłam pytanie…");
@@ -262,7 +263,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
           }
         });
       };
-      const timer = setTimeout(() => controller.abort(), publicChatTimeoutMs(modelOptions.model));
+      const timer = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
       try {
         let res = await request();
         // 202: the same request is still running on the server. Ask again with the same requestId.
@@ -280,11 +281,6 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
           return { kind: "invalid" };
         }
         if (res.status === 503) {
-          const answer = modelOptions.model === "qwen-27b" ? answerFromAskBody(res.body, requestId) : null;
-          if (answer?.status === "unavailable" && answer.message) {
-            upsert({ state: "lost", answer });
-            return { kind: "lost" };
-          }
           drop();
           return { kind: "unavailable", reason: "service_down", message: body.turn?.message ?? null };
         }

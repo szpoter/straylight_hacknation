@@ -1,4 +1,3 @@
-import { publicTurnBudgetMs } from "../chat-model";
 import type { Pool, PoolClient } from "pg";
 import { caseInput, docInput, MemoryError, profileInput, profilePatch, type MemoryRepository } from "../memory/contract";
 import { withMemoryTransaction } from "../memory/repository";
@@ -22,7 +21,6 @@ function created(body: {id:string}, path: string, revision?: number): SavedRespo
 }
 
 export async function dispatch(request: Request, parts: string[], deps: Dependencies) {
-  let longPublicTurn = false;
   try {
     const {owner,pool,secret} = deps;
     const url = new URL(request.url);
@@ -32,8 +30,7 @@ export async function dispatch(request: Request, parts: string[], deps: Dependen
     if (method !== "GET") requireOrigin(request);
     const body = method === "POST" || method === "PATCH" ? await readJson(request) : undefined;
     const message = method === "POST" && root === "cases" && id && child === "messages" && !childId
-      ? messageInput.safeParse(body) : undefined;
-    longPublicTurn = message?.success === true && message.data.intent === "public_question" && message.data.modelOptions?.model === "qwen-27b";
+      ? messageInput.parse(body) : undefined;
     const result = await withMemoryTransaction(pool, owner, async (repo,db): Promise<SavedResponse> => {
       if (method === "GET") {
         if (!id || (child && !childId && ["facts","proposals","documents","messages"].includes(child))) {
@@ -85,9 +82,8 @@ export async function dispatch(request: Request, parts: string[], deps: Dependen
             let item;
             if (child === "documents") item = await repo.registerDocument(id,docInput.parse(body));
             else if (child === "assessments") item = await assess(ctx,assessmentInput.parse(body));
-            else if (child === "messages") {
-              const input = message?.success ? message.data : messageInput.parse(body);
-              item = await createMessage(ctx,input,deps.publicAnswer);
+            else if (message) {
+              item = await createMessage(ctx,message,deps.publicAnswer);
             } else throw new ApiProblem(404,"not_found");
             return {profileId:ctx.profile.id,caseId:id,response:created(item,path)};
           }
@@ -95,11 +91,7 @@ export async function dispatch(request: Request, parts: string[], deps: Dependen
         });
       }
       throw new ApiProblem(404,"not_found");
-    }, longPublicTurn ? {lockMs: 500, idleMs: publicTurnBudgetMs("qwen-27b", 48_000) + 15_000} : undefined);
+    });
     return result.status === 204 ? new Response(null,{status:204,headers:{"Cache-Control":"private, no-store"}}) : json(result.body,result.status,result.headers);
-  } catch (error) {
-    if (longPublicTurn && (error as {code?: string})?.code === "55P03")
-      return problem(new ApiProblem(429,"public_request_busy"));
-    return problem(error instanceof MemoryError ? new ApiProblem(error.status,error.code) : error);
-  }
+  } catch (error) { return problem(error instanceof MemoryError ? new ApiProblem(error.status,error.code) : error); }
 }

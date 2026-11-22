@@ -15,7 +15,7 @@ export const NO_BASIS_MESSAGE =
   "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.";
 
 export { SYSTEM_PROMPT, balanceJsonBrackets, modelAnswerSchema, parseModelAnswer, type ModelAnswer } from "./model-tasks";
-import { QWEN_QUEUE_TIMEOUT_MS, SYSTEM_PROMPT, localModelIds, parseModelAnswer, type ModelAnswer } from "./model-tasks";
+import { SYSTEM_PROMPT, parseModelAnswer, type ModelAnswer } from "./model-tasks";
 
 export const ANSWER_INSTRUCTION = [
   "Odpowiedz po polsku, maksymalnie trzema krótkimi twierdzeniami, zwracając się do rodzica na „Ty”.",
@@ -262,9 +262,8 @@ export async function generateAnswer(
   evidence: Fragment[],
 ): Promise<GenerationResult> {
   const started = Date.now();
-  const budget = settings.selectedModel === "qwen-27b" ? QWEN_QUEUE_TIMEOUT_MS : ASK_MODEL_BUDGET_MS;
-  const deadline = Math.min(started + budget, settings.deadlineMs ?? Infinity);
-  const localOnly = settings.selectedModel === "pllum" || settings.selectedModel === "qwen-27b" ? settings.selectedModel : undefined;
+  const deadline = Math.min(started + ASK_MODEL_BUDGET_MS, settings.deadlineMs ?? Infinity);
+  const localOnly = settings.selectedModel === "pllum" ? settings.selectedModel : undefined;
   const hostedSettings = () => "hosted" in settings ? settings.hosted() : settings;
   if (!Number.isFinite(deadline) || deadline <= started)
     return { status: "timeout", output: null, model: localOnly ?? hostedSettings().model, ms: 0 };
@@ -282,16 +281,13 @@ export async function generateAnswer(
     const ms = Date.now() - started;
     const attempt = { event: "rag_model_attempt", attemptId, backend, status, ms };
     if (output) {
-      const model = local === "qwen-27b" ? localModelIds[local] : local;
-      console.info(JSON.stringify({ ...attempt, model }));
-      return { status: "ok", output, model, backend, attemptId, ms };
+      console.info(JSON.stringify({ ...attempt, model: local }));
+      return { status: "ok", output, model: local, backend, attemptId, ms };
     }
     const canUseHosted = !localOnly && Date.now() + MIN_RETRY_WINDOW_MS < deadline;
-    const fallback = canUseHosted ? "hosted" : local === "qwen-27b" ? "unavailable" : "source_only";
+    const fallback = canUseHosted ? "hosted" : "source_only";
     console.info(JSON.stringify({ ...attempt, fallback }));
     if (!canUseHosted) return { status: "error", output: null, model: local, backend, attemptId, ms };
-  } else if (localOnly === "qwen-27b" && settings.queue) {
-    return { status: "insufficient_evidence", output: null, ms: Date.now() - started };
   } else if (localOnly) {
     return { status: "error", output: null, model: localOnly, backend: "local-" + localOnly, ms: Date.now() - started };
   } else if (local) {
