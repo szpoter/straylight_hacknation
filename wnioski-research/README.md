@@ -60,3 +60,10 @@ Dla każdego: oficjalna nazwa i symbol, podstawa prawna, kto do kogo, termin, **
 4. Poprawić 10 definicji według ustaleń; pisma urlopowe jako pismo (patrz wyżej); oficjalne druki wypełniać jak ZAM (mapa współrzędnych + test sumy kontrolnej szablonu).
 5. Testy: `tests/documents-flow.test.ts`, `tests/application-pdf.test.ts` + nowe dla map druków; sprawdzić w przeglądarce każdy wniosek (wypełnienie → sprawdź → zatwierdź → przekaż każdym kanałem) i obejrzeć wyrenderowane PDF.
 6. Na koniec opisać zmiany per wniosek: co ustalono, co zmieniono, źródła.
+
+## Wynik researchu: 800+ i becikowe (gotowe)
+
+Pełny raport ze źródłami: [`800plus-becikowe.md`](800plus-becikowe.md).
+
+- `800plus`: wniosek **SW-R** (nie „SW-1”, to archiwalny druk gminny). **Tylko elektronicznie** (art. 13 ust. 5 ustawy, Dz.U. 2026 poz. 508): eZUS, mZUS, bankowość, Emp@tia; ePUAP i mObywatel nie. Oficjalnego PDF brak (kreator) → **bez PDF, symulacja online**. Wniosek w 3 mies. od urodzenia = świadczenie od urodzenia (reguła stała). Brakuje pól e-mail i telefon; „Nie mieszka z Tobą” powinno ostrzegać.
+- `becikowe`: wzór **SR-2** (gov.pl: https://www.gov.pl/attachment/20ec64a0-3df1-49dc-9884-369596f3818e, 7 stron, bez pól AcroForm → wypełniać nakładką jak ZAM). Kanały: papier/poczta do gminy lub OPS, **Emp@tia** (nie „ePUAP”). Usunąć pole „Dochód na osobę” (gmina liczy sama, rok bazowy 2025); próg 1922 zł jest w ustawie. Dodać warunek alimentów dla samotnie wychowujących, skład rodziny; zaświadczenie lekarskie (wzór Dz.U. 2021 poz. 199) jako załącznik, nie pytanie.
