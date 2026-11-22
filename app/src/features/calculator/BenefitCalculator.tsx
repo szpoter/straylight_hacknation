@@ -5,6 +5,8 @@ import { usePlan } from "@/features/family/PlanProvider";
 import { Button, TextButton } from "@/components/ui/AppButton";
 import { Page, PageTitle } from "@/components/ui/Page";
 import { computeForm, formFromPlan, otherVariant, type CalcForm } from "@/lib/plan/benefit-form";
+import { CasePdf } from "./CasePdf";
+import { BENEFIT_PRESETS } from "@/lib/plan/benefit-presets";
 import { pln } from "./ui";
 import { BasisSection, SituationSection, SplitSection } from "./FormSections";
 import { Deadlines, HowCalculated, MonthlyTable, Periods, Problems, Summary, Timeline } from "./Results";
@@ -43,6 +45,15 @@ export function BenefitCalculator() {
           Wpisz podstawy wynagrodzenia, aby porównać warianty urlopu rodziny Oli i terminy złożenia wniosków.
         </p>
       </div>
+
+      <details className="rounded-lg border border-outline p-gutter-mobile">
+        <summary>Sprawdź przykładową sprawę lub dokument PDF</summary>
+        <div className="mt-4 grid gap-4">
+          <p>Wybór przykładu zastępuje dane formularza na ekranie. Plan rodziny zachowuje zapisane dane.</p>
+          {BENEFIT_PRESETS.map(preset => <Button key={preset.id} variant="secondary" onClick={() => update(preset.form)}>{preset.title}</Button>)}
+          <CasePdf onBasis={known => update({ A: { ...form.A, mode: "known", known } })} />
+        </div>
+      </details>
 
       {result && (
         <a href="#wynik" className="-mt-4 flex items-center justify-between gap-4 rounded-lg bg-surface px-gutter-mobile py-4 lg:hidden">
