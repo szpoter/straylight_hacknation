@@ -32,3 +32,17 @@ it("scores the retrieved article, the quoted condition, the answer and the actio
   turn.citations[0].fragmentId = "wymyslony";
   expect(checks()).toMatchObject({ citation: false });
 });
+
+it("uses independent 36/40 retrieval and factual thresholds and 7/8 opportunity coverage", async () => {
+  const { releaseGates } = await import("../scripts/zusik-eval-g7");
+  const entries = Array.from({ length: 40 }, (_, i) => ({
+    group: "rag", pass: i >= 8, checks: { raw: i >= 4, fact: i < 4 || i >= 8,
+      citation: true, authentic: true, quoteAspect: true, action: true, noAward: true },
+  }));
+  const other = [...Array.from({ length: 12 }, () => ({ group: "clarification", pass: true })),
+    ...Array.from({ length: 8 }, () => ({ group: "memory", pass: true })),
+    ...Array.from({ length: 8 }, (_, i) => ({ group: "opportunity", pass: i !== 0 }))];
+  expect(releaseGates([...entries, ...other])).toEqual({ raw: 36, answered: 36, serious: 0, passed: true });
+  entries[0].checks.authentic = false;
+  expect(releaseGates([...entries, ...other]).passed).toBe(false);
+});

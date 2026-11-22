@@ -30,6 +30,12 @@ function goldCatalogue(): Map<string, { url: string; sha256: string; locator: st
 }
 
 const gold = goldCatalogue();
+const alternatives: Record<string, Record<string, string[]>> = JSON.parse(readFileSync(
+  "tests/fixtures/zusik-acceptance/equivalent-evidence.json", "utf8"));
+
+function acceptedIds(trialId: string, id: string) {
+  return [id, ...(alternatives[trialId]?.[id] ?? [])];
+}
 
 function trials(): Trial[] {
   const body = readFileSync("tests/fixtures/zusik-acceptance/g7.jsonl", "utf8");
@@ -37,7 +43,7 @@ function trials(): Trial[] {
   return body.trim().split("\n").map(line => JSON.parse(line));
 }
 
-async function session(origin: string) {
+async function session(origin: string, caseId: string) {
   const response = await fetch(origin + "/api/zusik/session", {
     method: "POST", headers: { Origin: origin }, redirect: "error", signal: AbortSignal.timeout(20000),
   });
@@ -53,7 +59,7 @@ async function session(origin: string) {
         body: JSON.stringify({ question, scenario: "ogolna", requestId: randomUUID(), family: planId ? { planId } : undefined }),
       });
       const sample = await response.json() as Sample;
-      console.log(JSON.stringify({ question, http: response.status, ms: Math.round(performance.now() - started),
+      console.log(JSON.stringify({ caseId, question, http: response.status, ms: Math.round(performance.now() - started),
         cost: null, status: sample.turn?.status, message: sample.turn?.message, claims: sample.turn?.claims,
         citations: sample.turn?.citations, retrieval: sample.retrieval }));
       assert.equal(response.status, 200, "Answer HTTP status");
@@ -72,6 +78,13 @@ async function session(origin: string) {
 }
 
 function verified(c: AskCitation) {
+  if (c.origin === "official_live") {
+    const match = /^live-(.+)-([a-f0-9]{16})$/.exec(c.fragmentId);
+    if (!match || !c.hash?.startsWith(match[2]) || createHash("sha256").update(c.quote.replace(/\s+/g, " ").trim()).digest("hex") !== c.hash) return false;
+    const pack = loadCorpus("oferta");
+    const snapshot = pack.fragments.get(match[1]);
+    return !!snapshot && pack.documents.get(snapshot.documentId)?.url === c.url && !!locateQuote(snapshot.sourceText, c.quote);
+  }
   for (const name of ["oferta", "publiczne", "marta"]) {
     const pack = loadCorpus(name);
     const f = pack.fragments.get(c.fragmentId);
@@ -103,13 +116,17 @@ export function ragAssertions(trial: Trial, { turn, retrieval }: Sample) {
   const required = trial.requiredEvidence ?? [];
   const facts = trial.facts ?? [];
   const claims = turn.claims.map(c => c.text).join(" ");
-  const citations = turn.citations.filter(c => required.includes(c.fragmentId));
+  const groups = required.map(id => acceptedIds(trial.id, id));
+  const containsAll = (ids?: string[]) => groups.every(group => group.some(id => ids?.includes(id)));
+  const citations = turn.citations.filter(c => groups.some(group => group.includes(c.fragmentId)));
   const quotes = citations.map(c => c.quote).join(" ");
   const linked = turn.claims.every(c => c.citationIds.length > 0 && c.citationIds.every(id => turn.citations.some(x => x.id === id)));
   return {
-    raw: required.every(id => retrieval?.top?.slice(0, 5).includes(id)),
-    evidence: required.every(id => retrieval?.evidence?.includes(id)),
-    citation: required.every(id => citations.some(c => c.fragmentId === id)) && turn.citations.every(verified),
+    raw: containsAll(retrieval?.top?.slice(0, 5)),
+    evidence: containsAll(retrieval?.evidence),
+    citation: containsAll(citations.map(c => c.fragmentId)),
+    authentic: turn.citations.every(verified),
+    noAward: !/przyznaję (?:ci|wam)|na pewno (?:dostaniesz|otrzymasz)/iu.test(claims),
     quoteAspect: matches(facts, quotes),
     fact: matches(facts, claims) && supportsClaim(trial.id, claims),
     action: turn.status === "answered" && linked && turn.claims.length > 0,
@@ -141,7 +158,7 @@ function recipient({ turn, retrieval }: Sample, mode: string) {
 }
 
 async function nursery(origin: string, mode: string, cases: Trial[]) {
-  const client = await session(origin);
+  const client = await session(origin, mode);
   const trial = cases.find(c => c.id === "memory-nursery");
   assert.ok(trial);
   const [intro, followup] = trial.questions;
@@ -161,7 +178,7 @@ async function nursery(origin: string, mode: string, cases: Trial[]) {
 }
 
 async function score(origin: string, trial: Trial) {
-  const client = await session(origin);
+  const client = await session(origin, trial.id);
   let last: Sample | undefined;
   const split = trial.id === "memory-separate";
   for (const [i, question] of trial.questions.entries()) {
@@ -193,7 +210,24 @@ async function score(origin: string, trial: Trial) {
         card.citationIds.every(id => turn.citations.some(c => c.id === id && verified(c)))) };
   }
   if (trial.id === "memory-correction") return { fact: /\b15\b|piętnaście/iu.test(text) };
-  return { citation: turn.citations.some(c => c.fragmentId === trial.expected && verified(c)) };
+  return { citation: turn.citations.some(c => trial.expected && acceptedIds(trial.id, trial.expected).includes(c.fragmentId) && verified(c)) };
+}
+
+type Scored = { group: string; pass: boolean; checks?: Record<string, boolean | undefined> };
+
+export function releaseGates(rows: Scored[]) {
+  const groups = Object.fromEntries(["rag", "clarification", "memory", "opportunity"].map(group =>
+    [group, rows.filter(row => row.group === group)]));
+  const rag = groups.rag;
+  const count = (entries: Scored[]) => entries.filter(row => row.pass).length;
+  const raw = rag.filter(row => row.checks?.raw).length;
+  const answered = rag.filter(({ checks }) => checks && ["citation", "authentic", "quoteAspect", "fact", "action", "noAward"].every(key => checks[key])).length;
+  const serious = rag.filter(({ checks }) => checks?.authentic === false || checks?.noAward === false).length;
+  const passed = rag.length === 40 && raw >= 36 && answered >= 36 && serious === 0
+    && groups.clarification.length === 12 && count(groups.clarification) === 12
+    && groups.memory.length === 8 && count(groups.memory) === 8
+    && groups.opportunity.length === 8 && count(groups.opportunity) >= 7;
+  return { raw, answered, serious, passed };
 }
 
 async function main() {
@@ -202,30 +236,40 @@ async function main() {
   const origin = new URL(target).origin;
   const cases = trials();
   console.log(JSON.stringify({ runnerSha: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
-    origin, mode, fixtureSha256: digest, evaluatorCorpusVersions: Object.fromEntries(
+    origin, mode, targetSha: process.env.G7_TARGET_SHA, localUiPatchSha256: process.env.G7_UI_PATCH_SHA256, fixtureSha256: digest, evaluatorCorpusVersions: Object.fromEntries(
       ["oferta", "marta", "publiczne"].map(name => [name, loadCorpus(name).manifest.corpusVersion])),
   }));
   if (mode === "corpus" || mode === "official_live") return nursery(origin, mode, cases);
   const rows = mode === "baseline" ? cases.filter(c => ["detention", "quarantine"].includes(c.id)) : cases;
   let failures = 0;
+  const scored: Scored[] = [];
   const groups: Record<string, { passed: number; total: number }> = {};
-  for (const row of rows) {
+  async function measure(row: Trial) {
     const group = groups[row.group] ??= { passed: 0, total: 0 };
     group.total++;
     try {
       const checks = await score(origin, row);
       const pass = Object.values(checks).every(Boolean);
+      scored.push({ group: row.group, pass, checks });
       if (!pass) failures++;
       else group.passed++;
       console.log(JSON.stringify({ id: row.id, group: row.group, expected: row.requiredEvidence ?? row.requiredCards ?? row.expected,
         checks, pass }));
     } catch (error) {
+      scored.push({ group: row.group, pass: false });
       failures++;
       console.log(JSON.stringify({ id: row.id, group: row.group, error: String(error), pass: false }));
     }
   }
-  console.log(JSON.stringify({ passed: rows.length - failures, total: rows.length, groups, fixtureSha256: digest }));
-  if (failures) process.exitCode = 1;
+  // A conversation stays serial. Each lane has its own signed session.
+  const lanes = mode === "g7" ? 2 : 1;
+  const pending = rows.values();
+  await Promise.all(Array.from({ length: lanes }, async () => {
+    for (const row of pending) await measure(row);
+  }));
+  const gates = mode === "g7" ? releaseGates(scored) : undefined;
+  console.log(JSON.stringify({ passed: rows.length - failures, total: rows.length, groups, gates, fixtureSha256: digest }));
+  if (gates ? !gates.passed : failures > 0) process.exitCode = 1;
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url)
