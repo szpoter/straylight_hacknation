@@ -17,6 +17,7 @@ export {
 const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   {
     id: "supp-threshold",
+    lawId: "kp-1802-1",
     group: "Uzupełniający",
     name: "Próg tygodnia ciąży dla dłuższego wymiaru",
     value: "28. tydzień",
@@ -28,6 +29,7 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   },
   {
     id: "supp-weight",
+    lawId: "kp-1802-1",
     group: "Uzupełniający",
     name: "Próg masy urodzeniowej",
     value: "1000 g",
@@ -39,6 +41,7 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   },
   {
     id: "sick-waiting",
+    lawId: "uz-4-1",
     group: "Chorobowy",
     name: "Okres wyczekiwania, ubezpieczenie obowiązkowe",
     value: "30 dni",
@@ -50,8 +53,9 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   },
   {
     id: "sick-period",
+    lawId: "uz-8-1",
     group: "Chorobowy",
-    name: "Okres zasiłkowy",
+    name: "Okres zasiłkowy w ciąży",
     value: "270 dni",
     from: "2016-01-01",
     state: "Obowiązuje",
@@ -61,6 +65,7 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
   },
   {
     id: "deadline-paternity",
+    lawId: "kp-1823-2",
     group: "Terminy",
     name: "Wniosek o urlop ojcowski",
     value: "7 dni",
@@ -90,7 +95,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
     from: "2027-01-01",
     reason: "Symulacja zmiany stawki na potrzeby demonstracji.",
     source: "Założenie demo",
-    tests: "12 / 12 zgodnych",
+    tests: "6 / 6 zgodnych",
   },
   {
     id: "H-04",
@@ -106,7 +111,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
     from: "2027-01-01",
     reason: "Coroczna aktualizacja kwoty.",
     source: "Rozporządzenie RM z 14.09.2026, Dz.U. 2026 poz. 1213",
-    tests: "8 / 8 zgodnych",
+    tests: "5 / 5 zgodnych",
   },
   {
     id: "H-03",
@@ -122,7 +127,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
     from: "2026-10-24",
     reason: "Połączenie formularzy przez ZUS.",
     source: "ZUS s. 12",
-    tests: "6 / 6 zgodnych",
+    tests: "3 / 3 zgodnych",
   },
   {
     id: "H-02",
@@ -138,7 +143,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
     from: "2026-10-24",
     reason: "Likwidacja formularza.",
     source: "ZUS s. 12",
-    tests: "6 / 6 zgodnych",
+    tests: "3 / 3 zgodnych",
   },
   {
     id: "H-01",
@@ -154,7 +159,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
     from: "2026-01-01",
     reason: "Coroczna aktualizacja kwoty.",
     source: "Rozporządzenie RM",
-    tests: "8 / 8 zgodnych",
+    tests: "5 / 5 zgodnych",
   },
 ];
 
