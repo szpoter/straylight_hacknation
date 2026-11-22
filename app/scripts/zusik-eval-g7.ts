@@ -204,9 +204,14 @@ async function score(origin: string, trial: Trial) {
     fact: matches(trial.facts ?? [], text),
   };
   if (trial.group === "opportunity") {
-    const cards = (turn as AskTurn & { opportunities?: { title: string; citationIds: string[] }[] }).opportunities ?? [];
+    const cards = turn.opportunities ?? [];
+    const cardIds: Record<string, string> = {
+      "aktywni rodzice w pracy": "aktywni-rodzice-w-pracy", "aktywnie w żłobku": "aktywnie-w-zlobku",
+      "aktywnie w domu": "aktywnie-w-domu", "uzupełniający urlop macierzyński": "uzupelniajacy-macierzynski",
+      "dobry start": "dobry-start", "800+": "800-plus", "zasiłek opiekuńczy": "opieka-zamkniecie",
+    };
     assert.ok(trial.requiredCards?.length);
-    return { requiredCards: trial.requiredCards.every(name => cards.slice(0, 3).some(card => card.title.toLocaleLowerCase("pl").includes(name))),
+    return { requiredCards: trial.requiredCards.every(name => cards.slice(0, 3).some(card => card.id === cardIds[name] || card.title.toLocaleLowerCase("pl").includes(name))),
       citations: cards.length > 0 && cards.every(card => card.citationIds.length > 0 &&
         card.citationIds.every(id => turn.citations.some(c => c.id === id && verified(c)))) };
   }
