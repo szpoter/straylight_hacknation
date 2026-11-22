@@ -1,0 +1,7 @@
+# Ujęcie 22 · Od Oli do najbliższej sprawy
+
+Na słowach „Na mapie Oli widzi, co już załatwili” utrzymujemy kierunek kreski z przycisku importu. Przy jej początku widnieje imię Oli i dzień urodzenia. Pierwszy zakręt prowadzi pod odhaczone badania, a potem kamera odkrywa kartę zgłoszenia urodzenia. [Scenariusz, 42–46 s](../../../../../PLAN-FILMU-DEMO.md) · [Imię i data urodzenia Oli](../../../../../app/src/lib/family/ola.ts)
+
+1. Rozpocząć w szerokim planie etapu „Narodziny”. Pociągnąć zielony ślad z lewej, najpierw poziomo, potem łagodnie w górę. Kontynuujemy ten sam gest graficzny po cięciu, jak w przykładzie ciągłej akcji Bang Motion. [Bang Motion · Continuous Action](../../przyklady/ciagly-ruch.jpg)
+2. Przesunąć całą mapę w lewo. Gdy „Badania przesiewowe noworodka” przechodzą przez środek kadru, widz czyta „Odhaczone” przy zielonym podeście ze znacznikiem. Za nim mija niższy, przerywany przystanek automatycznej sprawy pracodawcy. [Pozioma trasa](../../../../../app/src/features/journey-map/HorizontalPath.tsx) · [Geometria podestów i oznaczenia](../../../../../app/src/features/journey-map/shared.tsx)
+3. Odsłonić z prawej część karty „Zgłoś urodzenie Oli”. Powierzchnia, nagłówek, status i data wjeżdżają razem, jak jeden szczegół interfejsu w prezentacji Bang Motion. Dalszy dojazd i zatrzymanie terminu przejmuje ujęcie 23. [Bang Motion · SaaS UI Tour](../../przyklady/ruch-produktu.jpg) · [Karta sprawy w aplikacji](../../../../../app/src/features/journey-map/CaseCard.tsx)

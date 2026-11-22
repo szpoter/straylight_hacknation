@@ -1,0 +1,7 @@
+# Ujęcie 24 · Marta pyta o wspólny urlop
+
+Wchodzimy na ten sam termin, który widz właśnie odczytał. Prawa krawędź karty prowadzi wzrok w lewo, po czym Marta zadaje całe pytanie w odsłoniętej rozmowie. Podział ekranu pochodzi z widoku rodzica, w którym obok bieżącej strony otwiera się rozmowa z Zusikiem. [Scenariusz 46–48 s](../../../../../PLAN-FILMU-DEMO.md) · [Widok aplikacji](../../../../../app/src/features/chat/parent-chat.tsx)
+
+1. Przejąć gotowy rysunek mapy z końca ujęcia 23. Zmniejszyć kartę z datą wraz z podestem i poprowadzić jej prawy bok do jednej trzeciej szerokości ekranu. Granica mapy i czatu jedzie po tym samym boku. Przykład Bang Motion prowadzi jedną akcję przez zmianę kompozycji. [Continuous Action](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/05-continuous-action.jpg)
+2. Wyhamować panel, kiedy obok karty mieści się pełny dymek. Wejście przesuwa cały dymek o kilka pikseli w górę, podobnie jak w aplikacji. Do tej chwili panel pozostaje pusty. [Motionmaxxing · łagodne lądowanie panelu](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/runtime/motion.js#L28-L35) · [Kolory, kształt i ruch wypowiedzi rodzica](../../../../../app/src/features/chat/zusik.module.css#L558-L579)
+3. Pokazać „A jeśli weźmiemy urlop razem?” w dwóch wierszach na słowach lektora „O wspólny urlop pyta Zusika…”. Zostawić margines pytania dla odpowiedzi po cięciu w ujęciu 25.
