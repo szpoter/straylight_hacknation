@@ -1,9 +1,16 @@
 # 07 · Marta pochyla się do Oli
 
-**12–14 s.** Profil na wysokości budki. Marta zagląda pod daszek, wciąż trzyma rączkę. Wdech Oli lekko porusza pas kocyka. Marta zaczyna pytanie o wspólny urlop. [Wózek i profil](../../../referencje/kolejka-zus-v1.png) · [Widoki postaci](https://github.com/kaomei/stickman-video-director/tree/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b6/characters/kiosk_keeper)
+Autor planu: s07
 
-[Plansza firmowa](../../../referencje/kolejka-zus-v1.png) · [Wspólna obsada](../../POSTACIE.md)
+**12–14 s.** Po „Chyba tak” Pawła Marta szuka wzrokiem śpiącej córki. Ustaw kamerę na wysokości budki, po stronie widocznej na planszy. W jednym kadrze zmieść profil matki, dłoń na uchwycie i policzek dziecka pod daszkiem. Po prawej zostaw fragment Pawła z odwróconym drukiem. [Plansza kolejki](../../../referencje/kolejka-zus-v1.png)
 
-[Stickman · punkty jednej postaci w trzech widokach](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b6/characters/kiosk_keeper/package.json) · [Stickman · gra postaci](../../../v2/przyklady/pozy-postaci.png) · [Oryginał](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/character-acting-reference.png)
+| Klatki lokalne | Co zagrać |
+| --- | --- |
+| 0–9 | Przejmij z 06 lekkie pochylenie Marty ku dokumentom. Dłoń bliższa kamery już obejmuje rączkę. Przez początek pytania oczy schodzą z druku pod daszek. |
+| 10–26 | Broda podąża za spojrzeniem. Marta lekko cofa biodra nad stopami i zgina się w biodrach. Bliższy bark zatacza łuk do przodu, łokieć ugina się, palce leżą w tym samym miejscu uchwytu. |
+| 27–43 | Marta dostrzega twarz Oli i wyhamowuje w skłonie. Pod zamkniętymi powiekami dziecka widać policzek. Wdech podnosi barki i górny brzeg kocyka z jednym zielonym pasem. |
+| 44–59 | Pas osiada przy wydechu. Marta trwa w skłonie i mówi do śpiącej Oli. Do 08 oddaj ostatnią pozę, fazę oddechu oraz to samo nagranie pytania. Paweł wciąż czyta. |
 
-[Specyfikacja tego ujęcia](SPEC.md)
+Do całego skłonu wybierz profil Marty ze wspólnego arkusza obsady. Wzorzec B6 pokazuje, jak utrzymać oś szyi i punkty twarzy jednej osoby między widokami. Na arkuszu gry postaci prześledź zgięcie łokcia przy zmianie położenia barku. Ten ruch pozwoli Marcie zajrzeć pod daszek z dłonią opartą na rączce. [Wspólna obsada](../../POSTACIE.md) · [Widoki postaci B6](https://github.com/kaomei/stickman-video-director/tree/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b6/characters/kiosk_keeper) · [Punkty trzech widoków](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b6/characters/kiosk_keeper/package.json) · [Arkusz gry postaci](../../../v2/przyklady/pozy-postaci.png) · [Oryginał arkusza](https://github.com/kaomei/stickman-video-director/blob/cf78fdb077ce6c9aa43e22786e9f2d0aa122af2d/skills/directing-stickman-videos/assets/b1/character-acting-reference.png)
+
+[Specyfikacja ujęcia](SPEC.md)
