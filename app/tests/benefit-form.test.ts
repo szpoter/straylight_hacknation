@@ -11,6 +11,8 @@ describe("przykładowe sprawy ZUS w kalkulatorze", () => {
       expect(problems).toEqual([]);
       expect(result?.ok).toBe(true);
       for (const check of preset.checks) expect(check.pick(result!), check.label).toBe(check.zus);
+      // Ekran kalkulatora liczy z requireComplete: przykład musi mieć komplet pól.
+      expect(computeForm(preset.form, { requireComplete: true }).result?.ok).toBe(true);
     });
   }
 });

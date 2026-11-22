@@ -310,11 +310,13 @@ export function PresetCheckList({ preset, result }: { preset: BenefitPreset; res
         {preset.checks.map((c) => {
           const ours = c.pick(result);
           const match = ours !== undefined && Math.abs(ours - c.zus) < 0.005;
+          // Kwoty w złotych; okresy (gdy w aktach nie ma kwot) w dniach.
+          const show = (n: number) => (c.unit === "dni" ? `${n} dni` : pln(n));
           return (
             <li key={c.label} className="flex flex-col gap-1 py-3 text-meta first:pt-0 last:pb-0">
               <span className="font-medium">{c.label}</span>
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                ZUS: {pln(c.zus)} · kalkulator: {ours === undefined ? "—" : pln(ours)}
+                {c.source === "dokumenty" ? "Dokumenty sprawy" : "ZUS"}: {show(c.zus)} · kalkulator: {ours === undefined ? "—" : show(ours)}
                 {match ? (
                   <span className="inline-flex items-center gap-1 font-medium text-primary">
                     <CheckIcon size={16} /> zgodne
