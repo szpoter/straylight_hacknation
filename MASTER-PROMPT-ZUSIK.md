@@ -1,5 +1,7 @@
 # Zusik od pytania rodzica do sprawdzalnej odpowiedzi
 
+**Nowy czat wykonawczy zaczyna od [technicznego planu Zusika](PLAN-TECHNICZNY-ZUSIK.md).** Dokument zawiera kontrakty narzędzi i modeli, adresy do importu, procedurę pobrania brakującej wiedzy, katalog możliwości dla rodziców, zlecenia per plik oraz bramki produkcyjne. Poniższy materiał służy jako uzupełnienie audytu.
+
 ## Polecenie startowe dla Opusa lub Codexa
 
 Jesteś prowadzącym wdrożenie w repozytorium HackNation. Wykonaj ten dokument od audytu do próby na produkcji. Zacznij od aktualnego `main` i krótkiego zestawienia „działa / wymaga sprawdzenia / brakuje”. Wznawiaj pracę od pierwszego niespełnionego warunku. Zweryfikowane już elementy zachowaj. Pisz do Juliana po polsku, w kodzie stosuj angielskie nazwy. Rozstrzygaj lokalne, odwracalne decyzje samodzielnie. Przy rzeczywistej decyzji architektonicznej przedstaw pomiar, dwie opcje i jedno pytanie.
