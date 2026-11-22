@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ButtonLink, Page, PageTitle, Panel, SectionTitle } from "@/components/ui";
+import { ButtonLink, Page, Panel, SectionTitle } from "@/components/ui";
+import { FamilyTitle } from "@/features/family/profile/FamilyTitle";
 import { MyData } from "@/features/family/profile/MyData";
 import { PlansSection } from "@/features/family/profile/PlansSection";
 import { ZusAccount } from "@/features/family/profile/ZusAccount";
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: "Profil rodziny · Zusik" };
 export default async function ProfilePage() {
   return (
     <Page>
-      <PageTitle className="mb-stack">Rodzina Oli Lis</PageTitle>
+      <FamilyTitle className="mb-stack" />
       <div className="flex flex-col gap-stack pb-section-mobile md:pb-section">
         <div data-tour="profile-data"><MyData /></div>
         <div data-tour="profile-plans"><PlansSection /></div>

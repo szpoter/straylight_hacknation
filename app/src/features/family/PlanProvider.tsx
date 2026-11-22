@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
-import { DEFAULT_PLAN_ID, getPlan } from "@/lib/demo/fixtures";
+import { DEFAULT_PLAN_ID } from "@/lib/demo/fixtures";
+import { SCENARIO_PLANS, familyOf } from "@/lib/demo/scenarios";
 import { applyCalculatorToPlan, type CalcForm } from "@/lib/plan/benefit-form";
 import { refreshSavedLeavePlan } from "@/lib/plan/build";
 import { addDays, daysBetween, formatLong } from "@/lib/demo/dates";
@@ -45,7 +46,10 @@ export function applyPlanEdit(base: Plan, edit?: PlanEdit): Plan {
 }
 
 type PlanContextValue = {
+  /** Wszystkie plany: gotowe scenariusze i plany z onboardingu (wybór na /start). */
   plans: Plan[];
+  /** Dzieci rodziny wybranego planu — tylko je pokazuje selektor dziecka i Profil. */
+  familyPlans: Plan[];
   plan: Plan;
   selectPlan: (id: string) => void;
   /** Lokalna zmiana przystanku (np. prywatne „Odhaczone”). TODO(backend): zapis w sprawie. */
@@ -118,6 +122,14 @@ function writeStorage(key: string, value: string) {
   }
 }
 
+/**
+ * Plan, który otworzy się po wejściu na karty (np. „Otwórz plan rodziny Oli” przy logowaniu,
+ * zanim PlanProvider jest zamontowany). Bez tego wróciłby plan wybrany w poprzedniej wizycie.
+ */
+export function rememberActivePlan(id: string) {
+  writeStorage(STORAGE_KEY, id);
+}
+
 /** Klucz zapisu kalkulatora: rodzeństwo z jednego porodu ma wspólne urlopy, więc jeden kalkulator. */
 export function calculatorKey(plan: Pick<Plan, "id" | "family">): string {
   return plan.family?.groupId ?? plan.id;
@@ -143,10 +155,14 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [forms, setForms] = useState<Record<string, Record<string, FormValues>>>({});
   const [calculators, setCalculators] = useState<Record<string, CalcForm>>({});
   const [loaded, setLoaded] = useState(false);
-  const plans = useMemo(() => {
-    const ola = getPlan(DEFAULT_PLAN_ID);
-    return [applyCalculatorToPlan(ola, calculators[calculatorKey(ola)], schedule)];
-  }, [calculators, schedule]);
+  // Gotowe scenariusze (Ola pierwsza) i plany ułożone w onboardingu.
+  const plans = useMemo(
+    () =>
+      [...SCENARIO_PLANS, ...created]
+        .filter((p) => !hidden.includes(p.id))
+        .map((p) => applyCalculatorToPlan(p, calculators[calculatorKey(p)], schedule)),
+    [created, hidden, calculators, schedule],
+  );
   const updatePlan = useCallback((id: string, edit: PlanEdit) => setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...edit } })), []);
 
   // Odczyt po hydratacji (serwer nie zna localStorage).
@@ -165,6 +181,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setHidden(Array.isArray(saved.hidden) ? saved.hidden : []);
     setForms(saved.forms ?? {});
     setCalculators(saved.calculators && typeof saved.calculators === "object" ? saved.calculators : {});
+    // Po odświeżeniu zostaje scenariusz wybrany na początku onboardingu.
+    const active = readStorage(STORAGE_KEY);
+    if (active && [...SCENARIO_PLANS, ...createdPlans].some((p) => p.id === active)) setPlanId(active);
     setLoaded(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
@@ -174,12 +193,15 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     writeStorage(STATE_KEY, JSON.stringify({ patches, edits, created, hidden, forms, calculators } satisfies Saved));
   }, [loaded, patches, edits, created, hidden, forms, calculators]);
 
-  const selectPlan = useCallback((id: string) => {
-    if (id !== DEFAULT_PLAN_ID) return;
+  const choosePlan = useCallback((id: string) => {
     setPlanId(id);
     setZusik(null);
     writeStorage(STORAGE_KEY, id);
   }, []);
+  /** Tylko plany z listy (np. sprawa testowa „test-alicja” nie jest scenariuszem rodzica). */
+  const selectPlan = useCallback((id: string) => {
+    if (plans.some((p) => p.id === id)) choosePlan(id);
+  }, [plans, choosePlan]);
 
   /**
    * Plany, w których zapisujemy zmianę sprawy: wybrany plan, a przy sprawie wspólnej rodzeństwa
@@ -230,18 +252,18 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const addPlan = useCallback(
     (next: Plan) => {
       setCreated((prev) => [next, ...prev.filter((p) => p.id !== next.id)]);
-      selectPlan(next.id);
+      choosePlan(next.id);
     },
-    [selectPlan],
+    [choosePlan],
   );
   const addPlans = useCallback(
     (next: Plan[]) => {
       if (next.length === 0) return;
       const ids = new Set(next.map((p) => p.id));
       setCreated((prev) => [...next, ...prev.filter((p) => !ids.has(p.id))]);
-      selectPlan(next[0].id);
+      choosePlan(next[0].id);
     },
-    [selectPlan],
+    [choosePlan],
   );
   const removePlan = useCallback(
     (id: string) => {
@@ -262,7 +284,8 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         );
       } else setHidden((prev) => [...prev, id]);
       if (planId === id) {
-        const fallback = plans.find((p) => p.id !== id);
+        // Zostajemy w tej samej rodzinie, jeśli ma jeszcze inne dziecko.
+        const fallback = familyOf(plans, target).find((p) => p.id !== id) ?? plans.find((p) => p.id !== id);
         if (fallback) selectPlan(fallback.id);
       }
     },
@@ -287,16 +310,17 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setHidden([]);
     setForms({});
     setCalculators({});
-    selectPlan(DEFAULT_PLAN_ID);
-  }, [selectPlan]);
+    choosePlan(DEFAULT_PLAN_ID);
+  }, [choosePlan]);
 
   const plan = useMemo(() => {
-    const base = plans.find((p) => p.id === planId) ?? getPlan(planId);
-    const planPatches = patches[planId];
+    const base = plans.find((p) => p.id === planId) ?? plans[0];
+    const planPatches = patches[base.id];
     if (!planPatches) return base;
     return { ...base, stops: base.stops.map((s) => (planPatches[s.id] ? applyStopPatch(s, planPatches[s.id]) : s)) };
   }, [planId, patches, plans]);
 
+  const familyPlans = useMemo(() => familyOf(plans, plan), [plans, plan]);
   const currentKey = calculatorKey(plan);
   const calculator = calculators[currentKey];
   const saveCalculator = useCallback((form: CalcForm) => setCalculators((prev) => ({ ...prev, [currentKey]: form })), [currentKey]);
@@ -313,6 +337,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<PlanContextValue>(
     () => ({
       plans,
+      familyPlans,
       plan,
       selectPlan,
       patchStop,
@@ -332,7 +357,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       openZusik: setZusik,
       closeZusik: () => setZusik(current => current && { ...current, collapsed: true }),
     }),
-    [plans, plan, selectPlan, patchStop, resetStop, isPatched, updatePlan, addPlan, addPlans, removePlan, formValues, setFormValues, calculator, saveCalculator, clearCalculator, resetAll, zusik],
+    [plans, familyPlans, plan, selectPlan, patchStop, resetStop, isPatched, updatePlan, addPlan, addPlans, removePlan, formValues, setFormValues, calculator, saveCalculator, clearCalculator, resetAll, zusik],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;

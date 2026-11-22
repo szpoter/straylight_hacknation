@@ -28,7 +28,7 @@ const PLAN: GuideStep[] = [
   {
     target: "child",
     title: "Twoja rodzina",
-    body: "Imię dziecka w pasku prowadzi do profilu rodziny: dane rodziców, dziecka i konto w ZUS.",
+    body: "Imię dziecka w pasku rozwija listę planów. Tu przełączysz dziecko albo dodasz kolejne dziecko lub ciążę.",
   },
   {
     target: "path",
@@ -195,7 +195,7 @@ const PROFILE: GuideStep[] = [
   {
     target: "profile-plans",
     title: "Dziecko",
-    body: "Data urodzenia, od której liczą się terminy w planie. Przycisk otwiera plan dziecka.",
+    body: "Dzieci tej rodziny i daty, od których liczą się terminy w planie. Przyciski otwierają plan dziecka albo dodają kolejne dziecko lub ciążę.",
   },
   {
     target: "profile-zus",

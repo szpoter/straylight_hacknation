@@ -4,12 +4,14 @@ import { Onboarding } from "@/features/onboarding/Onboarding";
 
 export const metadata: Metadata = { title: "Ułóżmy plan · Zusik" };
 
-// Logowanie demo kończy się tutaj. Onboarding jest pokazem: na końcu rodzic trafia na plan
-// rodziny Oli z otwartym przewodnikiem „Jak to działa?” (patrz Onboarding.tsx).
-export default function StartPage() {
+// Logowanie demo kończy się tutaj: wybór gotowego scenariusza (Ola i dwa kolejne) albo pytania,
+// z których powstaje nowa rodzina. Potem plan z otwartym przewodnikiem „Jak to działa?”.
+// `?rodzina=<id>` („Dodaj dziecko albo ciążę” w selektorze): pytania dodają dziecko do tej rodziny.
+export default async function StartPage({ searchParams }: { searchParams: Promise<{ rodzina?: string | string[] }> }) {
+  const { rodzina } = await searchParams;
   return (
     <LoginGate>
-      <Onboarding />
+      <Onboarding family={typeof rodzina === "string" ? rodzina : undefined} />
     </LoginGate>
   );
 }
