@@ -18,3 +18,13 @@ W 22/58, 22/59 i 23/0 pary (X kamery, X linii) wynoszą kolejno (582; 1438,05), 
 **Dane aplikacji.** Plan „Ola” zawiera odhaczone badania, automatyczne Z-3 oraz obowiązek zgłoszenia urodzenia do 1 grudnia 2026. Model ścieżki wyświetla dla nich kolejno „Odhaczone”, „Nic nie musisz robić” i „Do zrobienia”. Algorytm najbliższej sprawy wybiera otwarty obowiązek z najbliższym terminem. [Dane rodziny](../../../../../app/src/lib/family/ola.ts) · [Przystanki i terminy](../../../../../app/src/lib/demo/fixtures.ts) · [Statusy ścieżki](../../../../../app/src/lib/plan/status.ts) · [Wybór najbliższej sprawy](../../../../../app/src/lib/plan/path.ts) · [Ścieżka z aplikacji](../../../../../app/src/features/journey-map/HorizontalPath.tsx)
 
 **Próba odbiorowa.** Odtworzyć v2 i v3 równolegle od 21/58 do 23/1 w tempie 1×. Wstrzymać na 22/0, 23, 26, 44 i 59, nałożyć obrazy przy 50% krycia. Porównać środek każdego podestu i kontur karty, kiedy znajdują się w kadrze, oraz koniec zielonej linii. Dopuszczalna różnica względem v2 wynosi 1 px. Na szerokości 360 px przy wyciszeniu wskazać „Ola”, odhaczone badania i tytuł następnej sprawy. Z narracją sprawdzić, czy przejazd przez podest z haczykiem wypada podczas zdania o załatwionych sprawach. [Klip v2](../../../v2/sceny/22/ujecie-720p.mp4) · [Klatki wzorcowe](../../../v2/sceny/22/klatki.jpg) · [Plan i przykłady](PLAN.md)
+
+## Realizacja v3 (autor s22, blok b19)
+
+- Kod: [`scene.mjs`](scene.mjs) eksportuje `drawMap(cameraX, traceX, cardOffset)`, `ROUTE`, `CARD`, `STOPS`, `camera22(f)` i `trace22(f)`. Wzory są takie same jak w SPEC i v2. Identyfikator clipPath zmieniłem na `v3-mapa-postep`.
+- Karta: tytuł, linia podziału (y = 206) i termin (Inter 600, 50 px, linia bazowa 262) mają położenie z v2. Zmieniły się tylko kapsuły: y = 134–188, Inter 30, „Do zrobienia” 600.
+
+## Odbiór
+
+- Pozy v2 i v3 w kl. 0/20/40/59 zestawione w `pozy.jpg`: środki podestów, ślad, kamera i obrys karty się pokrywają. Różnią się tylko kapsuły statusu.
+- Styki: 22/0 ma kamerę 0 i ślad 338. 22/59 ma kamerę 594, ślad 1458 i lewy brzeg karty na x = 666. 23/0 ma kamerę 606 i ślad 1478.

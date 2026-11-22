@@ -14,3 +14,7 @@ Autor planu: s23
 Z przykładu Bang Motion przenosimy sposób pokazania jednej czynności w detalu. Tutaj jedyną zmianą, którą trzeba śledzić, jest dojście do najbliższej sprawy. Krzywe Motionmaxxing służą do porównania końca dojazdu, gdy podest staje, a karta jeszcze domyka ruch. [Bang Motion · pokaz interfejsu](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/03-saas-ui-tour.jpg) · [Lokalna plansza](../../../v2/przyklady/ruch-produktu.jpg) · [Motionmaxxing · krzywe wyhamowania](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg)
 
 [Sposób odbioru](SPEC.md) · [Reżyseria części produktowej](../../PRODUKT.md) · [Typografia i kolory](../../../../../DESIGN.md)
+
+## Realizacja v3 (autor s23, blok b19)
+
+Dojazd przeniosłem z v2 (`../../../v2/sceny/23/scene.mjs`) bez zmian: kamera 606 → 918 (pół karty), linia staje na podeście w kl. 11, karta domyka maksymalnie 10 px i w kl. 30 osiada. Od kl. 30 do 59 obraz stoi. Rysunek mapy pochodzi z `../22/scene.mjs`, więc kapsuły statusu mają 30 px. Przykłady: [Bang Motion · 03-saas-ui-tour.jpg](https://github.com/bangtutorial/bang-motion/blob/c1aa65e921c970d858705fcb4a53a8294d1a4131/docs/gallery/03-saas-ui-tour.jpg) i [Motionmaxxing · eases.svg](https://github.com/Tejashmakwana/motionmaxxing/blob/8c8ec0f2a6f6c9a0da15cd24f7b1298ab298368c/docs/media/eases.svg) (koniec dojazdu).

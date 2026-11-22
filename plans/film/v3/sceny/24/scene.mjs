@@ -2,7 +2,7 @@
 // The right edge of the "Zgłoś urodzenie Oli" card (x=990 in 23/59) slides to x=427; the white chat panel grows
 // from it and Marta's whole question enters at once (14–21). Pure function of f.
 // The map is the shared drawing of scenes 22–23 (map at rest: camera 918, trace 1584).
-import { drawMap } from "../../../v2/sceny/22/scene.mjs";
+import { drawMap } from "../22/scene.mjs"; // v3 map (status pills 30 px), same as 23/59
 
 const SURFACE = "#F5FAF7", OUTLINE = "#D4D7DD";
 // Bubble of the parent's message (app/src/features/chat/zusik.module.css .bubble parent).

@@ -16,3 +16,14 @@ Na tle #F5FAF7 umieścić tytuł „Import danych rodziny Oli” w Domine 60 px 
 ## Próba odbiorowa
 
 Zmniejszyć cały kadr do szerokości 360 px. W klatkach 0, 17 i 40 odczytać cały napis przycisku, „Wersja demonstracyjna” i „dane z mObywatela i mZUS” bez powiększania obrazu. Przy pełnym nacisku napis przycisku ma około 11,8 px w tej próbie. Grot pozostaje poza literami. Przy odtwarzaniu 20/59 → 21/0 porównać lewą krawędź tytułu i kapsuły. Na styku 21/58 → 22/0 sprawdzić trzy kolejne pozycje końca linii, jej wysokość, kolor i tempo. [Plan i przykłady](PLAN.md) · [Poprzednie ujęcie](../20/SPEC.md) · [Następne ujęcie](../22/SPEC.md)
+
+## Realizacja v3 (autor s21, blok b19)
+
+- Kod: [`scene.mjs`](scene.mjs), eksportuje `BUTTON` i `lineEnd(f)`. Tło #F5FAF7. Pasek #FCDCAA ma 72 px wysokości, tekst Inter 42 px od x = 74 (szerokość tekstu w renderze 1173 px). Tytuł Domine 60 px leży na (80,195). Wiersz Inter 44 px leży na (80,270), imiona są w kolorze #283754 / 500, źródła w #5E697F. Kolor drugiej części wiersza oznaczam „do weryfikacji”, bo SPEC go nie podaje. Kapsuła: środek (859,378), 628 × 104, rx 52, #1A8648, biały napis Inter 500 44 px (szerokość 574 px, mieści się w kapsule).
+- Grot: (1190,505) → (1140,399) w kl. 13. Skala przycisku: 1 → 0,95 w 14–17 i powrót w 18–32. Linia: y = 641, 5 px, koniec −4 + 18·(f − 41), czyli 302 w kl. 58 i 320 w kl. 59.
+
+## Odbiór
+
+- 20/59 → 21/0: lewy brzeg kapsuły (545) leży na osi początku „Przewodnik”/„Rodzica” (545). Sprawdzone na klatkach 1199 i 1200.
+- Kl. 0, 17 i 40 w podglądzie 360 px: czytelny jest cały napis przycisku, „Wersja demonstracyjna” i „dane z mObywatela i mZUS” (`robocze/b19/w360.png`). Grot w kl. 17 stoi na prawym zaokrągleniu kapsuły, poza literami.
+- 21/59 → 22/0: koniec linii przechodzi z 320 na 338 na tym samym y, w tym samym kolorze i tempie 18 px/kl.

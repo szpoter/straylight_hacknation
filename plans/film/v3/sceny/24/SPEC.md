@@ -44,3 +44,7 @@ Build `node build.mjs --only 24,25,26,27,28,29,30 --out robocze/b24`. Stopklatki
 | 360 px | „A jeśli weźmiemy urlop razem?” i „Marta” czytelne; termin na karcie (≈ 8 px) rozpoznawalny. |
 
 **Wynik.** Ruch obejrzany w całości, bez klatki z problemem. **Otwarte:** styk 23/59 → 24/0 nie mógł być sprawdzony pikselowo — `sceny/23/scene.mjs` nie istnieje w chwili oddania. Po jego oddaniu: różnica 1379/1380; jeśli 23 zmieni rysunek mapy, podmienić import `drawMap` w 24.
+
+## Poprawka koordynatora
+
+Mapa w 24 importuje teraz `drawMap` z `../22/scene.mjs` (v3, kapsuły statusu 30 px) zamiast z v2. Różnica pikseli 1379/1380 wynosi 0. Podgląd `ujecie-720p.mp4` wyrenderowano ponownie.
