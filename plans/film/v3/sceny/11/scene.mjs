@@ -1,14 +1,12 @@
-// 11 · Ich numerek (20–22 s, film frames 600–659). Blok b07, modele r1. Plan ogólny, cam z = 1.
-// ZASIŁEK keeps sliding from 10/59; the display turns A16 → A17 on the ding (local 6 = 20.20 s); Marta steps in,
-// takes the handle with her left hand and catches the bottom-left corner (24 contact, 25 thumb on the print);
-// she lifts it to Paweł, whose right hand closes on the top edge at ⅓ from the left on 36; both hold 36–39;
-// Marta lets go on 40 (gap on 41); Paweł steps toward the counter carrying the print by that top edge.
-import { cam, shoot, world, key, curve, step, lips, breath, mix, ss, span, reach, rot, centreFor, gripBar, rollDeg, folderHold, HIP_Y } from "../07/kolejka.mjs";
+// 11 · Ich numerek. Próba r2: Marta łapie dolny lewy narożnik; Paweł przejmuje ten sam narożnik w 36–39.
+import { cam, shoot, world, key, curve, step, lips, breath, mix, ss, span, rot, centreFor, gripBar, rollDeg, folderHold } from "../07/kolejka.mjs";
 import { clerkIdle, PRAM_X } from "../07/scene.mjs";
-import { marta09, pawel09, pramX, extras09 } from "../09/scene.mjs";
+import { marta09, pramX, extras09 } from "../09/scene.mjs";
 import { pawel10 } from "../10/scene.mjs";
 
-export const Z_BL = [-32, 42], Z_TOP = [-32 + 64 / 3, -42];   // ZASIŁEK: bottom-left corner, top edge at ⅓
+import { reach, angleKeys, gripKeys, pinWindow, spatialAngles } from "../../ruch/pose.mjs";
+
+export const Z_BL = [-32, 42];
 export const CATCH = [505, 388], CATCH_F = 24, TAKE_F = 36, LET_F = 40;
 export const Z_END = { x: 796, y: 330, ang: 6 };                 // 11/59 (12/0 continues from here)
 
@@ -17,10 +15,10 @@ const zAng = f => f <= CATCH_F ? key(f, [[0, -15], [10, -21], [CATCH_F, -29]]) :
 const blFall = f => [curve(f, [[0, 611.8], [8, 596], [16, 562], [CATCH_F, CATCH[0]]]), curve(f, [[0, 316.4], [8, 345], [16, 372], [CATCH_F, CATCH[1]]])];
 // Marta's grip on the corner while she lifts it (25–40)
 const martaGrip = f => [curve(f, [[25, CATCH[0]], [32, 524], [39, 540]]), curve(f, [[25, CATCH[1]], [32, 352], [39, 328]])];
-// Paweł's grip on the top edge (36–59)
-const pawelGripEnd = () => rot(Z_END.x, Z_END.y, Z_END.ang, Z_TOP[0], Z_TOP[1]);
+// Paweł's grip on the corner (36–59)
+const pawelGripEnd = () => rot(Z_END.x, Z_END.y, Z_END.ang, Z_BL[0], Z_BL[1]);
 
-export function state11(k, f) {
+function blocked11(k, f) {
   const g = 600 + f;
   // pram: still until 42, then Marta rolls it 25 px after Paweł
   const px = pramX(59) + key(f, [[42, 0], [59, 25]], t => t * t * (3 - 2 * t));
@@ -40,34 +38,17 @@ export function state11(k, f) {
     feet: [[footA[0] - mx, 180 + footA[1]], [footB[0] - mx, 180 + footB[1]]],
     knees: [[(footA[0] - mx) * .5 - 6, 96 + footA[1] * .5], [(footB[0] - mx) * .5 + 6, 96 + footB[1] * .5]],
   };
-  // hands: right on the bar until 13, then the left takes the bar (13–19) and the right goes for the print
-  if (f < 13) { marta.leftGrip = "hold"; marta = reach(k, "marta", marta, "right", gripBar(px, .35), [60, 30]); }
-  else {
-    const lt = ss(span(f, 13, 19)), rest = [m0.x - 46, 398];
-    const lbar = gripBar(px, .55);
-    marta.leftGrip = "hold";
-    marta = reach(k, "marta", marta, "left", [mix(rest[0] + (mx - m0.x), lbar[0], lt), mix(rest[1], lbar[1], lt)], [-40, -20]);
-  }
-  let Z;
-  if (f >= 13) {
-    let tgt;
-    if (f <= CATCH_F) { // right hand leaves the bar and goes under the falling corner (open palm), contact on 24
-      const t = ss(span(f, 15, CATCH_F)), bar = gripBar(px, .35), bl = blFall(f);
-      tgt = [mix(bar[0], bl[0] - 1, t), mix(bar[1], bl[1] + 2, t)];
-      marta.rightGrip = "open";
-    } else if (f <= 41) {
-      tgt = f <= 39 ? martaGrip(f) : martaGrip(39);
-      marta.rightGrip = f < LET_F ? "pinch" : "open";
-      if (f >= LET_F) tgt = [tgt[0] - 4 * (f - 39), tgt[1] + 6 * (f - 39)];   // thumb off (40), gap (41)
-    } else { // right hand comes back down beside the hip (wrist eases to the r1 standing rest)
-      tgt = null;
-    }
-    if (tgt) marta = reach(k, "marta", marta, "right", tgt, [60, 30]);
-    else {
-      const rel = reach(k, "marta", { ...marta }, "right", [martaGrip(39)[0] - 8, martaGrip(39)[1] + 12], [60, 30]).right, t = ss(span(f, 41, 53));
-      marta.right = [58, -78, mix(rel[2], 50, t), mix(rel[3], -10, t)]; marta.rightGrip = "hold";
-    }
-  }
+  const Z=zAt(f), barL=gripBar(px,.55), barR=gripBar(px,.35);
+  const corner=rot(Z.x,Z.y,Z.ang,...Z_BL);
+  marta={...marta,r2:true,angles:{
+    left:angleKeys(f,[[0,[104,-22,0]],[12,[108,-32,0]],[18,[106,-56,4]]]),
+    right:angleKeys(f,[[0,[65,55,0]],[13,[61,57,1]],[18,[38,58,4]],[24,[32,49,6]],[40,[16,56,6]],[48,[48,56,2]],[56,[72,27,0]]])},
+    leftGrip:gripKeys(f,[[0,"hold"],[14,"open"],[20,"hold"]]),
+    rightGrip:gripKeys(f,[[0,"hold"],[17,"open"],[28,"pinch"],[44,"open"],[56,"hold"]])};
+  marta=reach("marta",marta,"left",barL,pinWindow(f,19,120,7));
+  const onBar=pinWindow(f,-60,12,6), onPaper=pinWindow(f,24,39,8);
+  if(onBar) marta=reach("marta",marta,"right",barR,onBar);
+  else if(onPaper) marta=reach("marta",marta,"right",f<24?CATCH:corner,onPaper);
   // ── Paweł
   const p0 = pawel10(k, 59, 599);
   const hx = key(f, [[40, p0.pose.x], [59, p0.pose.x + 62]]);
@@ -87,45 +68,71 @@ export function state11(k, f) {
   const dx = hx - p0.pose.x;
   const F = { ...p0.F, x: p0.F.x + dx };
   const shift = o => ({ ...o, x: o.x + dx });
-  pawel.rightGrip = "hold";
-  pawel = reach(k, "pawel", pawel, "right", folderHold(F), [80, -20], true);
-  // screen-left hand: fingertip stays on POTWIERDZENIE (0–25), opens and reaches for the top edge (26–35), pinches on 36
-  if (f < 26) { pawel.leftGrip = "point"; pawel = reach(k, "pawel", pawel, "left", p0.tip, [-90, -40], true); }
-  else if (f < TAKE_F) {
-    const t = ss(span(f, 26, 35)), zz = zAt(f), top = rot(zz.x, zz.y, zz.ang, Z_TOP[0], Z_TOP[1]);
-    pawel.leftGrip = "open";
-    pawel = reach(k, "pawel", pawel, "left", [mix(p0.tip[0], top[0] - 4, t), mix(p0.tip[1], top[1] - 6, t) - Math.sin(t * Math.PI) * 10], [-90, -40], true);
-  } else {
-    pawel.leftGrip = "pinch";
-    const zz = zAt(f);
-    pawel = reach(k, "pawel", pawel, "left", rot(zz.x, zz.y, zz.ang, Z_TOP[0], Z_TOP[1]), [-90, -40]);
-  }
+  pawel={...pawel,r2:true,angles:{left:angleKeys(f,[[0,[76,-129,2]],[22,[76,-129,2]],[27,[102,-111,2]],[32,[181,-102,-1]],[37,[254,-143,-3]],[53,[129,-115,0]]])},
+    leftGrip:gripKeys(f,[[0,"point"],[29,"open"],[39,"pinch"]]),rightGrip:"hold"};
+  pawel=reach("pawel",pawel,"right",folderHold(F));
+  pawel.downPole={left:36};
+  const pass=ss(span(f,25,36)), guide=[mix(p0.tip[0],corner[0],pass),mix(p0.tip[1],corner[1],pass)-Math.sin(Math.PI*pass)*14];
+  pawel=reach("pawel",pawel,"left",guide);
   // ── ZASIŁEK
   function zAt(ff) {
     const a = zAng(ff);
     if (ff <= CATCH_F) { const c = centreFor(blFall(ff), a, Z_BL[0], Z_BL[1]); return { x: c[0], y: c[1], ang: a }; }
     if (ff < LET_F) { const c = centreFor(martaGrip(Math.min(ff, 39)), a, Z_BL[0], Z_BL[1]); return { x: c[0], y: c[1], ang: a }; }
     // Paweł carries it: grip path from where he took it to the end grip (Z_END)
-    const at39 = centreFor(martaGrip(39), zAng(39), Z_BL[0], Z_BL[1]), g39 = rot(at39[0], at39[1], zAng(39), Z_TOP[0], Z_TOP[1]);
+    const g39 = martaGrip(39);
     const ge = pawelGripEnd(), t = ss(span(ff, 40, 58));
     let gp = [mix(g39[0], ge[0], t), mix(g39[1], ge[1], t) - Math.sin(t * Math.PI) * 10];
     if (ff > 58) gp = [ge[0] + (ff - 59) * 2, ge[1]];                 // last two frames: 820 → 822 (2 px/frame)
     if (ff === 58) gp = [ge[0] - 2, ge[1]];
-    const c = centreFor(gp, a, Z_TOP[0], Z_TOP[1]);
+    const c = centreFor(gp, a, Z_BL[0], Z_BL[1]);
     return { x: c[0], y: c[1], ang: a };
   }
-  Z = zAt(f);
+
   const inFolder = p0.inFolder.filter(p => p.id !== "Z").map(shift);
   return { g, px, marta, pawel, F, inFolder, Z };
 }
 
-export function scene(f, k) {
+const approaches=new WeakMap();
+export function state11(k,f){
+  const state=blocked11(k,f);
+  if(f<=25 || f>=36) return state;
+  if(!approaches.has(k)){
+    const keys=[25,36].map(n=>[n,spatialAngles(k.rig("pawel",blocked11(k,n).pawel).armL)]);
+    approaches.set(k,keys);
+  }
+  const p=state.pawel, weight=ss(span(f,32,36)),target=rot(state.Z.x,state.Z.y,state.Z.ang,...Z_BL);
+  state.pawel=reach("pawel",{...p,spatial:{left:angleKeys(f,approaches.get(k))}},"left",target,weight);
+  return state;
+}
+export function motionFrame(f,k) {
   const s = state11(k, f);
   const ex = extras09(59);
   const st = {
     disp: f < 6 ? 16 : 17, marta: s.marta, pawel: s.pawel, folder: s.F, inFolder: s.inFolder, free: [{ id: "Z", ...s.Z }],
-    clerk: { ...clerkIdle(s.g), head: key(f, [[6, -.25], [12, -.45]]), gaze: key(f, [[6, -.4], [12, -.8]]) },
+    clerk: { ...clerkIdle(s.g),r2:true,legs:false,downPole:{left:28}, head: key(f, [[6, -.25], [12, -.45]]), gaze: key(f, [[6, -.4], [12, -.8]]) },
     pram: { x: s.px, roll: rollDeg(s.px - PRAM_X), breath: breath(s.g) }, lady: ex.lady, bob: ex.bob,
   };
-  return shoot(cam(1, 640, 360), world(k, st));
+  st.clerk=reach("clerk",st.clerk,"left",[1040,364]);
+  const contacts=[{role:"pawel",joint:"gripR",id:"folder.edge",target:folderHold(s.F)}];
+  const add=(role,joint,id,target)=>contacts.push({role,joint,id,target});
+  if(f<=12) add("marta","gripR","bar.r",gripBar(s.px,.35));
+  if(f>=19) add("marta","gripL","bar.l",gripBar(s.px,.55));
+  if(f>=24 && f<=39) add("marta","gripR","Z.corner",rot(s.Z.x,s.Z.y,s.Z.ang,...Z_BL));
+  if(f>=36) add("pawel","gripL","Z.corner",rot(s.Z.x,s.Z.y,s.Z.ang,...Z_BL));
+  if(f<=25) { const p=s.inFolder.find(p=>p.id==="P"); add("pawel","gripL","P.heading",rot(p.x,p.y,p.ang,16,-36)); }
+  const actors={marta:s.marta,pawel:s.pawel,clerk:st.clerk};
+  const supports=[];
+  for(const [role,windows] of [["marta",[[[0,13],[21,44],[52,59]],[[0,17],[25,50],[58,59]]]],
+    ["pawel",[[[0,49],[58,59]],[[0,41],[50,59]]]]]) {
+    windows.forEach((ranges,i)=>{ const window=ranges.find(([a,b])=>f>=a && f<=b);
+      if(window) { const p=actors[role],foot=p.feet[i];
+        supports.push({role,joint:i?"ankleR":"ankleL",id:"floor."+window[0],target:[p.x+foot[0],p.y+foot[1]]}); }
+    });
+  }
+  return {st,actors,contacts,supports,props:{Z:[s.Z.x,s.Z.y],folder:[s.F.x,s.F.y]},camera:cam(1,640,360)};
+}
+export function scene(f,k){
+  const {st,camera}=motionFrame(f,k);
+  return shoot(camera,world(k,st));
 }

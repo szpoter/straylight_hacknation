@@ -35,3 +35,20 @@ Modele r1 (`k.rewizja === "r1"`), wspólny świat bloku w [`../07/kolejka.mjs`](
 ## Odbiór
 
 Sprawdzone 23 (szczelina), 24 (kontakt pod rogiem), 25 (kciuk), 35/36 (dłoń Pawła otwarta → chwyt), 37–39 (dwie pary palców), 40/41 (puszczenie), 59. Kolejność narożników bez zmian (arkusz liczony z jednego punktu chwytu naraz). Styk 599/600 ciągły, 659/660 kierunek w prawo zachowany. 360 px: zmiana numeru, upadek, kto łapie — czytelne.
+
+## Ruch v3.1
+
+**Próba C · FAIL.** Marta łapie w 24 dolny lewy narożnik druku. Paweł odbiera ten sam punkt, a przez klatki 36–39 obie dłonie jadą z papierem. Zmiana względem r2 wynika z wymogu wspólnego punktu przekazania. Wyświetlacz nadal zmienia się w 6. Model r2 stopniowo domyka palce. Przestrzenny biegun prowadzi łokieć pod barkiem. Dojście Pawła między 25 i 36 korzysta z interpolacji orientacji obu odcinków, a w 32–36 z narastającego przypięcia.
+
+| Pomiar dla 60 klatek w 720p | Wynik |
+| --- | ---: |
+| Maksymalna odchyłka długości czterech odcinków | <0,001% |
+| Największy krok kąta stawu | 19,38°/kl. |
+| Największe przyspieszenie | **22,59°/kl²** (limit 12) |
+| Największa odległość dłoni od punktu rekwizytu | 0,07 px po zaokrągleniu w górę |
+| Przesunięcie stopy podporowej | 0,00 px |
+| Podwójny kontakt | 36–39, 4/4 klatki |
+
+Granicę przyspieszenia przekraczają kolana Marty w 14, 22, 26, 51 i 53, kolana Pawła w 42, 49, 52 i 59 oraz jego łokieć w 30 i 31. Najsilniej widać zmianę przy kończeniu kroku Marty. Próba A podnosiła łokieć do skroni podczas prowadzenia druku. Próby B i C kierują go pod bark. Do wznowienia potrzebne są łagodniejsze przejęcie ciężaru przez kolana i rozłożenie zgięcia łokcia na sąsiednie klatki.
+
+Wyjście do 12 eksportuje rzeczywistą pozę, kartkę i teczkę. Zmiana rozstawienia postaci i wyniki cięcia są podane w SPEC 12. Wejścia 10/59 nie zweryfikowano metodą r2.
