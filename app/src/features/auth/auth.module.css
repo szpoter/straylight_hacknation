@@ -74,19 +74,16 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   min-width: 0;
   color: var(--color-on-surface);
   text-decoration: none;
   border-radius: var(--rounded-full);
 }
 
-.brandName {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
+/* Ta sama wysokość co w nagłówku strony głównej */
+.logo {
+  flex: none;
+  height: 32px;
 }
 
 .headerAside {

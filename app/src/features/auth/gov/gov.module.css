@@ -54,7 +54,6 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   color: var(--gov-ink);
   text-decoration: none;
 }
@@ -68,18 +67,10 @@
   outline-offset: 3px;
 }
 
-.brandMark,
-.brandMark svg {
-  display: block;
-  width: 34px;
-  height: 34px;
-}
-
-.brandName {
-  font-size: 21px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.01em;
+/* Ta sama wysokość co w nagłówku strony głównej */
+.logo {
+  flex: none;
+  height: 32px;
 }
 
 .main {
@@ -417,18 +408,6 @@ a.method:hover {
   line-height: 24px;
 }
 
-/* Wąski telefon: mniejszy znak i nazwa przewodnika */
-@media (max-width: 479px) {
-  .brandMark,
-  .brandMark svg {
-    width: 28px;
-    height: 28px;
-  }
-
-  .brandName {
-    font-size: 17px;
-  }
-}
 
 /* ——— Panel ze zdjęciem po prawej (tylko na dużych ekranach) ——— */
 .promo {

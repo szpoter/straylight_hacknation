@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Logo } from "@/components/ui/Logo";
 import { ArrowLeftIcon, InfoIcon } from "./icons";
 import styles from "./auth.module.css";
 
@@ -26,8 +27,7 @@ export function AuthShell({ aside, demoNote, footer, mainClassName, className, c
       <DemoBar>{demoNote}</DemoBar>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="Przewodnik Rodzica, strona główna">
-          <BrandMark />
-          <span className={styles.brandName}>Przewodnik Rodzica</span>
+          <Logo className={styles.logo} />
         </Link>
         {aside ? <div className={styles.headerAside}>{aside}</div> : null}
       </header>
@@ -91,19 +91,3 @@ export function AuthScreen({ service, title, lead, back, wide, children }: AuthS
   );
 }
 
-export function BrandMark() {
-  // Ten sam znak co w nagłówku strony głównej: rodzic i dziecko.
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="var(--color-primary)" />
-      <circle
-        cx="20.5"
-        cy="19.5"
-        r="6.5"
-        fill="var(--color-tertiary)"
-        stroke="var(--color-background)"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
