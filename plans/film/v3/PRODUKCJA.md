@@ -19,6 +19,7 @@ Dźwięk: `media/*.flac` to przyjęty miks v2 (dialog, narrator, efekty, otoczen
 | --- | --- | --- | --- |
 | r0 | koordynator | pusty zestaw, oryginalny Zusik w `zestaw.mjs` | zastąpiona |
 | r1 | dyrektor artystyczny | obsada, rekwizyty, plansza obsady, test obrotu; kanapa s=1,28 (zamiast 1,16) | przyjęta do produkcji |
+| r2 | rig | stawy, chwyty, podpory i dane cięć | test modelu zaliczony; trzecia próba 11–12 przekracza limit przyspieszenia. [Raport i podgląd](ruch/RAPORT.md) |
 
 ## Autorzy ujęć
 
