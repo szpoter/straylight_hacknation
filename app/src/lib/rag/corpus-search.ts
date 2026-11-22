@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import { relevantFragment } from "./relevance";
-import { isValidOn, type Corpus, type Fragment } from "./corpus";
+import { isPrimary, isValidOn, type Corpus, type Fragment } from "./corpus";
 import { corpusNames, loadCorpus } from "./corpus-fs";
 import { asksAboutOwnEligibility, type PublicQuestion } from "./public-query";
 import type { AskTurn } from "../zusik/types";
@@ -128,7 +128,9 @@ export function searchCorpus(text: string, direct?: PublicQuestion | null, kind 
     if (matches.length < 2 || !exact.length || !matches.some(key => idf(key) > 3.3)) return [];
     const positions = [...entry.words.keys()].flatMap((key, index) => matches.includes(key) && idf(key) > 2 ? [index] : []);
     const adjacent = positions.some((at,i) => i > 0 && at - positions[i-1] <= 4);
-    const score = matches.reduce((sum,key) => sum + idf(key) * weights.get(key)!, 0) * (adjacent ? 1.25 : 1) / (1 + 0.18 * Math.log(1 + entry.words.size));
+    // For legal conditions, prefer the provision over a form or guide which restates its vocabulary.
+    const legalWeight = ["entitlement", "rate", "proof"].includes(kind) && isPrimary(entry.corpus, entry.fragment) ? 1.15 : 1;
+    const score = matches.reduce((sum,key) => sum + idf(key) * weights.get(key)!, 0) * (adjacent ? 1.25 : 1) * legalWeight / (1 + 0.18 * Math.log(1 + entry.words.size));
     return [{entry, matches, score}];
   }).sort((a,b) => b.score-a.score);
   const best = ranked[0];
