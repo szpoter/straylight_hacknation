@@ -1,0 +1,31 @@
+# USC i wybór POZ dla dziecka
+
+Sprawdzone 22 listopada 2026 r. Zakres obejmuje zgłoszenie żywego urodzenia w Polsce, kolejny odpis aktu własnego dziecka oraz wybór opieki POZ przez przedstawiciela ustawowego. W aplikacji wybór kanału online zapisuje symulację w planie rodzica.
+
+## Zgłoszenie urodzenia
+
+Rodzic zgłasza urodzenie w USC właściwym dla miejsca urodzenia w ciągu 21 dni od sporządzenia karty urodzenia. Kartę przekazuje do USC placówka. Zgłoszenie i pierwszy odpis skrócony są bezpłatne. W czasie wizyty rodzic okazuje dowód osobisty albo paszport i podpisuje protokół przygotowany przez kierownika USC. W typowej sprawie akt powstaje w dniu wizyty, a po zgłoszeniu elektronicznym w następnym dniu roboczym, gdy urząd ma kartę. Podstawą są art. 52–59 Prawa o aktach stanu cywilnego. [Instrukcja gov.pl](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Tekst ustawy](https://eli.gov.pl/api/acts/DU/2026/393/text/T/D20260393L.pdf)
+
+Rodzic ma trzy kanały. Może udać się do USC, skorzystać z usługi na gov.pl lub od 5 marca 2026 r. złożyć zgłoszenie w aplikacji mObywatel. Przy zgłoszeniu online potrzebuje skrzynki do e-Doręczeń. Rodzic podaje m.in. dane rodziców i dziecka, wybrane imiona, miejsce pobytu i sposób odbioru dokumentów. Dokumenty można odebrać osobiście, pocztą lub elektronicznie. W razie nieustalenia ojcostwa formularz pozwala matce pominąć dane drugiego rodzica. Dla rodzica z ograniczoną zdolnością do czynności prawnych, który ukończył 16 lat, właściwa jest ścieżka urzędowa. [Usługa mObywatel](https://www.gov.pl/web/cyfryzacja/zglos-urodzenie-dziecka-w-mobywatelu-bez-umawiania-wizyty-w-urzedzie-bez-kolejek) · [Prawo o aktach stanu cywilnego, art. 57–58a](https://eli.gov.pl/api/acts/DU/2026/393/text/T/D20260393L.pdf)
+
+Wdrożenie obejmuje pola danych, limit dwóch imion, wybór kanału, listę rzeczy na wizytę oraz odejście od generowania papierowego wniosku rodzica.
+
+## Wniosek o odpis aktu urodzenia
+
+Rodzic może wystąpić o odpis aktu swojego dziecka do dowolnego USC w Polsce, również listownie lub przez gov.pl. We wniosku podaje dane pozwalające znaleźć akt, rodzaj odpisu, liczbę egzemplarzy, sposób odbioru i cel. Adres korespondencyjny jest potrzebny przy odbiorze pocztowym. W usłudze online urząd przesyła UPP na skrzynkę do e-Doręczeń. Odpis elektroniczny trzeba przekazywać odbiorcom w postaci elektronicznej. [Instrukcja gov.pl](https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu) · [Rejestr Stanu Cywilnego](https://www.gov.pl/web/cyfryzacja/rejestr-stanu-cywilnego)
+
+Za dodatkowy odpis skrócony, także wielojęzyczny, opłata wynosi 22 zł za egzemplarz. Za zupełny wynosi 33 zł. Odpis wielojęzyczny wydaje się na papierze. Przykłady zwolnień to postępowania w sprawach ubezpieczeń społecznych lub alimentów. Rodzic wskazuje konkretny cel i przy płatnym wniosku dołącza potwierdzenie opłaty. Pokrewieństwo uprawnia rodzica do uzyskania odpisu dziecka bez wykazywania interesu prawnego. Wniosek o kolejny odpis składa się według potrzeb. Typowy czas dla aktu obecnego w rejestrze to do 7 dni kalendarzowych. [Gov.pl, opłaty, dokumenty i terminy](https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu)
+
+W urzędowej instrukcji wskazano formularz dostępny w USC; nie wskazano ogólnopolskiego wzoru papierowego wniosku. Wdrożona wersja dla USC/poczty jest pismem rodzica. Zawiera dane wnioskodawcy, urząd, datę, żądanie, dane aktu, sposób odbioru, cel, załączniki i miejsce na podpis. Walidacja blokuje elektroniczny odbiór odpisu wielojęzycznego. [Gov.pl, instrukcja dla wizyty i listu](https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu)
+
+## Deklaracja wyboru POZ
+
+Załączniki 1–3 rozporządzenia Ministra Zdrowia z 26 czerwca 2020 r. zawierają odrębne wzory deklaracji wyboru lekarza, pielęgniarki i położnej. Dla dziecka składa je przedstawiciel ustawowy. Ustawa przewiduje druk papierowy, dokument elektroniczny z podpisem kwalifikowanym, zaufanym albo osobistym oraz deklarację złożoną w IKP. Adres do przekazania podpisanego dokumentu należy uzgodnić z placówką. W przeglądarce rodzic przełącza się na konto dziecka i składa deklarację w sekcji POZ. Aplikacja mojeIKP udostępnia dane kontaktowe przychodni. [NFZ, druki](https://www.nfz.gov.pl/dla-swiadczeniodawcy/pliki-do-pobrania/druki) · [Ustawa o POZ, art. 9–10](https://eli.gov.pl/api/acts/DU/2025/515/text.pdf) · [Instrukcja dla rodzica](https://pacjent.gov.pl/aktualnosc/wybierz-dziecku-lekarza-rodzinnego)
+
+W każdej deklaracji wskazuje się przychodnię i konkretnego medyka. Osoby te mogą pracować w różnych przychodniach. Druk obejmuje m.in. imię, nazwisko, datę urodzenia i adres dziecka, PESEL lub dokument tożsamości, dane i adres przedstawiciela, dane przychodni, wybór w bieżącym roku osobno dla placówki i medyka oraz datę i podpis. Telefon i e-mail są opcjonalne. Pierwsze dwa wybory w roku są bezpłatne. Kolejna zmiana kosztuje 80 zł, z wyjątkami z art. 9 ust. 5, np. gdy rodzina zmienia miejsce zamieszkania lub przychodnia przestaje udzielać świadczeń. Formularz nie wymaga załączników ani złożenia go w określonej liczbie dni od narodzin. [Rozporządzenie i wzory](https://eli.gov.pl/eli/DU/2020/1143/ogl) · [Pacjent.gov.pl, zasady wyboru](https://pacjent.gov.pl/jak-zostac-pacjentem-wybranej-przychodni)
+
+Repozytorium przechowuje oryginalny dziesięciostronicowy PDF. `pdf-lib` wykrywa w nim dwa pola typu `PDFSignature`, oba związane z publikacją. Pola deklaracji są nadrukiem. Eksport kopiuje trzy właściwe strony (druk i objaśnienia) i wpisuje wartości we współrzędnych przypisanych do danego załącznika. Podpis składa rodzic. Mapa wymaga szablonu o SHA-256 `34eea84267c338db365bd671313fc3a55aeedf130021282a22667fcb6d2bc6a4`. [Oryginalny PDF ELI](https://eli.gov.pl/api/acts/DU/2020/1143/text/O/D20201143.pdf)
+
+## Weryfikacja
+
+`app/tests/forms-civil.test.ts` sprawdza trzy warianty deklaracji, ich strony, tekst, pola w konkretnych pozycjach, znaki wyboru i ukryte dane, a także odrzucenie zmienionego szablonu. Dodatkowe przypadki obejmują rodzaje odpisu, opłatę za wiele egzemplarzy, zwolnienie oraz zgłoszenie urodzenia. Obejrzano render trzech wypełnionych deklaracji i pisma o dwa odpisy zupełne. Dane testowe pozostały lokalne.
