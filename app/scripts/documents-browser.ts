@@ -57,7 +57,7 @@ async function fillFields(page: Page, form: FormDef, values: Record<string, stri
   }
 }
 
-async function inspectPdf(page: Page, directory: string, key: string) {
+async function inspectPdf(page: Page, directory: string, key: string, fullLeave?: boolean) {
   const pending = page.waitForEvent("download");
   await page.locator("a[download]").click();
   const download = await pending;
@@ -69,7 +69,18 @@ async function inspectPdf(page: Page, directory: string, key: string) {
     const text: string[] = [];
     for (let index = 1; index <= pdf.numPages; index++) {
       const content = await (await pdf.getPage(index)).getTextContent();
-      text.push(content.items.map(item => "str" in item ? item.str : "").join(""));
+      const pageText = content.items.map(item => "str" in item ? item.str : "").join("");
+      text.push(pageText);
+      if (fullLeave !== undefined && (index === 2 || index === 5)) {
+        const marks = content.items.filter(item => "str" in item && item.str === "X");
+        if (index === 2) {
+          const intent = marks.some(item => "transform" in item && item.transform[4] >= 42 && item.transform[4] < 61 && item.transform[5] >= 303 && item.transform[5] < 321);
+          assert.equal(intent, fullLeave, "ZAM: deklaracja pełnego wymiaru na stronie 2");
+        } else {
+          // Only parental or supplementary leave requires the other-parent declaration on page 5.
+          assert.equal(marks.some(item => "transform" in item && Math.abs(item.transform[5] - 474) < 8), false);
+        }
+      }
     }
     const compact = text.join("").toLocaleLowerCase("pl").replace(/\s/g, "");
     assert.match(compact, /martalis|pawełlis|90051212349|olalis|26311000009/, `W pobranym PDF brakuje danych rodziny (${path})`);
@@ -95,7 +106,8 @@ async function checkChannel(browser: Browser, origin: string, directory: string,
     await page.getByRole("button", { name: "Rozpocznij wniosek" }).click();
     await page.getByRole("heading", { name: form.name, exact: true }).waitFor();
     const values = { ...sample };
-    if (id === "zasilek-macierzynski") Object.assign(values, { od: values.data_urodzenia, do: "", platnik: ["pue", "zus", "edoreczenia"].includes(channel) ? "ZUS" : "Pracodawca" });
+    const fullLeave = id === "zasilek-macierzynski" ? channel === "zus" : undefined;
+    if (id === "zasilek-macierzynski") Object.assign(values, { od: values.data_urodzenia, do: "", caly_okres: fullLeave ? "Tak" : "Nie", platnik: ["pue", "zus", "edoreczenia"].includes(channel) ? "ZUS" : "Pracodawca" });
     if (id === "urlop-ojcowski") values.rodzic = "Paweł Lis";
     if (id === "poz" && medic) values.medyk = medic;
     if (id === "becikowe" && channel === "poczta") {
@@ -122,7 +134,7 @@ async function checkChannel(browser: Browser, origin: string, directory: string,
     await page.getByText(delivery.label, { exact: true }).click();
     let output: string;
     if (delivery.mode === "pdf") {
-      const pages = await inspectPdf(page, directory, `${id}-${channel}${medic ? "-" + medic.split(" ")[0] : ""}`);
+      const pages = await inspectPdf(page, directory, `${id}-${channel}${medic ? "-" + medic.split(" ")[0] : ""}`, fullLeave);
       const expected = id === "poz" ? 3 : id === "becikowe" && channel === "poczta" ? 14 : form.pdf === "official" ? 7 : 1;
       assert.equal(pages, expected, "Niekompletny wydruk lub załączniki");
       output = `${pages} str.`;
