@@ -1,5 +1,6 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
+import { corpusFollowUp } from "../rag/corpus-search";
 import { relevantFragment } from "../rag/relevance";
 import { extractiveAnswer, needsStatutoryText } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
@@ -23,6 +24,7 @@ export interface AnswerDeps {
   search: KnowledgeSearch;
   /** Local-only fallback mapping the current utterance onto a reviewed public query. */
   suggestTopic?(text: string): PublicQuestion | null;
+  searchCorpus?(text: string, direct?: PublicQuestion | null): PublicQuestion | null;
   selectCorpus?(name: PublicQuestion["corpus"]): Corpus;
   /** Bielik via Sherlock. Receives only the sanitised question and public fragments. */
   generate(question: string, evidence: Fragment[], corpus: Corpus): Promise<GenerationResult>;
@@ -59,8 +61,12 @@ function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null 
   const direct = publicQuestion(text);
   const genericForm = direct?.question.startsWith("Jakie informacje należy zawrzeć") &&
     !/rodzicielsk/iu.test(text);
-  if ((direct && !genericForm) || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
-  return deps.suggestTopic?.(text) ?? direct;
+  if (direct?.clarify || scopeGate(text) || /podat|\bPIT\b|pogrzebow|aliment|kredyt/iu.test(text)) return direct;
+  const preset = (!direct || genericForm) ? deps.suggestTopic?.(text) : null;
+  // Preserve reviewed compound rules whose exceptions must travel with the main article.
+  if (preset || direct?.corpus === "oferta" || (direct?.corpus === "marta" && !genericForm) ||
+      ((direct?.locators?.length ?? 0) > 1 && !direct?.broad) || explicitLocatorKeys(text).length) return preset ?? direct;
+  return deps.searchCorpus?.(text, direct) ?? direct;
 }
 
 /** Resolve the public query locally before either provider receives it. */
@@ -74,7 +80,7 @@ export async function answerQuestion(
   const trace: AnswerTrace = {
     gate: null,
     contextRequestId,
-    sanitized,
+    sanitized: projected?.searchText ?? sanitized,
     expanded: null,
     vectorHits: [],
     vectorIds: [],
@@ -114,10 +120,10 @@ export async function answerQuestion(
   }
   if (!projected) return { answer: plain("insufficient_evidence",
     "Nie rozpoznałem tematu w bazie Zusika. O jakie świadczenie, dokument albo sytuację chcesz zapytać?"), trace };
-  trace.expanded = projected.corpus === "marta" ? expandQuery(sanitized) : null;
+  trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
-  const found = await deps.search.search({ query: sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
+  const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version, limit: TOP_K });
   trace.search = found.status;
   if (found.status !== "ok") return { answer: plain("unavailable", UNAVAILABLE_MESSAGE), trace };
   trace.vectorHits = found.hits;
@@ -236,7 +242,10 @@ export class AskService {
         result = { answer, trace: null };
       } else {
         const history = await this.deps.turns.list(threadId, requestId, 24);
-        const context = resolveFollowUp(text, history, this.deps.suggestTopic);
+        const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
+        const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
+        const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
+          : resolveFollowUp(text, history, this.deps.suggestTopic);
         const projected = context?.plan ?? projectQuestion(this.deps, text);
         result = await answerQuestion(this.deps, text, onProgress, projected, context?.requestId);
         if (projected?.question && result.answer.status !== "unavailable")
