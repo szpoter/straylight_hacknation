@@ -1,15 +1,20 @@
 import { isPrimary, type Corpus, type Fragment } from "./corpus";
-import { publicBenefitTopics, type PublicBenefitTopic } from "./public-query";
+import { publicBenefitFocus, type PublicBenefitTopic } from "./public-query";
 
 // Health insurance and a medical certificate occur in many benefit descriptions.
 // Only the name of sickness benefit establishes that subject in the source.
 function sourceTopics(text: string) {
-  return publicBenefitTopics(text).filter(topic => topic !== "sickness" ||
-    /(?:zasił\p{L}*|wynagrodzeni\p{L}*)\s+chorobow/iu.test(text));
+  const named = (source: string) => publicBenefitFocus(source).filter(topic => topic !== "sickness" ||
+    /(?:zasił\p{L}*|wynagrodzeni\p{L}*)\s+chorobow/iu.test(source));
+  // One benefit may depend on exhaustion of another, or use its calculation basis.
+  const withoutReference = text.replace(
+    /(?:po (?:wyczerpaniu|wykorzystaniu) (?:cał\p{L}* )?|podstaw\p{L}* wymiaru )(?:zasił\p{L}*|świadczeni\p{L}*) \p{L}+/giu, " ");
+  const main = named(withoutReference);
+  return main.length ? main : named(text);
 }
 
 export function matchesPublishedBenefit(question: string, publication: string) {
-  const asked = publicBenefitTopics(question);
+  const asked = publicBenefitFocus(question);
   return !asked.length || sourceTopics(publication).some(topic => asked.includes(topic));
 }
 
@@ -44,8 +49,12 @@ function index(corpus: Corpus) {
   return subjects;
 }
 
-export function benefitFilter(question: string) {
-  const asked = publicBenefitTopics(question);
+export function benefitFilter(question: string | string[]) {
+  // A keyword list may keep the adjective (“rehabilitacyjne”) without its noun.
+  const text = typeof question === "string" ? question : [
+    question.join(" "), ...question.map(word => `świadczenie ${word}. zasiłek ${word}. urlop ${word}.`),
+  ].join(". ");
+  const asked = publicBenefitFocus(text);
   return (corpus: Corpus, fragment: Fragment) => {
     if (!asked.length) return true;
     const subjects = (indexed.get(corpus) ?? index(corpus)).get(fragment.logicalId) ?? [];

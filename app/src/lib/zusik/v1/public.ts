@@ -1,6 +1,8 @@
 import type { ChatModelOptions } from "../chat-model";
 import sources from "../../../../corpus/official-sources.json";
 import { publicQuestion } from "../../rag/public-query";
+import { isReviewedProjection, publicLookupTitle, type PublicLookup } from "../../rag/ranked-lookup";
+import { knownPublicLookup } from "../../rag/public-ranked-plan";
 import { answerPublicTurn } from "../ask-service";
 import { publicAnswerDeps } from "../server";
 import { chatStarters, conversationInput } from "../conversation";
@@ -9,7 +11,10 @@ import { sourceIntent } from "../context-answer";
 import { ApiProblem } from "./http";
 import type { Message } from "./conversation";
 
-export async function publicReply(question: string, previous?: Message, options?: ChatModelOptions) {
+export async function publicReply(question: string, previous?: Message, options?: ChatModelOptions, lookup?: PublicLookup) {
+  if (lookup && ((!isReviewedProjection(question) && publicLookupTitle(lookup) !== question) || !knownPublicLookup(lookup.ids, lookup.terms))) {
+    throw new ApiProblem(422, "invalid_public_evidence");
+  }
   if (sourceIntent(question)) {
     if (previous?.input.intent !== "public_question") return {answer:"W tej rozmowie nie ma wcześniejszej publicznej odpowiedzi.",citations:[]};
     return {answer:previous.citations.length ? previous.answer : "Poprzednia odpowiedź nie zawierała cytatu ze źródła urzędowego.",
@@ -18,7 +23,7 @@ export async function publicReply(question: string, previous?: Message, options?
   const {text,reply} = conversationInput(question,"ogolna");
   if (reply) return {answer:reply,citations:[], ...(previous?.input.intent === "public_question" && !chatStarters.some(s => s.prompt === text)
     ? {contextMessageId:previous.id} : {})};
-  const deps = publicAnswerDeps(Date.now()+48_000, options);
+  const deps = {...publicAnswerDeps(Date.now()+48_000, options), publicLookup:lookup};
   const history: AskTurn[] = [];
   if (previous?.input.intent === "public_question") {
     const citations = previous.citations.flatMap(c => {

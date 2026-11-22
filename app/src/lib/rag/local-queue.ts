@@ -3,9 +3,10 @@ import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type { Corpus, Fragment } from "./corpus";
 import { corpusNames, loadCorpus } from "./corpus-fs";
-import { corpusKeywords } from "./corpus-search";
+import { compoundQuestion } from "./compound";
+import { corpusKeywords, searchCorpus } from "./corpus-search";
 import { statutoryListIds } from "./relevance";
-import { publicQuestion } from "./public-query";
+import { publicPairPrefix, publicQuestion } from "./public-query";
 import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, TYPED_CONTEXT_TOKENS, type localModelIds, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
 import { modelForTask } from "../zusik/model-provider";
 
@@ -13,6 +14,13 @@ import { modelForTask } from "../zusik/model-provider";
 export function publicQueueEvidence(corpus: Corpus, question: string, evidence: Fragment[]) {
   if (!evidence.length || !corpusNames.some(name => loadCorpus(name) === corpus) ||
       !evidence.every(f => corpus.fragments.get(f.logicalId) === f)) return null;
+  if (question.startsWith(publicPairPrefix)) {
+    const plan = compoundQuestion(question, searchCorpus);
+    const units = plan?.lexical;
+    if (plan?.question !== question || loadCorpus(plan.corpus) !== corpus || units?.length !== evidence.length) return null;
+    return units.every(unit => evidence.some(f => f.logicalId === unit.logicalId && f.corpusVersion === unit.corpusVersion &&
+      f.fragmentSha256 === unit.fragmentSha256)) ? evidence : null;
+  }
   const fromShippedWords = evidence.some(anchor => {
     if (!corpusKeywords(question, anchor)) return false;
     const allowed = new Set([...statutoryListIds(corpus, anchor), ...anchor.primaryIds, ...anchor.relatedIds]);

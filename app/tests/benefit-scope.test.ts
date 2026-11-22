@@ -3,6 +3,8 @@ import { loadCorpus } from "../src/lib/rag/corpus-fs";
 import { searchCorpus } from "../src/lib/rag/corpus-search";
 import { answerPublicTurn, answerQuestion, type AnswerDeps } from "../src/lib/zusik/ask-service";
 import { routeCaseQuestion } from "../src/lib/zusik/v1/intent";
+import { benefitFilter, matchesPublishedBenefit } from "../src/lib/rag/benefit-scope";
+import { publicBenefitFocus } from "../src/lib/rag/public-query";
 import { validateAnswer } from "../src/lib/rag/answer";
 
 const deps: AnswerDeps = { corpus:loadCorpus(), selectCorpus:loadCorpus, searchCorpus,
@@ -84,4 +86,55 @@ it("answers both the application opening and the covered period when they share 
   expect(explanation).toContain("1 lutego");
   expect(explanation).toContain(quote);
   expect(answer.citations.map(c => c.fragmentId)).toEqual(["800-plus"]);
+});
+
+it.each(["uz-18-1","uz-19-1"])("keeps sickness benefit as a prerequisite or calculation basis of rehabilitation: %s", id => {
+  const corpus = loadCorpus("publiczne");
+  const fragment = corpus.fragments.get(id)!;
+  const asksSickness = "Jaka jest zasada dotycząca samego zasiłku chorobowego?";
+  const asksRehabilitation = "Chodzi o świadczenie rehabilitacyjne po wyczerpaniu zasiłku chorobowego.";
+  expect(matchesPublishedBenefit(asksSickness, fragment.sourceText)).toBe(false);
+  expect(benefitFilter(asksSickness)(corpus, fragment)).toBe(false);
+  expect(matchesPublishedBenefit(asksRehabilitation, fragment.sourceText)).toBe(true);
+  expect(benefitFilter(asksRehabilitation)(corpus, fragment)).toBe(true);
+});
+
+it("does not select parental leave when the parent explicitly excludes it", () => {
+  const asks = "Chodzi o urlop ojcowski, a nie urlop rodzicielski.";
+  const parental = loadCorpus("marta").fragments.get("kp-art182-1d-par1")!;
+  const paternal = loadCorpus("publiczne").fragments.get("kp-1823-2")!;
+  expect(matchesPublishedBenefit(asks, parental.sourceText)).toBe(false);
+  expect(matchesPublishedBenefit(asks, paternal.sourceText)).toBe(true);
+});
+
+it.each([
+  "Czy możliwa jest wypłata chorobowego po wyczerpaniu okresu zasiłkowego?",
+  "Wyczerpałam zasiłek chorobowy i nadal nie mogę pracować. Czy jest świadczenie na dalszy okres?",
+  "Wyczerpałam zasiłek chorobowy i nadal nie mogę pracować. Lekarz nie przewiduje powrotu po leczeniu. Czy jest świadczenie na dalszy okres?",
+])("requires a positive prognosis before inferring rehabilitation from exhausted sick pay: %s", question => {
+  expect(publicBenefitFocus(question)).toEqual(["sickness"]);
+});
+
+it("distinguishes the document being replaced from the benefit requested later in the sentence", () => {
+  expect(publicBenefitFocus("Jaki dokument zamiast odpisu aktu urodzenia świadczy o prawie do urlopu ojcowskiego?")).toEqual(["paternity"]);
+  expect(publicBenefitFocus("Kończy się okres zasiłkowy. Leczenie pozwoli odzyskać zdolność do pracy. Czy istnieje kolejne świadczenie?")).toEqual(["rehabilitation"]);
+});
+
+it("does not read the end of a Polish noun as a standalone negation of recovery", () => {
+  const start = "Po wyczerpaniu chorobowego leczenie ";
+  const end = " odzyskanie zdolności do pracy. Czy można otrzymać kolejne świadczenie?";
+  expect(publicBenefitFocus(start + "rokuje" + end)).toEqual(["rehabilitation"]);
+  expect(publicBenefitFocus(start + "nie rokuje" + end)).toEqual(["sickness"]);
+});
+
+it.each([
+  "Czy pozwany może wnieść odpowiedź na pozew później, jeżeli jest na urlopie ojcowskim?",
+  "Jak rozliczyć w zeznaniu podatkowym koszt prywatnego leczenia podczas pobierania zasiłku chorobowego?",
+  "Czy prywatny ubezpieczyciel wypłaca pieniądze z polisy, jeżeli pracownik choruje?",
+])("keeps the requested proceeding distinct from benefits mentioned in the background: %s", async text => {
+  const search = vi.fn(deps.search.search);
+  const {answer} = await answerPublicTurn({...deps, search:{search}}, text, []);
+  expect(search).not.toHaveBeenCalled();
+  expect(answer.citations).toHaveLength(0);
+  expect(routeCaseQuestion(text,{facts:[]})).toHaveProperty("clarify");
 });

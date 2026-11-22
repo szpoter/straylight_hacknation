@@ -16,6 +16,12 @@ it("routes a mixed question without sending a child's name to a public provider"
   expect(messageInput.safeParse("input" in result && result.input).success).toBe(true);
   expect(JSON.stringify(result)).not.toContain("Joanna");
 });
+
+it("keeps public conditional questions out of private pay simulations", () => {
+  const result = routeCaseQuestion("Co jeśli mimo zakończenia ubezpieczenia chorobowego niezdolność do pracy trwa nadal?", {facts:[]});
+  expect(result).not.toEqual({clarify:"Jaką kwotę brutto zakładasz i za który miesiąc?"});
+  expect(routeCaseQuestion("Co jeśli moja pensja wzrośnie?", {facts:[]})).toMatchObject({clarify:expect.stringContaining("kwotę")});
+});
 it("preserves a public follow-up and the source of a private answer",()=>{
   const lastMessage = {id:"m",input:{intent:"public_question"},citations:[]};
   expect(routeCaseQuestion("Na czyje konto?",{facts:[],lastMessage})).toMatchObject({input:{intent:"public_question",replyTo:"m"}});

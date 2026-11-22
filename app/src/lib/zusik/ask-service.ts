@@ -7,12 +7,14 @@ import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type Validatio
 import { checkCitedSources } from "../rag/source-check";
 import { corpusFollowUp, type searchCorpus } from "../rag/corpus-search";
 import { compoundQuestion } from "../rag/compound";
+import { publicLookupTitle, rankedLookup, type PublicLookup } from "../rag/ranked-lookup";
+import { publicRankedCandidates, publicRankedPlan } from "../rag/public-ranked-plan";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
 import { nurseryIntent, runSectionTurn, schoolRecipientIntent } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
 import { benefitFilter, matchesPublishedBenefit } from "../rag/benefit-scope";
 import { extractiveAnswer, needsStatutoryText, reviewedSourceIds, withSourceException } from "../rag/excerpt";
-import { isPublicLegalDetail, offerDetail, publicQuestion, type PublicQuestion } from "../rag/public-query";
+import { asksOutsideBenefitScope, isPublicLegalDetail, offerDetail, publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
 import type { CaseStore } from "./case-store";
@@ -34,6 +36,7 @@ export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Sprób
 
 export interface AnswerDeps {
   selectedModel?: ChatModelOptions["model"];
+  publicLookup?: PublicLookup;
   extraVerification?: boolean;
   deadlineMs?: number;
   publicTask?(input: PublicTaskInput, deadline: number): ReturnType<typeof runPublicModelTask>;
@@ -88,6 +91,26 @@ function newTrace(sanitized: string, contextRequestId: string | null): AnswerTra
 }
 
 function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null {
+  if (asksOutsideBenefitScope(text)) return publicQuestion(text);
+  const lookup = deps.publicLookup ?? (deps.searchCorpus && deps.selectCorpus && rankedLookup(text, publicQuestion(text, true)));
+  if (!lookup || !deps.selectCorpus) return reviewedPlan(deps, text);
+  const base = text === publicLookupTitle(lookup) ? null : reviewedPlan(deps, text);
+  const {ids, facet, terms} = lookup;
+  const ranked = lookup.rankingOnly ? null : publicRankedPlan(ids, facet, terms);
+  if (!base || base.clarify || base.uncovered) return ranked ?? base ?? {corpus:"publiczne", question:"",
+    clarify:"O który warunek świadczenia chcesz zapytać? Znalezione fragmenty nie wskazują jednoznacznej odpowiedzi."};
+  const corpus = deps.selectCorpus(base.corpus);
+  const exact = base.requiredFragmentIds ?? (base.fragmentId ? [base.fragmentId] : reviewedSourceIds(base, corpus));
+  if (ranked && !base.requiredFragmentIds?.length && !exact.some(id => ids.includes(id))) return ranked;
+  const candidates = publicRankedCandidates(ids, terms);
+  const prior = base.lexical ?? exact.flatMap(id => {
+    const f = corpus.fragments.get(id);
+    return f ? [{logicalId:id, fragmentSha256:f.fragmentSha256, corpusVersion:f.corpusVersion}] : [];
+  });
+  return {...base, lexical:[...prior, ...candidates.filter(c => !prior.some(p => p.logicalId === c.logicalId))]};
+}
+
+function reviewedPlan(deps: AnswerDeps, text: string): PublicQuestion | null {
   if (isPublicLegalDetail(text)) return deps.searchCorpus?.(text) ?? {
     corpus: "publiczne", question: "", uncovered: "Nie znalazłem potwierdzonego fragmentu dotyczącego tego szczegółu.",
   };
@@ -192,7 +215,7 @@ export async function answerQuestion(
   });
   const asOf = (deps.asOf ?? today)();
   async function missingEvidence(fallback: AskAnswer) {
-    if (projected?.requiredFragmentIds?.length || !deps.discoverOfficial || !/program|świadczeni|dofinansowan|wsparci|dopłat/iu.test(question) ||
+    if (asksOutsideBenefitScope(question) || projected?.requiredFragmentIds?.length || !deps.discoverOfficial || !/program|świadczeni|dofinansowan|wsparci|dopłat/iu.test(question) ||
         /(?<!\d)(?:19|20)\d{2}(?!\d)|zeszł|dawn|kiedyś|ubiegł|przed lat|wtedy/iu.test(question)) return { answer: fallback, trace };
     onProgress?.("Sprawdzam katalog świadczeń na stronie ZUS…");
     const live = await deps.discoverOfficial(question, asOf, deps.deadlineMs);
@@ -272,11 +295,15 @@ export async function answerQuestion(
     const answer = extractiveAnswer(corpus, projected, fragments, [...confirmed], evidence.vectorIds);
     return {answer: answer ?? plain("insufficient_evidence", NO_BASIS_MESSAGE), trace};
   }
-  trace.calls.sherlock += 1;
   onProgress?.("Przygotowuję odpowiedź na podstawie źródeł…");
   const generated = await deps.generate(sanitized, fragments, corpus);
-  onProgress?.("Sprawdzam cytaty i podstawę odpowiedzi…");
   trace.model = generated.status;
+  if (generated.status === "insufficient_evidence") {
+    return { answer: plain("insufficient_evidence",
+      "Brakuje zweryfikowanych źródeł publicznych do odpowiedzi na to pytanie. Pytanie nie trafiło do modelu."), trace };
+  }
+  trace.calls.sherlock += 1;
+  onProgress?.("Sprawdzam cytaty i podstawę odpowiedzi…");
   trace.backend = generated.backend;
   trace.attemptId = generated.attemptId;
   trace.modelId = generated.model;
@@ -350,6 +377,7 @@ async function resolvePublicTurn(deps: AnswerDeps, text: string, history: AskTur
       message:clarification.message, claims:[], citations:[], corpusVersion:deps.corpus.manifest.corpusVersion};
     return {answer,trace};
   }
+  if (asksOutsideBenefitScope(text)) return answerQuestion(deps, text, onProgress, publicQuestion(text));
   const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
   const continuation = previous && publicContinuation(text, previous.publicQuery);
   text = continuation ?? publicSituation(text) ?? text;

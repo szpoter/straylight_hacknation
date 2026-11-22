@@ -226,16 +226,16 @@ export function validateAnswer(
   };
 }
 
-export interface GenerationResult {
-  status: "ok" | "invalid_json" | "rate_limited" | "timeout" | "error";
-  output: ModelAnswer | null;
-  model: string;
+export type GenerationResult = (
+  | { status: "ok" | "invalid_json" | "rate_limited" | "timeout" | "error"; output: ModelAnswer | null; model: string }
+  | { status: "insufficient_evidence"; output: null; model?: never }
+) & {
   ms: number;
   /** Diagnostics only (e.g. "stop", "length"); never the model text. */
   finishReason?: string;
   backend?: string;
   attemptId?: string;
-}
+};
 
 type HostedSettings = { baseURL: string; apiKey: string; model: string };
 export type AnswerModelSettings = (HostedSettings | { hosted: () => HostedSettings }) & {
@@ -289,6 +289,8 @@ export async function generateAnswer(
     const fallback = canUseHosted ? "hosted" : local === "qwen-27b" ? "unavailable" : "source_only";
     console.info(JSON.stringify({ ...attempt, fallback }));
     if (!canUseHosted) return { status: "error", output: null, model: local, backend, attemptId, ms };
+  } else if (localOnly === "qwen-27b" && settings.queue) {
+    return { status: "insufficient_evidence", output: null, ms: Date.now() - started };
   } else if (localOnly) {
     return { status: "error", output: null, model: localOnly, backend: "local-" + localOnly, ms: Date.now() - started };
   } else if (local) {

@@ -2,7 +2,7 @@ import type { Fragment } from "./corpus";
 import { loadCorpus } from "./corpus-fs";
 import { corpusKeywords, type searchCorpus } from "./corpus-search";
 import { reviewedSourceIds } from "./excerpt";
-import { asksAboutOwnEligibility, offerDocuments, projectPublicPair, publicBenefitTopics, publicQuestion, type PublicQuestion } from "./public-query";
+import { asksAboutOwnEligibility, offerDocuments, projectPublicPair, publicPairPrefix, publicBenefitTopics, publicQuestion, type PublicQuestion } from "./public-query";
 import { MAX_QUESTION_LENGTH, scopeGate } from "./query";
 
 type Search = typeof searchCorpus;
@@ -37,15 +37,14 @@ function covered(clause: string, publication: string) {
 export function compoundQuestion(text: string, search: Search): PublicQuestion | null {
   if (text.length > MAX_QUESTION_LENGTH || /(?<!\p{L})(?:lub|albo|zamiast|mój|moja|moim|mojej|naszym)(?!\p{L})|załączon|moim załączniku|@|\d{5}/iu.test(text) ||
       asksAboutOwnEligibility(text) || /\d|(?<!\p{L})(?:bez|nie|ani|oprócz)(?!\p{L})/iu.test(text.replace(/(?:800|300)\s*(?:\+|plus)/giu, ""))) return null;
-  const prefix = "Pytania publiczne: ";
-  const transported = text.startsWith(prefix);
-  const rawClauses = transported ? text.slice(prefix.length).split(/(?<=\?) oraz /u) : text.split(separator);
+  const transported = text.startsWith(publicPairPrefix);
+  const rawClauses = transported ? text.slice(publicPairPrefix.length).split(/(?<=\?) oraz /u) : text.split(separator);
   if (rawClauses.length !== 2) return transported ? missing() : null;
   const original = publicQuestion(text);
   if (!transported && original?.question === text && reviewedSourceIds(original, loadCorpus(original.corpus)).length) return null;
   const pair = projectPublicPair(text);
   if (transported && pair?.question !== text) return missing();
-  const clauses = pair?.question ? pair.question.slice(prefix.length).split(/(?<=\?) oraz /u) : rawClauses;
+  const clauses = pair?.question ? pair.question.slice(publicPairPrefix.length).split(/(?<=\?) oraz /u) : rawClauses;
   const [left, right] = clauses;
   const first = facetOf(left) ?? (pair?.question ? programmeDetail : undefined);
   const second = facetOf(right) ?? (pair?.question ? programmeDetail : undefined);
@@ -101,8 +100,8 @@ export function compoundQuestion(text: string, search: Search): PublicQuestion |
     return aspect === programmeDetail || facetOf(plan.question) === aspect ? [plan.question] :
       [aspect[3], plan.searchText ?? plan.question];
   });
-  const question = [...new Set(instructions)].join(" ");
-  if (question.length > MAX_QUESTION_LENGTH) return missing();
-  return {corpus:targets[0].plan.corpus, question, searchText:question, fragmentId:anchor.logicalId,
+  const searchText = [...new Set(instructions)].join(" ");
+  if (searchText.length > MAX_QUESTION_LENGTH) return missing();
+  return {corpus:targets[0].plan.corpus, question:pair?.question || searchText, searchText, fragmentId:anchor.logicalId,
     requiredFragmentIds:lexical.map(f => f.logicalId), lexical};
 }

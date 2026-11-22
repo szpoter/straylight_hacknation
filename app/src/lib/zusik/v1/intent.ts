@@ -5,6 +5,7 @@ import { opportunityQuestion } from "../../plan/opportunities";
 import { publicContinuation, publicSituation } from "../public-continuation";
 import { resolveFollowUp } from "../retrieval-context";
 import { chatStarters, sourceIntent } from "../conversation";
+import { isReviewedProjection, publicLookupTitle, rankedLookup } from "../../rag/ranked-lookup";
 import type { EvidenceFact } from "../memory/contract";
 import type { MessageInput } from "./conversation";
 
@@ -66,7 +67,8 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
       /^(?:(?:a |i )?(?:na dzień |na |w dniu |dnia )?)\d{4}-\d{2}-\d{2}[?!. ]*$/iu.test(text))
     return {input:{intent:"read_context",topic:prior.input.topic,subjectId:ctx.subjectId || prior.input.subjectId,
       validAt:date,knownAt:prior.input.knownAt,replyTo:prior.id}};
-  if (/gdyby|hipotetycz|co jeśli|co by było/iu.test(text)) return payVariant(text,ctx);
+  if (/gdyby|hipotetycz|co jeśli|co by było/iu.test(text) &&
+      (privateContext || /pensj|zarob|wynagrodz|podwyż|brutto|netto|\bzł\b|\bPLN\b/iu.test(text))) return payVariant(text,ctx);
   if (prior?.input.intent === "hypothetical" && /^(?:a |i )?(?:ile(?: (?:więcej|mniej))?|za jaki okres|za ile dni|jaka (?:byłaby )?różnica|o ile (?:więcej|mniej))[?!. ]*$/iu.test(text))
     return {input:{intent:"ask_case",topic:"previous_sources",replyTo:prior.id}};
   const changeTopic = /^(?:nie[, ]+)?(?:chodzi(?:ło)? mi o|chodzi o|pytam o|mam na myśli) (?:program )?(dobry start|300\s*(?:plus|\+)|aktywnie w żłobku|żłobek)[?!. ]*$/iu.exec(text);
@@ -132,6 +134,11 @@ export function routeCaseQuestion(question: string, ctx: Context): Result {
   const opportunity = !privateContext && opportunityQuestion(text);
   if (opportunity) return {input:{intent:"public_question",publicQuestion:opportunity}};
   const direct = publicQuestion(text, true);
+  const lookup = !privateContext && !prior && rankedLookup(text, direct);
+  if (lookup) {
+    const fallback = direct?.question && !direct.clarify && isReviewedProjection(direct.question);
+    return {input:{intent:"public_question", publicQuestion:fallback ? direct.question : publicLookupTitle(lookup), publicLookup:lookup}};
+  }
   const explicitlyGeneral = /^(?:ogólnie\b|jakie są ogólne zasady\b|co (?:mówią|stanowią) przepisy\b)/iu.test(text);
   if (direct?.question && !direct.clarify && (!privateContext || explicitlyGeneral || text === direct.question)) {
     return {input:{intent:"public_question",publicQuestion:direct.question,replyTo:prior?.input.intent === "public_question" ? prior.id : undefined}};

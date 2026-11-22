@@ -8,6 +8,7 @@ import { ageMessage } from "../conversation-age";
 import { accountAnswer, accountReadInput, accountLinkInput, type AccountReport } from "./account";
 import type { AskAnswer } from "../types";
 import { ApiProblem } from "./http";
+import { publicLookupSchema, type PublicLookup } from "../../rag/ranked-lookup";
 
 const id = z.string().min(1).max(128);
 const date = z.iso.date();
@@ -18,7 +19,7 @@ export const messageInput = z.discriminatedUnion("intent", [
   accountReadInput, accountLinkInput,
   z.strictObject({intent:z.literal("note_age"), child:z.enum(["daughter","son","child"]),months:z.int().min(0).max(216)}),
   z.strictObject({intent:z.literal("recall_age")}),
-  z.strictObject({ intent: z.literal("public_question"), modelOptions: chatModelOptions.optional(), publicQuestion: z.string().trim().min(2).max(500), replyTo }),
+  z.strictObject({ intent: z.literal("public_question"), modelOptions: chatModelOptions.optional(), publicQuestion: z.string().trim().min(2).max(500), publicLookup:publicLookupSchema.optional(), replyTo }),
   z.strictObject({ intent: z.literal("read_context"), topic: id, publicTopic: z.literal("nursery_recipient").optional(), ...lookup }),
   z.strictObject({ intent: z.literal("declare_fact"), fact: factInput, basisProfileRevision: revision, replyTo }),
   z.strictObject({ intent: z.literal("ask_case"), topic: id.optional(), ...lookup }),
@@ -153,7 +154,8 @@ async function hypothetical(ctx: Context, message: Extract<MessageInput,{intent:
   return {answer:intro + lines.join("\n"),citations:variant.flatMap(d=>d.citations)};
 }
 
-export async function createMessage(ctx: Context, input: MessageInput, publicAnswer: (question: string, previous?: Message, options?: ChatModelOptions) => Promise<Answer>) {
+export type PublicAnswer = (question: string, previous?: Message, options?: ChatModelOptions, lookup?: PublicLookup) => Promise<Answer>;
+export async function createMessage(ctx: Context, input: MessageInput, publicAnswer: PublicAnswer) {
   let previous: Message | undefined;
   if ("replyTo" in input && input.replyTo) previous = await readTurn(ctx,"message",input.replyTo);
   else previous = (await ctx.db.query("SELECT body FROM zusik.v1_turns WHERE owner_session=$1 AND profile_id=$2 AND case_id=$3 AND kind='message' ORDER BY created_at DESC,id DESC LIMIT 1",
@@ -170,7 +172,7 @@ export async function createMessage(ctx: Context, input: MessageInput, publicAns
   } else if (input.intent === "public_question") {
     if (previous?.input.intent === "public_question" && previous.contextMessageId)
       previous = await readTurn(ctx,"message",previous.contextMessageId);
-    response = await publicAnswer(input.publicQuestion,previous?.input.intent === "public_question" ? previous : undefined, input.modelOptions);
+    response = await publicAnswer(input.publicQuestion,previous?.input.intent === "public_question" ? previous : undefined, input.modelOptions, input.publicLookup);
   } else if (input.intent === "ask_case" && input.topic === "previous_sources" && previous) {
     response = {answer: previous.answer,citations:previous.citations};
   } else if (input.intent === "explain_result") {

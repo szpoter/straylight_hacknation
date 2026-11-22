@@ -38,7 +38,7 @@ function phrases(text: string) {
   return new Set(words.slice(1).map((word, i) => words[i] + " " + word));
 }
 
-const intents = {
+export const intents = {
   info: "Jakie ogólne zasady wynikają ze źródła?",
   entitlement: "Jaka zasada określa prawo do świadczenia w tej sytuacji?",
   duration: "Przez jaki okres obowiązuje ta zasada?",
@@ -64,7 +64,7 @@ function intent(text: string): Intent {
   return "info";
 }
 
-const facetEvidence: Record<Exclude<Intent,"info">, RegExp> = {
+export const facetEvidence: Record<Exclude<Intent,"info">, RegExp> = {
   entitlement: /przysług|(?:prawo|prawa) do|uprawnion/iu,
   duration: /dni|dnia|dzień|tygodni|miesię|miesią|przez|okres|lat\b|rok/iu,
   deadline: /termin|do dnia|w ciągu|najpóźniej|wcześniej|po upływie/iu,
@@ -74,7 +74,7 @@ const facetEvidence: Record<Exclude<Intent,"info">, RegExp> = {
   recipient: /wypłaca się|osob(?:ie|om) uprawnion/iu,
   proof: /stwierdz|potwierdz|orzecze|zaświadcze|dowod|dowód/iu,
 };
-function query(kind: Intent, words: string[]) {
+export function query(kind: Intent, words: string[]) {
   return intents[kind] + separator + words.join(", ");
 }
 

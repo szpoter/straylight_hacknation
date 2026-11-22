@@ -1,9 +1,12 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+import type { Pool } from "pg";
+import { generateAnswer } from "../src/lib/rag/answer";
+import { publicQueueEvidence } from "../src/lib/rag/local-queue";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 import { projectPublicPair } from "../src/lib/rag/public-query";
 import { searchCorpus } from "../src/lib/rag/corpus-search";
 import { compoundQuestion } from "../src/lib/rag/compound";
-import { answerQuestion } from "../src/lib/zusik/ask-service";
+import { answerPublicTurn, answerQuestion } from "../src/lib/zusik/ask-service";
 
 it.each([
   ["Do kiedy można wysłać wniosek o 300 plus i jakimi kanałami można go złożyć?", ["dobry-start-termin","dobry-start-kanaly"]],
@@ -77,19 +80,26 @@ it("retains the second facet even when one confirmed provision answers both ques
   expect(plan?.searchText).toMatch(/formie/iu);
 });
 
-it("returns both date boundaries and the opening from a single public source in either input", async () => {
+it("queues both facets for the selected Qwen and cites their shared source from either input", async () => {
   const text = "Kiedy można złożyć wniosek na kolejny okres 800+ oraz które miesiące obejmuje ten okres?";
   const wire = projectPublicPair(text)?.question ?? "";
   const corpus = loadCorpus("oferta");
   const source = corpus.fragments.get("800-plus");
   if (!source) throw new Error("Missing published programme period");
   for (const question of [text, wire]) {
+    const output = JSON.stringify({status:"answered", message:"",
+      claims:[{text:source.sourceText, evidence:[{id:source.logicalId, quote:source.sourceText}]}]});
+    const client = {query:vi.fn(async () => ({rows:[{done:true, output}]})), release:vi.fn()};
+    const queue = {connect: async () => client} as unknown as Pool;
     const {answer, trace} = await answerQuestion({
       corpus, selectCorpus:loadCorpus, searchCorpus,
       search:{search:async () => ({status:"ok",ms:0,hits:[{...source,score:1}]})},
-      generate:async () => ({model:"fixture",status:"ok",ms:0,output:{status:"answered",message:"",
-        claims:[{text:source.sourceText,evidence:[{id:source.logicalId,quote:source.sourceText}]}]}}),
+      generate:(q, evidence, pack) => generateAnswer({selectedModel:"qwen-27b", queue,
+        hosted:() => { throw Error("Unexpected hosted model"); }}, pack, q, evidence),
     }, question);
+    expect(client.query.mock.calls[0]).toEqual(["select zusik_model.submit($1,$2,$3)",
+      [expect.any(String), "qwen-27b", expect.stringContaining(wire)]]);
+    expect(trace).toMatchObject({backend:"local-qwen-27b", modelId:"qwen/qwen3.8-27b", attemptId:expect.any(String)});
     expect(trace.calls).toEqual({qdrant:1,sherlock:1});
     expect(trace.model).toBe("ok");
     expect(trace.report?.removedClaims).toBe(0);
@@ -127,4 +137,30 @@ it("grounds both donor facets in the statute and rejects a different medical cer
       expect(answer.citations).toHaveLength(0);
     }
   }
+});
+
+it("requires the exact two public projections and the complete matching evidence at the queue", async () => {
+  const wire = projectPublicPair("W jakim terminie składa się wniosek o Dobry Start i jakimi kanałami można go złożyć?")?.question;
+  const corpus = loadCorpus("oferta");
+  const deadline = corpus.fragments.get("dobry-start-termin");
+  const channels = corpus.fragments.get("dobry-start-kanaly");
+  const foreign = corpus.fragments.get("800-plus");
+  if (!wire || !deadline || !channels || !foreign) throw Error("Missing public pair fixture");
+  expect(publicQueueEvidence(corpus, wire, [channels, deadline])).toEqual([channels, deadline]);
+  for (const evidence of [[foreign], [channels], [channels, channels], [channels, deadline, foreign],
+    [channels, {...deadline, corpusVersion:"old"}]]) {
+    expect(publicQueueEvidence(corpus, wire, evidence)).toBeNull();
+  }
+  const search = vi.fn((): never => { throw Error("Unexpected retrieval"); });
+  const generate = vi.fn((): never => { throw Error("Unexpected model call"); });
+  for (const text of [wire + " Dodatek", wire.replace("? oraz", " osoba@example.test? oraz"),
+    wire.replace("? oraz", "? oraz Obcy identyfikator ABC123? oraz")]) {
+    expect(publicQueueEvidence(corpus, text, [channels, deadline])).toBeNull();
+    const {answer} = await answerPublicTurn({corpus, selectCorpus:loadCorpus, searchCorpus,
+      search:{search}, generate}, text, []);
+    expect(["needs_clarification", "insufficient_evidence"]).toContain(answer.status);
+    expect(answer.citations).toEqual([]);
+  }
+  expect(search).not.toHaveBeenCalled();
+  expect(generate).not.toHaveBeenCalled();
 });

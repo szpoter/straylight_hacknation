@@ -49,6 +49,39 @@ export function publicBenefitTopics(text: string): PublicBenefitTopic[] {
   return (Object.keys(benefitPatterns) as PublicBenefitTopic[]).filter(key => benefitPatterns[key].test(text));
 }
 
+/** A benefit mentioned only as background does not establish jurisdiction over a separate claim. */
+export function asksOutsideBenefitScope(input: string) {
+  const [purpose, background] = input.split(/,?\s+(?:jeśli|jeżeli|podczas|w trakcie|mimo że)\s+/iu, 2);
+  if (/\b(?:PIT|VAT)\b|zeznani\p{L}* podatkow|podat\p{L}* dochodow|ulg\p{L}* rehabilitacyjn/iu.test(purpose) ||
+      /prywatn\p{L}* (?:ubezpieczyciel|polis)|(?:z|warunki) (?:prywatn|dobrowoln)\p{L}* polis/iu.test(purpose)) return true;
+  return !!background && !publicBenefitTopics(purpose).length && publicBenefitTopics(background).length > 0 &&
+    /pozw(?:ie|em|u)|pozew|pozwan\p{L}*|oskarżon\p{L}*/iu.test(purpose);
+}
+
+function asksAboutNextBenefit(q: string) {
+  return /(?:wyczerp|wykorzyst|kończy|skończy).{0,45}(?:chorobow|okres zasiłkow)/iu.test(q)
+    && !/nie (?:wyczerp|wykorzyst|kończy|skończy)/iu.test(q)
+    && (/(?:nadal|dalej|wciąż).{0,30}(?:nie mogę pracować|niezdoln|nie mogę wrócić do pracy)/iu.test(q) || expectsRecovery(q))
+    && /(?:świadczeni|zasił|pieni[ąę]dz).{0,25}(?:dalsz|kolejn)|(?:dalsz|kolejn)\p{L}* (?:wsparci|świadczeni|zasił)|co dalej/iu.test(q);
+}
+
+function expectsRecovery(q: string) {
+  return /leczen|rehabilitac/iu.test(q) && /powr[oó][ct]|odzysk/iu.test(q)
+    && !/(?<!\p{L})(?:nie przewiduje|brak szans|nie rokuj|nie ma szans)/iu.test(q);
+}
+
+/** A benefit in a prerequisite or a rejected alternative is not the subject of the question. */
+export function publicBenefitFocus(text: string): PublicBenefitTopic[] {
+  const positive = text.replace(/(?:a nie|zamiast|nie (?:chodzi (?:mi )?o|mam na myśli))\s+(?:(?:urlop|świadczeni|zasił)\p{L}*\s+)?\p{L}+/giu, " ");
+  const named = publicBenefitTopics(positive);
+  if (named.every(topic => topic === "sickness") && asksAboutNextBenefit(positive) && expectsRecovery(positive))
+    return ["rehabilitation"];
+  if (named.length < 2) return named;
+  const main = positive.replace(/\bpo (?:wyczerpaniu|wykorzystaniu|zakończeniu|ustaniu)\s+(?:pobierania\s+)?(?:cał\p{L}*\s+)?(?:zasił\p{L}*\s+|świadczeni\p{L}*\s+|urlop\p{L}*\s+)?\p{L}+/giu, " ");
+  const focus = publicBenefitTopics(main);
+  return focus.length ? focus : named;
+}
+
 const programmePeriodQuestion = "Od kiedy do kiedy trwa okres świadczeniowy 800+?";
 const programmeOpeningQuestion = "Od kiedy można złożyć wniosek o 800+ na nowy okres?";
 const programmeChannelQuestion = "Jakimi kanałami można złożyć wniosek o 800+?";
@@ -130,13 +163,9 @@ function routeTopic(input: string): PublicQuestion | null {
     return generic("Jak wygląda wniosek ZAM o zasiłek macierzyński za okres urlopu ojcowskiego?", ["rz:33:1"]);
   }
 
-  const afterSickness = /(?:wyczerp|wykorzyst|kończy|skończy).{0,45}(?:chorobow|okres zasiłkow)/u.test(q)
-    && !/nie (?:wyczerp|wykorzyst|kończy|skończy)/u.test(q)
-    && /(?:nadal|dalej|wciąż).{0,30}(?:nie mogę pracować|niezdoln|nie mogę wrócić do pracy)/u.test(q)
-    && /(?:świadczeni|zasił|pieni[ąę]dz).{0,25}(?:dalsz|kolejn)|co dalej/u.test(q);
+  const afterSickness = asksAboutNextBenefit(q);
   const namedRehabilitation = /(?:świadcze\p{L}*|zasił\p{L}*)\s+rehabilitacyjn/u.test(q);
-  if (afterSickness && !namedRehabilitation && (!/leczen|rehabilitac/u.test(q) || !/powr[oó][ct]|odzysk/u.test(q)
-      || /(?:nie przewiduje|brak szans|nie rokuj|nie ma szans)/u.test(q))) {
+  if (afterSickness && !namedRehabilitation && !expectsRecovery(q)) {
     return { ...generic(""), clarify: "Chcesz poznać warunki świadczenia rehabilitacyjnego czy szukasz innego świadczenia po zakończeniu chorobowego?" };
   }
   if (namedRehabilitation || afterSickness) {
@@ -423,30 +452,32 @@ function projectedQuestion(input: string, includeDetails: boolean): PublicQuesti
 
 // Check the completed browser projection, including later qualifier-based rewrites.
 export function publicQuestion(input: string, includeDetails = false): PublicQuestion | null {
+  if (asksOutsideBenefitScope(input)) return {corpus:"publiczne", question:"",
+    uncovered:"Publikacje o świadczeniach nie rozstrzygają tej sprawy."};
   if (detailPrefixes.some(prefix => input.startsWith(prefix)) && input.includes(" — "))
     return isPublicLegalDetail(input) ? {corpus: "publiczne", question: input} :
       {corpus: "publiczne", question: "", clarify: "O który warunek zasiłku chcesz zapytać?"};
-  if (input.startsWith(pairPrefix)) return projectPublicPair(input);
+  if (input.startsWith(publicPairPrefix)) return projectPublicPair(input);
   const plan = includeDetails ? projectPublicPair(input) ?? projectedQuestion(input, true) : projectedQuestion(input, false);
   if (!includeDetails || !plan?.question || plan.clarify) return plan;
-  const asked = publicBenefitTopics(input);
+  const asked = publicBenefitFocus(input);
   const selected = publicBenefitTopics(plan.question);
   const correction = /(?:nie (?:chodzi|pytam)|zamiast|a nie|lecz|tylko o)/iu.test(input);
   // The reviewed transition after sickness exhaustion explicitly asks what comes next.
   const nextBenefit = plan.locators?.includes("uz:18") && /co dalej|dalsz|kolejn/iu.test(input);
-  if ((asked.length > 1 && correction) ||
+  if ((correction && publicBenefitTopics(input).length > 1) ||
       (asked.length && selected.length && !selected.some(subject => asked.includes(subject)) && !nextBenefit)) {
     return { corpus: plan.corpus, question: "", clarify: "O które świadczenie chcesz zapytać?" };
   }
   return plan;
 }
 
-const pairPrefix = "Pytania publiczne: ";
+export const publicPairPrefix = "Pytania publiczne: ";
 const pairClarification = "O który warunek jednego programu chcesz zapytać?";
 
 export function projectPublicPair(input: string): PublicQuestion | null {
-  const transported = input.startsWith(pairPrefix);
-  const body = transported ? input.slice(pairPrefix.length) : input;
+  const transported = input.startsWith(publicPairPrefix);
+  const body = transported ? input.slice(publicPairPrefix.length) : input;
   const separator = transported ? /(?<=\?) oraz /u :
     /\s+(?:oraz|i|a)\s+(?=(?:czy|jak\p{L}*|któr\p{L}*|kiedy|gdzie|kto|komu|ile|od kiedy|do kiedy)\b)/iu;
   const clauses = body.split(separator);
@@ -470,7 +501,7 @@ export function projectPublicPair(input: string): PublicQuestion | null {
   });
   const [first, second] = questions;
   if (!first || !second || first === second) return unclear;
-  const question = pairPrefix + first + " oraz " + second;
+  const question = publicPairPrefix + first + " oraz " + second;
   if (question.length > MAX_QUESTION_LENGTH || (transported && question !== input)) return unclear;
   return {corpus: "oferta", question};
 }

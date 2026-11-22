@@ -338,7 +338,7 @@ export function ImportConversation() {
       <div ref={thread} className={s.thread} onScroll={e => { const el = e.currentTarget; sticky.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40; }}>
         <div className={s.threadInner}><div className={s.messages} role="log" aria-label="Przebieg rozmowy">
           <p>O jakie świadczenie albo dokument chcesz zapytać?</p>
-          {view?.messages.map(m => <div className={s.messages} key={m.id} data-knowledge-turn>
+          {view?.messages.map(m => <div className={s.messages} key={m.id} data-knowledge-turn={m.id}>
             <div className={s.userRow}><p className={s.userBubble}>{originals.get(m.id) ?? messageLabel(m.input)}</p></div>
             <div className={s.aiMessage}>{(m.profileRevision < view.profile.revision || m.caseRevision < view.file.revision) && m.input.intent !== "public_question" && <small>Wcześniejsza odpowiedź · wersja profilu {m.profileRevision}</small>}
               <p>{m.state === "processing" ? "Przygotowuję odpowiedź…" : m.state === "failed" ? "Nie udało się przygotować odpowiedzi." : m.answer}</p>

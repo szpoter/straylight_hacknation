@@ -2,6 +2,7 @@ import { expect, it, vi } from "vitest";
 import type { Message } from "../src/lib/zusik/v1/conversation";
 import { publicReply } from "../src/lib/zusik/v1/public";
 import { answerPublicTurn } from "../src/lib/zusik/ask-service";
+import { publicLookupTitle, type PublicLookup } from "../src/lib/rag/ranked-lookup";
 
 vi.mock("../src/lib/zusik/server", () => ({ publicAnswerDeps: () => ({}) }));
 vi.mock("../src/lib/zusik/ask-service", () => ({ answerPublicTurn: vi.fn(async () => ({
@@ -28,4 +29,15 @@ it("keeps only a scoped public turn pointer after small talk", async () => {
     answer:"Odpowiedź",citations:[],state:"completed",caseRevision:1,profileRevision:1};
   expect(await publicReply("Co umiesz?",previous)).toMatchObject({contextMessageId:previous.id,citations:[]});
   expect(await publicReply("Co umiesz?",{...previous,input:{intent:"ask_case"}})).not.toHaveProperty("contextMessageId");
+});
+
+it("validates the public source and the fallback question before dispatching a ranked message", async () => {
+  const lookup: PublicLookup = {ids:["uz-16-1"], facet:"duration", terms:["nadużyciem","alkoholu"]};
+  const question = publicLookupTitle(lookup);
+  vi.mocked(answerPublicTurn).mockClear();
+  await expect(publicReply(question + " prywatny dopisek", undefined, undefined, lookup)).rejects.toMatchObject({status:422});
+  await expect(publicReply(question, undefined, undefined, {...lookup, ids:["foreign-edition"]})).rejects.toMatchObject({status:422});
+  expect(answerPublicTurn).not.toHaveBeenCalled();
+  await publicReply(question, undefined, undefined, lookup);
+  expect(vi.mocked(answerPublicTurn).mock.lastCall?.[0].publicLookup).toEqual(lookup);
 });

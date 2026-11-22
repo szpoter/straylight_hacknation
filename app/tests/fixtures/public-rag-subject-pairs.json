@@ -1,0 +1,266 @@
+[
+  {
+    "id": "pair01-a",
+    "question": "Leczenie potrwa jeszcze jakiś czas. Jaki jest ustawowy górny limit samego chorobowego, gdy przyczyną niezdolności jest gruźlica?",
+    "requiredEvidence": [
+      "uz-8-1"
+    ],
+    "wrongBenefits": [
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "pair01-b",
+    "question": "Leczenie potrwa jeszcze jakiś czas. Jaki jest ustawowy górny limit świadczenia rehabilitacyjnego po wykorzystaniu całego chorobowego, jeżeli leczenie rokuje powrót do pracy?",
+    "requiredEvidence": [
+      "uz-18-1"
+    ]
+  },
+  {
+    "id": "pair02-a",
+    "question": "Pracownik opuścił zmianę z powodu choroby. Pytanie dotyczy choroby samego pracownika: jaki jest zwykły procent podstawy chorobowego?",
+    "requiredEvidence": [
+      "uz-11-1"
+    ],
+    "wrongBenefits": [
+      "care"
+    ]
+  },
+  {
+    "id": "pair02-b",
+    "question": "Pracownik opuścił zmianę z powodu choroby. Zachorowało wyłącznie jego dziecko: jaki procent podstawy ma zasiłek za sprawowanie opieki?",
+    "requiredEvidence": [
+      "of-opieka-kwota-1-1"
+    ],
+    "wrongBenefits": [
+      "sickness"
+    ]
+  },
+  {
+    "id": "pair03-a",
+    "question": "Ojciec na umowie o pracę szykuje podanie do działu kadr. Z jakim wyprzedzeniem występuje o rozpoczęcie urlopu ojcowskiego?",
+    "requiredEvidence": [
+      "kp-1823-2"
+    ],
+    "wrongBenefits": [
+      "parental"
+    ]
+  },
+  {
+    "id": "pair03-b",
+    "question": "Ojciec na umowie o pracę szykuje podanie do działu kadr. Z jakim wyprzedzeniem występuje o rozpoczęcie urlopu rodzicielskiego?",
+    "requiredEvidence": [
+      "kp-art182-1d-par1"
+    ],
+    "wrongBenefits": [
+      "paternity"
+    ]
+  },
+  {
+    "id": "pair04-a",
+    "question": "Pracownik nie chce brać wszystkiego naraz. Na ile odrębnych części może rozłożyć ojcowski i jaka jest najmniejsza część?",
+    "requiredEvidence": [
+      "of-ojcowski-1-2"
+    ],
+    "wrongBenefits": [
+      "parental"
+    ]
+  },
+  {
+    "id": "pair04-b",
+    "question": "Pracownik nie chce brać wszystkiego naraz. Na ile odrębnych części może rozłożyć rodzicielski i jaki jest graniczny wiek dziecka?",
+    "requiredEvidence": [
+      "kp-art182-1c"
+    ],
+    "wrongBenefits": [
+      "paternity"
+    ]
+  },
+  {
+    "id": "pair05-a",
+    "question": "Po leczeniu własnej choroby pracownik występuje pierwszy raz o świadczenie rehabilitacyjne. Kto wystawia zaświadczenie o stanie zdrowia i jak świeże ma być?",
+    "requiredEvidence": [
+      "rz-11-1"
+    ],
+    "wrongBenefits": [
+      "care"
+    ]
+  },
+  {
+    "id": "pair05-b",
+    "question": "Po leczeniu własnej choroby pracownik jest już zdrowy, ale musi zostać z dzieckiem, bo jego niania zachorowała. Czym przy zasiłku opiekuńczym dokumentuje chorobę niani?",
+    "requiredEvidence": [
+      "of-opieka-dokumenty-3-5"
+    ],
+    "wrongBenefits": [
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "pair06-a",
+    "question": "Poprzednio pracownik pobierał chorobowe. Czy ustalone uprawnienie do emerytury wyłącza prawo do świadczenia rehabilitacyjnego?",
+    "requiredEvidence": [
+      "uz-18-3"
+    ]
+  },
+  {
+    "id": "pair06-b",
+    "question": "Poprzednio pracownik pobierał chorobowe. Czy ustalone uprawnienie do emerytury wyłącza wypłatę samego zasiłku chorobowego za czas po ustaniu ubezpieczenia?",
+    "requiredEvidence": [
+      "uz-art13-ust1"
+    ],
+    "wrongBenefits": [
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "pair07-a",
+    "question": "Po wyczerpaniu chorobowego trwa dalsze leczenie. Kto po stronie ZUS orzeka, czy rokowania uzasadniają świadczenie rehabilitacyjne?",
+    "requiredEvidence": [
+      "uz-18-1"
+    ]
+  },
+  {
+    "id": "pair07-b",
+    "question": "Po wyczerpaniu chorobowego trwa dalsze leczenie. Do kogo ubezpieczony wnosi sprzeciw od orzeczenia lekarza w sprawie świadczenia rehabilitacyjnego?",
+    "requiredEvidence": [
+      "uz-18-2"
+    ]
+  },
+  {
+    "id": "pair08-a",
+    "question": "Pracownik opisuje poród w czasie ubezpieczenia. Czy samo urodzenie dziecka w tym okresie jest ustawową przesłanką zasiłku macierzyńskiego?",
+    "requiredEvidence": [
+      "uz-29-1"
+    ],
+    "wrongBenefits": [
+      "rehabilitation",
+      "care"
+    ]
+  },
+  {
+    "id": "pair08-b",
+    "question": "Pracownik opisuje poród w rodzinie. Czy pobyt ubezpieczonej matki w szpitalu może uzasadniać opiekę nad dzieckiem przed ósmym tygodniem i jak to udokumentować?",
+    "requiredEvidence": [
+      "of-opieka-dokumenty-3-6"
+    ],
+    "wrongBenefits": [
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "pair09-a",
+    "question": "Kadry oceniają treść podania pracownika o urlop ojcowski. Jakie dane osoby i okresu wpisuje do samego wniosku?",
+    "requiredEvidence": [
+      "rw-17-1"
+    ],
+    "wrongBenefits": [
+      "parental"
+    ]
+  },
+  {
+    "id": "pair09-b",
+    "question": "Kadry oceniają treść podania pracownika o urlop rodzicielski. Czy poza danymi osoby trzeba ująć dotychczas wykorzystane okresy i części?",
+    "requiredEvidence": [
+      "rozp-2025-322-par15-ust1"
+    ],
+    "wrongBenefits": [
+      "paternity"
+    ]
+  },
+  {
+    "id": "pair10-a",
+    "question": "Rodzina pyta o granicę wieku. Do kiedy 800 plus przysługuje na dziecko i czy liczy się dochód rodziców?",
+    "requiredEvidence": [
+      "800-plus"
+    ],
+    "wrongBenefits": [
+      "dobry-start",
+      "active-parent"
+    ]
+  },
+  {
+    "id": "pair10-b",
+    "question": "Rodzina pyta o granicę wieku. Jak zmienia ją niepełnosprawność ucznia w programie Dobry Start i czy wsparcie obejmuje studentów?",
+    "requiredEvidence": [
+      "of-zerowka-1-2"
+    ],
+    "wrongBenefits": [
+      "800-plus",
+      "active-parent"
+    ]
+  },
+  {
+    "id": "pair11-a",
+    "question": "W kalendarzu rodziny były dwie różne nieobecności. Dla własnej choroby wskutek gruźlicy: jaka jest zwykła procentowa stawka chorobowego i maksymalny czas jego pobierania?",
+    "requiredEvidence": [
+      "uz-11-1",
+      "uz-8-1"
+    ],
+    "wrongBenefits": [
+      "care",
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "pair11-b",
+    "question": "W kalendarzu rodziny były dwie różne nieobecności. Dla opieki nad chorym dziesięciolatkiem: jaka jest procentowa stawka opiekuńczego i roczny limit dni na taką opiekę?",
+    "requiredEvidence": [
+      "of-opieka-kwota-1-1",
+      "of-opieka-4-1"
+    ],
+    "wrongBenefits": [
+      "sickness",
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "pair12-a",
+    "question": "Zakład pracy wykazuje absencję. Jaki procent zasiłku macierzyńskiego stosuje się za okres ojcowskiego?",
+    "requiredEvidence": [
+      "uz-31-1"
+    ]
+  },
+  {
+    "id": "pair12-b",
+    "question": "Zakład pracy wykazuje absencję. Jaki jest podstawowy procent zasiłku macierzyńskiego za okres rodzicielskiego według reguły ogólnej, bez wniosku o ujednoliconą stawkę?",
+    "requiredEvidence": [
+      "uz-31-1"
+    ]
+  },
+  {
+    "id": "negative01",
+    "question": "Ile prywatny ubezpieczyciel powinien zapłacić z dobrowolnej polisy szpitalnej za dzień rehabilitacji po przebytej chorobie?",
+    "requiredEvidence": [],
+    "wrongBenefits": [
+      "sickness",
+      "rehabilitation"
+    ]
+  },
+  {
+    "id": "negative02",
+    "question": "W pozwie o ustalenie ojcostwa ile czasu ma pozwany na odpowiedź, jeśli w pracy korzysta teraz z urlopu ojcowskiego?",
+    "requiredEvidence": [],
+    "wrongBenefits": [
+      "paternity",
+      "parental"
+    ]
+  },
+  {
+    "id": "negative03",
+    "question": "Jaką stawkę VAT ma prywatna usługa opieki nad chorym dzieckiem świadczona przez firmę opiekuńczą?",
+    "requiredEvidence": [],
+    "wrongBenefits": [
+      "care"
+    ]
+  },
+  {
+    "id": "negative04",
+    "question": "Gdzie w zeznaniu PIT wpisać wydatek na rehabilitację poniesiony podczas pobierania chorobowego?",
+    "requiredEvidence": [],
+    "wrongBenefits": [
+      "rehabilitation",
+      "sickness"
+    ]
+  }
+]
