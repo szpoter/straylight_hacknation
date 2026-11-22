@@ -6,19 +6,25 @@ Materiałem odniesienia jest przyjęty [animatik r2](../v3/podglady/animatik-720
 
 ## Materiały dla Flow
 
-Pary w tabeli wskazują pliki PNG w katalogu `kadry/`. Są eksportami rysunków źródłowych z ukrytym tekstem i usuniętym znakiem na szyldzie. Pełne oryginały, w tym końcowa 1139 do porównania, są lokalnie w `robocze/oryginaly/`. Dla 19 wysyłamy ostrą wersję pozy 1132 bez maskotki. Po niej nie ma już ruchu do wygenerowania.
+Wygląd Marty, Pawła i Oli bierzemy z wcześniejszych ilustracji. [Rodzina Oli](../referencje/rodzina-oli-v1.png) określa kształt twarzy, włosy, ubrania i proporcje. Szpital korzysta z [narodzin](../montaz/assets/narodziny.png), kolejka z [wycinka bez szyldu](referencje/kolejka-bez-szyldu.png), okienko z [ilustracji pracownicy](../montaz/assets/okienko.png), dom z [kanapy](../referencje/kanapa-przed-fala-v1.png), fala z [detalu papierów](referencje/fala-detal.png). Referencje okienka i narodzin służą lokalnie do przygotowania czystych kadrów. W Flow używamy dwóch ilustracji przedstawiających odpowiednie fazy gestu.
 
-Wzorce dobieramy według miejsca. Plansza [obsady r1](../v3/obsada/plansza-obsady-r1.png) rozstrzyga twarze i proporcje. Szpital i wózek korzystają z [rodziny Oli](../referencje/rodzina-oli-v1.png), poczekalnia z [wycinka bez szyldu](referencje/kolejka-bez-szyldu.png), dom z [kanapy](../referencje/kanapa-przed-fala-v1.png), ostatni gest z [detalu papierów](referencje/fala-detal.png). Ingredients służą jako referencje stylu. Jeżeli model przy dwóch klatkach nie przyjmuje dodatkowych obrazów, wzorce zostają do porównania w odbiorze. Żadna osobna generacja Ingredients nie wchodzi w koszt.
+**Ujęcie 01.** Wbudowany ImageGen przygotował [początek](ilustracje/01-start.png) na podstawie ilustracji narodzin i rodziny Oli. Drugi rysunek to edycja tej samej kompozycji. Na [końcu](ilustracje/01-koniec.png) dłoń Pawła jest bliżej, a między palcami zostaje prześwit. Oryginalna ilustracja narodzin pokazuje już zamknięty chwyt i nadaje się jako odniesienie dla końca 02.
 
-Do każdego promptu dopisz poniższy wspólny opis. Ruch powinien zająć cały ośmiosekundowy klip. Po montażu lokalna klatka 0 to wejście ujęcia, 59 to wyjście, a w 19 koniec ruchu wypada na 52.
+**Ujęcia 02–19.** Numery w tabeli wyznaczają pozycje w animatiku. Eksporty w `kadry/` są storyboardem ruchu do lokalnego porównania. Pary ilustracji do Flow przygotowujemy według powyższych wzorców, zachowując ustawienie kamery, kierunek i punkt styku dłoni. Po klatce 1132 montaż dokłada oryginalnego Zusika. Dla ujęć po pilocie pary ilustracji czekają na przygotowanie.
 
-> Single continuous hand-drawn 2D shot. Match the two supplied frame compositions and cast silhouettes exactly. Clean navy outlines (#283754), flat sage and mint fills, pale #F5FAF7 background, small dot eyes. Marta has a low bun, sage cardigan and light dress. Paweł has an asymmetric fringe and an open navy shirt. Ola has one broad green blanket stripe. The clerk has a high grey bun and a pale collar. Only show people already in frame. Keep weight, finger contacts, sleeve lengths and prop shapes consistent. Leave all lettering areas blank, including signs, form titles and dates. No logos, subtitles, extra cuts, photorealism or 3D lighting.
+Do angielskiego opisu gestu dopisz poniższy opis stylu. Po montażu lokalna klatka 0 to wejście ujęcia, 59 to wyjście, a w 19 koniec ruchu wypada na 52.
+
+> Use the two supplied picture-book illustrations as the exact first and last poses of one continuous shot. Preserve the rounded faces, expressive eyebrows, asymmetric hair shapes, gently varying navy ink line, muted sage fabrics and fine paper grain visible in these drawings. Keep identities, clothing and prop silhouettes stable. Let the motion follow the described gesture. Keep title areas and signs blank for editorial lettering. No logos, subtitles or extra cuts.
+
+Prompt przygotowany w Flow do 01:
+
+> Locked hospital shot in the exact picture-book style of the two frames. Marta cradles Ola securely throughout. Paweł slowly eases his extended index finger towards her open hand and stops just short. Keep the sliver of light between their fingertips through the cut. Preserve the faces, soft navy ink, warm ivory paper, sage fabric and single blanket stripe. No grasp yet, camera motion, lettering or extra people.
 
 ## Pierwsza seria
 
 Każdy wiersz to **Frames, 1 próba, do 10 kredytów**. Kolejność bloków daje odpowiednio 30, 50, 30, 40 i 40 kredytów. Gest i styk dłoni są częścią angielskiego promptu.
 
-| Blok | Ujęcie | Klatki PNG od → do | Prompt ujęcia |
+| Blok | Ujęcie | Klatki animatiku od → do | Prompt ujęcia |
 |---|---|---|---|
 | 01–03 | 01 | f0000 → f0059 | In the hospital Marta supports the swaddled newborn's neck and back. Paweł eases his index finger towards the open palm. End with a small visible gap, about three pixels in the wide view. |
 | | 02 | f0060 → f0119 | Macro from the same side. In the first twelfth of the shot the index pad touches the baby's palm. Her middle, ring, index and little fingers curl one after another, then the thumb rests against his finger. Keep the sleeve and blanket stripe joined to the wrist. Hold the grasp through the shutter and end on the clean photograph. |
@@ -42,7 +48,7 @@ Każdy wiersz to **Frames, 1 próba, do 10 kredytów**. Kolejność bloków daje
 
 ## Próby i odbiór
 
-Stan początkowy dla 01–19: 0 prób, 0 wybranych. Po każdym wyniku zapisać tu numer ujęcia i próby, nazwę pobranego pliku w `surowe/`, koszt, decyzję i konkretny powód. Obejrzeć przy 1× z miksem i klatka po klatce. Sprawdzić twarz względem r1, ubranie, liczbę i zasłanianie palców, styk dłoni, sztywność rekwizytu i płaski styl. Po trzech nieudanych próbach danego ujęcia zatrzymać pracę nad nim.
+Stan początkowy dla 01–19: 0 prób, 0 wybranych. Po każdym wyniku zapisać tu numer ujęcia i próby, nazwę pobranego pliku w `surowe/`, koszt, decyzję i konkretny powód. Obejrzeć przy 1× z miksem i klatka po klatce. Sprawdzić twarz względem ilustracji rodziny i obu nowych kadrów, ubranie, liczbę i zasłanianie palców, styk dłoni, sztywność rekwizytu i płaski styl. Po trzech nieudanych próbach danego ujęcia zatrzymać pracę nad nim.
 
 W montażu kontrolować chwyt w kl. 65, „Chyba tak” przy 10,85 s (najbliższa kl. 326), biodro 508 i zatrzymanie kół 514, sygnał 606, „do jutra” przy okienku, teczkę 846 i but 1038. W 19 klik wypada na 1132, oryginalny Zusik wchodzi od 1133. Od 1140 do 1799 włącznie źródłem jest A w rozdzielczości montażu. Po odbiorze wszystkich prób obejrzeć całe B z miksem, osobno cięcia oraz styk 37,7–38 s, potem wyciszony obraz o szerokości 360 px. W raporcie dopisać URL projektu, faktyczny model, koszt i najmocniejsze oraz najsłabsze ujęcie.
 
