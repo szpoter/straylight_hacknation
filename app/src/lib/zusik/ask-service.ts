@@ -1,6 +1,8 @@
 import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corpus";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { corpusFollowUp } from "../rag/corpus-search";
+import { fetchOfficialEvidence } from "../rag/official-fetch";
+import { nurseryIntent, runSectionTurn } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
 import { extractiveAnswer, needsStatutoryText, withSourceException } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
@@ -21,6 +23,7 @@ type Progress = (status: string) => void;
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
 
 export interface AnswerDeps {
+  readOfficial?: typeof fetchOfficialEvidence;
   corpus: Corpus;
   search: KnowledgeSearch;
   /** Local-only fallback mapping the current utterance onto a reviewed public query. */
@@ -35,6 +38,7 @@ export interface AnswerDeps {
 
 /** Ids, statuses and timings; logs keep only the id fields, never question text. */
 export interface AnswerTrace {
+  officialFetches?: number;
   gate: "amount" | "clarify" | null;
   sanitized: string;
   contextRequestId: string | null;
@@ -58,6 +62,14 @@ export interface AnswerTrace {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+function newTrace(sanitized: string, contextRequestId: string | null): AnswerTrace {
+  return {
+    gate: null, contextRequestId, sanitized, expanded: null, vectorHits: [], vectorIds: [],
+    evidenceIds: [], search: "skipped", model: "skipped", modelMs: null, proposedStatus: null,
+    quoteReason: null, finishReason: null, report: null, calls: { qdrant: 0, sherlock: 0 },
+  };
+}
+
 function projectQuestion(deps: AnswerDeps, text: string): PublicQuestion | null {
   const direct = publicQuestion(text);
   const genericForm = direct?.question.startsWith("Jakie informacje należy zawrzeć") &&
@@ -78,23 +90,7 @@ export async function answerQuestion(
   const corpus = projected && deps.selectCorpus ? deps.selectCorpus(projected.corpus) : deps.corpus;
   const version = corpus.manifest.corpusVersion;
   const sanitized = projected?.question ?? "";
-  const trace: AnswerTrace = {
-    gate: null,
-    contextRequestId,
-    sanitized: projected?.searchText ?? sanitized,
-    expanded: null,
-    vectorHits: [],
-    vectorIds: [],
-    evidenceIds: [],
-    search: "skipped",
-    model: "skipped",
-    modelMs: null,
-    proposedStatus: null,
-    quoteReason: null,
-    finishReason: null,
-    report: null,
-    calls: { qdrant: 0, sherlock: 0 },
-  };
+  const trace = newTrace(projected?.searchText ?? sanitized, contextRequestId);
   const plain = (status: AskAnswer["status"], message: string): AskAnswer => ({
     status,
     message,
@@ -249,16 +245,30 @@ export class AskService {
       } else {
         const history = await this.deps.turns.list(threadId, requestId, 24);
         const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
-        const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
-        const topic = familyTopic(family?.stopId);
-        const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
-          : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
-        const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
-        const retrievalText = usePageTopic ? topic + ". " + text : text;
-        const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
-        result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
-        if (projected?.question && result.answer.status !== "unavailable")
-          result.answer.publicQuery = projected.question;
+        const section = nurseryIntent(text, previous);
+        if (section && this.deps.selectCorpus) {
+          const { answer, result: resolved, query } = await runSectionTurn(section, this.deps.selectCorpus("oferta"),
+            this.deps.search, (this.deps.asOf ?? today)(), this.deps.readOfficial ?? fetchOfficialEvidence, onProgress);
+          const trace = newTrace(query, section === "recipient" && !nurseryIntent(text) ? previous?.requestId ?? null : null);
+          trace.calls.qdrant = 1;
+          trace.vectorHits = resolved.hits;
+          trace.vectorIds = resolved.hits.map(hit => hit.logicalId);
+          trace.search = resolved.unavailable && !resolved.fetches ? "error" : "ok";
+          trace.officialFetches = resolved.fetches;
+          trace.evidenceIds = answer.citations.map(c => c.fragmentId);
+          result = { answer, trace };
+        } else {
+          const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
+          const topic = familyTopic(family?.stopId);
+          const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
+            : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
+          const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
+          const retrievalText = usePageTopic ? topic + ". " + text : text;
+          const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
+          result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
+          if (projected?.question && result.answer.status !== "unavailable")
+            result.answer.publicQuery = projected.question;
+        }
       }
     } catch (error) {
       await this.deps.turns.release(threadId, requestId, token).catch(() => undefined);

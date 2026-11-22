@@ -66,6 +66,10 @@ export interface AskClaim {
 }
 
 export interface AskCitation {
+  sourceId?: string;
+  origin?: "corpus" | "official_live";
+  hash?: string;
+  retrievedAt?: string;
   /** Unique within the turn, e.g. "c1". */
   id: string;
   /** Corpus unit, e.g. "rozp-2025-322-par22". */

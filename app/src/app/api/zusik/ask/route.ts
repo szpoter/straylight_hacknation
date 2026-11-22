@@ -59,6 +59,7 @@ export async function POST(request: Request) {
           citations: result.turn?.citations.map((c) => c.fragmentId),
           quoteReason: trace?.quoteReason,
           calls: trace?.calls ?? { qdrant: 0, sherlock: 0 },
+          officialFetches: trace?.officialFetches ?? 0,
           ms: Date.now() - started,
         }),
       );
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       const retrieval = trace?.search === "ok" ? {
         query: trace.sanitized,
         contextRequestId: trace.contextRequestId,
+        officialFetches: trace.officialFetches ?? 0,
         top: trace.vectorIds,
         evidence: trace.evidenceIds,
         backend: trace.backend ?? null,
