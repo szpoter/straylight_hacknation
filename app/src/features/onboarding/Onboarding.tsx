@@ -603,10 +603,7 @@ function ActionBar({ children }: { children: React.ReactNode }) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh w-full flex-col">
-      <header className="px-gutter-mobile pt-4 md:px-gutter-desktop md:pt-6">
-        <span className="font-serif text-title">Zusik</span>
-      </header>
-      <main className="mx-auto flex w-full max-w-column flex-1 flex-col px-gutter-mobile pb-6 md:pb-16">{children}</main>
+      <main className="mx-auto flex w-full max-w-column flex-1 flex-col px-gutter-mobile pt-10 pb-6 md:pt-12 md:pb-16">{children}</main>
     </div>
   );
 }
