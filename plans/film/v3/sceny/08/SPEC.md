@@ -22,3 +22,23 @@ Zachowaj ciągłość obu nagrań i szumu korytarza na cięciach. Pozy ust odczy
 - Porównaj 07/59 z 08/0 oraz 08/59 z 09/0 po wyrównaniu do rączki i okładki. Kciuk Marty trafia w to samo miejsce rączki, wskazujący Pawła nadal zakrywa ten sam fragment kratkowanej strony, drugi arkusz zachowuje położenie przy grzbiecie. Odsłuchaj przejście do 09 przez początek „Nie wiem” i sprawdź ruch ust po obu stronach cięcia.
 
 [Plan i przykłady](PLAN.md) · [Poprzednie ujęcie](../07/SPEC.md) · [Następne ujęcie](../09/SPEC.md)
+
+
+## Realizacja v3 (autor b07)
+
+Modele r1 (`k.rewizja === "r1"`), wspólny świat bloku w [`../07/kolejka.mjs`](../07/kolejka.mjs): plan ogólny 1280×720, postaci s = 1, podłoga y 590, lada od x 960 (blat y 352), pracownica siedzi (1131,420) s 0,9, wózek s 0,95 (oś y 558). Każde ujęcie patrzy na ten świat kamerą `cam(z,cx,cy)`; kreski cienione z^−0,6. Teczka i druki jak w 03–06 (b01): teczka zamknięta, pionowo przy piersi, w ekranowo prawej dłoni Pawła; ekranowo lewa dłoń pracuje. Zdjęcie na okładce = `photo02(k)` (decyzja koordynatora). Render: `node build.mjs --only 06,…,13 --out robocze/b07`, `klatki.mjs`, `render.mjs 720 NN NN`. Przykład animatora ([ZRODLA.md](../../../v2/przyklady/ZRODLA.md)): Stickman `character-acting-reference.png` (czytanie z pochyloną głową, ciężar na przedramionach) i B6 `package.json` (ta sama głowa w obrocie).
+
+| Klatki | Realizacja |
+| --- | --- |
+| 0 | = 07/59 (kamera, poza, oddech). |
+| 3–9 | Oczy Marty w górę (gazeDown 0,55→−0,35). |
+| 10–25 | Głowa Marty na osi szyi: head 1→0,62, nod 0,76→0,05; od 14 bark (bow 0,44→0,2). Kamera z 1,9→1,45, środek (470,258). Ostatnia sylaba Marty ~18. |
+| 26–32 | Oczy Pawła z kratek ku Marcie (gaze →−1), broda jeszcze w dół. |
+| 33–43 | Głowa Pawła r1 do ¾ w lewo (head −0,55, nod 0,08). |
+| 44–59 | Wzajemne spojrzenie; 59 pierwsza próbka „Nie wiem”. |
+
+Styk 08/59→09/0: te same pozy, kamera z 1,45→1 (cięcie na plan ogólny).
+
+## Odbiór
+
+Sprawdzone 0, 9, 32, 43, 59 oraz 419/420 i 479/480. Jedna głowa na postać, obrót Pawła 33–43 bez podmiany modułu. Kciuk Marty na tym samym punkcie rączki. Wskazujący Pawła trzyma URLOP przez całe ujęcie. 360 px: kierunki spojrzeń czytelne.

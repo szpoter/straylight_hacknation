@@ -16,3 +16,22 @@ Autor planu: s11
 **Wyjście do 12.** W 11/59 Paweł stoi na prawo od Marty, przed lewym końcem lady. Jego prawa dłoń trzyma ten sam punkt górnej krawędzi. Prawy brzeg kartki pozostaje wolny po stronie pracownicy. Okładka ze zdjęciem oraz dwa pozostałe druki spoczywają w jego lewej dłoni. Lewa dłoń Marty nadal obejmuje rączkę, oboje patrzą w stronę lady. W 12/0 ciaśniejszy kadr z końca blatu przejmuje ruch w prawo, stronę z nagłówkiem i położenie kciuka względem papieru. Pierwszy kontakt pracownicy następuje już w 12. [Przejęcie przez pracownicę](../12/SPEC.md)
 
 **Ocena do wykonania na próbie v3.** Po wyciszeniu, również przy szerokości 360 px, widz powinien wskazać kolejno zmianę numeru, upadek i osobę, która odzyskała kartkę. Na klatkach 23, 25, 37 i 41 sprawdzić kolejno wolny róg, chwyt Marty, dwa widoczne kciuki i samą dłoń Pawła. Obrys dolnego lewego rogu powinien dać się prześledzić od osunięcia po wyprostowanie kartki. Odtworzyć 11/55–12/5 w zwykłym tempie, następnie porównać 11/59 i 12/0 w skali dokumentu. Punkt chwytu, zwrot zagiętego rogu i kierunek podania mają się zgadzać. [Wzorzec faz i referencje](PLAN.md)
+
+
+## Realizacja v3 (autor b07)
+
+Modele r1 (`k.rewizja === "r1"`), wspólny świat bloku w [`../07/kolejka.mjs`](../07/kolejka.mjs): plan ogólny 1280×720, postaci s = 1, podłoga y 590, lada od x 960 (blat y 352), pracownica siedzi (1131,420) s 0,9, wózek s 0,95 (oś y 558). Każde ujęcie patrzy na ten świat kamerą `cam(z,cx,cy)`; kreski cienione z^−0,6. Teczka i druki jak w 03–06 (b01): teczka zamknięta, pionowo przy piersi, w ekranowo prawej dłoni Pawła; ekranowo lewa dłoń pracuje. Zdjęcie na okładce = `photo02(k)` (decyzja koordynatora). Render: `node build.mjs --only 06,…,13 --out robocze/b07`, `klatki.mjs`, `render.mjs 720 NN NN`. Przykład animatora ([ZRODLA.md](../../../v2/przyklady/ZRODLA.md)): Stickman `action-envelope-report.json` (podanie/odbiór z pozą wspólnego obciążenia) i Bang Motion `05-continuous-action.jpg`.
+
+| Klatki | Realizacja |
+| --- | --- |
+| 0–12 | ZASIŁEK spada dalej z 10/59. Wyświetlacz A16→A17 w 6 (dźwięk 20,21 s). Oczy 7–9, głowy 10–12. |
+| 13–24 | Marta: lewa na rączce (13–19), krok ku Pawłowi (biodra 286→336), lean 15°, prawa `open` pod dolnym lewym rogiem. **Kontakt 24** w (505,388): punkt styku dłoni = róg lokalny (−32,42). |
+| 25 | Kciuk na zadrukowanej stronie (`pinch`), arkusz −29° przywiązany do chwytu. |
+| 26–35 | Marta unosi do (540,328), kąt −7°. Lewa dłoń Pawła otwarta sięga. |
+| **36–39** | Wspólny chwyt: Paweł `pinch` na górnej krawędzi w ⅓ od lewego narożnika = punkt lokalny (−10,7;−42); Marta nadal na rogu (−32,42). |
+| 40–41 | Kciuk Marty odchodzi (40), prześwit (41); jej prawa wraca wzdłuż boku. |
+| 42–59 | Paweł krok w prawo (biodra +62), niesie za ten sam punkt; Marta pcha wózek +25 px. 58→59: środek (794→796, 330), +6°. |
+
+## Odbiór
+
+Sprawdzone 23 (szczelina), 24 (kontakt pod rogiem), 25 (kciuk), 35/36 (dłoń Pawła otwarta → chwyt), 37–39 (dwie pary palców), 40/41 (puszczenie), 59. Kolejność narożników bez zmian (arkusz liczony z jednego punktu chwytu naraz). Styk 599/600 ciągły, 659/660 kierunek w prawo zachowany. 360 px: zmiana numeru, upadek, kto łapie — czytelne.

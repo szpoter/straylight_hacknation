@@ -22,3 +22,21 @@ Autor planu: s09
 3. Wyrównać 09/59 i 10/0 według górnej krawędzi oraz grzbietu teczki. Po nałożeniu klatek opuszka trafia na ten sam punkt „URLOP”, a narożniki, kolejność arkuszy i chwyt okładki pokrywają się w granicy 1 px planu ogólnego. Odtworzyć styk z nagraniem i sprawdzić, czy odpowiedź Pawła biegnie przez cięcie.
 
 [Plansza z układem rodziny i wózka](../../../referencje/kolejka-zus-v1.png) · [Referencje ruchu z opisem zastosowania](PLAN.md)
+
+
+## Realizacja v3 (autor b07)
+
+Modele r1 (`k.rewizja === "r1"`), wspólny świat bloku w [`../07/kolejka.mjs`](../07/kolejka.mjs): plan ogólny 1280×720, postaci s = 1, podłoga y 590, lada od x 960 (blat y 352), pracownica siedzi (1131,420) s 0,9, wózek s 0,95 (oś y 558). Każde ujęcie patrzy na ten świat kamerą `cam(z,cx,cy)`; kreski cienione z^−0,6. Teczka i druki jak w 03–06 (b01): teczka zamknięta, pionowo przy piersi, w ekranowo prawej dłoni Pawła; ekranowo lewa dłoń pracuje. Zdjęcie na okładce = `photo02(k)` (decyzja koordynatora). Render: `node build.mjs --only 06,…,13 --out robocze/b07`, `klatki.mjs`, `render.mjs 720 NN NN`. Przykład animatora ([ZRODLA.md](../../../v2/przyklady/ZRODLA.md)): Stickman `approved-2026-10-23-motion-sheet.png` (zmiana podpory przed naciskiem) i Video Shotcraft `JumpCutPunchIn.tsx` (cięcie na opuszkę).
+
+| Klatki | Realizacja |
+| --- | --- |
+| 0–7 | Plan ogólny z 1. Klientka z bobem robi krok do okienka (x 1010→1032), starsza pani rusza zza Pawła (770→905, krok 64 px, torba z opóźnieniem). |
+| 8–34 | Wózek 470→531 (krzywa bez zatrzymań), koła obracają się o drogę/32,3 px. Marta idzie za rączką (stopy 7–19 i 15–30). Paweł: lewa stopa 678→640 (10–23), prawa stoi w 722; biodra 700→678,4 do 28. **Kontakt 28**: udo (biodra −46) = prawa krawędź gondoli (px+106,4); 28–34 biodra jadą z gondolą do 683,4, koła stają w 34. Teczka +10 px wyżej. |
+| 30–40 | URLOP przesuwa się z boku za okładkę na swoje miejsce (od 30 za okładką, bez nakładania). |
+| 41–59 | Dłoń puszcza (41–44 `open`), wskazujący (`point`) ląduje w 59 na URLOP w punkcie lokalnym (−20,−34). |
+
+Styk 09/59→10/0: ten sam świat, kamera z 1→4.
+
+## Odbiór
+
+Sprawdzone 0, 23, 28, 34, 35, 45, 59 i 479/480, 539/540. Prześwit 23, kontakt 28 (udo = krawędź gondoli), zatrzymanie 34; prawa stopa Pawła stała (x 722); koła toczą się o drogę. Statyści bez modelu r1: lekkie, bez twarzy (prośba). Otwarte: lewa ręka Pawła w 45–59 z łokciem na zewnątrz (brak skrótu perspektywicznego w r1).

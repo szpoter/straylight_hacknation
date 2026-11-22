@@ -27,7 +27,7 @@ Na prośbę Juliana jeden autor dostaje blok kilku ujęć i odpowiada za cięcia
 | Ujęcia | Autor | Rewizja modeli | Stan |
 | --- | --- | --- | --- |
 | 01–06 | blok b01 | r1 | oddane; styk 06/07 rozstrzygnięty (photo02, chwyt URLOP, POTWIERDZENIE w teczce); prośby: przycięcie zdjęcia teczki, statyści, otwarta dłoń Oli, rewers kartki |
-| 07–12 | blok b07 | r1 | w realizacji |
+| 07–12 | blok b07 | r1 | oddane; styk 12/13 do decyzji; prośby: profil tułowia i nóg, skrót łokcia, statyści |
 | 13–18 | blok b13 | r1 | oddane; prośby do modeli: skłon tułowia z profilu, obrót buta, okładka teczki |
 | 19–23 | blok b19 | r1 | oddane; 20 poprawione (tytuł czytelny od pierwszej litery) |
 | 24–26, 29–30 | blok b24 | r1 (produkt) | oddane; styk 23/24 = 0 po poprawce importu mapy |

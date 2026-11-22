@@ -12,3 +12,10 @@ Autor planu: s11
 | 40–59 | Kciuk Marty odchodzi od papieru. Paweł prowadzi wydruk ku ladzie, Marta podjeżdża wózkiem obok niego. Cięcie wypada w ruchu. W bliższym planie pracownica ma przed sobą odsłonięty prawy brzeg tej samej kartki. [Ciągłość prowadzenia przedmiotu](../../../v2/przyklady/ciagly-ruch.jpg) · [Wejście przy okienku](../12/PLAN.md) |
 
 [Pozycje dłoni i kryteria odbioru](SPEC.md)
+
+
+## Realizacja v3 (autor b07)
+
+Modele r1 (`k.rewizja === "r1"`), wspólny świat bloku w [`../07/kolejka.mjs`](../07/kolejka.mjs): plan ogólny 1280×720, postaci s = 1, podłoga y 590, lada od x 960 (blat y 352), pracownica siedzi (1131,420) s 0,9, wózek s 0,95 (oś y 558). Każde ujęcie patrzy na ten świat kamerą `cam(z,cx,cy)`; kreski cienione z^−0,6. Teczka i druki jak w 03–06 (b01): teczka zamknięta, pionowo przy piersi, w ekranowo prawej dłoni Pawła; ekranowo lewa dłoń pracuje. Zdjęcie na okładce = `photo02(k)` (decyzja koordynatora). Render: `node build.mjs --only 06,…,13 --out robocze/b07`, `klatki.mjs`, `render.mjs 720 NN NN`. Przykład animatora ([ZRODLA.md](../../../v2/przyklady/ZRODLA.md)): Stickman `action-envelope-report.json` (podanie/odbiór z pozą wspólnego obciążenia) i Bang Motion `05-continuous-action.jpg`.
+
+Szczegóły klatek i styków: [SPEC](SPEC.md#realizacja-v3-autor-b07).
