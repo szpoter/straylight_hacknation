@@ -3,7 +3,7 @@ import { SYSTEM_PROMPT } from '../src/lib/rag/model-tasks';
 import { hasPreviewModel, lmStudioCompletion } from '../workers/lmstudio';
 
 const model = 'qwen/qwen3.8-27b';
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 it('requires the exact served model and uses only the localhost API', async () => {
   const fetch = vi.fn()
@@ -33,4 +33,33 @@ it('rejects substituted or truncated completions and returns only final content'
   expect(url).toBe('http://127.0.0.1:1234/api/v1/chat');
   expect(init.redirect).toBe('error');
   expect(JSON.parse(init.body)).toMatchObject({model, stream:false, store:false, reasoning:'off', integrations:[], system_prompt:SYSTEM_PROMPT, input:'Test publiczny'});
+});
+
+it('gives a full Qwen generation 90s, bounded by job expiry, and makes its deadline terminal', async () => {
+  const expiry = new AbortController();
+  const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(expiry.signal);
+  const payload = {model_instance_id:model, stats:{total_output_tokens:12,reasoning_output_tokens:0},
+    output:[{type:'message', content:'synthetic message'}]};
+  const fetch = vi.fn().mockResolvedValue(Response.json(payload));
+  vi.stubGlobal('fetch', fetch);
+  const lease = new AbortController();
+  const run = (leftMs: number) => lmStudioCompletion('answer_evidence', undefined, 'synthetic', lease.signal, undefined, leftMs);
+  await expect(run(105000)).resolves.toMatchObject({content:'synthetic message'});
+  expect(timeout).toHaveBeenLastCalledWith(90000);
+  fetch.mockImplementationOnce(async () => { expiry.abort(); return Response.json(payload); });
+  await expect(run(45000)).resolves.toEqual({reason:'timeout',terminal:true});
+  expect(timeout).toHaveBeenLastCalledWith(45000);
+});
+
+it('retains typed task limits and leaves transport failures eligible for retry', async () => {
+  const expiry = new AbortController();
+  const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(expiry.signal);
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(null, {status:503}))
+    .mockRejectedValueOnce(new Error('transport')));
+  const signal = new AbortController().signal;
+  await expect(lmStudioCompletion('plan_public', {candidates:[]}, '{}', signal, undefined, 105000))
+    .resolves.toEqual({reason:'http_503'});
+  expect(timeout).toHaveBeenLastCalledWith(9000);
+  await expect(lmStudioCompletion('answer_evidence', undefined, 'synthetic', signal, undefined, 105000))
+    .rejects.toThrow('transport');
 });

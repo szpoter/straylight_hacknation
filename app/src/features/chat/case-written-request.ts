@@ -7,7 +7,19 @@ const start = /^(?:wniosek(?: o)?|wnosze o|wnioskuje o|prosze o|zwracam sie z (?
 const subjectPrefix = /^(?:o )?(?:(?:wyplate|przyznanie|udzielenie)(?: mi)?(?: (?:czesci|\d{1,2} (?:tygodni|dni)))?)?$/u;
 const periodPrefix = /^(?:(?:za |na |w )?(?:okres(?:ie)?|czas|terminie|wymiarze)\s*)?(?:(?:\d{1,3}|jednego|dwoch) (?:tygodni(?:a|e)?|dni)\s*)?(?:(?:od|poczawszy|tj\.?)\s*)?$/u;
 const benefit = /\b(?:zasilek macierzynski|zasilku macierzynskiego)\b/u;
-const leave = /\burlop(?:u)? (macierzynski(?:ego)?|rodzicielski(?:ego)?|ojcowski(?:ego)?)\b/u;
+const leave = /\burlop(?:u)?\s+(macierzynski(?:ego)?|rodzicielski(?:ego)?|ojcowski(?:ego)?)\b/u;
+
+export function contradictsWrittenLeave(lines: string[], requests: LeaveRequest[]) {
+  const text = lines.join(" ");
+  if (benefit.test(text) || lines.some(line => line.startsWith("warunki urlopu")) ||
+      /\b(?:nie (?:prosze|wnosze|wnioskuje|zwracam)|historia|wykaz|wczesniej|poprzedni|korzystal|udzielono|wykorzystan|instrukcj|przyklad|poucz|rezygn|wycof|anul)/u.test(text)) return true;
+  const { leaves } = writtenRequests(lines, requests[0].locator.clientDocumentId, requests[0].locator.page);
+  return leaves.some(other => !requests.some(r => r.kind === other.kind && r.validFrom === other.validFrom && r.validTo === other.validTo));
+}
+
+function leaveKind(name: string): LeaveRequest["kind"] {
+  return name.startsWith("ojc") ? "paternity" : name.startsWith("rodz") ? "parental" : "maternity";
+}
 
 export function writtenRequests(lines: string[], clientDocumentId: string, page: number) {
   const claims: EvidenceCandidate[] = [], leaves: LeaveRequest[] = [];
@@ -46,8 +58,7 @@ export function writtenRequests(lines: string[], clientDocumentId: string, page:
       if (benefit.test(head) && !/urlopu (?:ojcowskiego|rodzicielskiego)/u.test(head)) {
         claims.push({ field: "benefitRequest", value: { kind: "code", code: "maternity" }, validFrom, validTo, locator });
       } else if (!benefit.test(head) && kinds.length >= 1) {
-        const name = kinds[0][1];
-        leaves.push({ kind: name.startsWith("ojc") ? "paternity" : name.startsWith("rodz") ? "parental" : "maternity", validFrom, validTo, locator });
+        leaves.push({ kind: leaveKind(kinds[0][1]), validFrom, validTo, locator });
       }
       break;
     }

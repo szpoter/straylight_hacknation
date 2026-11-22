@@ -1,4 +1,4 @@
-import { localModelIds, SYSTEM_PROMPT, taskInstructions, taskGrammar, taskSpecs, type ModelTaskKind } from '../src/lib/rag/model-tasks';
+import { localModelIds, QWEN_GENERATION_TIMEOUT_MS, SYSTEM_PROMPT, taskInstructions, taskGrammar, taskSpecs, type ModelTaskKind } from '../src/lib/rag/model-tasks';
 
 const origin = 'http://127.0.0.1:1234';
 const model = localModelIds['qwen-27b'];
@@ -17,6 +17,21 @@ export async function hasPreviewModel(token?: string) {
 }
 
 export async function lmStudioCompletion(kind: ModelTaskKind, input: Parameters<typeof taskGrammar>[1],
+  prompt: string, lease: AbortSignal, token?: string, leftMs = Infinity) {
+  const fullAnswer = kind === 'answer_evidence';
+  const cap = fullAnswer ? QWEN_GENERATION_TIMEOUT_MS : taskSpecs[kind].timeout;
+  const deadline = AbortSignal.timeout(Math.max(1, Math.min(leftMs, cap)));
+  const signal = AbortSignal.any([lease, deadline]);
+  const reply = await requestCompletion(kind, input, prompt, signal, token).catch((error: unknown) => {
+    if (!signal.aborted) throw error;
+    return { reason: 'timeout' };
+  });
+  // A finished generation window is terminal even if the provider resolves after cancellation.
+  if (fullAnswer && deadline.aborted) return { reason: 'timeout', terminal: true };
+  return signal.aborted ? { reason: 'timeout' } : reply;
+}
+
+async function requestCompletion(kind: ModelTaskKind, input: Parameters<typeof taskGrammar>[1],
   prompt: string, signal: AbortSignal, token?: string) {
   const system = kind === 'answer_evidence' ? SYSTEM_PROMPT : taskInstructions[kind];
   const budget = taskSpecs[kind].tokens;

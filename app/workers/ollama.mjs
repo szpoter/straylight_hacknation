@@ -18,7 +18,7 @@ async function infer(job) {
   const kind = job.task_kind ?? "answer_evidence";
   const spec = taskSpecs[kind];
   const abort = new AbortController();
-  const signal = AbortSignal.any([abort.signal, AbortSignal.timeout(Math.max(1, Math.min(job.left_ms, spec.timeout)))]);
+  const signal = preview ? abort.signal : AbortSignal.any([abort.signal, AbortSignal.timeout(Math.max(1, Math.min(job.left_ms, spec.timeout)))]);
   const heartbeat = setInterval(async () => {
     try {
       const { rows } = await db.query('select zusik_model.renew($1,$2) as owned', [job.id, job.lease]);
@@ -32,8 +32,10 @@ async function infer(job) {
     const input = kind === "answer_evidence" ? undefined : JSON.parse(job.prompt);
     let raw;
     if (preview) {
-      const reply = await lmStudioCompletion(kind, input, job.prompt, signal, settings.lmStudioToken);
+      const reply = await lmStudioCompletion(kind, input, job.prompt, signal, settings.lmStudioToken, job.left_ms);
       reason = reply.reason;
+      // finish('') reports worker_error to the caller without leasing the timed-out prompt again.
+      if (reply.terminal) output = '';
       raw = reply.content;
       verifiedModel = reply.model;
     } else {

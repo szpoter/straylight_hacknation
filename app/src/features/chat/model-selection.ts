@@ -1,4 +1,4 @@
-import type { ChatModelOptions } from "@/lib/zusik/chat-model";
+import { publicTurnBudgetMs, type ChatModelOptions } from "@/lib/zusik/chat-model";
 export type ChatModelChoice = ChatModelOptions["model"];
 export type ChatVerification = "standard" | "extra";
 export type ChatEffort = "default" | "low" | "high";
@@ -58,6 +58,11 @@ export function setChatEffort(choice: ChatEffort) {
 export function subscribeChatModel(notify: () => void) {
   listeners.add(notify);
   return () => { listeners.delete(notify); };
+}
+
+export function publicChatTimeoutMs(model?: ChatModelChoice) {
+  // Allow time for the server to save the turn and the browser to consume the response.
+  return publicTurnBudgetMs(model, 55_000) + 15_000;
 }
 
 export function getChatModelOptions(): ChatModelOptions {

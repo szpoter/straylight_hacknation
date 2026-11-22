@@ -1,5 +1,6 @@
-// From app/: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis [--next-four] | --work-birth-dates [--whole-check] [--compare-app PATH]
+// From app/: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis [--next-four] | --work-birth-dates [--whole-check] [--compare-app PATH] | --work-birth-regions | --leave-scans --compare-app PATH
 import { workBirthReferences, compareWorkBirthDates } from "./qa-work-birth-browser.mjs";
+import { compareLeaveScans } from "./qa-leave-scans.mjs";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -26,9 +27,10 @@ const safeFile = async pathname => {
   assert.ok(!stat.isSymbolicLink() && stat.uid === process.getuid() && !(stat.mode & 0o077));
 };
 
-async function assets(readerApp = app) {
+async function assets(readerApp = app, regions = false) {
   const compiled = await build({ stdin: { resolveDir: readerApp, contents:
-    'export { readCaseDocuments } from "./src/features/chat/read-case-pdf.ts";export { analyzeCasePage } from "./src/features/chat/case-evidence.ts";' },
+    'export { readCaseDocuments } from "./src/features/chat/read-case-pdf.ts";export { analyzeCasePage } from "./src/features/chat/case-evidence.ts";' +
+    (regions ? 'export { measureBirthRegions } from "./scripts/qa-birth-regions.mjs";' : "") },
     tsconfig: path.join(readerApp, "tsconfig.json"), bundle: true, write: false, platform: "browser", format: "iife",
     globalName: "qaReader", define: { "process.env.NODE_ENV": '"production"' }, logLevel: "silent" });
   const table = new Map([
@@ -51,6 +53,11 @@ async function readPages(page, bytes, copies, synthetic = false, diagnose = fals
     });
     if (result.length !== 1) throw Error("dedup");
     const { pages } = result[0];
+    if (synthetic && qaReader.measureBirthRegions) {
+      const decision = pages[9];
+      const trial = await qaReader.measureBirthRegions(arr, decision.page, decision);
+      if (decision.status !== "excluded" || Object.keys(trial).length) throw Error("protected_region");
+    }
     const problems = {}, signals = {};
     if (diagnose) for (const [index, p] of pages.entries()) {
       const text = p.text.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replaceAll("ł", "l");
@@ -82,7 +89,7 @@ async function readPages(page, bytes, copies, synthetic = false, diagnose = fals
       leavePages: pages.filter(p => p.leaveRequests?.length).length,
       fieldPages: pages.filter(p => p.candidates.length).length,
       problems, signals, roles: pages.map(p => p.role),
-      protectedFields: pages.filter(p => p.role === "decision").reduce((n, p) => n + p.candidates.length, 0),
+      protectedFields: pages.filter(p => p.role === "decision" || p.status === "excluded").reduce((n, p) => n + p.candidates.length + (p.leaveRequests?.length ?? 0), 0),
       synthetic: synthetic && {
         payroll: pages[10]?.candidates.map(c => [c.field, c.value.grosze, c.validFrom, c.validTo, c.locator.page, c.locator.column]),
         finePrintDate: pages[8]?.candidates.map(c => [c.field, c.value.date, c.locator.page]),
@@ -276,7 +283,9 @@ async function main(mode, nextFour, wholeCheck) {
   });
   assert.ok(denied, "macOS network policy inactive");
   const references = mode === "--work-birth-dates" && workBirthReferences();
-  const currentTable = await assets();
+  const regions = mode === "--work-birth-regions";
+  const samples = regions && [["work-prefix-geometry", workBirthReferences(true)], ["work-index-text", workBirthReferences()]];
+  const currentTable = await assets(app, regions || mode === "--self-test");
   const baseTable = compareApp && await assets(await realpath(compareApp));
   let table = currentTable;
   let blocked = 0;
@@ -293,6 +302,14 @@ async function main(mode, nextFour, wholeCheck) {
     });
     const page = await context.newPage();
     await page.goto(assetOrigin);
+    if (mode === "--leave-scans") {
+      await compareLeaveScans(page, async version => {
+        table = version === "base" ? baseTable : currentTable;
+        await page.reload();
+      });
+      assert.equal(blocked, 0);
+      return;
+    }
     if (references) {
       const selectVersion = baseTable && (async version => {
         table = version === "base" ? baseTable : currentTable;
@@ -303,19 +320,25 @@ async function main(mode, nextFour, wholeCheck) {
     await preflight(page);
     assert.equal(blocked, 0);
     console.log("offline preflight: text, blank, OCR, duplicate, mixed decision, mentioned heading, marked and empty choices, leave-only request and fine-print scan pair and payroll columns passed");
+    if (samples) {
+      for (const [name, sample] of samples) await compareWorkBirthDates(page, source, sample, () => blocked, false, undefined, name);
+      return;
+    }
     if (mode !== "--self-test") await runEdition(context, table, page, () => blocked, mode === "--work-diagnosis", nextFour);
   } finally { await browser.close(); }
 }
 
 const [mode, ...options] = process.argv.slice(2);
 const nextFour = mode === "--work-diagnosis" && options.length === 1 && options[0] === "--next-four";
-const dateOptions = mode === "--work-birth-dates" ? [...options] : [];
+const dateOptions = mode === "--work-birth-dates" || mode === "--leave-scans" ? [...options] : [];
 const wholeCheck = dateOptions[0] === "--whole-check";
 if (wholeCheck) dateOptions.shift();
 const compareApp = dateOptions.length === 2 && dateOptions[0] === "--compare-app" && dateOptions[1];
 const validDateOptions = mode === "--work-birth-dates" && (!dateOptions.length || compareApp);
-if (!["--self-test", "--edition", "--work-diagnosis", "--work-birth-dates"].includes(mode) || (options.length && !nextFour && !validDateOptions)) {
-  console.error("Usage: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis [--next-four] | --work-birth-dates [--whole-check] [--compare-app PATH]");
+const validLeaveOptions = mode === "--leave-scans" && compareApp && !wholeCheck;
+if (!["--self-test", "--edition", "--work-diagnosis", "--work-birth-dates", "--work-birth-regions", "--leave-scans"].includes(mode) ||
+    (mode === "--leave-scans" && !validLeaveOptions) || (options.length && !nextFour && !validDateOptions && !validLeaveOptions)) {
+  console.error("Usage: node scripts/qa-private-pages.mjs --self-test | --edition | --work-diagnosis [--next-four] | --work-birth-dates [--whole-check] [--compare-app PATH] | --work-birth-regions | --leave-scans --compare-app PATH");
   process.exitCode = 2;
 } else if (!process.env.QA_PAGES_SANDBOX_CHILD) {
   // Playwright uses local pipes. macOS denies outgoing IP traffic for Node, Chrome and their descendants.
@@ -324,7 +347,7 @@ if (!["--self-test", "--edition", "--work-diagnosis", "--work-birth-dates"].incl
   process.exitCode = run.status ?? 2;
 } else {
   try { await main(mode, nextFour, wholeCheck); } catch (error) {
-    if (mode === "--self-test") console.error(error.message.slice(0, 1000));
+    if (mode === "--self-test" || mode === "--leave-scans") console.error(error.message.slice(0, 1000));
     console.error("Offline reader check failed. No case details were logged.");
     process.exitCode = 1;
   }

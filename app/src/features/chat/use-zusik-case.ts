@@ -1,6 +1,6 @@
 "use client";
 
-import { getChatModelOptions } from "./model-selection";
+import { getChatModelOptions, publicChatTimeoutMs } from "./model-selection";
 import type { ChatModelOptions } from "@/lib/zusik/chat-model";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CaseName, FamilyChatScope } from "@/lib/zusik/conversation";
@@ -39,7 +39,6 @@ export type ConversationItem = { requestId: string; createdAt?: string; question
 
 type Payload = { documentCache?:string; view?: ClientView; error?: string; variable?: string };
 
-const ASK_TIMEOUT_MS = 70_000;
 const POLL_MS = 1_500;
 const POLL_LIMIT = 20;
 
@@ -263,7 +262,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
           }
         });
       };
-      const timer = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
+      const timer = setTimeout(() => controller.abort(), publicChatTimeoutMs(modelOptions.model));
       try {
         let res = await request();
         // 202: the same request is still running on the server. Ask again with the same requestId.

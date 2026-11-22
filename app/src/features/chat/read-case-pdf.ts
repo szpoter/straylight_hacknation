@@ -3,14 +3,16 @@
 import { createPolishOcrWorker, loadImage, pdfjs } from "@/features/kamil/read-document";
 import { MIN_CONFIDENCE } from "@/lib/ocr/birth-certificate";
 import { wordsFromPdfItems, wordsFromTesseract } from "@/lib/ocr/words";
-import { analyzeCasePage, containsDecision, containsRegistryBirthTitle, type LocalCasePage, type LocalCaseDocument, type LocalLocator } from "./case-evidence";
+import { analyzeCasePage, containsDecision, containsRegistryBirthTitle, preserveWrittenLeave, type LocalCasePage, type LocalCaseDocument, type LocalLocator } from "./case-evidence";
+import { locateBirthCell, readBirthCellValue } from "./case-birth-cell";
 import { checkScanDimensions } from "./case-image-size";
 import { openCaseProgress } from "./case-read-progress";
 import { pageLines, type PageLine } from "./case-page-layout";
 
 type Progress = (label: string) => void;
 type ReadOptions = { caseId: string; signal: AbortSignal; onProgress: Progress; onPage?: (page: LocalCasePage, total: number) => void };
-type PageRead = { text: string; method: LocalCasePage["method"]; lines?: PageLine[]; confidence?: number; blank?: boolean; protectedDecision?: boolean; highConfidenceText?: () => string };
+type BirthCell = NonNullable<ReturnType<typeof locateBirthCell>> & { angle: number };
+type PageRead = { birthCell?: BirthCell; text: string; method: LocalCasePage["method"]; lines?: PageLine[]; confidence?: number; blank?: boolean; protectedDecision?: boolean; highConfidenceText?: () => string };
 type PdfPage = import("pdfjs-dist/types/src/display/api").PDFPageProxy;
 type Worker = Awaited<ReturnType<typeof createPolishOcrWorker>>;
 
@@ -79,7 +81,7 @@ function retryRotation(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D)
   return horizontal >= vertical ? [180] : [-90, 90];
 }
 
-async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, signal: AbortSignal, getWorker: () => Promise<Worker>): Promise<PageRead> {
+async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, signal: AbortSignal, getWorker: () => Promise<Worker>, originalOrientation = false): Promise<PageRead> {
   signal.throwIfAborted();
   if (isBlank(ctx, canvas)) return { method: "ocr", text: "", blank: true };
   const worker = await getWorker();
@@ -90,7 +92,7 @@ async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, 
   let rotation = 0;
   let width = canvas.width, height = canvas.height;
   const angles = data.confidence < MIN_CONFIDENCE ? retryRotation(canvas, ctx) : [];
-  for (const angle of angles) {
+  for (const angle of originalOrientation ? angles.slice(0, 1) : angles) {
     const sideways = Math.abs(angle) === 90;
     const retry = canvasFor(sideways ? canvas.height : canvas.width, sideways ? canvas.width : canvas.height);
     try {
@@ -117,14 +119,16 @@ async function runOcr(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, 
     if (rotation === -90) line.box = { x: 1 - y - h, y: x, w: h, h: w };
   }
   const text = lines.length ? lines.map(l => l.text).join("\n") : data.text.trim();
+  const cell = rotation === 0 && !protectedDecision && containsRegistryBirthTitle(text) ? locateBirthCell(lines, words, width, height) : undefined;
   return { method: "ocr", text, confidence: data.confidence, lines, protectedDecision,
+    birthCell: cell && { ...cell, angle: data.rotateRadians || 0 },
     highConfidenceText: () => pageLines(positioned.map(word => word.confidence >= MIN_CONFIDENCE ? word : { ...word, text: "�" }),
       width, height).map(line => line.text).join("\n") };
 
 }
 
 async function readPage(page: PdfPage, lib: Awaited<ReturnType<typeof pdfjs>>, signal: AbortSignal, progress: Progress, total: number,
-  getWorker: () => Promise<Worker>, assess: (input: PageRead) => LocalCasePage): Promise<LocalCasePage> {
+  getWorker: () => Promise<Worker>, assess: (input: PageRead, previous?: LocalCasePage) => LocalCasePage, clientDocumentId: string): Promise<LocalCasePage> {
   const { items } = await page.getTextContent();
   const runs = items.filter(item => "str" in item);
   const raw = runs.map(item => item.str + (item.hasEOL ? "\n" : " ")).join("").trim();
@@ -140,27 +144,66 @@ async function readPage(page: PdfPage, lib: Awaited<ReturnType<typeof pdfjs>>, s
   }
   signal.throwIfAborted();
   progress(`Rozpoznaję skan strony ${page.pageNumber} z ${total}…`);
-  async function atScale(scale: number) {
+  async function rendered<T>(scale: number, inspect: (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => Promise<T>) {
     const view = page.getViewport({ scale });
     const { canvas, ctx } = canvasFor(view.width, view.height);
     try {
       await page.render({ canvasContext: ctx, viewport: view }).promise;
-      const result = await runOcr(canvas, ctx, signal, getWorker);
-      if (!result.text && raw) { result.text = raw; result.confidence = 0; result.blank = false; }
-      result.protectedDecision ||= containsDecision(raw);
-      return assess(result);
+      return await inspect(canvas, ctx);
     } finally { canvas.width = canvas.height = 0; }
   }
+  let cell: BirthCell | undefined;
+  function atScale(scale: number, original: boolean) {
+    return rendered(scale, async (canvas, ctx) => {
+      const result = await runOcr(canvas, ctx, signal, getWorker, original);
+      if (!original) cell = result.birthCell;
+      if (!result.text && raw) { result.text = raw; result.confidence = 0; result.blank = false; }
+      result.protectedDecision ||= containsDecision(raw) || containsDecision(result.text);
+      return result;
+    });
+  }
   const scale = scanScale(base.width, base.height, 300 / 72);
-  const first = await atScale(scale);
-  const smaller = 1800 / Math.max(base.width, base.height);
-  if (scale <= smaller || (first.role !== "certificate" && first.role !== "other") || first.candidates.length ||
+  const originalScale = 1800 / Math.max(base.width, base.height);
+  const originalInput = await atScale(originalScale, true).catch((): PageRead => {
+    signal.throwIfAborted();
+    return { method: "manual", text: "" };
+  });
+  const original = assess(originalInput);
+  if (originalInput.protectedDecision) return original;
+  const detailedInput = await atScale(scale, false);
+  // A complete, independently identified application starts a new document after a decision.
+  const first = assess(detailedInput, original.leaveRequests?.length ? original : undefined);
+  if (first.status === "excluded" || original.leaveRequests?.length) return preserveWrittenLeave(original, first);
+  if (scale <= originalScale || (first.role !== "certificate" && first.role !== "other") || first.candidates.length ||
       !containsRegistryBirthTitle(first.text)) return first;
-  // Some scans preserve the digits better when downsampled. Both passes must clear the usual decision guard.
   try {
-    const retry = await atScale(smaller);
-    if (retry.status === "excluded") return retry;
-    if (retry.role === "certificate" && retry.lines?.length && retry.candidates.length === 1 && retry.candidates[0].field === "birthDate") return retry;
+    if (original.role === "certificate" && original.lines?.length && original.candidates.length === 1 && original.candidates[0].field === "birthDate") return original;
+    if (!cell || !first.lines || original.candidates.length || (original.role !== "certificate" && original.role !== "other")) return first;
+    const source = cell;
+    const worker = await getWorker();
+    const options = { rectangle: source.rectangle, rotateRadians: source.angle, tessedit_char_whitelist: "0123456789./-", tessedit_pageseg_mode: "7" };
+    const { data } = await rendered(scale, canvas => abortable(worker.recognize(canvas, options, { blocks: true }), signal));
+    if (containsDecision(data.text)) return assess({ method: "ocr", text: first.text, lines: first.lines, protectedDecision: true });
+    const words = data.words ?? data.blocks?.flatMap(b => b.paragraphs.flatMap(p => p.lines.flatMap(l => l.words))) ?? [];
+    const value = readBirthCellValue(words);
+    if (!value) return first;
+    const row = first.lines[source.index];
+    row.text = source.label + "\t" + value.text;
+    row.confidence = Math.min(source.labelConfidence, value.confidence);
+    const view = page.getViewport({ scale });
+    const w = Math.ceil(view.width), h = Math.ceil(view.height);
+    // Enclose label and cell in the original scan, including displacement from automatic deskew.
+    const pad = Math.sin(Math.abs(source.angle)) * Math.hypot(w, h) / 2;
+    const x = Math.max(0, Math.min(source.labelLeft, source.rectangle.left) - pad), y = Math.max(0, source.rectangle.top - pad);
+    const right = Math.min(w, source.rectangle.left + source.rectangle.width + pad);
+    const bottom = Math.min(h, source.rectangle.top + source.rectangle.height + pad);
+    row.box = { x: x / w, y: y / h, w: (right - x) / w, h: (bottom - y) / h };
+    first.kind = first.role = "certificate";
+    first.status = "read";
+    first.reason = "ambiguous_field";
+    first.text = first.lines.map(line => line.text).join("\n");
+    first.candidates = [{ field: "birthDate", value: { kind: "date", date: value.date },
+      locator: { clientDocumentId, page: first.page, lineStart: source.index + 1, lineEnd: source.index + 1 } }];
   } catch { signal.throwIfAborted(); }
   return first;
 }
@@ -187,9 +230,9 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
   };
   let worker: Promise<Worker> | undefined;
   const getWorker = () => worker ??= createPolishOcrWorker();
-  function assess(input: PageRead) {
+  function assess(input: PageRead, previous = pages.at(-1)) {
     signal.throwIfAborted();
-    const page = analyzeCasePage(clientDocumentId, pages.length + 1, input.text, input.method, pages.at(-1), input.confidence, input.lines);
+    const page = analyzeCasePage(clientDocumentId, pages.length + 1, input.text, input.method, previous, input.confidence, input.lines);
     if (input.protectedDecision) {
       page.kind = page.role = "decision";
       page.status = "excluded";
@@ -209,7 +252,7 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
       if (leaves?.some(leave => !reliable(leave))) {
         // A weak word elsewhere in a letter must not invalidate a legible request and its dates.
         const masked = input.highConfidenceText?.() ?? "";
-        const confirmed = analyzeCasePage(clientDocumentId, page.page, masked, page.method, pages.at(-1), input.confidence).leaveRequests ?? [];
+        const confirmed = analyzeCasePage(clientDocumentId, page.page, masked, page.method, previous, input.confidence).leaveRequests ?? [];
         page.leaveRequests = leaves.filter(request => reliable(request) || confirmed.some(other =>
           other.kind === request.kind && other.validFrom === request.validFrom && other.validTo === request.validTo &&
           other.locator.lineStart === request.locator.lineStart && other.locator.lineEnd === request.locator.lineEnd));
@@ -252,7 +295,7 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
           let result: LocalCasePage;
           try {
             const page = await pdf.getPage(n);
-            try { result = await readPage(page, lib, signal, onProgress, pdf.numPages, getWorker, assess); }
+            try { result = await readPage(page, lib, signal, onProgress, pdf.numPages, getWorker, assess, clientDocumentId); }
             finally { page.cleanup(); }
           } catch {
             signal.throwIfAborted();
@@ -274,11 +317,17 @@ async function read(file: File, options: ReadOptions, pdfOnly = false, existing:
       onProgress("Rozpoznaję skan strony 1 z 1…");
       const img = await loadImage(new Blob([bytes], { type }));
       const scale = scanScale(img.naturalWidth, img.naturalHeight, 1);
-      const { canvas, ctx } = canvasFor(img.naturalWidth * scale, img.naturalHeight * scale);
-      try {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        record(assess(await runOcr(canvas, ctx, signal, getWorker)), 1);
-      } finally { canvas.width = canvas.height = 0; }
+      const originalScale = Math.min(1, 1800 / Math.max(img.naturalWidth, img.naturalHeight));
+      async function imageAtScale(factor: number, original = false) {
+        const { canvas, ctx } = canvasFor(img.naturalWidth * factor, img.naturalHeight * factor);
+        try {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          return assess(await runOcr(canvas, ctx, signal, getWorker, original));
+        } finally { canvas.width = canvas.height = 0; }
+      }
+      const original = await imageAtScale(originalScale, true);
+      const sameRead = originalScale === scale && (original.status === "blank" || (original.confidence ?? 0) >= MIN_CONFIDENCE);
+      record(original.status === "excluded" || sameRead ? original : preserveWrittenLeave(original, await imageAtScale(scale)), 1);
     }
   } finally {
     checkpoint?.close();

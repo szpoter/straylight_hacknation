@@ -28,11 +28,16 @@ function expectRevision(actual: number, expected: number) {
 }
 
 export async function withMemoryTransaction<T>(pool: Pool, owner: string,
-  run: (repo: MemoryRepository, client: PoolClient) => Promise<T>): Promise<T> {
+  run: (repo: MemoryRepository, client: PoolClient) => Promise<T>,
+  timeouts?: {lockMs: number; idleMs: number}): Promise<T> {
   if (!owner) throw new Error("verified_owner_required");
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    if (timeouts) {
+      await client.query("SELECT set_config('lock_timeout',$1,true), set_config('idle_in_transaction_session_timeout',$2,true)",
+        [String(timeouts.lockMs), String(timeouts.idleMs)]);
+    }
     await client.query("SELECT set_config('zusik.owner_session',$1,true)", [owner]);
     await client.query("DELETE FROM zusik.v1_profiles WHERE owner_session=$1 AND expires_at<=now()", [owner]);
     const result = await run(new Repository(client, owner), client);

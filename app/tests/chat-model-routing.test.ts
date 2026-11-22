@@ -45,20 +45,24 @@ it("submits Qwen only for approved public material, even with a hosted default",
   const question = publicQuestion("Kiedy złożyć wniosek o urlop rodzicielski?")?.question;
   if (!question || !fragment) throw Error("Missing public fixture");
   const output = {status: "insufficient_evidence", message: "", claims: []};
-  const client = {query: vi.fn(async () => ({rows: [{done: true, output: JSON.stringify(output)}]})), release: vi.fn()};
+  vi.useFakeTimers();
+  const start = Date.now();
+  const client = {query: vi.fn(async () => ({rows: [{started: true, done: Date.now() - start >= 91_000, output: JSON.stringify(output)}]})), release: vi.fn()};
   const queue = {connect: async () => client} as unknown as Pool;
   const hosted = vi.fn(() => { throw Error("Hosted configuration read"); });
   const options = {selectedModel: "qwen-27b" as const, queue, hosted};
   vi.stubEnv("ZUSIK_RAG_MODEL", "hosted");
   try {
-    expect(await generateAnswer(options, corpus, question, [fragment])).toMatchObject({status: "ok", model: "qwen/qwen3.8-27b", backend: "local-qwen-27b", output});
+    const pending = generateAnswer(options, corpus, question, [fragment]);
+    await vi.advanceTimersByTimeAsync(92_000);
+    expect(await pending).toMatchObject({status: "ok", model: "qwen/qwen3.8-27b", backend: "local-qwen-27b", output});
     expect(client.query.mock.calls[0]).toEqual(["select zusik_model.submit($1,$2,$3)", [expect.any(String), "qwen-27b", expect.stringContaining(question)]]);
     client.query.mockClear();
     expect(await generateAnswer(options, corpus, question + " Prywatny dopisek", [fragment])).toEqual({status: "insufficient_evidence", output: null, ms: expect.any(Number)});
     expect(await generateAnswer({...options, deadlineMs: 0}, corpus, question, [fragment])).toMatchObject({status: "timeout", model: "qwen-27b"});
     expect(client.query).not.toHaveBeenCalled();
     expect(hosted).not.toHaveBeenCalled();
-  } finally { vi.unstubAllEnvs(); }
+  } finally { vi.useRealTimers(); vi.unstubAllEnvs(); }
 });
 it.each(["unapproved", "worker_error", "no_queue", "timeout"] as const)(
   "distinguishes %s in the public replies consumed by both chat clients", async scenario => {

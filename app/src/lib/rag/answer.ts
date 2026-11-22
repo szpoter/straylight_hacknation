@@ -7,7 +7,7 @@ import type { AskAnswer, AskCitation, AskClaim } from "../zusik/types";
 import { citationUrl, normalizeSpaces, type Corpus, type Fragment } from "./corpus";
 import { contradictsQuotedBenefit } from "./benefit-scope";
 
-/** Bielik on Sherlock writes ~18 tokens/s; a cited answer is 200–400 tokens. Route maxDuration is 60 s. */
+/** Bielik on Sherlock writes ~18 tokens/s; a cited answer is 200–400 tokens. */
 export const ASK_TIMEOUT_MS = 40_000;
 export const ASK_MAX_OUTPUT_TOKENS = 700;
 
@@ -15,7 +15,7 @@ export const NO_BASIS_MESSAGE =
   "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.";
 
 export { SYSTEM_PROMPT, balanceJsonBrackets, modelAnswerSchema, parseModelAnswer, type ModelAnswer } from "./model-tasks";
-import { SYSTEM_PROMPT, localModelIds, parseModelAnswer, type ModelAnswer } from "./model-tasks";
+import { QWEN_QUEUE_TIMEOUT_MS, SYSTEM_PROMPT, localModelIds, parseModelAnswer, type ModelAnswer } from "./model-tasks";
 
 export const ANSWER_INSTRUCTION = [
   "Odpowiedz po polsku, maksymalnie trzema krótkimi twierdzeniami, zwracając się do rodzica na „Ty”.",
@@ -262,7 +262,8 @@ export async function generateAnswer(
   evidence: Fragment[],
 ): Promise<GenerationResult> {
   const started = Date.now();
-  const deadline = Math.min(started + ASK_MODEL_BUDGET_MS, settings.deadlineMs ?? Infinity);
+  const budget = settings.selectedModel === "qwen-27b" ? QWEN_QUEUE_TIMEOUT_MS : ASK_MODEL_BUDGET_MS;
+  const deadline = Math.min(started + budget, settings.deadlineMs ?? Infinity);
   const localOnly = settings.selectedModel === "pllum" || settings.selectedModel === "qwen-27b" ? settings.selectedModel : undefined;
   const hostedSettings = () => "hosted" in settings ? settings.hosted() : settings;
   if (!Number.isFinite(deadline) || deadline <= started)

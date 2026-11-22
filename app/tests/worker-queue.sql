@@ -61,4 +61,50 @@ DO $$ DECLARE claimed record; BEGIN
     RAISE EXCEPTION 'qwen job not completed';
   END IF;
 END $$;
+RESET ROLE;
+DO $$ DECLARE qid uuid := gen_random_uuid(); pid uuid := gen_random_uuid(); tid uuid := gen_random_uuid();
+  first_claim record; retried record; old_model text;
+BEGIN
+  FOREACH old_model IN ARRAY ARRAY['bielik','pllum'] LOOP
+    PERFORM zusik_model.submit(pid,old_model,'synthetic');
+    IF (SELECT expires_at FROM zusik_model.jobs WHERE id=pid) IS DISTINCT FROM now()+interval '42 seconds' THEN
+      RAISE EXCEPTION 'legacy TTL changed';
+    END IF;
+    PERFORM zusik_model.discard(pid);
+  END LOOP;
+  PERFORM zusik_model.submit_task(tid,'qwen-27b','{}','verify_claim');
+  IF (SELECT expires_at FROM zusik_model.jobs WHERE id=tid) IS DISTINCT FROM now()+interval '9 seconds' THEN
+    RAISE EXCEPTION 'typed Qwen TTL changed';
+  END IF;
+  PERFORM zusik_model.discard(tid);
+  PERFORM zusik_model.submit(qid,'qwen-27b','synthetic long answer');
+  SELECT * INTO first_claim FROM zusik_model.claim_task(ARRAY['qwen-27b']);
+  IF first_claim.id IS DISTINCT FROM qid OR first_claim.left_ms <> 105000 THEN RAISE EXCEPTION 'short Qwen window'; END IF;
+  -- Simulate the state after 45s and an abandoned heartbeat, without slowing down the test.
+  UPDATE zusik_model.jobs SET expires_at=now()+interval '60 seconds', lease_until=now()-interval '1 second' WHERE id=qid;
+  IF zusik_model.renew(qid,first_claim.lease) OR zusik_model.finish(qid,first_claim.lease,'late') THEN
+    RAISE EXCEPTION 'stale owner could renew or finish';
+  END IF;
+  SELECT * INTO retried FROM zusik_model.claim_task(ARRAY['qwen-27b']);
+  IF retried.id IS DISTINCT FROM qid OR retried.lease=first_claim.lease OR retried.left_ms<>60000 OR
+    NOT zusik_model.renew(qid,retried.lease) THEN RAISE EXCEPTION 'abandoned job not recovered'; END IF;
+  IF (SELECT lease_until FROM zusik_model.jobs WHERE id=qid) IS DISTINCT FROM now()+interval '9 seconds' THEN
+    RAISE EXCEPTION 'renewal did not preserve short lease';
+  END IF;
+  IF NOT zusik_model.finish(qid,retried.lease,'synthetic late success') THEN RAISE EXCEPTION 'late valid result refused'; END IF;
+  PERFORM zusik_model.discard(qid);
+  PERFORM zusik_model.submit(qid,'qwen-27b','synthetic timeout');
+  SELECT * INTO first_claim FROM zusik_model.claim_task(ARRAY['qwen-27b']);
+  IF NOT zusik_model.finish(qid,first_claim.lease,'') THEN RAISE EXCEPTION 'timeout not finalized'; END IF;
+  IF NOT EXISTS (SELECT FROM zusik_model.result(qid) WHERE done AND output='') OR
+    EXISTS (SELECT FROM zusik_model.claim_task(ARRAY['qwen-27b'])) OR
+    EXISTS (SELECT FROM zusik_model.jobs WHERE id=qid AND prompt IS NOT NULL) THEN
+    RAISE EXCEPTION 'timeout retried or prompt retained';
+  END IF;
+  UPDATE zusik_model.jobs SET expires_at=now()-interval '1 second' WHERE id=qid;
+  PERFORM zusik_model.submit(pid,'bielik','synthetic cleanup');
+  IF EXISTS (SELECT FROM zusik_model.jobs WHERE id=qid) OR zusik_model.finish(qid,first_claim.lease,'late') THEN
+    RAISE EXCEPTION 'expired job retained or resurrected';
+  END IF;
+END $$;
 ROLLBACK;

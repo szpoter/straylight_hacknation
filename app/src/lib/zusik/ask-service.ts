@@ -459,7 +459,7 @@ export class AskService {
       if (claim.kind === "claimed") token = claim.token;
       else if (claim.kind === "done") return { status: 200, turn: claim.turn, trace: null };
       else if (claim.kind === "conflict") return { status: 409, turn: null, trace: null };
-      else if (Date.now() >= deadline) return { status: 202, turn: null, trace: null };
+      else if (this.deps.selectedModel === "qwen-27b" || Date.now() >= deadline) return { status: 202, turn: null, trace: null };
       else await sleep(200);
     }
 

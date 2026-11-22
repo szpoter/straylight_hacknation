@@ -11,7 +11,7 @@ export function problem(error: unknown) {
   const { status, code } = error instanceof ApiProblem ? error :
     error instanceof z.ZodError ? new ApiProblem(422, "invalid_input") : new ApiProblem(503, "service_unavailable");
   return Response.json({ type: "about:blank", title: code, status, code, requestId: randomUUID() }, {
-    status, headers: { ...headers, "Content-Type": "application/problem+json", ...(status === 429 ? { "Retry-After": "60" } : {}) },
+    status, headers: { ...headers, "Content-Type": "application/problem+json", ...(status === 429 ? { "Retry-After": code === "public_request_busy" ? "2" : "60" } : {}) },
   });
 }
 

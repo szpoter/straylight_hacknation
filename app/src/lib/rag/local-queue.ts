@@ -7,7 +7,7 @@ import { compoundQuestion } from "./compound";
 import { corpusKeywords, searchCorpus } from "./corpus-search";
 import { statutoryListIds } from "./relevance";
 import { publicPairPrefix, publicQuestion } from "./public-query";
-import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, TYPED_CONTEXT_TOKENS, type localModelIds, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
+import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, QWEN_QUEUE_TIMEOUT_MS, TYPED_CONTEXT_TOKENS, type localModelIds, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
 import { modelForTask } from "../zusik/model-provider";
 
 /** Verify against shipped public material at the last boundary before persistence. */
@@ -34,13 +34,15 @@ export function publicQueueEvidence(corpus: Corpus, question: string, evidence: 
 
 export type LocalModel = keyof typeof localModelIds;
 export async function localCompletion(db: Pool, model: LocalModel, prompt: string, id = randomUUID(), kind: ModelTaskKind = "answer_evidence",
-  budgetMs: number = taskSpecs[kind].timeout) {
+  budgetMs?: number) {
   const started = Date.now();
   let client: PoolClient | undefined;
   let expired = false;
   const timeout = { id, status: "timeout" as const };
-  if (!Number.isFinite(budgetMs) || budgetMs <= 0) return timeout;
-  const cap = Math.min(taskSpecs[kind].timeout, budgetMs);
+  const maximum = model === "qwen-27b" && kind === "answer_evidence" ? QWEN_QUEUE_TIMEOUT_MS : taskSpecs[kind].timeout;
+  const budget = budgetMs ?? maximum;
+  if (!Number.isFinite(budget) || budget <= 0) return timeout;
+  const cap = Math.min(maximum, budget);
   const timer = Promise.withResolvers<typeof timeout>();
   const deadline = setTimeout(() => {
     expired = true;
@@ -56,6 +58,7 @@ export async function localCompletion(db: Pool, model: LocalModel, prompt: strin
       else await client.query("select zusik_model.submit_task($1,$2,$3,$4)", [id, model, prompt, kind]);
       while (!expired && client) {
         const { rows: [job] } = await client.query("select * from zusik_model.result($1)", [id]);
+        if (Date.now() - started >= cap) return timeout;
         if (!job) return { id, status: "expired" as const };
         if (job.done) return job.output ? { id, status: "ok" as const, text: String(job.output) } : { id, status: "worker_error" as const };
         if (!job.started && Date.now() - started > 3500) return { id, status: "unclaimed" as const };

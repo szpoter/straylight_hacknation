@@ -121,6 +121,8 @@ export function ImportConversation() {
         setRetry(() => work);
         if (error instanceof ApiError && error.status === 503 && error.code === "selected_model_unavailable")
           setNotice("Qwen 3.8 27B (LM Studio) jest niedostępny. Możesz ponowić próbę.");
+        else if (error instanceof ApiError && error.code === "public_request_busy")
+          setNotice("Trwa zapisywanie wiadomości w tej sprawie. Ponów próbę za chwilę.");
         else if (error instanceof ApiError && error.status === 422)
           setNotice("Sprawdź dane. Serwer nie przyjął tej zmiany.");
         else setNotice("Nie udało się zakończyć operacji. Możesz ponowić próbę.");

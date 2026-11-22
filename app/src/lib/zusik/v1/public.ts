@@ -1,4 +1,4 @@
-import type { ChatModelOptions } from "../chat-model";
+import { publicTurnBudgetMs, type ChatModelOptions } from "../chat-model";
 import sources from "../../../../corpus/official-sources.json";
 import { publicQuestion } from "../../rag/public-query";
 import { isReviewedProjection, publicLookupTitle, type PublicLookup } from "../../rag/ranked-lookup";
@@ -11,7 +11,7 @@ import { sourceIntent } from "../context-answer";
 import { ApiProblem } from "./http";
 import type { Message } from "./conversation";
 
-export async function publicReply(question: string, previous?: Message, options?: ChatModelOptions, lookup?: PublicLookup) {
+export async function publicReply(question: string, previous?: Message, options?: ChatModelOptions, lookup?: PublicLookup, requestStarted = Date.now()) {
   if (lookup && ((!isReviewedProjection(question) && publicLookupTitle(lookup) !== question) || !knownPublicLookup(lookup.ids, lookup.terms))) {
     throw new ApiProblem(422, "invalid_public_evidence");
   }
@@ -23,7 +23,8 @@ export async function publicReply(question: string, previous?: Message, options?
   const {text,reply} = conversationInput(question,"ogolna");
   if (reply) return {answer:reply,citations:[], ...(previous?.input.intent === "public_question" && !chatStarters.some(s => s.prompt === text)
     ? {contextMessageId:previous.id} : {})};
-  const deps = {...publicAnswerDeps(Date.now()+48_000, options), publicLookup:lookup};
+  const start = options?.model === "qwen-27b" ? requestStarted : Date.now();
+  const deps = {...publicAnswerDeps(start + publicTurnBudgetMs(options?.model, 48_000), options), publicLookup:lookup};
   const history: AskTurn[] = [];
   if (previous?.input.intent === "public_question") {
     const citations = previous.citations.flatMap(c => {

@@ -17,7 +17,8 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
 BEGIN
   DELETE FROM zusik_model.jobs WHERE expires_at <= now();
   IF p IS NULL OR octet_length(p) NOT BETWEEN 1 AND 65536 THEN RAISE EXCEPTION 'bad prompt size'; END IF;
-  INSERT INTO zusik_model.jobs(id,model,prompt,expires_at) VALUES (j,m,p,now()+interval '42 seconds');
+  INSERT INTO zusik_model.jobs(id,model,prompt,expires_at)
+    VALUES (j,m,p,now() + CASE WHEN m='qwen-27b' THEN interval '105 seconds' ELSE interval '42 seconds' END);
   PERFORM pg_notify('zusik_model_ready','');
 END $$;
 CREATE OR REPLACE FUNCTION zusik_model.submit_task(j uuid, m text, p text, kind text) RETURNS void

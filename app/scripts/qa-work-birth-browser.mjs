@@ -7,21 +7,21 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 
-export function workBirthReferences() {
+export function workBirthReferences(geometry = false) {
   const selector = fileURLToPath(new URL("./qa-work-birth-reference.py", import.meta.url));
-  const reference = spawnSync("python3", [selector, "--pipe"], { stdio: ["ignore", "ignore", "ignore", "pipe"], maxBuffer: 1_000_000 });
+  const reference = spawnSync("python3", [selector, ...(geometry ? ["--geometry"] : []), "--pipe"], { stdio: ["ignore", "ignore", "ignore", "pipe"], maxBuffer: 1_000_000 });
   assert.equal(reference.status, 0);
   const records = JSON.parse(reference.output[3]);
   assert.ok(Array.isArray(records) && records.length > 0);
   return records;
 }
 
-async function comparePage(page, root, entry, whole) {
+async function comparePage(page, root, entry, whole, regions = false) {
   const physical = await realpath(path.resolve(root, entry.relative_path));
   assert.ok(physical.startsWith(root + path.sep));
   let bytes = await readFile(physical);
   assert.equal(createHash("sha256").update(bytes).digest("hex"), entry.sha);
-  assert.ok(/^\d{4}-\d{2}-\d{2}$/u.test(entry.date));
+  assert.ok(regions && !entry.date || /^\d{4}-\d{2}-\d{2}$/u.test(entry.date));
   const pdf = await PDFDocument.load(bytes);
   assert.ok(Number.isSafeInteger(entry.page) && entry.page >= 1 && entry.page <= pdf.getPageCount());
   if (!whole) {
@@ -30,7 +30,7 @@ async function comparePage(page, root, entry, whole) {
     one.addPage(copied);
     bytes = Buffer.from(await one.save());
   }
-  return page.evaluate(async ({ encoded, reference, number }) => {
+  return page.evaluate(async ({ encoded, reference, number, regions, referenceBox }) => {
     const pdfBytes = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
     const [doc] = await qaReader.readCaseDocuments([new File([pdfBytes], "working.pdf")], {
       caseId: "offline", signal: AbortSignal.timeout(45 * 60_000), onProgress() {},
@@ -38,7 +38,7 @@ async function comparePage(page, root, entry, whole) {
     const p = doc.pages[number - 1];
     if (p.page !== number) throw Error("source_page");
     const [year, month, day] = reference.split("-");
-    const date = new RegExp(`\\b(?:${reference}|0?${Number(day)}([./-])0?${Number(month)}\\1(?:${year}))\\b`, "u");
+    const date = !reference ? /(?!)$/u : new RegExp(`\\b(?:${reference}|0?${Number(day)}([./-])0?${Number(month)}\\1(?:${year}))\\b`, "u");
     const fold = s => s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replaceAll("ł", "l");
     const label = /\bdata(?: i miejsce)? urodzenia\b/u;
     const lines = p.text.split("\n").map(fold);
@@ -56,10 +56,30 @@ async function comparePage(page, root, entry, whole) {
     const parents = lines.findIndex((l, i) => i > same && /\bdane rodzicow\b/u.test(l));
     const structured = titleIndex >= 0 && child > titleIndex && same > child && parents > same;
     const prefix = titleIndex >= 0 ? lines[titleIndex].split(title)[0].trim() : "";
+    const regional = {};
+    if (regions) {
+      const trial = await qaReader.measureBirthRegions(pdfBytes, number, p);
+      const centerX = referenceBox && referenceBox.x + referenceBox.w / 2;
+      const centerY = referenceBox && referenceBox.y + referenceBox.h / 2;
+      const cell = trial.cellBox;
+      regional.reference = !!reference;
+      regional.rowTried = !!trial.rowTried;
+      regional.cellTried = !!trial.cellTried;
+      regional.cellDigits = !!trial.cellDigits;
+      regional.guarded = !!trial.guarded;
+      regional.referenceLabelStrong = !!reference && !!trial.labelStrong;
+      regional.referenceCellAligned = !!cell && !!referenceBox && centerX >= cell.x && centerX <= cell.x + cell.w && centerY >= cell.y && centerY <= cell.y + cell.h;
+      for (const name of ["row", "cell"]) {
+        const value = trial[name + "Date"];
+        regional[name + "Agrees"] = !!reference && value === reference;
+        regional[name + "NewAgreement"] = !!trial.guarded && !candidates.length && !!reference && value === reference;
+        regional[name + "NewDisagreement"] = !!trial.guarded && !candidates.length && !!reference && !!value && value !== reference;
+      }
+    }
     return {
-      pages: 1, manual: p.status === "manual", excluded: p.status === "excluded", certificate: p.role === "certificate",
+      ...regional, pages: 1, manual: p.status === "manual", excluded: p.status === "excluded", certificate: p.role === "certificate",
       label: lines.some(l => label.test(l)), date: lines.some(l => date.test(l)), sameLine: same >= 0,
-      agree: correct.length > 0, disagree: candidates.some(c => c.value.date !== reference), located,
+      agree: correct.length > 0, disagree: !!reference && candidates.some(c => c.value.date !== reference), located,
       missedSameLine: missed, missedWithStructuredRows: missed && structured,
       missedAllRowsConfident: missed && structured && [titleIndex, child, same, parents].every(i => p.lines?.[i]?.confidence >= 80),
       missedCleanTitle: missed && titleIndex >= 0 && !prefix,
@@ -67,22 +87,22 @@ async function comparePage(page, root, entry, whole) {
       missedAlnumTitlePrefix: missed && /[\p{L}\d]/u.test(prefix),
       missedTrailingDateText: missed && !!lines[same].split(date).at(-1)?.trim(),
     };
-  }, { encoded: bytes.toString("base64"), reference: entry.date, number: whole ? entry.page : 1 });
+  }, { encoded: bytes.toString("base64"), reference: entry.date ?? "", regions, referenceBox: entry.valueBox, number: whole ? entry.page : 1 });
 }
 
-export async function compareWorkBirthDates(page, source, references, blocked, wholeCheck, selectVersion) {
+export async function compareWorkBirthDates(page, source, references, blocked, wholeCheck, selectVersion, regionSample) {
   const root = await realpath(source);
   async function measure(version) {
     if (selectVersion) await selectVersion(version);
     const rows = [], counts = {}, packagesWithAgreement = new Set();
     for (const ref of references) {
-      const result = await comparePage(page, root, ref, false);
+      const result = await comparePage(page, root, ref, false, Boolean(regionSample));
       assert.equal(blocked(), 0);
       rows.push(result);
       for (const [key, value] of Object.entries(result)) counts[key] = (counts[key] ?? 0) + Number(value);
       if (result.agree) packagesWithAgreement.add(ref.sha);
     }
-    console.log(JSON.stringify({ stage: "isolated-pages", version, packages: new Set(references.map(r => r.sha)).size,
+    console.log(JSON.stringify({ stage: "isolated-pages", version, regionSample, packages: new Set(references.map(r => r.sha)).size,
       packagesWithAgreement: packagesWithAgreement.size, ...counts }));
     return rows;
   }

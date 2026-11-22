@@ -37,6 +37,24 @@ it.each([[false, 4000, "unclaimed"], [true, 38400, "timeout"]] as const)(
 );
 
 
+it.each(["qwen-27b", "bielik", "pllum"] as const)("limits a claimed %s job using its own budget", async model => {
+  vi.useFakeTimers();
+  const started = Date.now();
+  const output = "synthetic result";
+  const client = {query: vi.fn(async () => ({rows:[{started:true, done:Date.now() - started >= 91_000, output}]})), release:vi.fn()};
+  const queue = {connect:async () => client} as unknown as Pool;
+  const request = localCompletion(queue, model, "approved synthetic input");
+  await vi.advanceTimersByTimeAsync(38_001);
+  if (model === "qwen-27b") {
+    expect(client.release).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(54_000);
+    expect(await request).toMatchObject({status:"ok", text:output});
+  } else {
+    expect((await request).status).toBe("timeout");
+  }
+  expect(client.release).toHaveBeenCalledOnce();
+});
+
 it("accepts only public catalogue references at the planner and verifier boundary", async () => {
   const fixture = { kind: "plan_public", aspect: "evidence", candidates: ["zlobek-odbiorca"], missing: [] } as const;
   const input = {...fixture,candidates:[...fixture.candidates],missing:[]};

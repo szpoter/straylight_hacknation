@@ -81,6 +81,8 @@ export const planOutput = z.strictObject({
 });
 export const verdictOutput = z.strictObject({ verdict: z.enum(["supported", "partial", "contradicted", "missing"]), evidenceIds: z.array(unit).max(5) });
 export const TYPED_CONTEXT_TOKENS = 4096;
+export const QWEN_GENERATION_TIMEOUT_MS = 90_000;
+export const QWEN_QUEUE_TIMEOUT_MS = 100_000;
 export const taskSpecs = {
   answer_evidence: { output: modelAnswerSchema, tokens: 700, timeout: 38000 },
   plan_public: { output: planOutput, tokens: 150, timeout: 9000 },

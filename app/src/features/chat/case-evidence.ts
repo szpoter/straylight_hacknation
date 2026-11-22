@@ -2,7 +2,7 @@ import { MIN_CONFIDENCE } from "@/lib/ocr/birth-certificate";
 import { factInput, type CaseDocument, type DocInput, type FactInput } from "@/lib/zusik/memory/contract";
 
 import { claimFields, documentDay, documentMoney } from "./case-claim-fields";
-import { writtenRequests, type LeaveRequest } from "./case-written-request";
+import { contradictsWrittenLeave, writtenRequests, type LeaveRequest } from "./case-written-request";
 import type { PageLine } from "./case-page-layout";
 
 export type DocumentKind = DocInput["kind"];
@@ -29,6 +29,25 @@ export type LocalCaseDocument = { caseId: string; mediaType?: "application/pdf" 
 
 function foldLabel(text: string) {
   return text.normalize("NFD").replace(/\p{M}/gu, "").replace(/ł/gi, "l").toLowerCase().trim();
+}
+
+export function preserveWrittenLeave(original: LocalCasePage, detailed: LocalCasePage): LocalCasePage {
+  const requests = original.leaveRequests, sourceLines = original.lines;
+  if (detailed.status === "excluded" || !requests?.length || !sourceLines?.length) return detailed;
+  const conflict = contradictsWrittenLeave(detailed.text.split("\n").map(foldLabel), requests);
+  if (conflict) return detailed.leaveRequests?.length ? { ...detailed, leaveRequests: [], reason: "ambiguous_field" } : detailed;
+  if (detailed.leaveRequests?.length) return detailed;
+  if (!detailed.candidates.length) return { ...original, candidates: [] };
+  // Keep the first set of evidence locators intact and append only the original quoted rows.
+  if (!detailed.lines?.length) return detailed;
+  const lines = [...detailed.lines];
+  const leaveRequests = requests.map(request => {
+    const { lineStart, lineEnd } = request.locator;
+    const offset = lines.length + 1;
+    lines.push(...sourceLines.slice(lineStart - 1, lineEnd));
+    return { ...request, locator: { ...request.locator, lineStart: offset, lineEnd: lines.length } };
+  });
+  return { ...detailed, lines, text: lines.map(line => line.text).join("\n"), leaveRequests };
 }
 
 export function containsRegistryBirthTitle(text: string) {
