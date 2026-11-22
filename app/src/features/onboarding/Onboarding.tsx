@@ -19,7 +19,6 @@ import {
   type DateParts,
 } from "@/components/ui";
 import { useDemoSession } from "@/features/auth/demo-session";
-import { ParentChat } from "@/features/chat/parent-chat";
 import type { Plan } from "@/lib/demo/types";
 import { buildPlans } from "@/lib/plan/build";
 import {
@@ -261,11 +260,9 @@ export function Onboarding() {
   }
 
   if (screen === "start") {
-    // Po logowaniu rodzic trafia tutaj — czat z Zusikiem (zakres Juliana, `features/chat/parent-chat.tsx`)
-    // jest dostępny obok ekranu startowego. Na ekranach pytań go nie ma: przycisk czatu w rogu
-    // zasłaniałby na telefonie przyklejony pasek „Dalej”. Maskotki w onboardingu nie ma (prośba zespołu).
+    // Po logowaniu rodzic trafia tutaj. W całym onboardingu nie ma przycisku czatu z Zusikiem ani
+    // maskotki (prośba zespołu) — czat jest dostępny dopiero na planie.
     return (
-      <ParentChat topLauncher>
       <Shell>
         <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 pb-20 text-center md:pt-14", ENTER)}>
           <div className="flex flex-col gap-3">
@@ -293,7 +290,6 @@ export function Onboarding() {
           </Disclosure>
         </div>
       </Shell>
-      </ParentChat>
     );
   }
 
