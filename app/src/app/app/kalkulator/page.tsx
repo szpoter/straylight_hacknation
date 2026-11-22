@@ -1,8 +1,5 @@
-import type { Metadata } from "next";
-import { BenefitCalculatorForm } from "@/features/calculator/BenefitCalculator";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Symulacja zasiłku · Zusik" };
-
-export default function ManualCalculatorPage() {
-  return <BenefitCalculatorForm />;
+export default function Page() {
+  redirect("/kalkulator");
 }

@@ -4,7 +4,7 @@
  * i nałożenie wyniku na przystanki planu (terminy wniosków).
  */
 import { computeScenario, limitsFor, supplementaryWeeksFor, type BasisInput, type EventKind, type InsuranceTitle, type ParentInput, type PayVariant, type ScenarioInput, type ScenarioResult } from "@/lib/rules/maternity";
-import { DEMO_TODAY, formatLong } from "@/lib/demo/dates";
+import { todayInPoland, formatLong } from "@/lib/demo/dates";
 import { addDays } from "@/lib/rules/dates";
 import type { Plan, Stop } from "@/lib/demo/types";
 
@@ -189,9 +189,9 @@ export function blankCalculatorForm(): CalcForm {
 
 /**
  * Start z danych planu: data i sytuacja z planu, pełna pula rodzicielskiego dla Ciebie,
- * drugi rodzic z 9 tygodniami. Wynagrodzenie to przykład do zmiany (ZUS nie podaje go w symulacji).
+ * drugi rodzic z 9 tygodniami. Podstawy wynagrodzenia podają rodzice.
  */
-export function formFromPlan(plan: Plan, today: string = DEMO_TODAY): CalcForm {
+export function formFromPlan(plan: Plan, today: string = todayInPoland()): CalcForm {
   const event: EventKind = plan.situation === "adopcja" ? "adoption" : plan.situation === "piecza" ? "foster" : "birth";
   const children = childCount(plan);
   const limits = limitsFor({ children, zaZyciem: false });
@@ -201,9 +201,7 @@ export function formFromPlan(plan: Plan, today: string = DEMO_TODAY): CalcForm {
     date: plan.keyDate ?? "",
     children,
     variant: "815",
-    A: parentForm("pracownik", "6500"),
     hasB: true,
-    B: parentForm("pracownik", "6000"),
     parentalWeeksA: limits.maxParentalOneParent,
     parentalWeeksB: limits.exclusiveWeeks,
     paternityDays: 14,
@@ -226,7 +224,7 @@ const baseId = (s: Stop) => s.id.replace(/^e-/, "");
 export function applyCalculatorToPlan(plan: Plan, form: CalcForm | undefined): Plan {
   if (!form || !plan.keyDate) return plan;
   // Data z planu jest nadrzędna: zmiana daty w Profilu przelicza też terminy z kalkulatora.
-  const { result } = computeForm({ ...form, date: plan.keyDate });
+  const { result } = computeForm({ ...form, date: plan.keyDate }, { requireComplete: true });
   if (!result || !result.ok) return plan;
   const parental = result.periods.filter((p) => p.kind === "rodzicielski");
   const parentalDeadline = result.deadlines.find((d) => d.label.startsWith("Wniosek o urlop rodzicielski"));

@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { cn } from "@/components/ui/cn";
 import { Disclosure } from "@/components/ui/Disclosure";
-import { AlertIcon, CheckIcon, InfoIcon } from "@/components/ui/icons";
+import { AlertIcon, InfoIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
-import { Tag } from "@/components/ui/Tag";
-import { DEMO_TODAY, formatLong, formatShort } from "@/lib/demo/dates";
+import { todayInPoland, formatLong, formatShort } from "@/lib/demo/dates";
 import { daysBetween } from "@/lib/rules/dates";
 import { estimateNet, monthlyPayments, round2, SOURCES, type Message, type ParentId, type Period, type ScenarioResult, type SourceId } from "@/lib/rules/maternity";
 import type { CalcForm } from "@/lib/plan/benefit-form";
-import type { BenefitPreset } from "@/lib/plan/benefit-presets";
 import { KIND_STYLE, monthLabel, pct, pln } from "./ui";
 
 const WHO: Record<ParentId, string> = { A: "Ty", B: "Drugi rodzic" };
@@ -227,6 +225,7 @@ export function MonthlyTable({ result, form }: { result: ScenarioResult; form: C
 }
 
 export function Deadlines({ result }: { result: ScenarioResult }) {
+  const today = todayInPoland();
   if (!result.deadlines.length) return null;
   return (
     <Panel className="flex flex-col gap-5">
@@ -236,7 +235,7 @@ export function Deadlines({ result }: { result: ScenarioResult }) {
           <li key={i} className="flex flex-col gap-1 py-4 first:pt-0 last:pb-0">
             <span className="flex flex-wrap items-center gap-2 font-medium">
               {formatLong(d.date)}
-              {d.date < DEMO_TODAY && <span className="rounded-full bg-tertiary px-2 text-meta">termin minął</span>}
+              {d.date < today && <span className="rounded-full bg-tertiary px-2 text-meta">termin minął</span>}
             </span>
             <span className="text-meta">
               {d.who === "both" ? "Oboje" : WHO[d.who]} · {d.label}
@@ -284,7 +283,7 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
         <li>Praca do pół etatu w czasie rodzicielskiego: urlop wydłuża się (np. ½ etatu — dwa razy dłużej), zasiłek maleje o tę część.</li>
       </ol>
       <p className="my-5 text-meta text-on-surface-variant">
-        Sprawdzone co do grosza na decyzjach ZUS z przykładowych spraw. Kwoty brutto; podatek to szacunek. Wynik nie jest decyzją — o zasiłku rozstrzyga płatnik albo ZUS.
+        Kalkulator pokazuje kwoty brutto i szacunkowy podatek. O wypłacie rozstrzyga płatnik albo ZUS.
       </p>
       <MessageList items={result.assumptions} tone="info" />
       <ul className="mt-5 flex flex-col gap-2 border-t border-outline pt-5 text-meta">
@@ -295,38 +294,5 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
         ))}
       </ul>
     </Disclosure>
-  );
-}
-
-/** Porównanie z decyzją ZUS dla przykładowej sprawy. */
-export function PresetCheckList({ preset, result }: { preset: BenefitPreset; result: ScenarioResult }) {
-  return (
-    <Panel className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Tag tone="brand">Sprawa z zestawu ZUS</Tag>
-      </div>
-      <p className="text-meta">{preset.description}</p>
-      <ul className="flex flex-col divide-y divide-outline">
-        {preset.checks.map((c) => {
-          const ours = c.pick(result);
-          const match = ours !== undefined && Math.abs(ours - c.zus) < 0.005;
-          return (
-            <li key={c.label} className="flex flex-col gap-1 py-3 text-meta first:pt-0 last:pb-0">
-              <span className="font-medium">{c.label}</span>
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                ZUS: {pln(c.zus)} · kalkulator: {ours === undefined ? "—" : pln(ours)}
-                {match ? (
-                  <span className="inline-flex items-center gap-1 font-medium text-primary">
-                    <CheckIcon size={16} /> zgodne
-                  </span>
-                ) : (
-                  <span className="font-medium">różnica — zmieniono dane</span>
-                )}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
   );
 }

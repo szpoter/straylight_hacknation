@@ -1,5 +1,3 @@
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import ManualCalculatorPage from "@/app/app/kalkulator/page";
 import { describe, expect, it } from "vitest";
 import { getPlan } from "@/lib/demo/fixtures";
@@ -18,10 +16,8 @@ describe("przykładowe sprawy ZUS w kalkulatorze", () => {
 });
 
 describe("formularz kalkulatora", () => {
-  it("otwiera publiczny formularz jurora bez sesji i bez kontekstu rodziny", () => {
-    const html = renderToStaticMarkup(createElement(ManualCalculatorPage));
-    expect(html).toContain("Ręczna symulacja dla Twojej sprawy");
-    expect(html).not.toMatch(/Mój plan:|Sprawa ZUS:|Zapisz w planie|Łącznie, brutto|value="6500"/);
+  it("dawny kalkulator z czatu prowadzi do kalkulatora rodziny", () => {
+    expect(ManualCalculatorPage).toThrow(expect.objectContaining({ digest: expect.stringContaining("/kalkulator") }));
   });
 
   it("symulacja z czatu wymaga własnych danych i ukrywa wynik błędnego scenariusza", () => {
@@ -48,9 +44,8 @@ describe("formularz kalkulatora", () => {
     const form = formFromPlan(getPlan("ola"));
     expect(form.date).toBe("2026-11-10");
     expect([form.parentalWeeksA, form.parentalWeeksB, form.paternityDays]).toEqual([32, 9, 14]);
-    const { result } = computeForm(form);
-    expect(result?.ok).toBe(true);
-    expect(result?.warnings).toEqual([]);
+    expect([form.A.average, form.B.average]).toEqual(["", ""]);
+    expect(computeForm(form, { requireComplete: true }).result).toBeNull();
   });
 
   it("puste pola: problem przy polu, bez wyniku przy braku daty", () => {
@@ -61,6 +56,8 @@ describe("formularz kalkulatora", () => {
 
   it("porównanie wariantów: ta sama długość, inny rozkład kwot", () => {
     const form = formFromPlan(getPlan("ola"));
+    form.A.average = "5500";
+    form.B.average = "7200";
     const a = computeForm(form).result!;
     const b = computeForm(otherVariant(form)).result!;
     expect(a.span).toEqual(b.span);
@@ -69,7 +66,11 @@ describe("formularz kalkulatora", () => {
 
   it("zapisany wynik na ścieżce: termin wniosku o rodzicielski i notatki ze źródłem", () => {
     const ola = getPlan("ola");
-    const applied = applyCalculatorToPlan(ola, formFromPlan(ola));
+    const form = formFromPlan(ola);
+    expect(applyCalculatorToPlan(ola, form)).toBe(ola);
+    form.A.average = "5500";
+    form.B.average = "7200";
+    const applied = applyCalculatorToPlan(ola, form);
     const parental = applied.stops.find((s) => s.id === "rodzicielski")!;
     expect(parental.due).toBe("2027-03-09"); // 30.03.2027 − 21 dni
     expect(parental.notes?.at(-1)?.sources[0].url).toContain("gov.pl");
