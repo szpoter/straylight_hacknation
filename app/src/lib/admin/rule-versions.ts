@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
-import { RULE_PARAMETERS, validateValue, valueOn, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
+import { RULE_PARAMETERS, parameterOn, validateValue, valueOn, type RuleParameterId, type RuleSchedule } from "../rules/parameters";
 import type { RuleState as StateLabel } from "./types";
 
 /**
@@ -101,11 +101,11 @@ export function draftProblems(input: DraftInput, today: string): string[] {
 export function saveDraft(
   state: RuleVersionsState,
   input: DraftInput,
-  meta: { id: string; now: string; author: string; fallback: number },
+  meta: { id: string; now: string; author: string },
 ): Outcome {
   const problems = draftProblems(input, meta.now.slice(0, 10));
   if (problems.length) return { ok: false, error: problems.join(" "), state };
-  const previous = valueOn(scheduleOf(state), input.parameter, addDay(input.validFrom, -1), meta.fallback).value;
+  const previous = parameterOn(scheduleOf(state), input.parameter, addDay(input.validFrom, -1)).value;
   const existing = draftFor(state, input.parameter);
   const version: RuleVersion = {
     id: existing?.id ?? meta.id,

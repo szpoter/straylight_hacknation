@@ -1,4 +1,4 @@
-import { valueOn, type RuleSchedule } from "./parameters";
+import { DEFAULTS, parameterOn, type RuleSchedule } from "./parameters";
 
 /**
  * Who pays sickness and maternity benefits: the contribution payer (employer) or ZUS.
@@ -7,7 +7,7 @@ import { valueOn, type RuleSchedule } from "./parameters";
  */
 
 export const PAYER_RULES_VERSION = "payer-art61-2026-11-22";
-export const DEFAULT_INSURED_THRESHOLD = 20;
+export const DEFAULT_INSURED_THRESHOLD = DEFAULTS["payer.insuredThreshold"][0].value;
 
 /** Insured situations art. 61 ust. 1 pkt 2 lit. b–e sends straight to ZUS. */
 export type InsuredSituation =
@@ -57,7 +57,7 @@ export function countDateFor(benefitDate: string): string {
 }
 
 export function benefitPayer(input: PayerInput): PayerResult {
-  const threshold = valueOn(input.schedule, "payer.insuredThreshold", input.benefitDate, DEFAULT_INSURED_THRESHOLD).value;
+  const threshold = parameterOn(input.schedule, "payer.insuredThreshold", input.benefitDate).value;
   const base = { threshold, rulesVersion: PAYER_RULES_VERSION };
 
   if (input.situation !== "employee") {
