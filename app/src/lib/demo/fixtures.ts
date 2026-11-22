@@ -53,7 +53,7 @@ function olaStops(): Stop[] {
       checked: true,
       institution: "ZUS",
       forWhom: "Dla Ciebie",
-      why: "Szacunek z Twoich podstaw składek w ZUS. Przy umowie o pracę składniki wynagrodzenia poda pracodawca w Z-3.",
+      why: "Do obliczeń w kalkulatorze wpisz podstawę z dokumentów dotyczących Twojego wynagrodzenia.",
       source: SRC.zusAmount,
       action: { label: "Jak ZUS liczy zasiłek" },
     },
@@ -127,7 +127,7 @@ function olaStops(): Stop[] {
     {
       id: "z3",
       stage: "narodziny",
-      title: "Pracodawca przekaże Z-3 do ZUS",
+      title: "Zaświadczenie Z-3 od pracodawcy",
       kind: "dzieje-sie-samo",
       institution: "Pracodawca",
       forWhom: "Dla Ciebie",
@@ -174,7 +174,7 @@ function olaStops(): Stop[] {
       prepare: ["Dane Oli: imię, nazwisko, PESEL, data i miejsce urodzenia (po zgłoszeniu urodzenia)", "Dane pracodawcy"],
       howTo: {
         co: "Wniosek o zasiłek macierzyński w wysokości 81,5%",
-        doKogo: "Pracodawca · zatrudnia do 20 osób, więc przekaże wniosek i Z-3 do ZUS",
+        doKogo: OLA.employer,
         doKiedy: "1 grudnia 2026 · 21 dni od porodu",
         zalaczniki: "Brak — we wniosku podajesz dane Oli",
       },
