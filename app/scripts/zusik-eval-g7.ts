@@ -52,7 +52,7 @@ async function session(origin: string, caseId: string) {
   assert.ok(cookie, "Missing signed cookie");
   const headers = { Origin: origin, Cookie: cookie, "Content-Type": "application/json" };
   return {
-    async ask(question: string, planId?: string): Promise<Sample> {
+    async ask(question: string, planId?: string, measureUnavailable = false): Promise<Sample> {
       const started = performance.now();
       const response = await fetch(origin + "/api/zusik/ask", {
         method: "POST", headers, redirect: "error", signal: AbortSignal.timeout(75000),
@@ -61,8 +61,9 @@ async function session(origin: string, caseId: string) {
       const sample = await response.json() as Sample;
       console.log(JSON.stringify({ caseId, question, http: response.status, ms: Math.round(performance.now() - started),
         cost: null, status: sample.turn?.status, message: sample.turn?.message, claims: sample.turn?.claims,
-        citations: sample.turn?.citations, retrieval: sample.retrieval }));
-      assert.equal(response.status, 200, "Answer HTTP status");
+        citations: sample.turn?.citations, opportunities: sample.turn?.opportunities, retrieval: sample.retrieval }));
+      if (!(measureUnavailable && response.status === 503 && sample.turn?.status === "unavailable"))
+        assert.equal(response.status, 200, "Answer HTTP status");
       assert.ok(sample.turn, "Missing saved answer");
       return sample;
     },
@@ -191,7 +192,7 @@ async function score(origin: string, trial: Trial) {
         assert.deepEqual(restored.at(-1)?.citations, last?.turn.citations);
       }
     }
-    last = await client.ask(question, plan);
+    last = await client.ask(question, plan, trial.group === "rag");
   }
   assert.ok(last);
   const { turn } = last;
