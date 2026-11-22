@@ -50,7 +50,7 @@
 }
 
 .root p,
-.root h1,
+.root :where(h1),
 .root h2,
 .root h3,
 .root dl,
@@ -477,6 +477,7 @@
 
 .chatHead {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
   padding: 8px 12px 8px 20px;
@@ -485,7 +486,7 @@
 }
 
 .chatHeadTitle {
-  flex: 1;
+  flex: 1 1 9rem;
   min-width: 0;
 }
 
@@ -976,9 +977,10 @@
 /* short visible area (on-screen keyboard open): keep the message field and send button in reach */
 @media (max-width: 767px) and (max-height: 560px) {
   .formPaneFragment {
-    max-height: 30%;
+    max-height: min(20%, 72px);
   }
 
+  .textarea { max-height: 20dvh; }
 }
 
 @media (prefers-reduced-motion: reduce) {

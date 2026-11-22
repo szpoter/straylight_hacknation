@@ -157,7 +157,7 @@ export function VerticalPath({
       {/* Przyklejony baner etapu */}
       <div className="sticky top-[72px] z-30 -mx-gutter-mobile mb-2 bg-background px-gutter-mobile py-2">
         <div className="flex items-center gap-3 rounded-full bg-secondary py-1.5 pl-5 pr-1.5">
-          <p className="min-w-0 flex-1 truncate text-meta" aria-live="polite">
+          <p className="min-w-0 flex-1 text-meta" aria-live="polite">
             <span className="font-medium">
               Etap {stageNumber} · {stageLabels[currentStage]}
             </span>
@@ -193,7 +193,7 @@ export function VerticalPath({
           if (item.type === "collapsed") {
             return (
               <div key={`c-${item.stage}`} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${line.x}%`, top: line.y }}>
-                <CollapsedStage item={item} onExpand={onExpand} labelClassName="top-full mt-2" />
+                <CollapsedStage item={item} onExpand={onExpand} labelClassName="top-full mt-2 max-w-[48vw]" />
               </div>
             );
           }

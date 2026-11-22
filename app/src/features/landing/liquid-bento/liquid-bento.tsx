@@ -27,7 +27,7 @@ import styles from "./liquid-bento.module.css";
  * (liquid-renderer.ts), na wierzchu zwykły HTML z treścią, fokusem i ARIA. Płynny efekt dotyczy
  * tylko kształtów; tekst nigdy nie jest rozmywany ani skalowany.
  *
- * Trzy interakcje (tryb „liquid”: od 768 px, mysz, WebGL, bez ograniczenia ruchu):
+ * Trzy interakcje (tryb „liquid”: od 960 px, mysz, WebGL, bez ograniczenia ruchu):
  * 1. Podział przy przewijaniu: na wejściu jedna plama, w miarę przewijania dzieli się na kafle.
  *    Postęp wynika z przewijania (w górę proces się odwraca). Treść pojawia się, gdy kafle się
  *    rozdzielą.
@@ -53,7 +53,7 @@ const OPEN_FUSE = 70;
 const OPEN_SPRING = { type: "spring", visualDuration: 0.75, bounce: 0.12 } as const;
 const BRIDGE_SPRING = { type: "spring", visualDuration: 0.45, bounce: 0.25 } as const;
 /** Tryb liquid: szeroki ekran z myszą i bez ograniczenia ruchu. */
-const LIQUID_QUERY = "(min-width: 768px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
+const LIQUID_QUERY = "(min-width: 960px) and (min-height: 640px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
@@ -257,6 +257,7 @@ export function LiquidBento() {
       if (!frameId) frameId = requestAnimationFrame(frame);
     };
 
+    openAmount.set(openIndexRef.current === null ? 0 : 1);
     measure();
     frame();
     const unsubscribe = [scrollYProgress, bridge, openAmount].map((value) => value.on("change", schedule));
@@ -270,6 +271,7 @@ export function LiquidBento() {
       unsubscribe.forEach((stop) => stop());
       resize.disconnect();
       cancelAnimationFrame(frameId);
+      unlockScroll("bento");
       renderer.dispose();
       stage.dataset.mode = "plain";
       inners.forEach((inner) => inner?.removeAttribute("style"));
@@ -344,9 +346,9 @@ export function LiquidBento() {
     }
     openIndexRef.current = index;
     setOpenIndex(index);
-    if (liquid) {
+    if (stage.dataset.mode === "liquid") {
       lockScroll("bento");
-      await animate(openAmount, 1, OPEN_SPRING);
+      animate(openAmount, 1, OPEN_SPRING);
     }
     busy.current = false;
   }
@@ -354,11 +356,12 @@ export function LiquidBento() {
   async function closeTile() {
     if (busy.current || openIndexRef.current === null) return;
     busy.current = true;
-    if (liquid) await animate(openAmount, 0, OPEN_SPRING);
+    if (stageRef.current?.dataset.mode === "liquid") await animate(openAmount, 0, OPEN_SPRING);
+    else openAmount.jump(0);
     openIndexRef.current = null;
     returnFocus.current = true;
     setOpenIndex(null);
-    if (liquid) unlockScroll("bento");
+    unlockScroll("bento");
     busy.current = false;
   }
 

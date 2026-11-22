@@ -15,7 +15,7 @@ export function EzusDemo({ schedule }: { schedule: RuleSchedule }) {
   const [notice, setNotice] = useState("");
   const asOf = "2026-11-02";
   const assessment = assessArrears({ covered: true, arrears: Number(amount), rightArisesOn: asOf, today: asOf, paidOn: null, schedule });
-  return <Panel className="grid gap-3">
+  return <Panel className="grid grid-cols-1 gap-3">
     <SectionTitle>Konto eZUS · symulacja</SectionTitle>
     <div><Button variant="secondary" onClick={refreshDemoProfile}>Odśwież dane rodziny</Button>
       {session?.refreshedAt && <p role="status">Dane pobrane ponownie o {new Date(session.refreshedAt).toLocaleTimeString("pl-PL")}.</p>}</div>
@@ -33,7 +33,7 @@ export function EzusDemo({ schedule }: { schedule: RuleSchedule }) {
       <ButtonLink href="/profil/przyklad-ubezpieczenia" variant="secondary">Sprawdź ubezpieczenie na przykładzie</ButtonLink>
     </Disclosure>
     <Disclosure summary="Zapytaj ZUS · korespondencja demonstracyjna">
-      <form className="grid gap-2" onSubmit={e => {
+      <form className="grid grid-cols-1 gap-2" onSubmit={e => {
         e.preventDefault();
         if (sendDemoQuestion(question)) { setQuestion(""); setNotice("Dodano do korespondencji tej sesji demo."); }
         else setNotice("Nie udało się zapisać pytania w tej sesji.");
