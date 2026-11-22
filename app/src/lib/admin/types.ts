@@ -76,6 +76,8 @@ export interface TestCase {
   reasons?: string[];
   /** Rule and version that produced the result. */
   computedBy?: string;
+  /** Parent screen that shows this case, for "Pokaż oczami rodzica". */
+  parentView?: string;
 }
 
 export interface HistoryEntry {

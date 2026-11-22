@@ -28,10 +28,22 @@ const STATUS: Record<EligibilityStatus, { label: string; tone: "brand" | "accent
 };
 
 /** Ekran testu prawa do zasiłku: sprawa z zestawu, wgrany skan albo własne fakty. */
-export function CheckView({ laws, schedule, today }: { laws: Record<string, LawRef>; schedule: RuleSchedule; today: string }) {
+export function CheckView({
+  laws,
+  schedule,
+  today,
+  initialCaseId,
+}: {
+  laws: Record<string, LawRef>;
+  schedule: RuleSchedule;
+  today: string;
+  /** Sprawa z zestawu otwarta od razu, np. z „Pokaż oczami rodzica” w panelu. */
+  initialCaseId?: string;
+}) {
+  const initial = ZESTAW.find((c) => c.id === initialCaseId) ?? null;
   const [mode, setMode] = useState<Mode>("zestaw");
-  const [caseId, setCaseId] = useState<string | null>(null);
-  const [facts, setFacts] = useState<EligibilityFacts>(EMPTY);
+  const [caseId, setCaseId] = useState<string | null>(initial?.id ?? null);
+  const [facts, setFacts] = useState<EligibilityFacts>(initial?.facts ?? EMPTY);
   const [reading, setReading] = useState<(CaseReading & { pages: ReadPage[]; fileName: string }) | null>(null);
   const selected = ZESTAW.find((c) => c.id === caseId) ?? null;
 

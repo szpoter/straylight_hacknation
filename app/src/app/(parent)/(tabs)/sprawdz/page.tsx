@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * Test na sprawach z zestawu ZUS (zadanie s. 14–15): wybór sprawy, wgranie skanu albo własne
  * fakty, werdykt reguły z przypisami do przepisów z korpusu Zusika.
  */
-export default async function CheckPage() {
+export default async function CheckPage({ searchParams }: { searchParams: Promise<{ sprawa?: string | string[] }> }) {
   const corpus = loadCorpus("publiczne");
   const laws: Record<string, LawRef> = {};
   for (const id of ELIGIBILITY_LAW_IDS) {
@@ -30,5 +30,6 @@ export default async function CheckPage() {
   }
   const { schedule } = await effectiveSchedule();
   const today = new Date().toISOString().slice(0, 10);
-  return <CheckView laws={laws} schedule={schedule} today={today} />;
+  const { sprawa } = await searchParams;
+  return <CheckView laws={laws} schedule={schedule} today={today} initialCaseId={typeof sprawa === "string" ? sprawa : undefined} />;
 }

@@ -83,6 +83,15 @@ describe("admin catalogue · test cases computed by the paternity rule", () => {
     expect(scenarioOutcome({ ...k8, input: { ...k8.input, insuranceConfirmed: null } }, {})).toBe("wymaga uzupełnienia");
   });
 
+  it("includes the ZUS case set, each matching the ZUS decision and opening in /sprawdz", () => {
+    const zestaw = allTestCases().filter((c) => c.tag.startsWith("Zestaw ZUS"));
+    expect(zestaw).toHaveLength(10);
+    expect(zestaw.filter((c) => c.tag.endsWith("odmowa"))).toHaveLength(6);
+    expect(zestaw.every((c) => c.expected[0].value === c.result[0].value)).toBe(true);
+    expect(zestaw.find((c) => c.id === "Z-ZAB-3")?.parentView).toBe("/sprawdz?sprawa=zab-3");
+    expect(allTestCases()).toHaveLength(26);
+  });
+
   it("every case in the set has complete data", () => {
     expect(allTestCases().filter((c) => c.status !== "zgodna").map((c) => c.id)).toEqual([]);
     expect(allTestCases().every((c) => !c.missing && c.result.length > 0)).toBe(true);
