@@ -77,6 +77,13 @@ describe("answerFromAskBody", () => {
 });
 
 describe("turnsFromView", () => {
+  it("restores the origin and timestamp of the exact quotation shown before reload", () => {
+    const citation = { ...odpis.citations[0], origin: "official_live", retrievedAt: "2026-11-22T14:50:00Z" };
+    const turn = { ...odpis, requestId: "r1", question: "Źródło?", citations: [citation] };
+    expect(answerFromAskBody({ turn }, "r1")?.citations[0]).toEqual(citation);
+    expect(turnsFromView({ turns: [turn] })[0].citations[0]).toEqual(citation);
+  });
+
   it("returns an empty list for the step-1 view and skips invalid turns", () => {
     expect(turnsFromView({ state: "completed" })).toEqual([]);
     const turns = turnsFromView({ turns: [{ ...odpis, requestId: "r1", question: "Q" }, { bad: true }] });
@@ -145,6 +152,15 @@ describe("AnswerView", () => {
       }),
     );
     expect(html).toContain("Pytasz o wniosek do pracodawcy czy o wypłatę zasiłku?");
+  });
+
+  it("keeps supported claims visible when one personal fact is still needed", () => {
+    const html = renderToStaticMarkup(createElement(AnswerView, {
+      answer: { ...odpis, status: "needs_clarification", message: "Czy dokument jest już w aktach?" },
+    }));
+    expect(html).toContain(odpis.claims[0].text);
+    expect(html).toContain("Źródło 1");
+    expect(html).toContain("Czy dokument jest już w aktach?");
   });
 });
 
