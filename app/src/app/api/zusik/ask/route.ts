@@ -4,6 +4,7 @@ import { MAX_QUESTION_LENGTH } from "@/lib/rag/query";
 import { NO_STORE, askService, currentSessionId, errorResponse } from "@/lib/zusik/server";
 import type { AskTurn } from "@/lib/zusik/types";
 import { ASK_STREAM } from "@/lib/zusik/ask-stream";
+import { familyScopeSchema } from "@/lib/zusik/family-chat";
 import { caseNames } from "@/lib/zusik/conversation";
 import { isSameOrigin } from "@/lib/zusik/session";
 
@@ -14,6 +15,7 @@ export const maxDuration = 60;
 // Unknown fields (e.g. a threadId sent by the browser) are stripped and ignored.
 const bodySchema = z.object({
   scenario: z.enum(caseNames).default("marta"),
+  family: familyScopeSchema.optional(),
   question: z.string().trim().min(2).max(MAX_QUESTION_LENGTH),
   requestId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
 });
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "forbidden_origin" }, { status: 403, headers: NO_STORE });
   }
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
+  if (!parsed.success || (parsed.data.family && parsed.data.scenario !== "ogolna")) {
     return Response.json({ error: "invalid_request" }, { status: 400, headers: NO_STORE });
   }
   const started = Date.now();
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
     const service = askService();
     const { question, requestId } = parsed.data;
     const run = async (progress?: (value: string) => void, verified?: (turn: AskTurn) => void) => {
-      const result = await service.ask(sessionId, question, requestId, progress, verified, parsed.data.scenario);
+      const result = await service.ask(sessionId, question, requestId, progress, verified, parsed.data.scenario, parsed.data.family);
       const trace = result.trace;
       // Ids, statuses and timings only: never the question or the answer text.
       console.log(

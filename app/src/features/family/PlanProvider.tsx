@@ -80,7 +80,7 @@ type PlanContextValue = {
   closeZusik: () => void;
 };
 
-export type ZusikContext = { planId: string; place: string; stopId?: string; field?: string; returnTo?: string };
+export type ZusikContext = { planId: string; place: string; stopId?: string; field?: string; returnTo?: string; collapsed?: boolean };
 
 const PlanContext = createContext<PlanContextValue | null>(null);
 
@@ -198,6 +198,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
 
   const selectPlan = useCallback((id: string) => {
     setPlanId(id);
+    setZusik(null);
     writeStorage(STORAGE_KEY, id);
   }, []);
 
@@ -350,7 +351,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       resetAll,
       zusik,
       openZusik: setZusik,
-      closeZusik: () => setZusik(null),
+      closeZusik: () => setZusik(current => current && { ...current, collapsed: true }),
     }),
     [plans, plan, selectPlan, patchStop, resetStop, isPatched, updatePlan, addPlan, addPlans, removePlan, formValues, setFormValues, leaveSplit, saveLeaveSplit, clearLeaveSplit, resetAll, zusik],
   );

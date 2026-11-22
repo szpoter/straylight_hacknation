@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 import { ChatHeader } from "./chat-panel";
-import { conversationInput } from "@/lib/zusik/conversation";
+import { conversationInput, type FamilyChatScope } from "@/lib/zusik/conversation";
 import { useZusikCase } from "./use-zusik-case";
 import { TurnView } from "./turn-view";
 import { Composer } from "./composer";
@@ -14,13 +14,16 @@ export type CaseChatEntry = { id: string; at: string; content: ReactNode };
 
 type EmbeddedControls = { fullscreen: boolean; onFullscreen: () => void; onCollapse: () => void };
 
-export function GeneralConversation({ controls }: { controls?: EmbeddedControls }) {
-  return <CaseChatWindow scenario="ogolna" label="Rozmowa ogólna" ready busy={false} entries={[]} documents={null}
-    controls={controls} introduction={<p>O jakie świadczenie albo dokument chcesz zapytać?</p>} />;
+export function GeneralConversation({ controls, label = "Rozmowa ogólna", introduction, family }: {
+  controls?: EmbeddedControls; label?: string; introduction?: ReactNode; family?: FamilyChatScope;
+}) {
+  return <CaseChatWindow scenario="ogolna" family={family} label={label} ready busy={false} entries={[]} documents={null}
+    controls={controls} introduction={introduction ?? <p>O jakie świadczenie albo dokument chcesz zapytać?</p>} />;
 }
 
-export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice, controls }: {
+export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice, controls, family }: {
   scenario: Scenario;
+  family?: FamilyChatScope;
   label: string;
   busy: boolean;
   introduction?: ReactNode;
@@ -32,7 +35,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   notice?: string | null;
   controls?: EmbeddedControls;
 }) {
-  const chat = useZusikCase(scenario, ready);
+  const chat = useZusikCase(scenario, ready, family);
   const [askNotice, setAskNotice] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [text, setText] = useState("");

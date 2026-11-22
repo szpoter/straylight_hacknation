@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NO_STORE, currentSessionId, errorResponse, probeService } from "@/lib/zusik/server";
 import { z } from "zod";
+import { familyScopeSchema } from "@/lib/zusik/family-chat";
 import { caseNames, conversationOwner } from "@/lib/zusik/conversation";
 import { emptyView } from "@/lib/zusik/view";
 
@@ -13,9 +14,12 @@ export async function GET(request: Request) {
   try {
     const sessionId = await currentSessionId();
     if (!sessionId) return Response.json({ view: emptyView() }, { headers: NO_STORE });
-    const scope = z.enum(caseNames).safeParse(new URL(request.url).searchParams.get("scenario") ?? "marta");
-    if (!scope.success) return Response.json({ error: "invalid_scenario" }, { status: 400, headers: NO_STORE });
-    const view = await probeService().getView(conversationOwner(sessionId, scope.data));
+    const params = new URL(request.url).searchParams;
+    const scope = z.enum(caseNames).safeParse(params.get("scenario") ?? "marta");
+    const family = familyScopeSchema.optional().safeParse(params.has("planId") || params.has("stopId") ?
+      { planId: params.get("planId"), stopId: params.get("stopId") ?? undefined } : undefined);
+    if (!scope.success || !family.success || (family.data && scope.data !== "ogolna")) return Response.json({ error: "invalid_scenario" }, { status: 400, headers: NO_STORE });
+    const view = await probeService().getView(conversationOwner(sessionId, scope.data, family.data));
     console.log(JSON.stringify({ event: "zusik_state", opId, state: view.state, thread: view.threadId?.slice(0, 10) }));
     return Response.json({ view }, { headers: NO_STORE });
   } catch (error) {

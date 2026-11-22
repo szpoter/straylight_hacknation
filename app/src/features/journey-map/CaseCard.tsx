@@ -96,8 +96,11 @@ export function CaseCard({
     const { label, href } = stop.action;
     if (label.startsWith("Dokończ z Zusikiem") || stop.state === "wezwanie") {
       return (
-        <Button variant={actionVariant} onClick={() => openZusik({ planId: plan.id, place: "Mój plan", stopId: stop.id, field: stop.doc?.note, returnTo: "/plan" })}>
-          {stop.state === "wezwanie" ? "Uzupełnij z Zusikiem" : label}
+        <Button variant={actionVariant} onClick={() => {
+          onLeave?.();
+          openZusik({ planId: plan.id, place: "Mój plan", stopId: stop.id, field: stop.doc?.note, returnTo: "/plan" });
+        }}>
+          {stop.state === "wezwanie" ? "Zapytaj o wezwanie" : "Zapytaj o ten wniosek"}
         </Button>
       );
     }

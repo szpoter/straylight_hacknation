@@ -1,7 +1,10 @@
 export const caseNames = ["marta", "kamil", "chorobowe", "ogolna"] as const;
 export type CaseName = typeof caseNames[number];
 
-export function conversationOwner(session: string, scenario: CaseName) {
+export type FamilyChatScope = { planId: string; stopId?: string };
+
+export function conversationOwner(session: string, scenario: CaseName, family?: FamilyChatScope) {
+  if (scenario === "ogolna" && family) return [session, scenario, family.planId, family.stopId].filter(Boolean).join(":");
   return scenario === "marta" ? session : session + ":" + scenario;
 }
 

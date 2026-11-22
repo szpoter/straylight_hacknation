@@ -3,7 +3,7 @@
   box-sizing: border-box;
   width: 100%;
 }
-.page { display: grid; justify-items: center; min-width: 0; }
+.page { min-width: 0; }
 .layout[data-split] { padding-inline-end: var(--chat-width); }
 .launcher {
   position: fixed;
@@ -40,6 +40,7 @@
 }
 .panel > div { height: 100%; }
 @media (max-width: 767px) {
+  .launcher[data-top] { top: max(8px, env(safe-area-inset-top)); bottom: auto; }
   .layout[data-split] { padding: 0 0 70dvh; }
   .panel { inset: auto 0 0; width: 100%; height: 70dvh; }
 }

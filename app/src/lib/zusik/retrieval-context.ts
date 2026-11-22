@@ -44,15 +44,16 @@ const coverage: Record<string, RegExp> = {
 // Only a topic-free follow-up may inherit the subject; a new noun with unclear meaning needs clarification.
 const connectiveWords = new Set(("a i ale to tego jej jego tej ta tym takim tak wtedy ten teraz jeszcze dokładnie właściwie ogóle czy ile co " +
   "do od na przy się też za w we go je jeśli już z żeby mam trzeba mi mnie dla kogo komu kto jest są oraz bez po przez " +
-  "tam tu o chodzi jestem pracuję kiedy gdzie moment dni dzień osobiście online").split(" "));
-const followUpStems = ("jak musz mog moż będ potrzeb zło skład dostarcz wys przes załatw przygot przynie wnios pobier dost przysług " +
+  "tam tu u o chodzi jestem pracuję kiedy gdzie moment dni dzień osobiście online").split(" "));
+const followUpStems = ("jak musi musz mog moż będ potrzeb zło skład dostarcz wys przes załatw przygot przynie wnios pobier dost przysług " +
   "obowiąz świadczeni zasił urlop tygod miesi okres potrwa trwa maksymal dług któr termin najpóź wcześ ostatni zdąży " +
   "wysokoś procent stawk wynosi wypłac płac pieniędz załącz dołącz formularz odpis dokument papier warun kanał portal " +
   "internet elektroniczn poczt aplikacj pracowni eta pracodawc działalnoś firm prowadz przedsiębior").split(" ");
 
 export function resolveFollowUp(text: string, history: AskTurn[],
   suggestTopic?: (text: string) => PublicQuestion | null,
-): { plan: PublicQuestion; requestId: string | null } | null {
+  hasOpeningTopic = false,
+): { plan: PublicQuestion; requestId: string | null; needsTopic?: boolean } | null {
   const words = text.toLocaleLowerCase("pl").normalize("NFC").match(/[\p{L}\p{N}]+/gu) ?? [];
   if (!words.length) return null;
   const namedSubjects = subjects.flatMap(([pattern]) => {
@@ -67,7 +68,7 @@ export function resolveFollowUp(text: string, history: AskTurn[],
   if (namedSubjects.length || /podatk|pogrzeb|kredyt|aliment|emerytur|rentow|składk|hospitaliz|przysposob|adopcj|ubezpiecz|\d/iu.test(text)) return null;
   const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
   const topicFree = words.every(word => connectiveWords.has(word) || followUpStems.some(stem => word.startsWith(stem)));
-  const semanticFacet = previous && !topicFree ? suggestSubmissionFacet(text) : null;
+  const semanticFacet = (previous || hasOpeningTopic) && !topicFree ? suggestSubmissionFacet(text) : null;
   // An unknown noun may name a different subject. The local facet classifier can recognise
   // a delivery/deadline paraphrase; a weak interpretation must not select a statute.
   if (!topicFree && !semanticFacet) {
@@ -95,8 +96,8 @@ export function resolveFollowUp(text: string, history: AskTurn[],
   });
   if (!topic || !prior || (previous?.status === "insufficient_evidence" && !previous.publicQuery)) {
     // Keep the established purpose clarification when a parent asks what to send with no prior turn.
-    if (!previous && /(?:co|jakie).*(?:wysłać|wyslac|złożyć)/iu.test(text)) return null;
-    return clarify("Które świadczenie albo jaki urlop masz na myśli?");
+    if (!previous && !hasOpeningTopic && /(?<![\p{L}])(?:co|jakie)(?![\p{L}]).*(?:wysłać|wyslac|złożyć)/iu.test(text)) return null;
+    return { ...clarify("Które świadczenie albo jaki urlop masz na myśli?"), needsTopic: !previous };
   }
   if (asksAboutOwnEligibility(text)) return clarify(`Chcesz sprawdzić własne uprawnienie w sprawie „${topic}”? Opisz, z jakiego tytułu składasz wniosek.`);
   if (!facet && !role) return clarify(`W sprawie „${topic}” pytasz o czas trwania, termin wniosku czy wysokość świadczenia?`);

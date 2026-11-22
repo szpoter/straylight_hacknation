@@ -95,6 +95,8 @@ export function JourneyMap() {
         </Button>
       </div>
 
+      {(listView || !pawnStop) && <Button variant="secondary" size="sm" onClick={onPawn}
+        aria-label="Otwórz czat z Zusikiem" className="self-start">Zapytaj Zusika</Button>}
       {listView ? (
         <>
           {/* W widoku listy najbliższa sprawa stoi nad listą; na ścieżce — pod nią. */}

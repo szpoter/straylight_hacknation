@@ -12,8 +12,9 @@ import type { AskAnswer, AskTurn } from "./types";
 import type { MartaView } from "../marta/types";
 import { caseSources, previousSources, sourceIntent } from "./context-answer";
 
+import { familyTopic } from "./family-chat";
 import { resolveFollowUp } from "./retrieval-context";
-import { conversationInput, conversationOwner, type CaseName } from "./conversation";
+import { conversationInput, conversationOwner, type CaseName, type FamilyChatScope } from "./conversation";
 
 type Progress = (status: string) => void;
 
@@ -212,8 +213,8 @@ export function questionHash(question: string): string {
 export class AskService {
   constructor(private readonly deps: AskServiceDeps) {}
 
-  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void, scenario: CaseName = "marta"): Promise<AskResult> {
-    const demoCase = await this.deps.store.findOrCreate(conversationOwner(sessionId, scenario));
+  async ask(sessionId: string, question: string, requestId: string, onProgress?: Progress, onVerified?: (turn: AskTurn) => void, scenario: CaseName = "marta", family?: FamilyChatScope): Promise<AskResult> {
+    const demoCase = await this.deps.store.findOrCreate(conversationOwner(sessionId, scenario, family));
     const threadId = demoCase.threadId;
     const hash = questionHash(question);
     const deadline = Date.now() + (this.deps.pendingWaitMs ?? 45_000);
@@ -249,10 +250,13 @@ export class AskService {
         const history = await this.deps.turns.list(threadId, requestId, 24);
         const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
         const fromCorpus = this.deps.searchCorpus && corpusFollowUp(text, previous);
+        const topic = familyTopic(family?.stopId);
         const context = fromCorpus && previous ? { plan: fromCorpus, requestId: previous.requestId }
-          : resolveFollowUp(text, history, this.deps.suggestTopic);
-        const projected = context?.plan ?? projectQuestion(this.deps, text);
-        result = await answerQuestion(this.deps, text, onProgress, projected, context?.requestId);
+          : resolveFollowUp(text, history, this.deps.suggestTopic, Boolean(topic));
+        const usePageTopic = !previous && topic && (context?.needsTopic || scopeGate(text)?.kind === "clarify");
+        const retrievalText = usePageTopic ? topic + ". " + text : text;
+        const projected = !usePageTopic && context ? context.plan : projectQuestion(this.deps, retrievalText);
+        result = await answerQuestion(this.deps, retrievalText, onProgress, projected, context?.requestId);
         if (projected?.question && result.answer.status !== "unavailable")
           result.answer.publicQuery = projected.question;
       }

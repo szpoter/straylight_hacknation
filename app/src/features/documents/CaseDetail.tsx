@@ -127,9 +127,9 @@ export function CaseDetail({ id }: { id: string }) {
             <>
               {c.doc.hasDraft && (
                 <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-on-surface-variant">
-                  Wolisz krok po kroku?
+                  Potrzebujesz wyjaśnienia?
                   <button type="button" onClick={() => zusik(c.doc.note)} className="underline underline-offset-4 decoration-outline hover:decoration-on-surface">
-                    Dokończ z Zusikiem
+                    Zapytaj o ten wniosek
                   </button>
                 </p>
               )}
@@ -281,7 +281,7 @@ function NowCard({
           ))}
         </ul>
         <Actions>
-          <Button onClick={() => onZusik("Uzupełnienie po wezwaniu")}>Uzupełnij z Zusikiem</Button>
+          <Button onClick={() => onZusik("Uzupełnienie po wezwaniu")}>Zapytaj o wezwanie</Button>
           {def && (
             <Button variant="secondary" onClick={() => onStep("wniosek")}>
               Popraw wniosek samodzielnie
@@ -326,13 +326,13 @@ function NowCard({
               )}
               {c.doc.hasDraft && (c.state === "aktualna" || c.state === "szkic") && (
                 <Button variant="secondary" onClick={() => onZusik(c.doc.note)}>
-                  Dokończ z Zusikiem
+                  Zapytaj o ten wniosek
                 </Button>
               )}
             </Actions>
           ) : c.doc.hasDraft ? (
             <Button className="self-start" onClick={() => onZusik(c.doc.note)}>
-              Dokończ z Zusikiem
+              Zapytaj o ten wniosek
             </Button>
           ) : (
             <p className="text-on-surface-variant">Tę sprawę załatwiasz poza Zusikiem — szczegóły w „Jak złożyć” poniżej.</p>

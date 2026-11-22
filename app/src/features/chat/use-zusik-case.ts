@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CaseName } from "@/lib/zusik/conversation";
+import type { CaseName, FamilyChatScope } from "@/lib/zusik/conversation";
 import { ASK_STREAM, readAskStream } from "@/lib/zusik/ask-stream";
 import type { Choice } from "@/lib/zusik/constants";
 import { answerFromAskBody, turnsFromView, type Answer, type ClientView, type Turn } from "./contract";
@@ -76,7 +76,9 @@ export function mergeConversation(saved: Turn[], local: LocalAsk[]): Conversatio
   ];
 }
 
-export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) {
+export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, family?: FamilyChatScope) {
+  const planId = family?.planId;
+  const stopId = family?.stopId;
   const [view, setView] = useState<ClientView | null>(null);
   const [documentCache,setDocumentCache]=useState("");
   const [phase, setPhase] = useState<Phase>("restoring");
@@ -103,14 +105,17 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
   const markReady = useCallback(() => setPhase((current) => (current === "error" ? current : "ready")), []);
 
   const readState = useCallback(async (): Promise<ClientView | null> => {
-    const state = await call("/api/zusik/state?scenario=" + scenario);
+    const query = new URLSearchParams({scenario});
+    if (planId) query.set("planId", planId);
+    if (stopId) query.set("stopId", stopId);
+    const state = await call("/api/zusik/state?" + query);
     if (state.status >= 400 || !state.body.view) {
       fail(errorFrom(state.status, state.body));
       return null;
     }
     setView(state.body.view);
     return state.body.view;
-  }, [fail, scenario]);
+  }, [fail, scenario, planId, stopId]);
 
   /** Waits while another request holds the case (202) or a start is still running. */
   const settle = useCallback(
@@ -235,7 +240,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
         const response = await fetch("/api/zusik/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: ASK_STREAM },
-          body: JSON.stringify({ question, requestId, scenario }),
+          body: JSON.stringify({ question, requestId, scenario, family: planId ? {planId, stopId} : undefined }),
           cache: "no-store",
           signal: controller.signal,
         });
@@ -304,7 +309,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true) 
         asking.current.delete(requestId);
       }
     },
-    [readState, scenario],
+    [readState, scenario, planId, stopId],
   );
 
   const ask = useCallback((question: string) => send(newRequestId(), question), [send]);

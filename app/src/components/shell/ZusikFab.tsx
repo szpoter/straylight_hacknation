@@ -1,11 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { usePlan } from "@/features/family/PlanProvider";
 import { Zusik } from "../mascot/Zusik";
-import { ButtonLink } from "../ui/AppButton";
-import { CloseIcon } from "../ui/icons";
+import { ParentChat } from "@/features/chat/parent-chat";
 
 /**
  * Bąbelek Zusika w prawym dolnym rogu (na telefonie nad dolnym paskiem). Na „Moim planie”
@@ -15,11 +14,13 @@ export function ZusikFab() {
   const pathname = usePathname();
   const { plan, openZusik, zusik } = usePlan();
   const [inviting, setInviting] = useState(false);
-  if (pathname === "/plan" || zusik) return null;
+  const stop = plan.stops.find(item => pathname === "/dokumenty/" + item.id);
+  if (pathname === "/plan") return null;
   return (
     <button
+      hidden={Boolean(zusik && !zusik.collapsed && zusik.planId === plan.id)}
       type="button"
-      onClick={() => openZusik({ planId: plan.id, place: pathname, returnTo: pathname })}
+      onClick={() => openZusik({ planId: plan.id, place: pathname, stopId: stop?.id, returnTo: pathname })}
       onPointerEnter={() => setInviting(true)}
       onPointerLeave={() => setInviting(false)}
       onFocus={() => setInviting(true)}
@@ -37,37 +38,26 @@ export function ZusikFab() {
   );
 }
 
-/**
- * Miejsce na panel Juliana (ui/JULIAN.md). Przekazuje kontekst dziecka, sprawy i pola.
- * TODO(julian): podmienić na panel czatu i widok dzielony.
- */
-export function ZusikPanelSlot() {
-  const { zusik, closeZusik, plans } = usePlan();
-  if (!zusik) return null;
-  const planName = plans.find((p) => p.id === zusik.planId)?.name;
+const pageLabels: Record<string, string> = {
+  "/dokumenty": "Dokumenty", "/profil": "Profil", "/wsparcie": "Wsparcie", "/profil/sprawa-testowa": "Sprawa testowa",
+};
+
+/** The map pawn, document actions and floating mascot open the same live chat. */
+export function FamilyChatShell({ children }: { children: ReactNode }) {
+  const { plan, zusik, closeZusik } = usePlan();
+  const context = zusik?.planId === plan.id ? zusik : null;
+  const stop = plan.stops.find(item => item.id === context?.stopId);
+  const title = stop?.title ?? (context && (pageLabels[context.place] ?? context.place));
   return (
-    <aside
-      aria-label="Zusik · asystent AI"
-      className="fixed inset-x-0 bottom-0 z-50 flex max-h-[70dvh] flex-col rounded-t-lg border border-outline bg-background md:inset-y-2 md:right-2 md:left-auto md:max-h-none md:w-[400px] md:rounded-lg"
-    >
-      <div className="flex items-center justify-between border-b border-outline px-card py-4">
-        <div>
-          <p className="font-medium">Zusik · asystent AI</p>
-          <p className="text-meta text-on-surface-variant">{[planName, zusik.place, zusik.field].filter(Boolean).join(" · ")}</p>
-        </div>
-        <button type="button" onClick={closeZusik} aria-label="Zwiń czat" className="rounded-full p-2 hover:bg-surface">
-          <CloseIcon />
-        </button>
-      </div>
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-card text-center text-on-surface-variant">
-        <Zusik size={72} animated state="waiting" toward={90} />
-        <p>Rozmowa z Zusikiem przy wniosku działa na osobnym ekranie: formularz obok czatu, odpowiedzi z przypisami do przepisów.</p>
-        {/* Ekrany Juliana: /zusik (wniosek o urlop rodzicielski), /zusik/kamil (ZAM z odpisem aktu). TODO(julian): panel w tym miejscu. */}
-        <ButtonLink href="/zusik">Otwórz rozmowę z Zusikiem</ButtonLink>
-        <ButtonLink href="/zusik/kamil" variant="secondary">
-          Wniosek ZAM z odpisem aktu
-        </ButtonLink>
-      </div>
-    </aside>
+    <ParentChat panel={{
+      expanded: Boolean(context && !context.collapsed),
+      close: closeZusik,
+      family: context ? {planId: plan.id, stopId: stop?.id} : undefined,
+      label: [plan.name, title].filter(Boolean).join(" · "),
+      introduction: stop && <p>O co chcesz zapytać w sprawie „{stop.title}”?{context?.field && <> Wybrane pole lub zadanie: {context.field}.</>}</p>,
+    }}>
+      {children}
+      <ZusikFab />
+    </ParentChat>
   );
 }
