@@ -5,7 +5,7 @@ import { usePlan } from "@/features/family/PlanProvider";
 import { Button, TextButton } from "@/components/ui/AppButton";
 import { Page, PageTitle } from "@/components/ui/Page";
 import { computeForm, formFromPlan, otherVariant, type CalcForm } from "@/lib/plan/benefit-form";
-import type { RuleSchedule } from "@/lib/rules/parameters";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
 import { Payer } from "./Payer";
 import { CasePdf } from "./CasePdf";
 import { BENEFIT_PRESETS } from "@/lib/plan/benefit-presets";
@@ -19,18 +19,19 @@ import { Deadlines, HowCalculated, MonthlyTable, Periods, Problems, Summary, Tim
  * urodzenie / adopcja / rodzina zastępcza, oboje rodzice, łączenie z pracą, „Za życiem”,
  * wcześniak, indywidualna podstawa.
  */
-export function BenefitCalculator({ schedule }: { schedule: RuleSchedule }) {
+export function BenefitCalculator() {
+  const schedule = useRuleSchedule();
   const family = usePlan();
   const [draft, setDraft] = useState<CalcForm | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const form = draft ?? family.calculator ?? formFromPlan(family.plan);
+  const form = draft ?? family.calculator ?? formFromPlan(family.plan, undefined, schedule);
   const update = (patch: Partial<CalcForm>) => {
     setDraft({ ...form, ...patch });
     setStatus(null);
   };
 
-  const { result, problems } = useMemo(() => computeForm(form, { requireComplete: true }), [form]);
-  const other = useMemo(() => (result ? computeForm(otherVariant(form), { requireComplete: true }).result : null), [form, result]);
+  const { result, problems } = useMemo(() => computeForm(form, { requireComplete: true, schedule }), [form, schedule]);
+  const other = useMemo(() => (result ? computeForm(otherVariant(form), { requireComplete: true, schedule }).result : null), [form, result, schedule]);
 
   const save = () => {
     family.saveCalculator({ ...form, date: family.plan.keyDate ?? form.date });

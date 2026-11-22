@@ -87,7 +87,7 @@ export function Summary({ result, other, form, onSwitchVariant, children }: { re
       {diff !== null && (
         <div className="flex flex-col gap-2">
           <p className="text-meta">
-            {form.variant === "815" ? "Wariant 100%, potem 70%" : "Wariant 81,5% przez cały okres"}: <strong>{pln(other!.totals.all)}</strong>{" "}
+            {form.variant === "815" ? "Wariant według rodzaju urlopu" : "Wariant uśredniony"}: <strong>{pln(other!.totals.all)}</strong>{" "}
             <span className="text-on-surface-variant">
               ({diff === 0 ? "tyle samo" : diff > 0 ? `o ${pln(diff)} mniej` : `o ${pln(-diff)} więcej`})
             </span>
@@ -156,7 +156,7 @@ export function Timeline({ result }: { result: ScenarioResult }) {
   );
 }
 
-function PeriodRow({ p }: { p: Period }) {
+function PeriodRow({ p, variable }: { p: Period; variable: boolean }) {
   return (
     <li className="flex flex-col gap-1.5 py-4 first:pt-0 last:pb-0">
       <div className="flex items-baseline justify-between gap-3">
@@ -167,9 +167,9 @@ function PeriodRow({ p }: { p: Period }) {
         <span className="shrink-0 font-medium">{pln(p.amount)}</span>
       </div>
       <p className="text-meta text-on-surface-variant">
-        {WHO[p.parent]} · {formatShort(p.from, true)}–{formatShort(p.to, true)} · {p.days} dni · {pct(p.ratePct)}
-        {p.work > 0 && ` · praca ${p.work === 0.5 ? "½" : "¼"} etatu`} · {pln(p.daily)} dziennie
-        {p.topUp > 0 && ` · w tym dopłata do 1000 zł: ${pln(p.topUp)}`}
+        {WHO[p.parent]} · {formatShort(p.from, true)}–{formatShort(p.to, true)} · {p.days} dni · {variable ? "stawka zmienna" : pct(p.ratePct)}
+        {p.work > 0 && ` · praca ${p.work === 0.5 ? "½" : "¼"} etatu`}{!variable && ` · ${pln(p.daily)} dziennie`}
+        {p.topUp > 0 && ` · w tym dopłata: ${pln(p.topUp)}`}
         {p.note && ` · ${p.note}`}
       </p>
     </li>
@@ -182,7 +182,7 @@ export function Periods({ result }: { result: ScenarioResult }) {
       <h2 className="font-serif text-title">Okresy i kwoty</h2>
       <ul className="divide-y divide-outline">
         {result.periods.map((p) => (
-          <PeriodRow key={p.id} p={p} />
+          <PeriodRow key={p.id} p={p} variable={result.segments.some(s => s.periodId === p.id && (s.daily !== p.daily || s.ratePct !== p.ratePct))} />
         ))}
       </ul>
     </Panel>
@@ -218,7 +218,7 @@ export function MonthlyTable({ result, form }: { result: ScenarioResult; form: C
         </table>
       </div>
       <p className="mt-4 text-meta text-on-surface-variant">
-        ZUS płaci za każdy dzień kalendarzowy: stawka dzienna × liczba dni w miesiącu. Na rękę: zaliczka na podatek 12% zaokrąglona do złotych{form.pit2 ? ", minus 300 zł (PIT-2)" : ""}; składki zdrowotnej od zasiłku się nie pobiera.
+        Wypłata za każdy dzień kalendarzowy: stawka dzienna × liczba dni w miesiącu. Na rękę: zaliczka na podatek 12% zaokrąglona do złotych{form.pit2 ? ", minus 300 zł (PIT-2)" : ""}; składki zdrowotnej od zasiłku się nie pobiera.
       </p>
     </Disclosure>
   );
@@ -257,8 +257,8 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
   return (
     <Disclosure summary="Jak to policzyliśmy" summaryClassName="py-4" className="rounded-lg border border-outline px-gutter-mobile pb-2 md:px-card">
       <ol className="flex list-decimal flex-col gap-3 pl-5">
-        <li>Podstawa wymiaru: przeciętne miesięczne wynagrodzenie (albo podstawa składki chorobowej) z 12 miesięcy przed miesiącem porodu, minus 13,71% składek. Miesiące przepracowane w mniej niż połowie pomija się.</li>
-        <li>Przy umowie o pracę na pełny etat podstawa nie może być niższa niż płaca minimalna minus 13,71% — i rośnie razem z płacą minimalną.</li>
+        <li>Podstawa wymiaru: przeciętne miesięczne wynagrodzenie (albo podstawa składki chorobowej) z 12 miesięcy przed miesiącem porodu, po odjęciu składek społecznych. Miesiące przepracowane w mniej niż połowie pomija się.</li>
+        <li>Przy umowie o pracę na pełny etat podstawa nie może być niższa niż płaca minimalna po odjęciu składek — i rośnie razem z płacą minimalną.</li>
         <li>
           Stawka dzienna = podstawa × procent ÷ 30, zaokrąglona do grosza.
           {first && (
@@ -278,8 +278,8 @@ export function HowCalculated({ result }: { result: ScenarioResult }) {
             </span>
           )}
         </li>
-        <li>Procent: 100% za macierzyński, uzupełniający i ojcowski; 70% za rodzicielski; 81,5% za cały okres po wniosku w 21 dni — z wyjątkiem 9 tygodni drugiego rodzica (zawsze 70%).</li>
-        <li>Gdy zasiłek wychodzi poniżej 1000 zł miesięcznie, ZUS podwyższa go do tej kwoty (nie dotyczy urlopu ojcowskiego).</li>
+        <li>Stawka zależy od rodzaju urlopu, wariantu wypłaty i dnia, za który przysługuje zasiłek.</li>
+        <li>Gdy zasiłek wychodzi poniżej kwoty świadczenia rodzicielskiego, kalkulator uwzględnia dopłatę (nie dotyczy urlopu ojcowskiego).</li>
         <li>Praca do pół etatu w czasie rodzicielskiego: urlop wydłuża się (np. ½ etatu — dwa razy dłużej), zasiłek maleje o tę część.</li>
       </ol>
       <p className="my-5 text-meta text-on-surface-variant">

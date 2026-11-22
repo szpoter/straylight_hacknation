@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
 import { DEFAULT_PLAN_ID, getPlan } from "@/lib/demo/fixtures";
 import { applyCalculatorToPlan, type CalcForm } from "@/lib/plan/benefit-form";
 import { refreshSavedLeavePlan } from "@/lib/plan/build";
@@ -142,6 +143,7 @@ function applyStopPatch(stop: Stop, patch: StopPatch): Stop {
 }
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
+  const schedule = useRuleSchedule();
   const [planId, setPlanId] = useState(DEFAULT_PLAN_ID);
   const [patches, setPatches] = useState<Record<string, Record<string, StopPatch>>>({});
   const [zusik, setZusik] = useState<ZusikContext | null>(null);
@@ -153,8 +155,8 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const plans = useMemo(() => {
     const ola = getPlan(DEFAULT_PLAN_ID);
-    return [applyCalculatorToPlan(ola, calculators[calculatorKey(ola)])];
-  }, [calculators]);
+    return [applyCalculatorToPlan(ola, calculators[calculatorKey(ola)], schedule)];
+  }, [calculators, schedule]);
   const updatePlan = useCallback((id: string, edit: PlanEdit) => setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...edit } })), []);
 
   // Odczyt po hydratacji (serwer nie zna localStorage).

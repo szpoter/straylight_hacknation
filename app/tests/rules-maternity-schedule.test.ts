@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appParameters } from "@/lib/admin/catalog";
+import { computeForm } from "@/lib/plan/benefit-form";
+import { BENEFIT_PRESETS } from "@/lib/plan/benefit-presets";
 import { changeSpecFor } from "@/lib/admin/parameter-changes";
 import { MATERNITY_PARAMETERS } from "@/lib/rules/maternity";
 import { maternityParametersOn } from "@/lib/rules/maternity-schedule";
@@ -21,6 +23,16 @@ describe("calculator parameters from the panel schedule", () => {
     expect([before.rateParental, before.parentalWeeks.one, before.deductionPct]).toEqual([70, 41, 13.71]);
     expect([after.rateParental, after.parentalWeeks.one, after.deductionPct]).toEqual([75, 45, 14]);
     expect(after.maternityWeeks).toEqual([20, 31, 33, 35, 37]);
+  });
+
+  it("applies a published rate from the exact benefit day in the parent calculator", () => {
+    const form = BENEFIT_PRESETS[0].form;
+    const schedule = { "rate.averaged": [{ value: 900, validFrom: "2026-06-15" }] };
+    const { result } = computeForm(form, { requireComplete: true, schedule });
+    expect(result?.segments.slice(0, 2).map(s => [s.from, s.to, s.daily, s.days])).toEqual([
+      ["2026-06-03", "2026-06-14", 152.37, 12],
+      ["2026-06-15", "2026-06-30", 168.27, 16],
+    ]);
   });
 
   it("checks keep leave lengths consistent", () => {
