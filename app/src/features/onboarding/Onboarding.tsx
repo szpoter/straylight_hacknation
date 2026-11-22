@@ -291,7 +291,7 @@ export function Onboarding() {
     // jest dostępny obok ekranu startowego. Na ekranach pytań go nie ma: przycisk czatu w rogu
     // zasłaniałby na telefonie przyklejony pasek „Dalej”; tam rodzic ma Zusika w dymku.
     return (
-      <ParentChat>
+      <ParentChat topLauncher>
       <Shell>
         <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 pb-20 text-center md:pt-14", ENTER)}>
           <Zusik size={128} animated entrance state="available" toward={270} />
