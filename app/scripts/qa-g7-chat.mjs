@@ -12,8 +12,19 @@ const dir = "tests/fixtures/zusik-acceptance/";
 const raw = readFileSync(dir+"g7.jsonl","utf8");
 assert.equal(createHash("sha256").update(raw).digest("hex"),"51ca95e212e91b7541369e327e70d467ed14ab6e02e590f2cadc9387e6b63781");
 const rows = raw.trim().split("\n").map(s=>JSON.parse(s));
+const cardAudit = process.argv.includes("--cards-only");
 const gold = JSON.parse(readFileSync(dir+"gold-evidence.json","utf8"));
 const alts = JSON.parse(readFileSync(dir+"equivalent-evidence.json","utf8"));
+const cardSources = new Map();
+if (cardAudit) for (const pack of ["oferta","publiczne","marta"]) {
+  const base = "corpus/" + pack + "/";
+  const manifest = JSON.parse(readFileSync(base+"manifest.json","utf8"));
+  const urls = new Map(manifest.documents.map(doc => [doc.id,doc.url]));
+  for (const line of readFileSync(base+(manifest.fragmentsFile ?? "fragments.jsonl"),"utf8").trim().split("\n")) {
+    const f = JSON.parse(line);
+    cardSources.set(f.corpusVersion+"/"+f.logicalId,urls.get(f.documentId)?.split("#")[0]);
+  }
+}
 const browser = await chromium.launch({channel:"chrome"});
 async function freshContext() {
   const ctx = await browser.newContext();
@@ -42,7 +53,23 @@ async function submit(page, question) {
   const links = await turn.getByRole("link").evaluateAll(nodes=>nodes.map(n=>n.href));
   const visibleRefs = msg.citations.filter(c=>c.kind==="public_source" && links.includes(c.publicUrl) &&
     gold[c.ref]?.url.split("#")[0] === c.publicUrl.split("#")[0]).map(c=>c.ref);
-  return {answer:msg.answer,visibleRefs,clarify:!msg.citations.length && /\?|podaj|doprecyzuj|potrzeb|brak|zakres/iu.test(msg.answer)};
+  return {answer:msg.answer,visibleRefs,turn,msg,clarify:!msg.citations.length && /\?|podaj|doprecyzuj|potrzeb|brak|zakres/iu.test(msg.answer)};
+}
+async function inspectCards(sample, required) {
+  if (!sample.turn) return "no_cards";
+  const articles = sample.turn.getByRole("article");
+  const titles = await articles.getByRole("heading").allTextContents();
+  if (!required.every(name => titles.slice(0,3).some(title => title.toLocaleLowerCase("pl").includes(name)))) return "required_card_missing";
+  for (const title of titles) {
+    const card = sample.msg.opportunities?.find(c => c.title === title);
+    if (!card?.citationIds.length) return "card_source_missing";
+    const links = await articles.filter({hasText:title}).getByRole("link").evaluateAll(nodes=>nodes.map(n=>n.href));
+    for (const ref of card.citationIds) {
+      const c = sample.msg.citations.find(c => c.kind === "public_source" && c.ref === ref);
+      if (!c || !links.includes(c.publicUrl) || cardSources.get(c.version+"/"+ref) !== c.publicUrl.split("#")[0]) return "card_source_unverified";
+    }
+  }
+  return "pass";
 }
 async function measure(row) {
   let ctx = await freshContext();
@@ -74,6 +101,7 @@ async function measure(row) {
     if (row.group==="rag") return facts && row.requiredEvidence.every(refs) ? "pass" : "fact_or_visible_source";
     if (row.group==="clarification") return sample.clarify && facts ? "pass" : "clarification";
     if (row.group==="opportunity") {
+      if (cardAudit) return await inspectCards(sample,row.requiredCards);
       const cards=await page.getByRole("log").getByRole("heading").allTextContents();
       return row.requiredCards.every(s=>cards.slice(-3).some(t=>t.toLowerCase().includes(s))) && sample.visibleRefs.length ? "pass" : "opportunity_cards";
     }
@@ -93,7 +121,7 @@ async function lane(pending) {
   }
 }
 try {
-  const pending=rows.values();
+  const pending=(cardAudit ? rows.filter(row=>row.group==="opportunity") : rows).values();
   await Promise.all([lane(pending),lane(pending)]);
   console.log(JSON.stringify({groups:tally,errors:failures}));
   if(Object.values(tally).some(g=>g.passed!==g.total)) process.exitCode=1;

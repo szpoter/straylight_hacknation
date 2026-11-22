@@ -750,7 +750,7 @@ components:
       required: true
       schema:
         type: string
-      description: Silny ETag zasobu docelowego pobrany przez GET.
+      description: 'Silny walidator w formacie "<id>.<revision>". Oba pola pochodzą z tej samej odczytanej wersji profilu lub sprawy. Po kompresji odpowiedzi pośrednik może zwrócić słaby ETag. Klient odtwarza wówczas silny walidator z pól obiektu.'
     key:
       name: Idempotency-Key
       in: header

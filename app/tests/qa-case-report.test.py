@@ -27,6 +27,14 @@ class Scores(unittest.TestCase):
         self.assertEqual(result["metrics"]["amount"], {"correct": 0, "total": 1})
         self.assertEqual(compare({**key, "review":"pending"}, None, None)["metrics"]["amount"]["total"], 0)
 
+    def test_leave_page_is_distinct_from_a_benefit_fact_and_from_a_saved_assessment(self):
+        case = {"expected": [], "review": "pending"}
+        read = {"fields": 0, "leavePages": 1}
+        self.assertEqual(compare(case, read, None)["blocker"], "leave_request_without_benefit_fact")
+        self.assertEqual(compare(case, read, [])["blocker"], "observed")
+        self.assertFalse(compare({"review": "verified", "completeReference": True, "expected": [{"branch":"a", "decision":"eligible"}]},
+                                 None, [{"branch":"a", "decision":"eligible"}])["full"])
+
 
 if __name__ == "__main__":
     unittest.main()

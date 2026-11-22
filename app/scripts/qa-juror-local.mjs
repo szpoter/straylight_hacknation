@@ -11,14 +11,15 @@ import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 import { chromium } from "playwright-core";
 import { previewCookies } from "./qa-preview-access.mjs";
+import { offlineChrome, previewRelay } from "./qa-preview-browser.mjs";
 
 const app = fileURLToPath(new URL("../", import.meta.url));
 const script = fileURLToPath(import.meta.url);
 const vault = path.join(homedir(), "Library/Application Support/Zusik/private-cases");
 let stage = "startup";
 const switchName = process.argv[2];
-const remoteSynthetic = switchName === "--preview-preflight";
-assert.ok(remoteSynthetic || ["--preflight", "--draw"].includes(switchName));
+const remote = switchName === "--preview-preflight";
+assert.ok(remote || ["--preflight", "--draw"].includes(switchName));
 const noIP = '(version 1)(allow default)(deny network-outbound (remote ip "*:*"))';
 const sandbox = "/usr/bin/sandbox-exec";
 const marker = "QA-JUROR-FICTION-4179";
@@ -114,34 +115,37 @@ function permitted(request, origin, headers = request.headers()) {
 }
 
 async function exercise(browser, origin, buffer, real, cookies = []) {
+  assert.ok(!real || new URL(origin).hostname === "127.0.0.1");
   const context = await browser.newContext({viewport:{width:1365,height:880}, serviceWorkers:"block", acceptDownloads:false});
   let requests = 0, blocked = 0, workers = 0, active = false;
   const assets = new Set();
+  let toolbarSuppressed = 0;
+  const relay = remote ? previewRelay(context,origin,cookies,createHash("sha256").update(buffer).digest()) : null;
   try {
     if (cookies.length) await context.addCookies(cookies);
-    context.on("request", req => {
-      if (/^https?:/.test(req.url()) && new URL(req.url()).origin !== origin) blocked++;
-    });
     await context.routeWebSocket("**/*", ws => { blocked++; ws.close(); });
-    await context.route("**/*", async route => {
+    async function handle(route) {
       const request = route.request();
       const target = new URL(request.url());
-      if (target.origin !== origin || active && !permitted(request,origin,await request.allHeaders())) {
-        if (!real) console.error("Synthetic preflight blocked", request.method(), target.origin === origin ? "same origin" : "other origin");
+      if (remote && target.origin === "https://vercel.live" && target.pathname === "/_next-live/feedback/feedback.js" && request.resourceType() === "script") {
+        toolbarSuppressed++;
+        return route.abort();
+      }
+      if (target.origin !== origin || (active || remote && target.pathname.startsWith("/api/")) && !permitted(request,origin,await request.allHeaders())) {
+        if (!real) console.error("Synthetic preflight blocked", request.method(), request.resourceType(),
+          target.origin === origin ? "same origin" : target.hostname === "vercel.live" ? "Vercel toolbar" : "other origin", active ? "during trial" : "before attachment");
         blocked++; return route.abort();
       }
       if (target.pathname.startsWith("/ocr/") || target.pathname.startsWith("/pdfjs/")) assets.add(target.pathname);
       requests++;
-      if (remoteSynthetic) {
-        const response = await route.fetch({maxRedirects:0});
-        if (response.status() >= 300 && response.status() < 400) {
-          blocked++;
-          return route.abort();
-        }
-        return route.fulfill({response});
-      }
+      if (relay) return relay(route,target,request.method());
       return route.continue();
-    });
+    }
+    await context.route("**/*", route => handle(route).catch(async () => {
+      blocked++;
+      if (!real) console.error("Synthetic preflight transport failed", route.request().resourceType());
+      await route.abort().catch(() => {});
+    }));
     const page = await context.newPage();
     page.on("worker", () => workers++);
     page.setDefaultTimeout(30000);
@@ -156,13 +160,19 @@ async function exercise(browser, origin, buffer, real, cookies = []) {
     stage = "reading PDF";
     await (await chooser).setFiles({name, mimeType:"application/pdf", buffer});
     await page.getByRole("link",{name:"Otwórz własny PDF"}).first().waitFor({timeout:30 * 60000});
+    const questions = [], replyStatuses = [];
     const ask = async question => {
       const box = page.getByRole("textbox",{name:"Wiadomość do Zusika"});
       await box.fill(question);
       const saved = page.waitForResponse(r => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith("/messages"));
       await page.getByRole("button",{name:"Wyślij",exact:true}).click();
       assert.equal((await saved).status(),201);
-      await page.getByRole("log").getByText(question,{exact:true}).first().waitFor();
+      const turn = page.locator("[data-knowledge-turn]").filter({has:page.getByText(question,{exact:true})}).last();
+      await turn.waitFor();
+      const asksForPerson = await turn.getByText("Dodaj osobę i potwierdź dane z wniosku, aby rozpocząć analizę.",{exact:true}).count();
+      const asksForPeriod = await turn.getByText(/Wskaż świadczenie i okres z wniosku\./).count();
+      questions.push(question);
+      replyStatuses.push(asksForPerson ? "person_and_confirmation_requested" : asksForPeriod ? "benefit_and_period_requested" : "other");
     };
     stage = "follow-up";
     await ask("Co wynika z tego dokumentu?");
@@ -200,12 +210,14 @@ async function exercise(browser, origin, buffer, real, cookies = []) {
     stage = "reload";
     await page.reload();
     await page.getByText(/Dołącz ponownie ten sam PDF/).first().waitFor();
+    let restoredQuestions = 0;
+    for (const question of questions) if (await page.getByRole("log").getByText(question,{exact:true}).count()) restoredQuestions++;
     stage = "boundary";
     assert.equal(blocked,0);
     const pdfWorker = assets.has("/pdfjs/pdf.worker.min.mjs");
     const polishOcr = assets.has("/ocr/worker.min.js") && assets.has("/ocr/lang/pol.traineddata.gz");
-    console.log(JSON.stringify({stage:real ? "local_draw": remoteSynthetic ? "preview_synthetic":"synthetic_preflight", hasPage, followedEvidence, decisionCard,
-      candidatesAvailable:candidateFields>0, correctionAvailable:hasCorrection, manualReviewOpened, restoredMetadata:true, requests, blocked, workers, pdfWorker, polishOcr}));
+    console.log(JSON.stringify({stage:real ? "local_draw" : remote ? "preview_synthetic":"synthetic_preflight", hasPage, followedEvidence, decisionCard,
+      candidatesAvailable:candidateFields>0, correctionAvailable:hasCorrection, manualReviewOpened, restoredMetadata:true, restoredQuestions, replyStatuses, requests, blocked, workers, pdfWorker, polishOcr, toolbarSuppressed}));
     if (!real) assert.ok(pdfWorker && polishOcr && followedEvidence && workers >= 2);
     return {hasPage, decisionCard, hasCorrection};
   } finally { await context.close(); }
@@ -234,9 +246,10 @@ async function previewPreflight() {
   stage = "deployment authentication";
   const origin = process.argv[3];
   const cookies = await previewCookies(origin, process.argv[4]);
-  const browser = await chromium.launch({channel:"chrome",args:["--disable-background-networking"]});
+  const browser = await offlineChrome();
   try {
-    await exercise(browser,origin,await syntheticPacket(browser),false,cookies);
+    const preflight = await exercise(browser,origin,await syntheticPacket(browser),false,cookies);
+    assert.ok(preflight.hasPage);
   } finally { await browser.close(); }
 }
 
@@ -265,7 +278,7 @@ async function run() {
     }
   } finally { await browser.close(); }
 }
-try { await (remoteSynthetic ? previewPreflight() : process.env.QA_JUROR_ORIGIN ? run() : start()); }
+try { await (remote ? previewPreflight() : process.env.QA_JUROR_ORIGIN ? run() : start()); }
 catch (error) {
   // Playwright and filesystem exceptions can contain a filename or a quoted locator. Never log them.
   console.error("Juror check incomplete at " + stage + " (" + (error.name === "TimeoutError" ? "timeout" : "guard or application") + ").");

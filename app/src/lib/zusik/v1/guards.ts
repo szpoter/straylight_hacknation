@@ -2,8 +2,9 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { Page } from "../memory/contract";
 import { ApiProblem } from "./http";
+import { etag } from "./etag";
 
-export function etag(id: string, revision: number) { return `"${id}.${revision}"`; }
+export { etag } from "./etag";
 
 export function matchRevision(request: Request, id: string) {
   const match = request.headers.get("if-match");

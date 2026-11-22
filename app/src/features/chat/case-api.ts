@@ -1,5 +1,6 @@
 import type { Message, MessageInput as WireMessageInput } from "@/lib/zusik/v1/conversation";
 import type { CaseDocument, CaseFile, DocInput, EvidenceFact, Patch, Profile, Proposal } from "@/lib/zusik/memory/contract";
+import { etag } from "@/lib/zusik/v1/etag";
 
 export type MessageInput = WireMessageInput;
 
@@ -22,7 +23,11 @@ async function request<T>(path: string, method = "GET", body?: unknown, key?: st
   if (etag) headers.set("If-Match", etag);
   const res = await fetch("/api/v1/" + path, { method, headers, body: JSON.stringify(body), credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(70000) });
   if (!res.ok) throw new ApiError(res.status);
-  return { data: (res.status === 204 ? undefined : await res.json()) as T, etag: res.headers.get("ETag") };
+  return { data: (res.status === 204 ? undefined : await res.json()) as T };
+}
+function versioned<T extends Profile | CaseFile>({data}: {data:T}) {
+  // A CDN may weaken the representation ETag during compression.
+  return {data, etag:etag(data.id,data.revision)};
 }
 async function list<T>(path: string) {
   const items: T[] = [];
@@ -44,11 +49,11 @@ export const caseApi = {
     const profile = await request<Profile>("profiles", "POST", { mode: "case_import" }, key);
     return (await request<CaseFile>("cases", "POST", { profileId: profile.data.id }, key)).data;
   },
-  file: (id: string) => request<CaseFile>(c(id)),
-  profile: (id: string) => request<Profile>(p(id)),
+  file: (id: string) => request<CaseFile>(c(id)).then(versioned),
+  profile: (id: string) => request<Profile>(p(id)).then(versioned),
   facts: (id: string) => list<EvidenceFact>(p(id) + "/facts"),
   proposals: (id: string) => list<Proposal>(p(id) + "/proposals"),
-  patch: (id: string, patch: Patch, etag: string, key: string) => request<Profile>(p(id), "PATCH", patch, key, etag),
+  patch: (id: string, patch: Patch, etag: string, key: string) => request<Profile>(p(id), "PATCH", patch, key, etag).then(versioned),
   documents: (id: string) => list<CaseDocument>(c(id) + "/documents"),
   register: (id: string, metadata: DocInput, key: string) => request<CaseDocument>(c(id) + "/documents", "POST", metadata, key),
   messages: (id: string) => list<CaseMessage>(c(id) + "/messages"),

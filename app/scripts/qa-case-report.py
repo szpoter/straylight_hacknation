@@ -21,12 +21,12 @@ def read_private(path):
 def compare(case, read, observed):
     if read is None:
         blocker = "parser_pending"
-    elif read["fields"] == 0:
-        blocker = "no_candidate_before_rules"
-    elif observed is None:
-        blocker = "awaiting_confirmed_facts"
-    else:
+    elif observed is not None:
         blocker = "observed"
+    elif read["fields"] == 0:
+        blocker = "leave_request_without_benefit_fact" if read.get("leavePages", 0) else "no_candidate_before_rules"
+    else:
+        blocker = "awaiting_confirmed_facts"
     # A branch key identifies claimant, title, benefit and requested interval locally.
     def indexed(rows):
         result = {row["branch"]: row for row in rows}
@@ -42,7 +42,7 @@ def compare(case, read, observed):
         eligible = [(branch, row[metric]) for branch, row in expected.items() if row.get(metric) is not None]
         metrics[metric] = dict(correct=sum(actual.get(branch, {}).get(metric) == value for branch, value in eligible),
                                total=len(eligible))
-    complete = case.get("completeReference") is True and bool(expected) and observed is not None and not extra and actual.keys() == expected.keys() and all(
+    complete = read is not None and case.get("completeReference") is True and bool(expected) and observed is not None and not extra and actual.keys() == expected.keys() and all(
         m["total"] == m["correct"] for m in metrics.values()) and all(row.get("decision") is not None for row in expected.values())
     return dict(blocker=blocker, reviewed=bool(expected), amountReference=bool(metrics["amount"]["total"]),
                 extra=extra, metrics=metrics, full=complete)
