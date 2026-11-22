@@ -4,7 +4,7 @@
 | --- | --- | ---: | --- |
 | `marta` | `marta-v1` | 23 | Urlop rodzicielski pracownika, wniosek do pracodawcy i wyjątki w załącznikach |
 | `publiczne` | `rodzina-2026-11-v1` | 487 | Akty prawne z materiałów konkursowych, poradnik rodziców ZUS, instrukcje chorobowego i ZAM |
-| `oferta` | `programy-2026-11-v2` | 5 | Informacje o 800+, Dobrym Starcie i Aktywnym Rodzicu |
+| `oferta` | `programy-2026-11-v3` | 8 | 800+, Dobry Start, Aktywny Rodzic oraz trzy fragmenty o opiece, wieku i odbiorcy przelewu w żłobku |
 
 [Inwentarz materiałów](materialy.json) rozlicza wszystkie 95 plików merytorycznych, organizacyjnych i akt. Oryginalne 87 plików akt spraw pozostaje poza wspólnym indeksem. Ich kopie zawierają 86 różnych dokumentów. Cztery wyciągi konkursowe mają odpowiedniki ze zbioru ELI. Sumy SHA-256 identyfikują pliki źródłowe, a strony PDF i jednostki redakcyjne prowadzą do konkretnych przepisów. Materiał szkoleniowy o stawkach i czasie świadczeń ma odsyłacze do źródeł ustawowych.
 
@@ -23,6 +23,27 @@ node --env-file=.env.local --import tsx scripts/zusik-import-marta.ts --corpus=o
 Opcja `--collection=nazwa` wskazuje drugą fizyczną kolekcję przy migracji. Importer wysyła brakujące punkty w partiach po 16, po czym porównuje wszystkie identyfikatory i hashe z manifestem. Wznowienie polecenia po awarii uzupełnia brakującą partię. Zmiana treści istniejącego fragmentu wymaga nadania nowej wersji. Aplikacja filtruje wersję przy każdym wyszukiwaniu. Stara sonda wybiera wyłącznie dokumenty bez pola `corpusVersion`.
 
 ## Ewaluacja
+
+### Pierwsza próba „Aktywnie w żłobku”
+
+Pakiet zachowuje pełną treść artykułu ZUS w postaci migawki HTML. Manifest podaje hash całej pobranej strony. Rejestr zawiera osobny hash migawki, datę publikacji, datę sprawdzenia i podstawę prawną. Daty obowiązywania poszczególnych warunków wymagają osobnego sprawdzenia dla spraw historycznych. [Rejestr publikacji](official-sources.json) · [Zapis artykułu](oferta/snapshots/zus-aktywnie-w-zlobku.html)
+
+| Aspekt | Fragment | Sekcja ZUS i zakres |
+| --- | --- | --- |
+| Forma opieki | `zlobek-opieka` | „Na kogo przysługuje świadczenie”, akapit 1, placówka lub opiekun w rejestrze |
+| Wiek | `zlobek-wiek` | „Na kogo przysługuje świadczenie”, akapity 4 i 5, górna granica z wyjątkiem i warunek rozpoczęcia |
+| Adresat przelewu | `zlobek-odbiorca` | „Komu wypłacamy świadczenie aktywnie w żłobku”, akapit 1, podmiot prowadzący placówkę albo dzienny opiekun |
+
+Na tym etapie poza indeksem pozostają wyłączenia, kwota, termin, dokumenty, kanał złożenia i kolizje świadczeń opisane szerzej w migawce. [Strona ZUS](https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku)
+
+Do powtórzenia próby użyj dwóch nowych, fizycznych kolekcji testowych. Druga pomija dokładnie jeden fragment. Ponowne wywołanie tych samych poleceń sprawdza ID i hashe oraz powinno wykazać zapis zera nowych punktów.
+
+```sh
+node --env-file=.env.local --import tsx scripts/zusik-import-marta.ts --corpus=oferta --collection=zusik_test_nursery_20261122_full
+node --env-file=.env.local --import tsx scripts/zusik-import-marta.ts --corpus=oferta --collection=zusik_test_nursery_20261122_gap --omit-test-fragment=zlobek-odbiorca
+```
+
+### Pozostałe pakiety
 
 ```sh
 node --env-file=.env.local --import tsx scripts/zusik-eval-marta.ts

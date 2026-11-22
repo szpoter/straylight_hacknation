@@ -12,9 +12,12 @@
  * 6. reads everything back and compares ids + hashes with the local digest.
  * Re-running with the same version is idempotent: same ids, same hashes.
  */
+import { readFileSync } from "node:fs";
+import sources from "../corpus/official-sources.json";
 import { DEFAULT_EMBED_MODEL } from "../src/lib/zusik/config";
-import { corpusDigest, embeddingText, pointId } from "../src/lib/rag/corpus";
+import { corpusDigest, embeddingText, pointId, sha256, withoutFragments } from "../src/lib/rag/corpus";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
+import { extractOfficialParagraph } from "../src/lib/rag/official-sections";
 
 // Explicit destination is useful when a deployment has its own collection-scoped reader.
 const corpusName = process.argv.find((arg) => arg.startsWith("--corpus="))?.slice(9) ?? "marta";
@@ -44,7 +47,23 @@ type ScrollResponse = {
 };
 
 async function main() {
-  const corpus = loadCorpus(corpusName);
+  const complete = loadCorpus(corpusName);
+  for (const source of sources.filter((s) => complete.documents.has(s.sourceId))) {
+    const snapshot = readFileSync(`corpus/${source.snapshot}`, "utf8");
+    if (sha256(snapshot) !== source.snapshotSha256) throw new Error(`Snapshot digest mismatch: ${source.sourceId}`);
+    for (const { heading, fragmentId } of source.sections) {
+      if (extractOfficialParagraph(snapshot, heading) !== complete.fragments.get(fragmentId)?.sourceText) {
+        throw new Error(`Snapshot paragraph mismatch: ${fragmentId}`);
+      }
+    }
+  }
+  const omitted = process.argv.find((arg) => arg.startsWith("--omit-test-fragment="))?.split("=")[1];
+  if (omitted && (!collectionOverride?.startsWith("zusik_test_") ||
+      [process.env.QDRANT_COLLECTION, process.env.QDRANT_KNOWLEDGE_COLLECTION].includes(collectionOverride) ||
+      !complete.fragments.has(omitted))) {
+    throw new Error("Omitting a fragment requires a known ID and an isolated zusik_test_ collection");
+  }
+  const corpus = omitted ? withoutFragments(complete, [omitted]) : complete;
   const version = corpus.manifest.corpusVersion;
   console.log(`${OP}: manifest ${version} OK · ${corpus.documents.size} documents · ${corpus.fragments.size} units · digest ${corpusDigest(corpus).slice(0, 16)}`);
 

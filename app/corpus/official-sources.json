@@ -1,0 +1,23 @@
+[
+  {
+    "sourceId": "zus-aktywnie-w-zlobku",
+    "title": "Świadczenie aktywnie w żłobku",
+    "authority": "zus_guidance",
+    "issuer": "Zakład Ubezpieczeń Społecznych",
+    "sourceType": "html",
+    "locale": "pl",
+    "url": "https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku",
+    "discoveryPaths": ["/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku"],
+    "priority": "official_guidance",
+    "reviewIntervalDays": 30,
+    "reviewedAt": "2026-11-22",
+    "publicationDate": "2024-07-08",
+    "legalBasisUrl": "https://eli.gov.pl/eli/DU/2024/858/ogl",
+    "snapshot": "oferta/snapshots/zus-aktywnie-w-zlobku.html",
+    "snapshotSha256": "49184e96c64f4c5481e0091c2f8b5324091341a6990c443408ae59ee0dcc8975",
+    "sections": [
+      {"facet": "care", "heading": "Na kogo przysługuje świadczenie", "fragmentId": "zlobek-opieka"},
+      {"facet": "recipient", "heading": "Komu wypłacamy świadczenie aktywnie w żłobku", "fragmentId": "zlobek-odbiorca"}
+    ]
+  }
+]

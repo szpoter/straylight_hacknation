@@ -1,10 +1,10 @@
 {
-  "corpusVersion": "programy-2026-11-v2",
+  "corpusVersion": "programy-2026-11-v3",
   "locale": "pl",
   "description": "Katalog świadczeń rodzinnych ZUS. Informacje o programach i sposobie składania wniosków. Indywidualna kwalifikacja wymaga zweryfikowania szczegółowych warunków.",
   "verifiedAt": "2026-11-22",
   "fragmentsFile": "fragments.jsonl",
-  "expectedFragments": 5,
+  "expectedFragments": 8,
   "documents": [
     {
       "id": "katalog-zus",
@@ -35,6 +35,21 @@
       "validFrom": null,
       "validTo": null,
       "versionNote": "Oficjalna instrukcja ZUS dla rodziców, sprawdzona 22 listopada 2026 r."
+    },
+    {
+      "id": "zus-aktywnie-w-zlobku",
+      "title": "Świadczenie aktywnie w żłobku",
+      "shortTitle": "ZUS, Aktywnie w żłobku",
+      "authority": "zus_guidance",
+      "issuer": "Zakład Ubezpieczeń Społecznych",
+      "sourceType": "html",
+      "url": "https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku",
+      "landingUrl": "https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku",
+      "retrievedAt": "2026-11-22",
+      "sourceSha256": "0172b5f64a14112302bd512833954c9af2d331807d2f695c37269330d89fe1e5",
+      "validFrom": null,
+      "validTo": null,
+      "versionNote": "Data publikacji 8 lipca 2024 r. Zapis z 22 listopada 2026 r. Brak wspólnej daty obowiązywania dla wszystkich warunków na stronie."
     }
   ]
 }
