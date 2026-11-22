@@ -88,3 +88,31 @@ Trzy lokalne poprawki zespołu porównano bajt po bajcie w katalogu roboczym i k
 Eksperyment lokalnego wyszukiwania na 897 fragmentach dał indeks 384-wymiarowy. Budowa zajęła 21,31 s, mediana kodowania pytania 4,04 ms, a skanowania 0,11 ms. Na ośmiu pytaniach kalibracyjnych Marty lokalny E5 trafił wszystkie potrzebne grupy w 2/8 dla surowego pytania i 7/8 po przekształceniu go do publicznych pojęć. W tym samym zestawie hybryda Qdrant dała 5/8. Zamrożona próba nowego dokumentu ma osobny wynik. [Porównanie i surowe rankingi](app/tests/fixtures/zusik-acceptance/results/g3-local-embedding.json)
 
 Pierwszy, diagnostyczny przebieg szerszego G7 uruchomiono podczas prac integracyjnych. W jego trakcie zakończył pracę lokalny czytnik. [Ślad diagnostyczny](app/tests/fixtures/zusik-acceptance/results/g7-family-v4.jsonl) pozostaje oddzielnym zapisem awarii środowiska. Dla oceny wydania uruchomiono odrębny proces czytnika i świeże sesje na zamrożonym kandydacie. W końcowym przebiegu żądanie do hostowanego modelu zapasowego prowadziło wyłącznie do nieczynnego portu na tym samym komputerze. Jeśli ślad wskazuje `backend=hosted` i `quoteReason=model_unavailable`, ten napis oznacza próbę wywołania. Cytat pochodzi wtedy z ekstrakcji w aplikacji.
+
+## Decyzja wydaniowa
+
+**Wydanie wstrzymane.** W niezależnym odbiorze na kandydacie `c230d946e4278ff394f5a13ff8c41b5a8f11374c` przeszło 17/68 przypadków po przeglądzie odpowiedzi. Automat podał 18/68. Wszystkie 80 tur wykonano przez API, z czego 69 zakończyło się HTTP 200, a 11 HTTP 503. Mediana czasu całej tury wyniosła 3,780 s, p95 17,184 s. [Pełna ocena, różnice względem automatu i sposób odtworzenia](app/tests/fixtures/zusik-acceptance/results/G7-c230d94.md)
+
+| Kryterium G7 | Zweryfikowany wynik | Próg |
+|---|---:|---:|
+| Wszystkie wymagane podstawy w surowym top 5 | 17/40 | 36/40 |
+| Poprawna odpowiedź z właściwą podstawą | 11/40 | 36/40 |
+| Trafne dopytanie lub odmowa | 3/12 | 12/12 |
+| Cała rozmowa z poprawnym odniesieniem i izolacją | 0/8 | 8/8 |
+| Odpowiednie karty z podstawą w pierwszej trójce | 3/8 | 7/8 |
+
+Przeszły m.in. próby kwarantanny oraz wypłaty po śmierci uprawnionego. Jedna parafraza pytania o areszt zatrzymała się na dopytaniu, a prośba o źródło ostatniej odpowiedzi żłobkowej w innej rozmowie skierowała na paragraf dotyczący urlopu rodzicielskiego. Rozmowa dwóch planów zachowała izolację, ale wcześniejsze dopytanie w pierwszym planie zgubiło przedmiot. Próg pamięci wymaga przejścia wszystkich tur danego przypadku.
+
+| Etap | Stan po próbach |
+|---|---|
+| G0 | Punkt odniesienia, podział odpowiedzialności i podpisany zestaw ocen zapisane. |
+| G1 | Import i wznowienie sprawdzone. Macierz pozostawia sześć jawnych luk w podstawach. |
+| G2 | Żłobek z F5, izolacja i zapis przed transmisją działają. Pełna pamięć kontekstu i korekt pozostaje otwarta. |
+| G3 | Nowy dokument został znaleziony i wycofany. Próg poprawności treści nie został osiągnięty. |
+| G4 | Potwierdzony HTML z oficjalnej strony ZUS, cache, ograniczony zakres adresów i obsługa niedostępności. Zakres interaktywny ELI/PDF i kompletne rozwiązywanie konfliktów między źródłami wymagają dalszego odbioru. |
+| G5 | Dziesięć aktywnych kart i przegląd zmian źródeł działają. Trafność rekomendacji w całych rozmowach pozostaje poniżej progu. |
+| G6 | Trzy sprawy, wolny czat, F5, nowy skan i oryginalny ZAM zweryfikowano w Chrome. Po pomiarze G7 zmiana wyłącznie w CSS (`1f7aa84`) naprawiła zawijanie identyfikatora wersji WWW. [Widok mobilny po poprawce](app/tests/fixtures/zusik-acceptance/results/mobile-official-source.png) |
+| G7 | Czerwona bramka. Dla końcowego G7 lokalny worker ukończył 14 prób, 34 pozostały nieodebrane w budżecie. W 32 turach nie podejmowano próby modelu. |
+| G8 | Czysta instalacja 476 pakietów, lint, typecheck, 392/392 testy, pełna kompilacja 36/36 i powrót do sprawnej pary v3 sprawdzone lokalnie. Brak zielonego zdalnego Preview, promocja do produkcji wstrzymana. |
+
+Zmian treści lub progów nie wprowadzano po to, aby zaliczyć nieudane próby. Wcześniejsze pomiary modeli i test z wyłączonym workerem są [dostępne oddzielnie](app/tests/fixtures/zusik-acceptance/results/model-worker.json). Koszt rzeczywisty nie został podany przez dostawców.
