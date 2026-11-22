@@ -1,10 +1,13 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { usePlan } from "@/features/family/PlanProvider";
+import { planAnswer, sessionLeaveStatus, type LocalPlan, type PlanAnswer } from "@/lib/zusik/plan-answer";
 import { Babelek } from "@/components/mascot/Babelek";
 import { ChatHeader } from "./chat-panel";
 import { conversationInput, type CaseName, type FamilyChatScope } from "@/lib/zusik/conversation";
-import { useZusikCase } from "./use-zusik-case";
+import { newRequestId, useZusikCase } from "./use-zusik-case";
 import { TurnView } from "./turn-view";
 import { Composer } from "./composer";
 import { ChatStarters } from "./scenario-nav";
@@ -15,15 +18,21 @@ export type CaseChatEntry = { id: string; at: string; content: ReactNode };
 
 type EmbeddedControls = { fullscreen: boolean; onFullscreen: () => void; onCollapse: () => void };
 
-export function GeneralConversation({ controls, label = "Rozmowa ogólna", introduction, family }: {
-  controls?: EmbeddedControls; label?: string; introduction?: ReactNode; family?: FamilyChatScope;
-}) {
-  return <CaseChatWindow scenario="ogolna" family={family} label={label} ready busy={false} entries={[]} documents={null}
-    controls={controls} introduction={introduction ?? <p>O jakie świadczenie albo dokument chcesz zapytać?</p>} />;
+type GeneralProps = { controls?: EmbeddedControls; label?: string; introduction?: ReactNode; family?: FamilyChatScope };
+
+export function PlanConversation(props: GeneralProps) {
+  const { plan, isPatched } = usePlan();
+  return <GeneralConversation key={plan.id} {...props} localPlan={{ plan, isPatched, selectedStopId: props.family?.stopId }} />;
 }
 
-export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice, controls, family }: {
+export function GeneralConversation({ controls, label = "Rozmowa ogólna", introduction, family, localPlan }: GeneralProps & { localPlan?: LocalPlan }) {
+  return <CaseChatWindow scenario="ogolna" family={family} localPlan={localPlan} label={label} ready busy={false} entries={[]} documents={null}
+    controls={controls} introduction={introduction ?? <p>{localPlan ? "Możesz zapytać o stan swoich spraw w planie albo o zasady świadczenia." : "O jakie świadczenie albo dokument chcesz zapytać?"}</p>} />;
+}
+
+export function CaseChatWindow({ scenario, label, busy, ready, entries, introduction, children, documents, onMessage, notice, controls, family, localPlan }: {
   scenario: CaseName;
+  localPlan?: LocalPlan;
   family?: FamilyChatScope;
   label: string;
   busy: boolean;
@@ -38,6 +47,9 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
 }) {
   const chat = useZusikCase(scenario, ready, family);
   const pdf = useCaseFile();
+  const [planTurns, setPlanTurns] = useState<{ id: string; at: string; question: string; answer: PlanAnswer }[]>([]);
+  const [readingPlan, setReadingPlan] = useState(false);
+  const planLock = useRef(false);
   const [askNotice, setAskNotice] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [text, setText] = useState("");
@@ -45,7 +57,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   const thread = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
-  const waiting = pdf.active ? !pdf.canAsk : busy || chat.asking || chat.phase !== "ready";
+  const waiting = pdf.active ? !pdf.canAsk : busy || readingPlan || chat.asking || (!localPlan && chat.phase !== "ready");
   useEffect(() => {
     const viewport = thread.current;
     if (!viewport || !content.current) return;
@@ -55,7 +67,16 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
     observer.observe(content.current);
     return () => observer.disconnect();
   }, []);
-  const timeline: CaseChatEntry[] = [...entries, ...pdf.entries, ...chat.conversation.map(item => ({
+  const timeline: CaseChatEntry[] = [...entries, ...pdf.entries, ...planTurns.map(turn => ({
+    id: turn.id, at: turn.at, content: <div className={s.messages} data-plan-turn>
+      <div className={s.userRow}><p className={s.userBubble}>{turn.question}</p></div>
+      <div className={s.aiMessage}>
+        {turn.answer.lines.map((line, i) => <p key={i}>{line}</p>)}
+        <p className={s.muted}>{turn.answer.source}</p>
+        {turn.answer.readLeave && <Link href="/app" className={s.secondaryButton}>Otwórz sprawę urlopu rodzicielskiego</Link>}
+      </div>
+    </div>,
+  })), ...chat.conversation.map(item => ({
     id: item.requestId,
     at: item.createdAt ?? "",
     content: <div data-knowledge-turn className={s.messages}><TurnView item={item} asking={chat.asking} activity={chat.activity}
@@ -67,7 +88,7 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
   }))].sort((a, b) => a.at.localeCompare(b.at));
   const submit = async (draft = text) => {
     const message = draft.trim();
-    if (!message || waiting) return;
+    if (!message || waiting || planLock.current) return;
     setAskNotice(null);
     atBottom.current = true;
     if (pdf.active) {
@@ -75,6 +96,41 @@ export function CaseChatWindow({ scenario, label, busy, ready, entries, introduc
       return;
     }
     const { text: body, reply } = conversationInput(message, scenario);
+    if (localPlan) {
+      const lastLocal = planTurns.at(-1);
+      const previous = lastLocal && timeline.at(-1)?.id === lastLocal.id ? lastLocal.answer : undefined;
+      const answer = planAnswer(body, localPlan, previous);
+      if (answer) {
+        planLock.current = true;
+        setReadingPlan(true);
+        try {
+          if (answer.readLeave) {
+            try {
+              const response = await fetch("/api/zusik/marta", { cache: "no-store", signal: AbortSignal.timeout(3_000) });
+              if (!response.ok) throw new Error("Session read failed");
+              const sessionStatus = sessionLeaveStatus((await response.json()).view);
+              if (sessionStatus) {
+                answer.lines.push(sessionStatus);
+                answer.source += " Stan osobnego wniosku pochodzi z zapisu sprawy urlopowej w tej sesji.";
+              }
+            } catch {
+              answer.lines.push("Dodatkowy stan wniosku w sprawie urlopu rodzicielskiego jest teraz niedostępny.");
+            }
+          }
+          setPlanTurns(turns => [...turns, { id: newRequestId(), at: new Date().toISOString(), question: message, answer }]);
+          setText(current => current.trim() === message ? "" : current);
+        } finally {
+          planLock.current = false;
+          setReadingPlan(false);
+        }
+        return;
+      }
+      if (chat.phase !== "ready") {
+        setAskNotice(chat.phase === "error" ? "Brak połączenia ze źródłami publicznymi. Ponów połączenie z czatem."
+          : "Trwa łączenie ze źródłami publicznymi. Spróbuj ponownie po nawiązaniu połączenia.");
+        return;
+      }
+    }
     const lastAnswer = [...chat.conversation].reverse().find(turn => turn.state === "done" && turn.answer?.status !== "conversation");
     const lastCaseAt = entries.at(-1)?.at ?? "";
     const previousAnswer = /(?:poprzedni|ostatni).*odpowiedzi/iu.test(body);

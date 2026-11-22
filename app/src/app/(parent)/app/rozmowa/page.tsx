@@ -1,5 +1,5 @@
-import { GeneralConversation } from "@/features/chat/case-chat-window";
+import { PlanConversation } from "@/features/chat/case-chat-window";
 
 export default function GeneralChatPage() {
-  return <GeneralConversation />;
+  return <PlanConversation />;
 }

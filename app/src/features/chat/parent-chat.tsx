@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Babelek } from "@/components/mascot/Babelek";
 import type { FamilyChatScope } from "@/lib/zusik/conversation";
-import { GeneralConversation } from "./case-chat-window";
+import { GeneralConversation, PlanConversation } from "./case-chat-window";
 import { usePhone, useVisualViewport } from "./use-chat-viewport";
 import styles from "./parent-chat.module.css";
 
@@ -23,6 +23,7 @@ export function ParentChat({ children, panel: familyPanel, topLauncher = false }
   const opener = useRef<HTMLElement | null>(null);
   const mounted = familyPanel ? Boolean(familyPanel.family) : mode !== "unopened";
   const expanded = familyPanel?.expanded ?? (mode === "split" || mode === "full");
+  const Conversation = familyPanel?.family ? PlanConversation : GeneralConversation;
   const full = expanded && mode === "full";
   const close = () => {
     familyPanel?.close();
@@ -63,7 +64,7 @@ export function ParentChat({ children, panel: familyPanel, topLauncher = false }
         style={phone && viewport ? {height: panelHeight, top: viewport.top + viewport.height - panelHeight, bottom: "auto"} : undefined}
         onCancel={event => { event.preventDefault(); close(); }}
         onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); close(); } }}>
-        {mounted && <GeneralConversation key={JSON.stringify(familyPanel?.family)} family={familyPanel?.family}
+        {mounted && <Conversation key={JSON.stringify(familyPanel?.family)} family={familyPanel?.family}
           label={familyPanel?.label} introduction={familyPanel?.introduction} controls={{
           fullscreen: mode === "full",
           onFullscreen: () => setMode(mode === "full" ? "split" : "full"),
