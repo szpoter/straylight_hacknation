@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { officialCatalogueReader, officialEvidenceReader } from "@/lib/rag/official-fetch";
 import { FAMILY_CATALOG_URL } from "@/lib/rag/official-sections";
-import { answerQuestion } from "@/lib/zusik/ask-service";
+import { answerPublicTurn, answerQuestion } from "@/lib/zusik/ask-service";
 import { loadCorpus } from "@/lib/rag/corpus-fs";
+import type { AskTurn } from "@/lib/zusik/types";
+import type { KnowledgeSearch } from "@/lib/rag/retrieve";
 import { nurseryIntent, runSectionTurn } from "@/lib/zusik/turn-graph";
 
 const sourceId = "zus-aktywnie-w-zlobku";
@@ -41,6 +43,27 @@ describe("official evidence", () => {
     expect(answer.claims[0].text).toContain("rachunek bankowy podmiotu");
     expect(answer.citations[0]).toMatchObject({ sourceId, origin: "official_live" });
   });
+  it("switches the payment recipient on correction and retains the corrected topic on a follow-up", async () => {
+    const corpus = loadCorpus("oferta");
+    const generate = vi.fn((): never => { throw new Error("Unexpected model call"); });
+    const deps = { corpus, selectCorpus:loadCorpus, generate,
+      search:{search: async ({ lexical }: Parameters<KnowledgeSearch["search"]>[0]) =>
+        ({status:"ok" as const,ms:1,hits:(lexical ?? []).map(f=>({...f,score:1}))})} };
+    const history: AskTurn[] = [];
+    for (const [text, id] of [
+      ["Komu ZUS wypłaca świadczenie aktywnie w żłobku?", "zlobek-odbiorca"],
+      ["Nie, chodzi mi o Dobry Start.", "of-dobry-1-2"],
+      ["A na czyje konto?", "of-dobry-1-2"],
+      ["Chodziło mi o żłobek.", "zlobek-odbiorca"],
+    ]) {
+      const {answer} = await answerPublicTurn(deps,text,history);
+      expect(answer.citations.map(c=>c.fragmentId)).toEqual([id]);
+      expect(answer.claims[0].text).toBe(corpus.fragments.get(id)?.sourceText);
+      history.push({...answer,question:text,requestId:id,createdAt:""});
+    }
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it("distinguishes starting nursery from closure, dates and personal calculations", () => {
     expect(nurseryIntent("Od stycznia syn będzie w żłobku. Co warto sprawdzić?")).toBe("care");
     for (const question of ["na czyje konto?", "Zamknęli żłobek, co mogę zrobić?", "Dziecko zacznie żłobek. Ile dostanę?",

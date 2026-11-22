@@ -14,7 +14,8 @@ export const factValueKinds = {
   benefitRequest: "code", deliveryDate: "date", sicknessCoverage: "code", otherCoverage: "code",
   postInsuranceException: "code", maternityPayVariant: "code", payrollRegime: "code",
   monthlyEmployeeDeduction: "money", monthlyPayAfterDeduction: "money", payerInsuredCount: "count",
-  accountArrears: "money", sicknessCertificate: "code", benefitHistory: "code",
+  birthChildCount: "count", prenatalLeaveDays: "count", maternityCourse: "code", childDeathDate: "date",
+  accountArrears: "money", debtSettlement: "code", sicknessCertificate: "code", benefitHistory: "code",
 } as const;
 export const factInput = z.strictObject({
   subjectId: id, field: z.enum(Object.keys(factValueKinds) as [keyof typeof factValueKinds, ...(keyof typeof factValueKinds)[]]),

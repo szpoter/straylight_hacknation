@@ -50,3 +50,32 @@ it('extends the calendar from actual hospital stays and shifts the start of pare
   expect(priceMaternityPeriod(scenario, { ...period, kind: 'rodzicielski', from: '2026-12-03', to: '2026-12-09' })).toMatchObject({ status: 'calculated' });
   expect(priceMaternityPeriod({ ...scenario, hospitalCertificate: { ...hospitalCertificate, children: [] } }, period)).toMatchObject({ status: 'needs_review' });
 });
+
+it('checks the birthday itself and professional foster care separately from ordinary adoption', () => {
+  const period = { parent: 'A', kind: 'na-warunkach', from: input.date, to: input.date } as const;
+  expect(priceMaternityPeriod({ ...input, event: 'adoption', childBirthDate: '2012-06-25' }, period).status).toBe('needs_review');
+  expect(priceMaternityPeriod({ ...input, event: 'foster', childBirthDate: '2024-01-01', professionalFoster: true }, period).status).toBe('needs_review');
+  expect(priceMaternityPeriod({ ...input, event: 'adoption', children: 2, childBirthDate: '2024-01-01' }, period).status).toBe('calculated');
+});
+
+it('prices work at the employer granting leave, changed fractions and a separately specified extension', () => {
+  const start = '2026-11-12';
+  const period = { parent: 'A', kind: 'rodzicielski', from: start, to: '2026-11-30' } as const;
+  const work = { leaveEmployer: 'P', intervals: [
+    { from: start, to: '2026-11-18', fraction: 0.25, employer: 'P' },
+    { from: '2026-11-19', to: '2026-11-25', fraction: 0.5, employer: 'P' },
+  ], extension: { fraction: 0, employer: 'P' } };
+  const scenario = { ...input, parentalWeeksA: 2, parentalWork: { A: work } };
+  expect(priceMaternityPeriod(scenario, period)).toMatchObject({ status: 'calculated', segments: [
+    { days: 7, dailyGrosze: 9060 }, { days: 7, dailyGrosze: 6040 }, { days: 5, dailyGrosze: 12081 },
+  ] });
+  const external = { ...work, intervals: [{ from: start, to: '2026-11-25', employer: 'Q', fraction: 0.75 }] };
+  expect(priceMaternityPeriod({ ...scenario, parentalWork: { A: external } }, { ...period, to: '2026-11-25' })).toMatchObject({ status: 'calculated', segments: [{ days: 14, dailyGrosze: 12081 }] });
+  expect(priceMaternityPeriod({ ...scenario, parentalWork: { A: { ...external, leaveEmployer: 'Q' } } }, period).status).toBe('needs_review');
+});
+
+it('prices a partial overlap for two parents using the second person’s own basis', () => {
+  const scenario = { ...input, parentB: { ...input.parentA, basis: { kind: 'known' as const, amount: 6000 } }, parentalWeeksA: 2, parentalWeeksB: 2, parentalStarts: { B: '2026-11-19' } };
+  const period = { parent: 'B', kind: 'rodzicielski', from: '2026-11-19', to: '2026-12-02' } as const;
+  expect(priceMaternityPeriod(scenario, period)).toMatchObject({ status: 'calculated', grossAmountGrosze: 196000, segments: [{ days: 12, dailyGrosze: 14000 }, { days: 2, dailyGrosze: 14000 }] });
+});

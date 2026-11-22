@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { publicQuestion } from "@/lib/rag/public-query";
+import { routeCaseQuestion } from "@/lib/zusik/v1/intent";
 import { chatStarters } from "@/lib/zusik/conversation";
 import type { CaseFile, EvidenceFact, FactInput, Patch } from "@/lib/zusik/memory/contract";
 import { ApiError, caseApi, loadCase, type AssessmentInput, type CaseView, type MessageInput } from "./case-api";
 import { ChatHeader } from "./chat-panel";
 import { findCasePassages } from "./find-case-passages";
+import { clearCaseReadProgress } from "./case-read-progress";
 import { Composer } from "./composer";
 import { ChatStarters } from "./scenario-nav";
 import { DecisionCard, DocumentReview, Evidence, FactForm, labels, valueLabel, type FactDraft, type LocalPdf } from "./case-review";
@@ -22,6 +23,7 @@ export function ImportConversation() {
   const createKey = useRef("");
   const [history, setHistory] = useState<CaseFile[]>([]);
   const [draft, setDraft] = useState("");
+  const [inFlightQuestion, setInFlightQuestion] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(true);
   const locked = useRef(true);
@@ -35,6 +37,9 @@ export function ImportConversation() {
   const [subject, setSubject] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [progress, setProgress] = useState("");
+  const [reading, setReading] = useState(false);
+  const readController = useRef<AbortController | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [lastChange, setLastChange] = useState("");
   const textarea = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -81,7 +86,7 @@ export function ImportConversation() {
         setRetry(() => work);
         setNotice(error instanceof ApiError && error.status === 422 ? "Sprawdź dane. Serwer nie przyjął tej zmiany." : "Nie udało się zakończyć operacji. Możesz ponowić próbę.");
       }
-    } finally { locked.current = false; setBusy(false); }
+    } finally { locked.current = false; setBusy(false); setInFlightQuestion(""); }
   }, [restore]);
   useEffect(() => {
     const controller = new AbortController();
@@ -115,23 +120,18 @@ export function ImportConversation() {
   function send(text: string) {
     const question = text.trim();
     if (!question || locked.current) return;
-    const last = view?.assessments.at(-1);
-    if (/korekt|popraw|jednak/iu.test(question) && view?.facts.length) {
-      setNotice("Wybierz „Popraw” przy polu i okresie, którego dotyczy zmiana."); return;
-    }
-    if (/gdyby|hipotetycz/iu.test(question)) {
-      setNotice("Własny wariant możesz policzyć w kalkulatorze. Zachowa on odrębne dane."); return;
-    }
-    const starter = chatStarters.find(item => item.prompt === question);
-    const publicFollowUp = /^(?:skąd to wiesz|pokaż źródło)[?!.]*$/iu.test(question) ? "Skąd to wiesz?" : null;
-    const help = /^(?:co umiesz|jak możesz mi pomóc)[?!.]*$/iu.test(question) ? "Co umiesz?" : null;
-    const projected = starter?.prompt ?? help ?? publicFollowUp ?? publicQuestion(question)?.question;
-    const input: MessageInput = (view?.facts.length && /wynagrodz|zarob|pensj/iu.test(question) && !/skąd|dlaczego/iu.test(question)) ? { intent: "read_context", topic: "monthlyGrossPay", subjectId: subject || view.facts.find(f => f.fact.field === "monthlyGrossPay")?.fact.subjectId } : last && /skąd|dlaczego|dowód|źródł/iu.test(question) ? { intent: "explain_result", assessmentId: last.id } :
-      projected && !view?.documents.length ? { intent: "public_question", publicQuestion: projected } : { intent: "ask_case" };
+    const routed = routeCaseQuestion(question, {
+      facts: view?.facts ?? [], subjectId: subject || undefined, lastMessage: view?.messages.at(-1),
+      assessmentId: view?.assessments.at(-1)?.id, hasDocuments: Boolean(view?.documents.length),
+    });
+    if ("clarify" in routed) { setNotice(routed.clarify); return; }
+    if ("correction" in routed) { setNotice("Wybierz „Popraw” przy polu i okresie, którego dotyczy zmiana."); return; }
+    const input = routed.input;
     const key = id();
     sticky.current = true;
     setDraft(question);
     void run(async () => {
+      setInFlightQuestion(question);
       const file = await current();
       const result = await caseApi.message(file.id, input, key);
       setOriginals(prev => new Map(prev).set(result.data.id, question));
@@ -141,6 +141,7 @@ export function ImportConversation() {
   }
   function attach(selected: File, fresh = false) {
     if (locked.current) return;
+    if (selected.type && selected.type !== "application/pdf") { setNotice("Wybierz dokument PDF."); return; }
     const startKey = id(), docKey = id(), messageKey = id();
     const question = draft.trim();
     let file: CaseFile | null = null;
@@ -152,23 +153,32 @@ export function ImportConversation() {
         active.current = file; sessionStorage.setItem("zusik.activeCase", file.id);
         window.history.replaceState(null, "", "?sprawa=" + encodeURIComponent(file.id));
         setView(null); setForm(null); setLastChange(""); setOriginals(new Map()); setLocal(new Map());
+        urls.current.forEach(url => URL.revokeObjectURL(url)); urls.current.clear();
         setSubject(""); setAsOf(""); const created = file; setHistory(items => [created, ...items]);
       }
       file ??= await current();
       if (!opened) {
         const { readCaseDocument } = await import("./read-case-pdf");
+        const readAbort = new AbortController();
+        readController.current = readAbort; setReading(true);
         try {
           const signal = lifecycle.current?.signal;
           if (!signal || signal.aborted) return;
-          const read = await readCaseDocument(selected, { caseId: file.id, signal, onProgress: setProgress });
+          const read = await readCaseDocument(selected, { caseId: file.id, signal: AbortSignal.any([signal, readAbort.signal]), onProgress: setProgress });
           const url = URL.createObjectURL(selected.slice(0, selected.size, "application/pdf")); urls.current.add(url);
           opened = { url, name: selected.name, read };
         } catch {
+          if (readAbort.signal.aborted) {
+            await clearCaseReadProgress(file.id).catch(() => undefined);
+            setProgress(""); setPendingFile(null); setNotice("Anulowano odczyt pliku."); return;
+          }
           setProgress("Nie udało się odczytać PDF. Wybierz czytelny plik do 20 MB, bez hasła."); setPendingFile(null); return;
-        }
+        } finally { readController.current = null; setReading(false); }
       }
       const pdf = opened;
       const metadata = pdf.read.metadata;
+      const replaced = local.get(metadata.clientDocumentId);
+      if (replaced && replaced.url !== pdf.url) { URL.revokeObjectURL(replaced.url); urls.current.delete(replaced.url); }
       setLocal(prev => new Map(prev).set(metadata.clientDocumentId, pdf));
       existing ??= (await caseApi.documents(file.id)).some(d => d.metadata.clientDocumentId === metadata.clientDocumentId);
       if (!existing) await caseApi.register(file.id, metadata, docKey);
@@ -179,6 +189,16 @@ export function ImportConversation() {
       }
       setView(await loadCase(file.id)); setProgress(""); setPendingFile(null);
       if (question) setDraft(prev => prev.trim() === question ? "" : prev);
+    });
+  }
+  function erase() {
+    const caseEtag = view?.caseEtag;
+    if (!view || !caseEtag) return;
+    void run(async () => {
+      await caseApi.erase(view.file.id, caseEtag);
+      await clearCaseReadProgress(view.file.id).catch(() => undefined);
+      sessionStorage.removeItem("zusik.activeCase");
+      location.replace("?nowa=1");
     });
   }
   function pick(selected: File) {
@@ -246,7 +266,10 @@ export function ImportConversation() {
       <details className={s.caseHistory}><summary>Historia rozmów</summary>
         <a href="?nowa=1">Nowa rozmowa</a>
         {history.map(c => <a key={c.id} href={"?sprawa=" + encodeURIComponent(c.id)}>Sprawa z {new Date(c.createdAt).toLocaleString("pl-PL")} · {c.id.slice(-6)}</a>)}
-        <a href="?historia=1">Wcześniejsze rozmowy</a></details>
+        <a href="?historia=1">Wcześniejsze rozmowy</a>
+        {view && (deleting ? <div><p>Usunąć tę sprawę wraz z jej wiadomościami, ocenami i dokumentami?</p>
+          <button disabled={busy} onClick={erase}>Tak, usuń sprawę</button> <button onClick={() => setDeleting(false)}>Anuluj</button></div>
+          : <button disabled={busy} onClick={() => setDeleting(true)}>Usuń tę sprawę</button>)}</details>
       <div ref={thread} className={s.thread} onScroll={e => { const el = e.currentTarget; sticky.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40; }}>
         <div className={s.threadInner}><div className={s.messages} role="log" aria-label="Przebieg rozmowy">
           <p>O jakie świadczenie albo dokument chcesz zapytać?</p>
@@ -261,6 +284,7 @@ export function ImportConversation() {
               <Evidence citations={m.citations} documents={view.documents} local={local} />
               {m.input.intent === "public_question" && m.input.publicQuestion === chatStarters[1].prompt && <a href="/app/kalkulator" target="_blank" rel="noreferrer">Otwórz kalkulator dla swojej sprawy</a>}
             </div></div>)}
+          {inFlightQuestion && <div className={s.userRow}><p className={s.userBubble}>{inFlightQuestion}</p></div>}
           {view && <fieldset disabled={busy || !!retry} className={s.caseActions}>
             {view.documents.map(doc => {
               const pdf = local.get(doc.metadata.clientDocumentId);
@@ -278,7 +302,7 @@ export function ImportConversation() {
             })}
             {view.facts.map(f => <div key={f.factId} className={s.aiMessage}><strong>{labels[f.fact.field]} · {valueLabel(f.fact.value)}</strong>
               <p>{f.fact.subjectId} · {f.fact.validFrom ?? f.fact.asOf}{f.fact.validTo && " – " + f.fact.validTo} · wersja {f.version}</p>
-              <p>{f.verification === "disputed" ? "Sprzeczne dane" : f.verification === "withdrawn" ? "Wycofano" : f.fact.source.kind === "document" ? "Z dokumentu" : "Deklaracja w rozmowie"}</p>
+              <p>{f.verification === "disputed" ? "Sprzeczne dane" : f.verification === "withdrawn" ? "Wycofano" : f.fact.source.kind === "document" ? "Z dokumentu" : f.fact.source.kind === "simulated_zus" ? "Symulowane konto ZUS" : f.fact.source.kind === "workflow" ? "Z przebiegu sprawy" : "Deklaracja w rozmowie"}</p>
               {f.fact.source.kind === "document" && <Evidence citations={[{ kind: "document", ref: f.fact.source.referenceId, version: String(f.version), page: f.fact.source.page }]} documents={view.documents} local={local} />}
               <button className={s.secondaryButton} onClick={() => setForm({ fact: f.fact, previous: f })}>Popraw</button></div>)}
             {view.proposals.filter(p => p.status === "pending").map(p => <div key={p.id} className={s.aiMessage}>Proponowana wartość · {labels[p.fact.field]} · {valueLabel(p.fact.value)} · {p.fact.subjectId} · {p.fact.validFrom ?? p.fact.asOf}
@@ -286,7 +310,7 @@ export function ImportConversation() {
             {lastChange && <p role="status">{lastChange}</p>}
             {form ? <FactForm key={form === "new" ? "new" : JSON.stringify(form)} draft={form === "new" ? undefined : form} save={save} cancel={() => setForm(null)} />
               : <button className={s.secondaryButton} onClick={() => setForm("new")}>Podaj fakt do sprawy</button>}
-            {view.assessments.map(a => <DecisionCard key={a.id} assessment={a} historical={a.stale || a.input.profileRevision !== view.profile.revision || a.input.caseRevision !== view.file.revision} documents={view.documents} local={local} />)}
+            {view.assessments.map((a, index) => <DecisionCard prior={view.assessments.slice(0, index)} key={a.id} assessment={a} historical={a.stale || a.input.profileRevision !== view.profile.revision || a.input.caseRevision !== view.file.revision} documents={view.documents} local={local} />)}
             {view.profile.subjects.length > 0 && <form className={s.reviewForm} onSubmit={e => { e.preventDefault(); assess(); }}>
               <label>Osoba do oceny<select required value={subject} onChange={e => setSubject(e.target.value)}><option value="">Wybierz osobę</option>{view.profile.subjects.map(v => <option key={v}>{v}</option>)}</select></label>
               <label>Świadczenie<select value={benefit} onChange={e => setBenefit(e.target.value)}><option value="maternity">Zasiłek macierzyński</option><option value="paternity">Za okres ojcowski</option><option value="sickness">Zasiłek chorobowy</option></select></label>
@@ -295,8 +319,8 @@ export function ImportConversation() {
           </fieldset>}
         </div></div></div>
       <div className={s.chatBottom}>
+        {reading && <button className={s.secondaryButton} onClick={() => readController.current?.abort()}>Anuluj odczyt</button>}
         {!view && !progress && <ChatStarters disabled={busy || !!retry} onSelect={send} />}
-        {notice.includes("kalkulatorze") && <a href="/app/kalkulator" target="_blank" rel="noreferrer">Otwórz symulację</a>}
         {retry && !busy && <button className={s.secondaryButton} onClick={() => void run(retry)}>Ponów próbę</button>}
         {retry && !busy && <button className={s.secondaryButton} onClick={() => { setRetry(null); setNotice(""); setProgress(""); }}>Wróć do edycji</button>}
         {pendingFile && !busy && <div className={s.row8}><button className={s.secondaryButton} onClick={() => attach(pendingFile)}>Uzupełnij tę sprawę</button>

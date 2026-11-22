@@ -45,3 +45,51 @@ describe("review of local evidence", () => {
       .toMatchObject({ role: "certificate", reason: "ambiguous_field", candidates: [] });
   });
 });
+
+it("requires an explicit single check in the insurance coverage group", () => {
+  const read = (choices: string) => analyzeCasePage(id, 1, "Potwierdzenie ubezpieczenia\nStan na dzień: 25.06.2026\nUbezpieczenie chorobowe: " + choices, "pdf_text");
+  expect(read("[ ] tak [X] nie").candidates[0]).toMatchObject({ field: "sicknessCoverage", value: { code: "excluded" }, asOf: "2026-06-25" });
+  expect(read("☑ tak ☐ nie").candidates[0].value).toEqual({ kind: "code", code: "covered" });
+  for (const choices of ["[ ] tak [ ] nie", "[x] tak [x] nie", ""]) {
+    expect(read(choices)).toMatchObject({ candidates: [], reason: "ambiguous_field" });
+  }
+});
+
+it("keeps a reference to Z-3 inside a decision continuation from opening a new document", () => {
+  const prev = analyzeCasePage(id, 2, "Decyzja końcowa", "pdf_text");
+  const continuation = analyzeCasePage(id, 3, "Na podstawie Z-3 sporządzono wyliczenie.\nMiesiąc | Brutto\n2026-02 | 99999,99", "pdf_text", prev);
+  expect(continuation).toMatchObject({ role: "decision", status: "excluded", candidates: [] });
+});
+
+describe("extended v1 evidence", () => {
+  function confirmed(text: string) {
+    const page = analyzeCasePage(id, 1, text, "pdf_text");
+    const source = { ...doc, pages: [page], metadata: { clientDocumentId: id, kind: page.kind, pages: 1, pageKinds: [page.kind] } };
+    const entry = { id: "server-document", metadata: source.metadata };
+    return page.candidates.map(candidate => confirmCaseCandidate(source, entry, candidate, scope));
+  }
+  it("sends dated, typed maternity fields with the certificate page", () => {
+    const facts = confirmed(["Zaświadczenie o porodzie", "Data porodu: 01.02.2026", "Liczba dzieci z tego porodu: 1",
+      "Liczba dni urlopu macierzyńskiego przed porodem: 0", "Przebieg urlopu macierzyńskiego: zgon jedynego dziecka z tego porodu",
+      "Data zgonu dziecka: 16.02.2026"].join("\n"));
+    expect(facts.map(f => [f.field, f.value])).toEqual([
+      ["deliveryDate", { kind: "date", date: "2026-02-01" }], ["birthChildCount", { kind: "count", count: 1 }],
+      ["prenatalLeaveDays", { kind: "count", count: 0 }], ["maternityCourse", { kind: "code", code: "single_child_death" }],
+      ["childDeathDate", { kind: "date", date: "2026-02-16" }],
+    ]);
+    for (const fact of facts) expect(factInput.parse(fact)).toMatchObject({ asOf: "2026-02-01", source: { kind: "document", referenceId: "server-document", page: 1 } });
+  });
+  it("emits the full settlement date or explicit unpaid status at the certified date", () => {
+    const header = "Rozliczenie konta płatnika\nStan na dzień: 01.05.2026\n";
+    expect(confirmed(header + "Zadłużenie z tytułu składek: 100,10 zł\nStan spłaty zadłużenia: niespłacone").map(f => f.value)).toEqual([
+      { kind: "money", grosze: 10010, currency: "PLN" }, { kind: "code", code: "unpaid" },
+    ]);
+    expect(confirmed(header + "Data pełnej spłaty zadłużenia: 28.04.2026")[0]).toMatchObject({
+      field: "debtSettlement", asOf: "2026-05-01", value: { kind: "code", code: "2026-04-28" },
+    });
+    for (const row of ["Data pełnej spłaty zadłużenia: 02.05.2026", "Data częściowej spłaty: 28.04.2026", "Stan spłaty zadłużenia: brak danych"]) {
+      expect(confirmed(header + row)).toEqual([]);
+    }
+    expect(confirmed("Rozliczenie konta płatnika\nStan spłaty zadłużenia: niespłacone")).toEqual([]);
+  });
+});

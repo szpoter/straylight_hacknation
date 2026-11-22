@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { factInput, profilePatch, type FactInput } from "../src/lib/zusik/memory/contract";
+import { factInput, factValueKinds, profilePatch, type FactInput } from "../src/lib/zusik/memory/contract";
 
 const declared: FactInput = { subjectId: "person-A", field: "monthlyGrossPay",
   value: { kind: "money", currency: "PLN", grosze: 600000 }, titleRef: "title-A", payerRef: "payer-P",
@@ -36,4 +36,20 @@ it("admits the scoped underwriting and payroll fields consumed by the maternity 
     expect(factInput.parse(fact)).toEqual(fact);
     expect(factInput.safeParse({ ...fact, value: { kind: "count", count: -1 } }).success).toBe(false);
   }
+});
+
+it.each([
+  ["birthChildCount", {kind:"count",count:2}],
+  ["prenatalLeaveDays", {kind:"count",count:0}],
+  ["maternityCourse", {kind:"code",code:"ordinary_uninterrupted"}],
+  ["childDeathDate", {kind:"date",date:"2026-06-26"}],
+  ["debtSettlement", {kind:"code",code:"unpaid"}],
+  ["debtSettlement", {kind:"code",code:"2026-05-19"}],
+  ["monthlyContributionBasis", {kind:"money",grosze:400000,currency:"PLN"}],
+  ["accountArrears", {kind:"money",grosze:0,currency:"PLN"}],
+] as const)("validates the value kind for %s", (field,value) => {
+  const fact={...document,field,value};
+  expect(factValueKinds[field]).toBe(value.kind);
+  expect(factInput.parse(fact)).toEqual(fact);
+  expect(factInput.safeParse({...fact,value:value.kind==="money"?{kind:"count",count:0}:declared.value}).success).toBe(false);
 });

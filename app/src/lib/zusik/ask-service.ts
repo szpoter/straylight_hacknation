@@ -5,9 +5,9 @@ import type { runPublicModelTask } from "../rag/local-queue";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { corpusFollowUp } from "../rag/corpus-search";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
-import { nurseryIntent, runSectionTurn } from "./turn-graph";
+import { nurseryIntent, runSectionTurn, schoolRecipientIntent } from "./turn-graph";
 import { relevantFragment } from "../rag/relevance";
-import { extractiveAnswer, needsStatutoryText, withSourceException } from "../rag/excerpt";
+import { extractiveAnswer, needsStatutoryText, reviewedSourceIds, withSourceException } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
@@ -204,8 +204,14 @@ export async function answerQuestion(
   trace.expanded = projected.corpus === "marta" && !projected.fragmentId ? expandQuery(sanitized) : null;
   trace.calls.qdrant += 1;
   onProgress?.("Szukam w źródłach urzędowych…");
+  const exact = projected.fragmentId ? [projected.fragmentId] : reviewedSourceIds(projected);
+  const lexical = projected.lexical ?? exact.flatMap(id => {
+    const f = corpus.fragments.get(id);
+    return f && isValidOn(corpus, f, asOf)
+      ? [{ logicalId:id, fragmentSha256:f.fragmentSha256, corpusVersion:version }] : [];
+  });
   const found = await deps.search.search({ query: trace.sanitized, expanded: trace.expanded, corpusVersion: version,
-    limit: TOP_K, deadlineMs: deps.deadlineMs, ...(projected.lexical?.length ? { lexical: projected.lexical, asOf } : {}) });
+    limit: TOP_K, deadlineMs: deps.deadlineMs, ...(lexical.length ? { lexical, asOf } : {}) });
   trace.search = found.status;
   if (found.status !== "ok") return missingEvidence(plain("unavailable", UNAVAILABLE_MESSAGE));
   trace.vectorHits = found.hits;
@@ -222,7 +228,9 @@ export async function answerQuestion(
     const fragment = corpus.fragments.get(id);
     return fragment && relevant(fragment);
   });
-  const fragments = rawSubjectHit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
+  const confirmed = new Set([...(found.rankings?.lexical ?? []), ...evidence.vectorIds]);
+  const missingReviewedUnit = found.rankings && exact.some(id => !confirmed.has(id));
+  const fragments = rawSubjectHit && !missingReviewedUnit ? evidence.items.map((i) => i.fragment).filter(relevant) : [];
   trace.evidenceIds = fragments.map((f) => f.logicalId);
   if (fragments.length === 0) {
     const { answer } = validateAnswer(corpus, [], { status: "insufficient_evidence", message: "", claims: [] });
@@ -279,11 +287,11 @@ export async function answerQuestion(
 
 export async function answerPublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
   const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
-  const section = nurseryIntent(text, previous);
+  const section = schoolRecipientIntent(text, previous) ? "schoolRecipient" : nurseryIntent(text, previous);
   if (section && deps.selectCorpus) {
     const { answer, result: resolved, query } = await runSectionTurn(section, deps.selectCorpus("oferta"),
       deps.search, (deps.asOf ?? today)(), deps.readOfficial ?? fetchOfficialEvidence, onProgress, deps.deadlineMs);
-    const trace = newTrace(query, section === "recipient" && !nurseryIntent(text) ? previous?.requestId ?? null : null);
+    const trace = newTrace(query, section !== "care" && !nurseryIntent(text) && !schoolRecipientIntent(text) ? previous?.requestId ?? null : null);
     trace.calls.qdrant = 1;
     trace.vectorHits = resolved.hits;
     trace.vectorIds = resolved.hits.map(hit => hit.logicalId);

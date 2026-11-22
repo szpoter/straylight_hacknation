@@ -11,7 +11,8 @@ export type CandidateChoice = { document: LocalCaseDocument; registered: CaseDoc
 export type FactDraft = { fact: FactInput; previous?: EvidenceFact; choice?: CandidateChoice };
 const currency = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" });
 export const labels: Record<FactInput["field"], string> = {
-  accountArrears: "Zadłużenie składkowe", sicknessCertificate: "Zwolnienie lekarskie", benefitHistory: "Historia świadczeń",
+  birthChildCount: "Liczba urodzonych dzieci", prenatalLeaveDays: "Dni urlopu przed porodem", maternityCourse: "Przebieg urlopu macierzyńskiego",
+  childDeathDate: "Data śmierci dziecka", debtSettlement: "Rozliczenie zadłużenia", accountArrears: "Zadłużenie składkowe", sicknessCertificate: "Zwolnienie lekarskie", benefitHistory: "Historia świadczeń",
   birthDate: "Data urodzenia dziecka", insuranceTitle: "Tytuł ubezpieczenia", employerRef: "Płatnik",
   monthlyGrossPay: "Wynagrodzenie brutto", monthlyContributionBasis: "Podstawa składek", submissionStatus: "Status wniosku", benefitRequest: "Wnioskowane świadczenie",
   deliveryDate: "Data porodu", sicknessCoverage: "Ubezpieczenie chorobowe", otherCoverage: "Inny tytuł ubezpieczenia",
@@ -38,13 +39,24 @@ export function Evidence({ citations, documents, local }: { citations: Citation[
 }
 const statusText = { eligible: "Przysługuje", ineligible: "Nie przysługuje", needs_information: "Brakuje danych", needs_review: "Wymaga sprawdzenia", unsupported: "Poza zakresem reguły" };
 const benefits: Record<string, string> = { maternity: "Zasiłek macierzyński", paternity: "Okres ojcowski", sickness: "Zasiłek chorobowy", parental: "Okres rodzicielski" };
-export function DecisionCard({ assessment, historical, documents, local }: { assessment: Assessment; historical: boolean; documents: CaseDocument[]; local: Map<string, LocalPdf> }) {
+export function DecisionCard({ assessment, historical, documents, local, prior }: { assessment: Assessment; historical: boolean; documents: CaseDocument[]; local: Map<string, LocalPdf>; prior: Assessment[] }) {
+  function changedAmount(d: Assessment["decisions"][number]) {
+    if (d.grossAmountGrosze === undefined) return null;
+    const previous = prior.filter(a => a.input.asOf === assessment.input.asOf).flatMap(a => a.decisions).findLast(old =>
+      old.benefit === d.benefit && old.subjectId === d.subjectId && old.from === d.from && old.to === d.to &&
+      old.titleRef === d.titleRef && old.payerRef === d.payerRef && old.amountPeriod === d.amountPeriod && old.grossAmountGrosze !== undefined);
+    const old = previous?.grossAmountGrosze;
+    if (old === undefined || old === d.grossAmountGrosze) return null;
+    const delta = d.grossAmountGrosze - old;
+    return <p>Zmiana kwoty: {currency.format(old / 100)} → {currency.format(d.grossAmountGrosze / 100)} ({delta > 0 ? "+" : ""}{currency.format(delta / 100)}).</p>;
+  }
   return <section className={s.aiMessage} aria-label="Ocena sprawy">
     <strong>{historical ? "Ocena historyczna" : "Ocena sprawy"} · wersja profilu {assessment.input.profileRevision}</strong>
     {assessment.decisions.map((d, i) => <section key={i}><strong>{benefits[d.benefit] ?? d.benefit} · {d.subjectId}</strong>
       <p>{statusText[d.status]}{d.from && " · od " + d.from}{d.to && " do " + d.to}</p>
       <p>Kwota: {d.amountStatus === "calculated" && typeof d.grossAmountGrosze === "number" ? valueLabel({ kind: "money", grosze: d.grossAmountGrosze, currency: "PLN" }) + " brutto " + ({ monthly: "miesięcznie", daily: "dziennie", total: "za okres" }[d.amountPeriod ?? "total"])
         : d.amountStatus === "not_applicable" ? "nie dotyczy" : d.amountStatus === "calculated" ? "brak wartości" : statusText[d.amountStatus]}</p>
+      {changedAmount(d)}
       {d.needed?.map(n => <p key={n.field}>{n.request}</p>)}
       <details><summary>Dlaczego taki wynik?</summary><p>{d.reasonCode} · reguła {assessment.ruleVersion}</p>
         {d.segments?.map(part => <p key={part.from}>{part.from} – {part.to} · podstawa {currency.format(part.basisGrosze / 100)} · {part.ratePct}% · {part.days} dni × {currency.format(part.dailyGrosze / 100)} = {currency.format(part.grossAmountGrosze / 100)} brutto</p>)}

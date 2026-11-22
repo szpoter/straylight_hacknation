@@ -84,3 +84,8 @@ describe("private chat PDF import", () => {
     expect(pdfjs).not.toHaveBeenCalled();
   });
 });
+
+it("rejects a small encoded PNG claiming 400 megapixels before decode", async () => {
+  const bytes = new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,78,32,0,0,78,32]);
+  await expect(readCaseDocument(new File([bytes], "scan.png"), { caseId: "new", signal: new AbortController().signal, onProgress() {} })).rejects.toThrow("megapikseli");
+});

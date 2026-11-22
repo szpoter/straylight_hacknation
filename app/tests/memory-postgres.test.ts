@@ -151,7 +151,15 @@ describe.skipIf(!db)("memory repository on PostgreSQL", () => {
     await withMemoryTransaction(db,owner,(_,c)=>c.query("update zusik.v1_profiles set expires_at=now() - interval '1 day' where owner_session=$1 and id=$2",[owner,profileId]));
     const maintenance=new Pool({host:socket,port:Number(process.env.MEMORY_TEST_PORT??5432),database:"memory_b_test",user:"memory_test"});
     try {
-      expect(await purgeExpiredProfiles(maintenance)).toBeGreaterThan(0);
+      const {rows:[{replay}]}=await maintenance.query("select to_regclass('zusik.v1_requests') is not null as replay");
+      if (replay) {
+        await maintenance.query(`insert into zusik.v1_requests(owner_session,key_hash,fingerprint,expires_at)
+          values ($1,'expired','synthetic',now()-interval '1 second'),($1,'fresh','synthetic',now()+interval '1 day')`,[owner]);
+      }
+      expect(await purgeExpiredProfiles(maintenance)).toBe(1);
+      if (replay) {
+        expect((await maintenance.query("select key_hash from zusik.v1_requests where owner_session=$1",[owner])).rows).toEqual([{key_hash:"fresh"}]);
+      }
       for (const table of ["facts","cases","subjects"]) {
         const {rowCount}=await maintenance.query(`select 1 from zusik.v1_${table} where owner_session=$1 and profile_id=$2`,[owner,profileId]);
         expect(rowCount).toBe(0);

@@ -759,7 +759,7 @@ components:
         type: string
         minLength: 8
         maxLength: 128
-      description: Klucz jednej operacji, powtarzany bez zmian przy ponowieniu.
+      description: Klucz jednej operacji, powtarzany bez zmian przy ponowieniu. Sesja może zapisać 120 nowych operacji na minutę. Ponowienie zapisanego wyniku nie zużywa limitu.
     cursor:
       name: cursor
       in: query
@@ -807,6 +807,11 @@ components:
       - accountArrears
       - sicknessCertificate
       - benefitHistory
+      - birthChildCount
+      - prenatalLeaveDays
+      - maternityCourse
+      - childDeathDate
+      - debtSettlement
     Value:
       oneOf:
       - type: object
@@ -928,6 +933,7 @@ components:
               enum:
               - birthDate
               - deliveryDate
+              - childDeathDate
           required:
           - field
         then:
@@ -968,6 +974,8 @@ components:
               - payrollRegime
               - benefitHistory
               - sicknessCertificate
+              - maternityCourse
+              - debtSettlement
           required:
           - field
         then:
@@ -978,7 +986,7 @@ components:
                   const: code
       - if:
           properties:
-            field: {const: payerInsuredCount}
+            field: {enum: [payerInsuredCount, birthChildCount, prenatalLeaveDays]}
         then:
           properties:
             value:
@@ -1262,12 +1270,25 @@ components:
         intent:
           type: string
           enum:
+          - link_account
+          - read_account
           - public_question
           - read_context
           - declare_fact
           - ask_case
           - explain_result
           - hypothetical
+        basisCaseRevision: {type: integer, minimum: 1}
+        scenario: {type: string, enum: [employment-transition, business-settlement, unavailable]}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        areas:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: {type: string, enum: [insurance, contributions, e_zla, balance, benefits]}
+        titleRef: {type: string, minLength: 1, maxLength: 128}
+        payerRef: {type: string, minLength: 1, maxLength: 128}
         publicTopic:
           type: string
           enum: [nursery_recipient]
@@ -1399,6 +1420,18 @@ components:
         then:
           propertyNames:
             enum: [intent, replyTo, variant, subjectId, validAt, knownAt]
+      - if:
+          properties:
+            intent: {const: link_account}
+        then:
+          required: [subjectId, scenario, basisCaseRevision]
+          propertyNames: {enum: [intent, subjectId, scenario, basisCaseRevision]}
+      - if:
+          properties:
+            intent: {const: read_account}
+        then:
+          required: [subjectId, from, to, areas]
+          propertyNames: {enum: [intent, subjectId, from, to, areas, titleRef, payerRef]}
       description: >-
         Jedna intencja na operację. Serwer akceptuje tylko pola mające znaczenie dla tej intencji i nigdy nie wykorzystuje parametrów
         wariantu do zmiany profilu.
@@ -1409,6 +1442,7 @@ components:
         kind:
           type: string
           enum:
+          - account
           - public_source
           - fact
           - document
@@ -1481,6 +1515,34 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+        account:
+          type: object
+          additionalProperties: false
+          required: [sourceVersion, readAt, facts, coverage]
+          properties:
+            sourceVersion: {type: string}
+            readAt: {type: string, format: date-time}
+            facts:
+              type: array
+              items: {"$ref": "#/components/schemas/FactInput"}
+            coverage:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [area, status, spans]
+                properties:
+                  area: {type: string, enum: [insurance, contributions, e_zla, balance, benefits]}
+                  status: {type: string, enum: [no_register, unavailable, partial, unknown, complete]}
+                  spans:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [from, to]
+                      properties:
+                        from: {type: string, format: date}
+                        to: {type: string, format: date}
         input:
           "$ref": "#/components/schemas/MessageInput"
           description: Zweryfikowana, zminimalizowana postać tury użytkownika do wznowienia kontekstu.
@@ -1548,6 +1610,7 @@ components:
         titleRef: {type: string}
         payerRef: {type: string}
         payer: {type: string, enum: [zus, employer]}
+        paymentStatus: {type: string, enum: [payable, withheld, needs_information, expired]}
         segments:
           type: array
           items:

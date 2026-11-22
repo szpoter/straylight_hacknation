@@ -1,6 +1,6 @@
 import { factInput, type CaseDocument, type DocInput, type FactInput } from "@/lib/zusik/memory/contract";
 
-import { claimFields, documentDay } from "./case-claim-fields";
+import { claimFields, documentDay, documentMoney } from "./case-claim-fields";
 import type { PageLine } from "./case-page-layout";
 
 export type DocumentKind = DocInput["kind"];
@@ -22,20 +22,24 @@ export type LocalCasePage = {
   table?: Column[];
   candidates: EvidenceCandidate[];
 };
-export type LocalCaseDocument = { caseId: string; storageUnavailable?: boolean; metadata: DocInput; pages: LocalCasePage[] };
+export type LocalCaseDocument = { caseId: string; mediaType?: "application/pdf" | "image/jpeg" | "image/png"; storageUnavailable?: boolean; metadata: DocInput; pages: LocalCasePage[] };
 
 function foldLabel(text: string) {
   return text.normalize("NFD").replace(/\p{M}/gu, "").replace(/ł/gi, "l").toLowerCase().trim();
 }
 
+export function containsDecision(text: string) {
+  return /\b(decyzj[ae]|przyznano|odmowiono|odmowa prawa|odmawia(?:m| sie)|przyznaje(?:my| sie)? zasilek|ustalona kwota zasilku|rozstrzygniecie)\b/u.test(foldLabel(text));
+}
+
 function classify(text: string): PageRole | undefined {
-  if (/\b(decyzj[ae]|przyznano|odmowiono|odmowa prawa|odmawia(?:m| sie)|przyznaje(?:my| sie)? zasilek|ustalona kwota zasilku|rozstrzygniecie)\b/u.test(text)) return "decision";
-  if (/\b(?:odpis (?:skrocony |zupelny )?aktu urodzenia|akt urodzenia|zaswiadczenie szpitalne|zaswiadczenie o porodzie|karta urodzenia|postanowienie o (?:przysposobieniu|ustanowieniu pieczy))\b/u.test(text)) return "certificate";
-  if (/\b(?:z[- ]?3[ab]?|zaswiadczenie platnika|zestawienie wynagrodzen|tabela wynagrodzen|lista plac)\b/u.test(text)) return "payroll";
-  if (/\b(?:e[- ]?zla|zaswiadczenie lekarskie)\b/u.test(text)) return "medical_leave";
-  if (/\b(?:potwierdzenie|poswiadczenie|zaswiadczenie) (?:o )?(?:podlegani[au] |okresach )?ubezpiecz/u.test(text)) return "insurance";
-  if (/\b(?:zam|wniosek o (?:wyplate |udzielenie )?(?:zasilek|zasilku|urlop|urlopu))\b/u.test(text)) return "application";
-  if (/\bhistoria (?:wyplat|urlopow|zatrudnienia|zadluzenia)\b/u.test(text)) return "history";
+  if (containsDecision(text)) return "decision";
+  if (/^(?:odpis (?:skrocony |zupelny )?aktu urodzenia|akt urodzenia|zaswiadczenie szpitalne|zaswiadczenie o porodzie|akt zgonu|karta urodzenia|postanowienie o (?:przysposobieniu|ustanowieniu pieczy))\b/mu.test(text)) return "certificate";
+  if (/^(?:z[- ]?3[ab]?|zaswiadczenie platnika|zestawienie wynagrodzen|tabela wynagrodzen|lista plac)\b/mu.test(text)) return "payroll";
+  if (/^(?:e[- ]?zla|zaswiadczenie lekarskie)\b/mu.test(text)) return "medical_leave";
+  if (/^(?:(?:potwierdzenie|poswiadczenie|zaswiadczenie) (?:o )?(?:podlegani[au] |okresach )?ubezpiecz|zaswiadczenie o stanie (?:konta platnika|zadluzenia)|rozliczenie konta platnika)/mu.test(text)) return "insurance";
+  if (/^(?:zam|wniosek o (?:wyplate |udzielenie )?(?:zasilek|zasilku|urlop|urlopu))\b/mu.test(text)) return "application";
+  if (/^historia (?:wyplat|urlopow|zatrudnienia|zadluzenia)\b/mu.test(text)) return "history";
 }
 
 function columns(line: string) {
@@ -49,13 +53,6 @@ function monthScope(value: string) {
   const end = new Date(validFrom + "T00:00:00Z");
   end.setUTCMonth(end.getUTCMonth() + 1, 0);
   return { validFrom, validTo: end.toISOString().slice(0, 10) };
-}
-
-function money(text: string) {
-  const match = /^(\d+|\d{1,3}(?:[ \u00a0]\d{3})+)(?:,(\d{2}))?(?:\s*(?:zl|pln))?$/u.exec(text);
-  if (!match) return;
-  const grosze = Number(match[1].replace(/\s/gu, "")) * 100 + Number(match[2] ?? 0);
-  if (Number.isSafeInteger(grosze)) return { kind: "money", currency: "PLN", grosze } as const;
 }
 
 export function analyzeCasePage(clientDocumentId: string, page: number, text: string, method: LocalCasePage["method"], previous?: LocalCasePage, confidence?: number): LocalCasePage {
@@ -96,7 +93,7 @@ export function analyzeCasePage(clientDocumentId: string, page: number, text: st
     if (!period || cells.length !== table.length) { result.reason = "ambiguous_field"; continue; }
     for (const [column, type] of table.entries()) {
       if (type === "month" || type === "other") continue;
-      const value = money(cells[column]);
+      const value = documentMoney(cells[column]);
       if (value) result.candidates.push({ field: type, value, ...period, locator: { ...locator, column: column + 1 } });
       else result.reason = "ambiguous_field";
     }
@@ -118,7 +115,9 @@ export function confirmCaseCandidate(document: LocalCaseDocument, registered: Ca
   const { locator } = candidate;
   const page = document.pages[locator.page - 1];
   if (document.metadata.clientDocumentId !== registered.metadata.clientDocumentId || locator.clientDocumentId !== registered.metadata.clientDocumentId ||
-      registered.metadata.pages !== document.pages.length || page?.status !== "read" || !page.candidates.includes(candidate)) {
+      registered.metadata.pages !== document.pages.length || page?.status !== "read" ||
+      (registered.metadata.pageKinds && registered.metadata.pageKinds[locator.page - 1] !== page.kind) ||
+      !page.candidates.includes(candidate)) {
     throw new Error("Wybierz pole z zarejestrowanego dokumentu tej sprawy.");
   }
   const { field, value, validFrom, validTo } = candidate;

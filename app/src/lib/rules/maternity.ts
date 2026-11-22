@@ -17,6 +17,8 @@
  * „do weryfikacji”. Kwoty są brutto; podatek to szacunek (osobno, `estimateNet`).
  */
 import { addDays, addMonths, daysBetween, isValidIso } from "./dates";
+import { parentalWorkPeriods, type ParentalWork } from "./parental-work";
+import { paternityWindow } from "./paternity";
 import { hospitalLeaveWeeks, type HospitalCertificate } from "./hospital-stays";
 import { maternityParametersOn } from "./maternity-schedule";
 import { rateOn, type RateKind } from "./rates";
@@ -157,6 +159,8 @@ export type ScenarioInput = {
   zaZyciem: boolean;
   /** Adopcja / rodzina zastępcza: data urodzenia dziecka (limit wieku). */
   childBirthDate?: string;
+  adoptionFinalOn?: string;
+  professionalFoster?: boolean;
   /** Rodzina zastępcza: odroczony obowiązek szkolny (limit 10 lat zamiast 7). */
   schoolDeferred?: boolean;
   /** Urodzenie martwego dziecka (albo zgon przed 8. tygodniem życia): 8 tygodni po porodzie, 100% (KP art. 180¹). */
@@ -184,6 +188,8 @@ export type ScenarioInput = {
   /** Ułamek etatu pracy w czasie urlopu rodzicielskiego (0 – bez pracy, najwyżej 0,5). */
   workA: number;
   workB: number;
+  parentalWork?: Partial<Record<ParentId, ParentalWork>>;
+  parentalStarts?: Partial<Record<ParentId, string>>;
   /** Urlop ojcowski drugiego rodzica: 0, 7 albo 14 dni. */
   paternityDays: number;
   paternityStart?: string;
@@ -490,7 +496,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     const years = input.event === "adoption" ? 14 : input.schoolDeferred ? 10 : 7;
     const limitDay = addMonths(input.childBirthDate, years * 12);
     const available = Math.floor(daysBetween(input.date, limitDay) / 7);
-    if (available < 0) {
+    if (input.date >= limitDay || input.childBirthDate > input.date) {
       errors.push({ text: `Dziecko przekroczyło wiek, do którego przysługuje urlop na warunkach urlopu macierzyńskiego (${years} lat).`, source: "kp183" });
     } else if (available < maternityWeeks) {
       maternityWeeks = Math.max(p.adoptionMinWeeks, available);
@@ -501,6 +507,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
     }
   }
 
+  if (input.event === "foster" && input.professionalFoster) errors.push({ text: "Zawodowej rodzinie zastępczej nie przysługuje ten urlop z tytułu przyjęcia dziecka.", source: "kp183" });
   const weeksBefore = birth ? Math.min(Math.max(Math.round(input.weeksBeforeBirth), 0), p.maxWeeksBeforeBirth) : 0;
   if (stillbirth && !given.childDeathDates) {
     maternityWeeks = weeksBefore + p.stillbirthWeeksAfterBirth;
@@ -590,28 +597,68 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
   const parentalStart = next;
   const capDays = limits.parentalWithWorkMaxWeeks * 7;
   const stretched = (weeks: number, work: number) => Math.min(Math.floor((7 * weeks) / (1 - work)), capDays);
-  if (weeksA > 0) raw.push({ id: "par-A", parent: "A", kind: "rodzicielski", from: parentalStart, days: stretched(weeksA, workA), rate: rateParental, work: workA });
+  function addParental(parent: ParentId, start: string, weeks: number, work: number, rate: RateKind, id: string, note?: string) {
+    if (weeks === 0) return 0;
+    if (!isValidIso(start) || start < parentalStart) {
+      errors.push({ text: "Potwierdź początek rodzicielskiego po zakończeniu poprzedzającego urlopu.", source: "kp182-1a" });
+      return 0;
+    }
+    const record = input.parentalWork?.[parent];
+    let pieces = [{ from: start, days: stretched(weeks, work), work }];
+    if (record) {
+      if ((parent === "A" ? input.parentA : input.parentB)?.title !== "pracownik") {
+        errors.push({ text: "Do wydłużenia urlopu w związku z pracą wymagany jest tytuł pracowniczy.", source: "kp182-1f" });
+        return 0;
+      }
+      try {
+        pieces = parentalWorkPeriods(start, weeks * 7, capDays, record);
+      } catch (issue) {
+        if (!(issue instanceof RangeError)) throw issue;
+        errors.push({ text: "Sprawdź ciągłość pracy, pracodawcę, etat do połowy oraz sposób wykorzystania wydłużenia.", source: "kp182-1f" });
+        return 0;
+      }
+    }
+    if (input.parentalStarts?.[parent]) {
+      const childDate = birth ? input.date : input.childBirthDate;
+      const lastDay = childDate && (birth ? (Number(childDate.slice(0, 4)) + 6) + "-12-31"
+        : addDays(addMonths(childDate, 12 * (input.event === "adoption" ? 14 : input.schoolDeferred ? 10 : 7)), -1));
+      if (!lastDay || pieces.some(piece => addDays(piece.from, piece.days - 1) > lastDay)) {
+        errors.push({ text: "Sprawdź granicę wieku dziecka dla wnioskowanych dat rodzicielskiego.", source: birth ? "kp182-1a" : "kp183" });
+        return 0;
+      }
+    }
+    for (const [i, piece] of pieces.entries()) raw.push({ ...piece, id: i ? id + "-work-" + i : id, parent, kind: "rodzicielski", rate, note });
+    return sum(pieces.map(piece => piece.days));
+  }
+  const fromA = input.parentalStarts?.A ?? parentalStart;
+  const daysA = addParental("A", fromA, weeksA, workA, rateParental, "par-A");
   if (weeksB > 0) {
-    const fromB = input.parentalOrder === "together" || weeksA === 0 ? parentalStart : addDays(parentalStart, stretched(weeksA, workA));
-    // 9 tygodni drugiego rodzica zawsze po 70% (UZ art. 31 ust. 3f); w wariancie 100/70 i tak 70%.
-    const exclusive = Math.min(weeksB, limits.exclusiveWeeks);
-    const exclusiveDays = stretched(exclusive, workB);
-    raw.push({ id: "par-B", parent: "B", kind: "rodzicielski", from: fromB, days: exclusiveDays, rate: "parental", work: workB, note: "wyłączna część drugiego rodzica" });
-    if (weeksB > exclusive) {
-      raw.push({ id: "par-B2", parent: "B", kind: "rodzicielski", from: addDays(fromB, exclusiveDays), days: stretched(weeksB, workB) - exclusiveDays, rate: rateParental, work: workB });
+    const fromB = input.parentalStarts?.B ?? (input.parentalOrder === "together" || daysA === 0 ? parentalStart : addDays(fromA, daysA));
+    if (input.parentalWork?.B && weeksB > limits.exclusiveWeeks && input.variant === "815") {
+      errors.push({ text: "Rozdziel pracę podczas części wyłącznej i dodatkowej drugiego rodzica.", source: "kp182-1f" });
+    } else if (input.parentalWork?.B) {
+      addParental("B", fromB, weeksB, workB, "parental", "par-B");
+    } else {
+      const exclusive = Math.min(weeksB, limits.exclusiveWeeks);
+      const exclusiveDays = addParental("B", fromB, exclusive, workB, "parental", "par-B", "wyłączna część drugiego rodzica");
+      if (weeksB > exclusive && exclusiveDays > 0) {
+        raw.push({ id: "par-B2", parent: "B", kind: "rodzicielski", from: addDays(fromB, exclusiveDays), days: stretched(weeksB, workB) - exclusiveDays, rate: rateParental, work: workB });
+      }
     }
   }
   if (input.paternityDays > 0 && hasB) {
     const days = Math.min(Math.round(input.paternityDays), p.paternityDays);
     const start = input.paternityStart ?? input.date;
-    const deadline = addDays(addMonths(input.date, p.paternityMonths), -1);
+    const window = input.event === "adoption" && input.adoptionFinalOn && input.childBirthDate
+      ? paternityWindow(input.childBirthDate, input.adoptionFinalOn) : paternityWindow(input.date);
+    const deadline = window.to;
     if (addDays(start, days - 1) > deadline) {
       errors.push({ text: `Urlop ojcowski trzeba wykorzystać do ukończenia przez dziecko ${p.paternityMonths} miesięcy (do ${deadline}).`, source: "kp182-3" });
     }
-    if (start < input.date) errors.push({ text: "Urlop ojcowski zaczyna się najwcześniej w dniu urodzenia lub przyjęcia dziecka.", source: "kp182-3" });
+    if (start < window.from) errors.push({ text: "Urlop ojcowski zaczyna się najwcześniej w dniu urodzenia lub prawomocności przysposobienia.", source: "kp182-3" });
     raw.push({ id: "pat", parent: "B", kind: "ojcowski", from: start, days, rate: "maternity", work: 0 });
   }
-  if (!birth && input.paternityDays > 0) {
+  if (!birth && input.paternityDays > 0 && !(input.event === "adoption" && input.adoptionFinalOn && input.childBirthDate)) {
     assumptions.push({ text: "Przy adopcji urlop ojcowski liczy się od uprawomocnienia postanowienia o przysposobieniu — przyjmujemy datę przyjęcia dziecka.", source: "kp182-3" });
   }
 
@@ -692,7 +739,7 @@ export function computeScenario(given: ScenarioInput): ScenarioResult {
       source: "uz30a",
     });
   }
-  for (const per of periods.filter((x) => x.kind === "rodzicielski" && x.id !== "par-B2")) {
+  for (const per of periods.filter((x) => x.kind === "rodzicielski" && (x.id === "par-A" || x.id === "par-B"))) {
     const parent = per.parent === "A" ? input.parentA : input.parentB;
     if (parent?.title === "pracownik") {
       deadlines.push({ date: addDays(per.from, -21), label: "Wniosek o urlop rodzicielski do pracodawcy — co najmniej 21 dni przed", who: per.parent, source: "govParental" });

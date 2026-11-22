@@ -22,6 +22,11 @@ export async function replayable(db: PoolClient, owner: string, req: Request, in
     if (previous.fingerprint !== fingerprint) throw new ApiProblem(409, "idempotency_conflict");
     return previous.response as SavedResponse;
   }
+  // Concurrent writes with different keys share the same database-backed owner limit.
+  await db.query("SELECT pg_advisory_xact_lock(hashtextextended($1,24861))", [owner]);
+  const recent = await db.query(`SELECT count(*)::int AS count FROM zusik.v1_requests
+    WHERE owner_session=$1 AND expires_at > statement_timestamp() + interval '7 days' - interval '1 minute'`,[owner]);
+  if (recent.rows[0].count > 120) throw new ApiProblem(429,"write_limit");
   const { response, profileId, caseId } = await write();
   await db.query(`INSERT INTO zusik.v1_responses(owner_session,key_hash,profile_id,case_id,response)
     VALUES ($1,$2,$3,$4,$5)`, [owner,scope,profileId,caseId ?? null,response]);

@@ -96,3 +96,95 @@ await post("profiles",{mode:"case_import"},{key:profileKey,status:404});
 assert.equal((await get("profiles")).data.items.length,0);
 assert.equal(operations.size,20,[...operations].join("\n"));
 console.log("PASS 20/20 HTTP operations; corrected salary, history, duplicate race, rollback, sessions, scoped cursors, purge and replay.");
+
+// One mixed packet. The changed month is the only difference between the three decisions.
+const pp = await post("profiles",{mode:"case_import"});
+const target = "profiles/"+pp.data.id;
+const cc = (await post("cases",{profileId:pp.data.id})).data;
+const casePath = "cases/"+cc.id;
+const packet = (await post(casePath+"/documents",{clientDocumentId:"fixture-packet",kind:"other",pages:5,
+  pageKinds:["application","insurance","certificate","payroll","decision"]})).data;
+const subjectId = "parent-A", titleRef = "title-A", payerRef = "payer-A", asOf = "2026-06-25";
+const period = {validFrom:asOf,validTo:"2026-07-08"};
+const field = (field,value,page,range={asOf}) => ({subjectId,field,value,titleRef,payerRef,...range,source:{kind:"document",referenceId:packet.id,page}});
+const code = code=>({kind:"code",code});
+const cents = grosze=>({kind:"money",currency:"PLN",grosze});
+const windowOf = i => ({validFrom:new Date(Date.UTC(2025,5+i,1)).toISOString().slice(0,10),validTo:new Date(Date.UTC(2025,6+i,0)).toISOString().slice(0,10)});
+const feb = windowOf(8);
+const payroll = Array.from({length:12},(_,i)=>field("monthlyPayAfterDeduction",cents(517740),4,windowOf(i)));
+const full = [field("benefitRequest",code("maternity"),1,{...period,asOf}),field("deliveryDate",{kind:"date",date:asOf},3),
+  field("insuranceTitle",code("employee"),2),field("sicknessCoverage",code("covered"),2),field("maternityPayVariant",code("100-70"),1,period),
+  field("payerInsuredCount",{kind:"count",count:21},2,{asOf:"2025-11-30"}),field("payrollRegime",code("full_time_fixed_full_months"),4),
+  ...payroll.filter(v=>v.validFrom!==feb.validFrom)];
+const half = await patch(target,{changes:[{action:"add_subject",role:"parent",subjectId},...full.map(fact=>({action:"add_fact",fact}))]},pp.etag);
+const ask = {intent:"ask_case",subjectId,validAt:"2026-07-09"};
+const partial = (await post(casePath+"/messages",ask)).data;
+assert.match(partial.answer,/Potwierdzono prawo/);
+assert.match(partial.answer,/2026-02/);
+const confirmed = await patch(target,{changes:[{action:"add_fact",fact:payroll[8]}]},half.etag);
+const awarded = (await post(casePath+"/messages",ask)).data;
+assert.match(awarded.answer,/2\s?416,12/);
+const estimate = {...payroll[8],value:cents(637740),source:{kind:"declaration",referenceId:"assumption"}};
+const variant = (await post(casePath+"/messages",{intent:"hypothetical",variant:[estimate],validAt:ask.validAt})).data;
+assert.match(variant.answer,/2\s?462,74/);
+assert.match(variant.answer,/46,62/);
+assert.equal((await get(target)).etag,confirmed.etag);
+const awardId = awarded.citations.find(c=>c.kind==="assessment").ref;
+assert.equal((await get(casePath+"/assessments/"+awardId)).data.decisions[0].grossAmountGrosze,241612);
+const denialFact = (await get(target+"/facts")).data.items.find(row=>row.fact.field==="sicknessCoverage");
+await patch(target,{changes:[{action:"correct_fact",previousFactId:denialFact.factId,fact:{...denialFact.fact,value:code("excluded")}},
+  ...[field("otherCoverage",code("none"),2),field("postInsuranceException",code("none"),3)].map(fact=>({action:"add_fact",fact}))]},confirmed.etag);
+const denial = (await post(casePath+"/messages",ask)).data;
+assert.match(denial.answer,/Świadczenie nie przysługuje/);
+assert.equal((await get(casePath+"/assessments/"+awardId)).data.stale,true);
+assert.equal((await get(casePath+"/messages/"+awarded.id)).data.answer,awarded.answer);
+const accountRead = {intent:"read_account",subjectId,from:"2026-05-19",to:"2026-05-19",areas:["balance"]};
+const noRegister = await post(casePath+"/messages",accountRead);
+assert.equal(noRegister.data.account.coverage[0].status,"no_register");
+const latestCase = await get(casePath);
+await post(casePath+"/messages",{intent:"link_account",subjectId,scenario:"business-settlement",basisCaseRevision:latestCase.data.revision});
+const balance = await post(casePath+"/messages",accountRead);
+assert.equal(balance.data.account.coverage[0].status,"complete");
+const zero = balance.data.account.facts[0];
+assert.equal(zero.value.grosze,0);
+assert.equal(balance.data.citations[0].kind,"account");
+const confirmedZero = await post(casePath+"/messages",{intent:"declare_fact",fact:zero,basisProfileRevision:(await get(target)).data.revision});
+assert.ok(confirmedZero.data.citations.some(c=>c.kind==="fact"));
+assert.equal((await post(casePath+"/messages",{...accountRead,from:"2026-06-01",to:"2026-06-01"})).data.account.coverage[0].status,"unknown");
+await post(casePath+"/messages",{intent:"declare_fact",fact:{...zero,value:cents(2000)},basisProfileRevision:(await get(target)).data.revision},{status:422});
+console.log("PASS simulated account: unlinked, complete zero balance, unknown day, confirmed fact, rejected forged balance.");
+await call("DELETE",target,{cookie,etag:(await get(target)).etag,status:204});
+console.log("PASS mixed packet: missing February → 241612 gr; hypothetical 246274 gr (+4662), unchanged revision; corrected exclusion → denial with older assessment preserved.");
+
+const legacyHeaders = {Origin:base.origin,Cookie:cookie,"Content-Type":"application/json"};
+const legacy = (suffix,opts={})=>fetch(new URL("/api/zusik/"+suffix,base),{headers:legacyHeaders,...opts});
+assert.equal((await (await legacy("session",{method:"POST"})).json()).session,"existing");
+const greet = {scenario:"ogolna",question:"Cześć!",requestId:randomUUID()};
+const stream = await legacy("ask",{method:"POST",headers:{...legacyHeaders,Accept:"application/x-ndjson"},body:JSON.stringify(greet)});
+assert.match(stream.headers.get("content-type"),/application\/x-ndjson/);
+const frames = (await stream.text()).trim().split("\n").map(line=>JSON.parse(line));
+assert.equal(frames.at(-1).type,"result");
+assert.equal(frames.at(-1).status,200);
+assert.equal((await (await legacy("ask",{method:"POST",body:JSON.stringify(greet)})).json()).turn.requestId,greet.requestId);
+assert.equal((await legacy("state?scenario=ogolna")).status,200);
+assert.equal((await legacy("marta")).status,200);
+const pdf = await legacy("marta/pdf?version=0");
+assert.equal(pdf.status,200);
+assert.match(Buffer.from(await pdf.arrayBuffer()).subarray(0,5).toString(),/%PDF-/);
+console.log("PASS legacy signed cookie, JSON retry, NDJSON stream, state and template PDF.");
+
+const rateCookie = (await call("POST","sessions")).cookie;
+const pr = await post("profiles",{mode:"case_import"},{cookie:rateCookie});
+const rateCase = await post("cases",{profileId:pr.data.id},{cookie:rateCookie});
+const docPath = "cases/"+rateCase.data.id+"/documents";
+const meta = {kind:"other",pages:1,clientDocumentId:"one-document"};
+const firstKey = randomUUID();
+const original = await post(docPath,meta,{cookie:rateCookie,key:firstKey});
+for (let i=3;i<120;i++) await post(docPath,meta,{cookie:rateCookie});
+const throttled = await fetch(new URL("/api/v1/"+docPath,base),{method:"POST",headers:{
+  Origin:base.origin,Cookie:rateCookie,"Content-Type":"application/json","Idempotency-Key":randomUUID()},body:JSON.stringify(meta)});
+assert.equal(throttled.status,429);
+assert.equal(throttled.headers.get("retry-after"),"60");
+assert.equal((await post(docPath,meta,{cookie:rateCookie,key:firstKey})).data.id,original.data.id);
+await call("DELETE","profiles/"+pr.data.id,{cookie:rateCookie,etag:pr.etag,status:204});
+console.log("PASS 429 on the 121st new write and successful exact replay during throttling.");

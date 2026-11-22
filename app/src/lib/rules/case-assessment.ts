@@ -3,6 +3,7 @@ import { addDays, addMonths, isValidIso } from "./dates";
 import { basisMonthLabels, birthLeaveWindow, MATERNITY_RULES_VERSION, type BasisMonth } from "./maternity";
 import { maternityParametersOn } from "./maternity-schedule";
 import { priceMaternityPeriod } from "./case-maternity";
+import { assessArrears } from "./arrears";
 import { benefitPayer, countDateFor } from "./payer";
 import type { RuleSchedule } from "./parameters";
 
@@ -45,6 +46,7 @@ export interface DecisionResult {
   from?: string;
   to?: string;
   payer?: "employer" | "zus";
+  paymentStatus?: "payable" | "withheld" | "needs_information" | "expired";
   grossAmountGrosze?: number;
   amountPeriod?: "total";
   amountStatus: "calculated" | "needs_information" | "needs_review" | "unsupported" | "not_applicable";
@@ -60,6 +62,7 @@ const law = (ref: string): Citation => ({
 });
 const documentKinds: Record<string, CaseDocument["metadata"]["kind"][]> = {
   birthChildCount: ["certificate"], prenatalLeaveDays: ["application", "certificate"], maternityCourse: ["application", "certificate"], childDeathDate: ["certificate"],
+  accountArrears: ["insurance"], monthlyContributionBasis: ["insurance", "payroll"], debtSettlement: ["insurance"],
   benefitRequest: ["application"], deliveryDate: ["certificate"], insuranceTitle: ["insurance"],
   sicknessCoverage: ["insurance"], otherCoverage: ["insurance"], postInsuranceException: ["insurance", "certificate"],
   maternityPayVariant: ["application"], payrollRegime: ["payroll"], monthlyGrossPay: ["payroll"],
@@ -82,7 +85,7 @@ function valueOf(f: Fact) {
 function admit(e: Evidence, documents: readonly CaseDocument[]) {
   if (e.verification !== "confirmed" && e.verification !== "disputed") return false;
   const { field, source } = e.fact;
-  if (source.kind === "simulated_zus") return ["insuranceTitle", "sicknessCoverage", "otherCoverage", "postInsuranceException", "payerInsuredCount"].includes(field);
+  if (source.kind === "simulated_zus") return ["insuranceTitle", "sicknessCoverage", "otherCoverage", "postInsuranceException", "payerInsuredCount", "monthlyContributionBasis", "accountArrears", "debtSettlement"].includes(field);
   if (source.kind !== "document" || !source.page || !Number.isInteger(source.page)) return false;
   const doc = documents.find(d => d.id === source.referenceId);
   if (!doc || source.page < 1 || source.page > doc.metadata.pages) return false;
@@ -179,32 +182,68 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
     }
     if (covered !== "covered") throw new EvidenceIssue("sicknessCoverage", "Potwierdź objęcie ubezpieczeniem chorobowym.", true);
     const title = read("insuranceTitle", atBirth, "Potwierdź rodzaj tytułu w dniu porodu.");
-    if (title !== "employee" && title !== "pracownik") return { ...result, status: "unsupported", amountStatus: "unsupported", reasonCode: "unsupported_insurance_title" } satisfies DecisionResult;
+    const employee = title === "employee" || title === "pracownik";
+    const contractor = title === "contract" || title === "zleceniobiorca";
+    const business = title === "business" || title === "dzialalnosc";
+    if (!employee && !contractor && !business) return { ...result, status: "unsupported", amountStatus: "unsupported", reasonCode: "unsupported_insurance_title" } satisfies DecisionResult;
     result.status = "eligible";
     const countDay = countDateFor(from);
     let count: string | number | undefined;
     try {
-      count = read("payerInsuredCount", f => scoped(f) && f.asOf === countDay, `Ilu ubezpieczonych zgłaszał płatnik ${countDay}?`, true);
+      if (!business) count = read("payerInsuredCount", f => scoped(f) && f.asOf === countDay, `Ilu ubezpieczonych zgłaszał płatnik ${countDay}?`, true);
     } catch (issue) {
       if (!(issue instanceof EvidenceIssue)) throw issue;
       result.needed = [{ field: issue.field, request: issue.question }];
     }
-    const payer = benefitPayer({ situation: "employee", payerInsuredCount: typeof count === "number" ? count : null, benefitDate: from, schedule: snapshot.schedule });
+    const payer = benefitPayer({ situation: business ? "self_employed" : contractor ? "contract" : "employee", payerInsuredCount: typeof count === "number" ? count : null, benefitDate: from, schedule: snapshot.schedule });
     if (payer.payer) result.payer = payer.payer;
     else if (payer.question && !result.needed) result.needed = [{ field: "payerInsuredCount", request: payer.question }];
     result.citations.push(law("uz-art61"));
+    if (business) {
+      try {
+        const debt = read("accountArrears", f => scoped(f) && f.asOf === birth, `Dołącz saldo składek na ${birth}.`, true);
+        if (typeof debt !== "number") {
+          result.paymentStatus = "needs_information";
+          (result.needed ??= []).push({ field: "accountArrears", request: `Dołącz saldo składek na dzień powstania prawa (${birth}).` });
+        } else {
+          let arrears = assessArrears({ covered: true, arrears: debt / 100, rightArisesOn: birth, today: input.asOf, paidOn: null, schedule: snapshot.schedule });
+          if (arrears.status !== "within_limit" && input.asOf !== birth) {
+            const settlement = read("debtSettlement", f => scoped(f) && applies(f, input.asOf), "Potwierdź pełną spłatę i jej datę lub niespłacone saldo na dzień oceny.", true);
+            if (typeof settlement === "string" && isValidIso(settlement) && settlement >= birth && settlement <= input.asOf) {
+              arrears = assessArrears({ covered: true, arrears: debt / 100, rightArisesOn: birth, today: input.asOf, paidOn: settlement, schedule: snapshot.schedule });
+            } else if (settlement !== "unpaid") {
+              result.paymentStatus = "needs_information";
+              (result.needed ??= []).push({ field: "debtSettlement", request: `Czy i kiedy w całości spłacono dług wykazany ${birth}?` });
+            }
+          }
+          if (!result.paymentStatus) result.paymentStatus = arrears.status === "expired" ? "expired" : arrears.status === "withheld_until_paid" ? "withheld" : "payable";
+          result.citations.push(law("uz-art2a"));
+          if (result.paymentStatus === "expired") return { ...result, status: "ineligible", amountStatus: "not_applicable", reasonCode: "debt_not_settled_in_time" } satisfies DecisionResult;
+        }
+      } catch (issue) {
+        if (!(issue instanceof EvidenceIssue)) throw issue;
+        result.paymentStatus = "needs_information";
+        (result.needed ??= []).push({ field: issue.field, request: issue.question });
+      }
+    }
     const variant = course === "single_stillbirth" ? "100-70" : read("maternityPayVariant", f => scoped(f) && applies(f, from), "Potwierdź wybraną stawkę na wniosku oraz datę jego złożenia.");
     if (course === "single_child_death" && variant === "815") throw new EvidenceIssue("maternityPayVariant", "Potwierdź stawkę po zmianie okresu świadczenia.", true);
     if (variant !== "100-70" && variant !== "815") throw new EvidenceIssue("maternityPayVariant", "Sprawdź wybór stawki na wniosku.", true);
     if (variant === "815" && (!filed || !isValidIso(filed) || filed < birth || filed > addDays(birth, maternityParametersOn(snapshot.schedule, birth).averagedRequestDays))) throw new EvidenceIssue("maternityPayVariant", "Sprawdź datę wniosku o stawkę uśrednioną i właściwą stawkę.", true);
     const basisDay = addDays(birth, -prenatalDays);
     const monthsDue = basisMonthLabels(basisDay);
-    const regime = read("payrollRegime", atBirth, `Dołącz Z-3 płatnika ${payerRef} z informacją o etacie i wynagrodzeniach za okres od ${monthsDue[0]} do ${monthsDue.at(-1)}.`);
-    if (regime !== "full_time_fixed_full_months") return { ...result, amountStatus: "unsupported", reasonCode: "unsupported_payroll_regime" } satisfies DecisionResult;
+    const form = employee ? "Z-3" : contractor ? "Z-3a" : "poświadczenie składek";
+    const regime = read("payrollRegime", atBirth, `Dołącz ${form} płatnika ${payerRef} z historią podstaw za okres od ${monthsDue[0]} do ${monthsDue.at(-1)}.`);
+    if (regime !== (employee ? "full_time_fixed_full_months" : "full_year_contribution_months")) return { ...result, amountStatus: "unsupported", reasonCode: "unsupported_payroll_regime" } satisfies DecisionResult;
     const months: BasisMonth[] = monthsDue.map(month => {
       const start = month + "-01";
       const end = addDays(addMonths(start, 1), -1);
       const row = (f: Fact) => scoped(f) && f.validFrom === start && f.validTo === end;
+      if (!employee) {
+        const contribution = read("monthlyContributionBasis", row, `Dołącz ${form} z podstawą chorobowego za ${month} dla płatnika ${payerRef}.`);
+        if (typeof contribution !== "number" || !Number.isSafeInteger(contribution) || contribution < 0) throw new EvidenceIssue("monthlyContributionBasis", `Potwierdź kwotę za ${month} w groszach.`, true);
+        return { amount: contribution / 100 };
+      }
       const question = `Dołącz wiersz Z-3 płatnika ${payerRef} za ${month}, z podstawą i potrąconymi składkami lub kwotą po potrąceniu.`;
       const net = read("monthlyPayAfterDeduction", row, question, true);
       const gross = read("monthlyGrossPay", row, question, net !== undefined);
@@ -217,12 +256,12 @@ function assessRequest(input: AssessmentInput, snapshot: AssessmentSnapshot, fac
       return { amount: amount / 100, deductionPct: 0 };
     });
     const priced = priceMaternityPeriod({
-      event: "birth", date: birth, children, prenatalLeaveDays: prenatalDays, childDeathDates: deathDates, stillbirth: course === "single_stillbirth", zaZyciem: false, variant, parentA: { title: "pracownik", basis: { kind: "months", months }, fullTime: true },
+      event: "birth", date: birth, children, prenatalLeaveDays: prenatalDays, childDeathDates: deathDates, stillbirth: course === "single_stillbirth", zaZyciem: false, variant, parentA: { title: employee ? "pracownik" : business ? "dzialalnosc" : "zleceniobiorca", basis: { kind: "months", months }, fullTime: employee },
       parentB: null, weeksBeforeBirth: 0, transferWeeks: 0, supplementaryWeeks: 0, supplementaryParent: "A", parentalWeeksA: 0,
       parentalWeeksB: 0, parentalOrder: "sequential", workA: 0, workB: 0, paternityDays: 0, schedule: snapshot.schedule,
     }, { parent: "A", kind: "macierzynski", from, to });
     if (priced.status !== "calculated") return { ...result, amountStatus: "needs_review", reasonCode: priced.reason } satisfies DecisionResult;
-    result.citations.push(law("uz-art31"), law("uz-art36"));
+    result.citations.push(law("uz-art31"), law(employee ? "uz-art36" : "uz-art48"));
     return { ...result, amountStatus: "calculated", amountPeriod: "total", grossAmountGrosze: priced.grossAmountGrosze, segments: priced.segments, reasonCode: "insured_at_delivery" } satisfies DecisionResult;
   } catch (issue) {
     if (!(issue instanceof EvidenceIssue)) throw issue;

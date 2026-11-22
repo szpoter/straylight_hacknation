@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { PDFDocument } from "pdf-lib";
 import { chromium, type Page } from "playwright-core";
 import { syntheticCasePdf } from "../tests/fixtures/case-import-pdf";
 
@@ -58,12 +59,26 @@ async function run() {
           assert.equal(new URL(page.url()).searchParams.get("sprawa"),caseId);
           await page.getByRole("textbox",{name:"Wiadomość do Zusika"}).fill("Skąd ta kwota?");
           await page.getByRole("button",{name:"Wyślij"}).click();
-          await page.getByText("Skąd ta kwota?",{exact:true}).waitFor();
+          await page.getByRole("log").getByText("Skąd ta kwota?",{exact:true}).waitFor();
+          const revised = await PDFDocument.create();
+          revised.addPage().drawText("Zestawienie wynagrodzen\nMiesiac | Brutto\n2026-02 | 6500,00", { size: 12, x: 40, y: 700 });
+          const chooser = page.waitForEvent("filechooser");
+          await page.getByRole("button",{name:"Dołącz PDF sprawy"}).click();
+          await (await chooser).setFiles({name:"korekta.pdf",mimeType:"application/pdf",buffer:Buffer.from(await revised.save())});
+          await page.getByRole("button",{name:"Uzupełnij tę sprawę"}).click();
+          await page.getByRole("button",{name:/6\s?500,00.*sprawdź stronę/}).click();
+          await page.getByLabel("Tytuł w tej sprawie").selectOption("title-A");
+          await page.getByLabel("Płatnik w tej sprawie").selectOption("payer-P");
+          await page.getByRole("button",{name:"Potwierdzam zapis"}).click();
+          await page.getByRole("button",{name:"Potwierdź propozycję"}).click();
+          await cards.last().getByText(/Kwota: 2\s?435,58.*brutto/).waitFor();
           await page.reload();
-          await cards.last().getByText(/Kwota: 2\s?416,12.*brutto/).waitFor();
+          await cards.last().getByText(/Kwota: 2\s?435,58.*brutto/).waitFor();
+          assert.equal(new URL(page.url()).searchParams.get("sprawa"),caseId);
+          await cards.last().getByText(/Zmiana kwoty:.*19,46/).waitFor();
           assert.ok(await page.getByText(/Ocena historyczna/).count());
         }
-        console.log("PASS",kind,kind === "excluded" ? "odmowa · źródło str. 3 · decyzja str. 4 poza oceną" : "prawo bez płacy → drugi PDF → 241612 gr · podstawa 517740 · 14 × 17258 · F5");
+        console.log("PASS",kind,kind === "excluded" ? "odmowa · źródło str. 3 · decyzja str. 4 poza oceną" : "prawo bez płacy → drugi PDF → 241612 gr · podstawa 517740 · 14 × 17258 · korekta → 243558 gr · F5");
       } finally { await context.close(); }
     }
   } finally { await browser.close(); }

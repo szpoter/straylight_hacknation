@@ -59,7 +59,13 @@ async function main() {
     const snapshot = readFileSync(`corpus/${source.snapshot}`, "utf8");
     if (sha256(snapshot) !== source.snapshotSha256) throw new Error(`Snapshot digest mismatch: ${source.sourceId}`);
     for (const { heading, fragmentId, paragraphStarts } of source.sections) {
-      if (extractOfficialParagraph(snapshot, heading, paragraphStarts) !== complete.fragments.get(fragmentId)?.sourceText) {
+      const expected = complete.fragments.get(fragmentId)?.sourceText;
+      const matchingSections = source.snapshot.endsWith(".json")
+        ? (JSON.parse(snapshot) as Array<{headingPath:string[]; blocks:string[]}>).filter(s => s.headingPath.at(-1) === heading)
+        : null;
+      const valid = matchingSections ? matchingSections.length === 1 && !!expected && matchingSections[0].blocks.includes(expected)
+        : extractOfficialParagraph(snapshot, heading, paragraphStarts) === expected;
+      if (!expected || !valid) {
         throw new Error(`Snapshot paragraph mismatch: ${fragmentId}`);
       }
     }

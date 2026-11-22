@@ -70,3 +70,10 @@ describe("contribution arrears (art. 2a)", () => {
     expect(assessArrears({ ...base, arrears: 0, rightArisesOn: "2027-01-04", schedule }).threshold).toBe(50);
   });
 });
+
+it("uses the first registration month for a new contribution payer including a contractor", () => {
+  const input = { situation: "contract" as const, payerInsuredCount: null, benefitDate: "2026-06-25", firstRegistrationMonth: "2026-03" };
+  expect(benefitPayer(input).question).toContain("w pierwszym miesiącu zgłoszeń 2026-03");
+  expect(benefitPayer({ ...input, payerInsuredCount: 20 }).payer).toBe("zus");
+  expect(benefitPayer({ ...input, payerInsuredCount: 21 }).payer).toBe("employer");
+});

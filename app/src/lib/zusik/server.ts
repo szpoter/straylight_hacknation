@@ -24,10 +24,17 @@ import { askSherlock } from "./sherlock";
  */
 let pool: Pool | null = null;
 let checkpointer: PostgresSaver | null = null;
+let casePool: Pool | null = null;
+
+// A v1 transaction can await a public turn whose model queue needs another connection.
+function newPool() {
+  return new Pool({ connectionString: requireEnv("DATABASE_URL"), max: 3, connectionTimeoutMillis: 5_000 });
+}
+export function caseTransactionPool() { return casePool ??= newPool(); }
 
 export function runtime() {
   if (!pool || !checkpointer) {
-    pool = new Pool({ connectionString: requireEnv("DATABASE_URL"), max: 3, connectionTimeoutMillis: 5_000 });
+    pool = newPool();
     checkpointer = new PostgresSaver(pool, undefined, { schema: CHECKPOINT_SCHEMA });
   }
   return { pool, checkpointer };

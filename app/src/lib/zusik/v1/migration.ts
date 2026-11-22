@@ -21,6 +21,7 @@ export async function migrateConversation(pool: Pool, runtimeRole: string) {
         expires_at timestamptz NOT NULL DEFAULT now() + interval '7 days',
         PRIMARY KEY(owner_session,key_hash)
       );
+      CREATE INDEX IF NOT EXISTS v1_requests_expiry ON zusik.v1_requests(owner_session,expires_at);
       CREATE TABLE IF NOT EXISTS zusik.v1_responses (
         owner_session text NOT NULL, key_hash text NOT NULL, profile_id text NOT NULL, case_id text,
         response jsonb NOT NULL, PRIMARY KEY(owner_session,key_hash),

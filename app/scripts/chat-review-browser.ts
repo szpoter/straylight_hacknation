@@ -66,7 +66,13 @@ async function run() {
     await other.goto(saved.href);
     await other.getByText(/Ta sprawa jest niedostępna/).waitFor();
     assert.equal(await other.getByText(/6\s?500,00/).count(), 0);
-    console.log("PASS 390 · PDF → 600000 gr → dowód strony 1 → ocena → drugi PDF → konflikt → 650000 gr → F5 bez zapisów → drugie cookie bez danych");
+    await page.getByText("Historia rozmów",{exact:true}).click();
+    await page.getByRole("button",{name:"Usuń tę sprawę"}).click();
+    await page.getByRole("button",{name:"Tak, usuń sprawę"}).click();
+    await page.waitForURL("**/app/rozmowa?nowa=1");
+    const erased = await page.request.get(new URL("/api/v1/cases/" + saved.searchParams.get("sprawa"),origin).href);
+    assert.equal(erased.status(),404);
+    console.log("PASS 390 · PDF → 600000 gr → dowód strony 1 → ocena → drugi PDF → konflikt → 650000 gr → F5 bez zapisów → drugie cookie bez danych → usunięta sprawa 404");
   } finally { await browser.close(); }
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

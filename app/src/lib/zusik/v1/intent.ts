@@ -15,6 +15,9 @@ function payVariant(q: string, ctx: Context): Result {
   const month = /\b(20\d\d)-(0[1-9]|1[012])\b/u.exec(q);
   const year = /\b(20\d\d)\b/u.exec(q)?.[1];
   const index = months.findIndex(m=>new RegExp("(?<!\\p{L})"+m+"\\p{L}*","iu").test(q));
+  const afterDeduction = /po (?:potrąceniu|odliczeniu) składek/iu.test(q);
+  const field = afterDeduction ? "monthlyPayAfterDeduction" : "monthlyGrossPay";
+  // A gross row can locate the month when the user supplies an absolute amount after deductions.
   const rows = ctx.facts.filter(r=>r.fact.field === "monthlyGrossPay" && (!ctx.subjectId || r.fact.subjectId === ctx.subjectId) &&
     (!month || r.fact.validFrom?.startsWith(month[0])) &&
     (index === -1 || Number(r.fact.validFrom?.slice(5,7)) === index+1) && (!year || r.fact.validFrom?.startsWith(year)));
@@ -23,9 +26,10 @@ function payVariant(q: string, ctx: Context): Result {
   const fact = rows[0].fact;
   const relative = /(?:podwyżk\p{L}*\s+o|więcej o|wyższ\p{L}* o)\s*$/iu.test(q.slice(0,amount.index).trimEnd()) ||
     /^\s+więcej/iu.test(q.slice(amount.index + amount[0].length));
+  if (relative && afterDeduction) return {clarify:"Podaj nową kwotę po potrąceniu składek za wskazany miesiąc."};
   const next = relative && fact.value.kind === "money" ? fact.value.grosze + grosze : grosze;
   if (!Number.isSafeInteger(next)) return {clarify:"Podaj kwotę w złotych i groszach."};
-  return {input:{intent:"hypothetical",subjectId:fact.subjectId,variant:[{...fact,value:{kind:"money",currency:"PLN",grosze:next},
+  return {input:{intent:"hypothetical",subjectId:fact.subjectId,variant:[{...fact,field,value:{kind:"money",currency:"PLN",grosze:next},
     source:{kind:"declaration",referenceId:"variant"}}]}};
 }
 

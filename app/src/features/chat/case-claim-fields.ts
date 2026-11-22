@@ -6,7 +6,23 @@ export function documentDay(input: string) {
   return isValidIso(iso) ? iso : undefined;
 }
 
+export function documentMoney(text: string) {
+  const match = /^(\d+|\d{1,3}(?:[ \u00a0]\d{3})+)(?:,(\d{2}))?(?:\s*(?:zl|pln))?$/u.exec(text);
+  if (!match) return;
+  const grosze = Number(match[1].replace(/\s/gu, "")) * 100 + Number(match[2] ?? 0);
+  if (Number.isSafeInteger(grosze)) return { kind: "money", currency: "PLN", grosze } as const;
+}
+
 const periodLabel = /^(?:wnioskowany okres(?: zasilku| urlopu)?|okres(?: wnioskowany| zasilku| urlopu)?|wnioskuje za okres)\s*:?\s*(?:od\s+)?(\d{4}-\d{2}-\d{2}|\d{2}\.\d{2}\.\d{4})\s*(?:do|[-–—])\s*(\d{4}-\d{2}-\d{2}|\d{2}\.\d{2}\.\d{4})$/u;
+// Accept a checkbox group only when exactly one printed option is positively marked.
+function selectedOption(value: string) {
+  const options = Array.from(value.matchAll(/(?:\[([ x]?)\]|([☒☑☐]))\s*([^☒☑☐[\]]+)/gu));
+  if (!options.length) return value;
+  if (options.map(m => m[0]).join("").trim() !== value || options.some(m => !m[3].trim())) return "";
+  const marked = options.filter(m => m[1] === "x" || m[2] === "☒" || m[2] === "☑");
+  return marked.length === 1 ? marked[0][3].trim() : "";
+}
+
 const claimHeading = /^(?:wniosek o (?:wyplate |udzielenie )?zasil(?:ek|ku) macierzynski(?:ego)?|(?:rodzaj (?:swiadczenia|wniosku)|swiadczenie)\s*:\s*zasilek macierzynski)$/u;
 
 export function claimFields(result: LocalCasePage, id: string, lines: string[]) {
@@ -17,6 +33,8 @@ export function claimFields(result: LocalCasePage, id: string, lines: string[]) 
   });
   const stated = dates(/^(?:stan (?:na dzien|na)|data poswiadczenia stanu|stan ubezpieczenia na dzien)\s*:\s*(\S+)$/u);
   const asOf = stated.length === 1 ? documentDay(stated[0].match[1]) : undefined;
+  const delivery = dates(/^data porodu\s*:\s*(\S+)$/u);
+  const eventDay = delivery.length === 1 ? documentDay(delivery[0].match[1]) : undefined;
   const filed = dates(/^data zlozenia(?: wniosku)?\s*:\s*(\S+)$/u);
   const filedDay = filed.length === 1 ? documentDay(filed[0].match[1]) : undefined;
   const intervals = dates(periodLabel);
@@ -45,16 +63,60 @@ export function claimFields(result: LocalCasePage, id: string, lines: string[]) 
           filedDay ? [period.i, filed[0].i] : [period.i]);
       } else result.reason = "ambiguous_field";
     }
-    const split = /^([^:]+)\s*:\s*(.+)$/u.exec(line);
+    const split = /^([^:]+)\s*:\s*(.*)$/u.exec(line);
     if (!split) continue;
     const label = split[1].trim();
-    const value = split[2].trim();
+    const value = selectedOption(split[2].trim());
     if (kind === "application" && /^(?:wybrany )?(?:wariant(?: wyplaty| zasilku)?|stawka zasilku)$/u.test(label)) {
       code(i, "maternityPayVariant", /^(?:100\s*%?\s*[-/–]\s*70\s*%?|100\s*%)$/u.test(value) ? "100-70" : /^81[,.]5\s*%$/u.test(value) ? "815" : undefined);
     }
     if (kind === "certificate" && label === "data porodu") {
       const date = documentDay(value);
       if (date) add(i, "deliveryDate", { kind: "date", date }, { asOf: date });
+      else result.reason = "ambiguous_field";
+    }
+    const courseDocument = kind === "certificate" || kind === "application";
+    let event: Pick<EvidenceCandidate, "field" | "value"> | undefined;
+    if (kind === "certificate" && /^(?:liczba dzieci (?:z tego porodu|urodzonych (?:w|przy) tym porodzie))$/u.test(label)) {
+      if (/^[1-9]\d?$/u.test(value)) event = { field: "birthChildCount", value: { kind: "count", count: Number(value) } };
+      else result.reason = "ambiguous_field";
+    }
+    if (courseDocument && /^(?:liczba dni urlopu macierzynskiego (?:wykorzystanych )?przed porodem|dni urlopu macierzynskiego przed porodem)$/u.test(label)) {
+      if (/^\d{1,2}$/u.test(value) && Number(value) <= 42) event = { field: "prenatalLeaveDays", value: { kind: "count", count: Number(value) } };
+      else result.reason = "ambiguous_field";
+    }
+    if (courseDocument && label === "przebieg urlopu macierzynskiego") {
+      const courses: Record<string, string> = {
+        "bez przerw i bez przejecia urlopu": "ordinary_uninterrupted",
+        "urodzenie martwe jedynego dziecka z tego porodu": "single_stillbirth",
+        "zgon jedynego dziecka z tego porodu": "single_child_death",
+      };
+      if (Object.hasOwn(courses, value)) event = { field: "maternityCourse", value: { kind: "code", code: courses[value] } };
+      else result.reason = "ambiguous_field";
+    }
+    if (kind === "certificate" && label === "data zgonu dziecka") {
+      const date = documentDay(value);
+      if (date && (!eventDay || date >= eventDay)) event = { field: "childDeathDate", value: { kind: "date", date } };
+      else result.reason = "ambiguous_field";
+    }
+    if (event) {
+      const day = eventDay ?? asOf;
+      const related = eventDay ? delivery[0].i : asOf ? stated[0].i : undefined;
+      if (day && related !== undefined) add(i, event.field, event.value, { asOf: day }, [related]);
+      else result.reason = "ambiguous_field";
+    }
+    if (kind === "insurance" && /^(?:saldo zadluzenia skladkowego|zadluzenie z tytulu skladek)$/u.test(label)) {
+      const amount = documentMoney(value);
+      if (amount && asOf) add(i, "accountArrears", amount, { asOf }, [stated[0].i]);
+      else result.reason = "ambiguous_field";
+    }
+    if (kind === "insurance" && label === "data pelnej splaty zadluzenia") {
+      const date = documentDay(value);
+      if (date && asOf && date <= asOf) add(i, "debtSettlement", { kind: "code", code: date }, { asOf }, [stated[0].i]);
+      else result.reason = "ambiguous_field";
+    }
+    if (kind === "insurance" && label === "stan splaty zadluzenia") {
+      if (asOf && value === "niesplacone") add(i, "debtSettlement", { kind: "code", code: "unpaid" }, { asOf }, [stated[0].i]);
       else result.reason = "ambiguous_field";
     }
     if (kind === "insurance" || kind === "payroll") {

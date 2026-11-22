@@ -18,6 +18,11 @@ export const MAX_PARTS = 2;
 
 export interface PaternityInput {
   childBirthDate: string | null;
+  title?: "employee" | "business" | "contract";
+  /** Undefined for biological fatherhood, null for an adoption awaiting the court date. */
+  adoptionFinalOn?: string | null;
+  filedOn?: string;
+  employerGrantedLateLeave?: boolean;
   /** Voluntary sickness insurance covering the requested period. null = not confirmed yet. */
   insuranceConfirmed: boolean | null;
   noArrears: boolean | null;
@@ -47,11 +52,20 @@ function overlaps(a: { start: string; end: string }, b: { start: string; end: st
   return a.start <= b.end && b.start <= a.end;
 }
 
+/** KP art. 182³ §1 (Dz.U. 2025 poz. 277). Both limits are exclusive anniversaries. */
+export function paternityWindow(birth: string, adoptionFinalOn?: string) {
+  const from = adoptionFinalOn ?? birth;
+  const ageLimit = addMonths(birth, adoptionFinalOn ? 14 * 12 : 12);
+  const endExclusive = [addMonths(from, 12), ageLimit].sort()[0];
+  return { from, to: addDays(endExclusive, -1) };
+}
+
 export function evaluatePaternity(input: PaternityInput): PaternityResult {
   const reasons: RuleReason[] = [];
   const missing: MissingKey[] = [];
-  const daysUsedBefore = input.priorParts.reduce((sum, part) => sum + partDays(part), 0);
-  const partsUsed = input.priorParts.length;
+  const priorParts = [...new Map(input.priorParts.map(p => [p.start + "/" + p.end, p])).values()];
+  const daysUsedBefore = priorParts.reduce((sum, part) => sum + partDays(part), 0);
+  const partsUsed = priorParts.length;
   const totalDays = valueOn(input.schedule, "paternity.totalDays", input.request?.start ?? input.today, TOTAL_DAYS).value;
   const available = Math.max(0, totalDays - daysUsedBefore);
 
@@ -84,7 +98,7 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
     reasons.push({
       ruleId: "R1-ubezpieczenie",
       ok: false,
-      text: "Bez dobrowolnego ubezpieczenia chorobowego zasiłek macierzyński nie przysługuje.",
+      text: "Potwierdzono brak ubezpieczenia chorobowego z badanego tytułu.",
       citationId: "zam-info-prawo",
     });
     return finish("not_eligible", null);
@@ -93,23 +107,25 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
     reasons.push({
       ruleId: "R1-ubezpieczenie",
       ok: true,
-      text: "Masz potwierdzone dobrowolne ubezpieczenie chorobowe z działalności.",
+      text: "Masz potwierdzone ubezpieczenie chorobowe z badanego tytułu.",
       citationId: "zam-info-prawo",
     });
   } else missing.push("insurance_confirmed");
 
   // R2 · arrears (an assumption of the demo profile; ZUS checks it on the real case)
-  if (input.noArrears === true) {
-    reasons.push({ ruleId: "R2-skladki", ok: true, text: "Profil potwierdza brak zaległości w składkach.", citationId: null });
-  } else if (input.noArrears === false) {
-    reasons.push({
-      ruleId: "R2-skladki",
-      ok: false,
-      text: "Zaległość w składkach może przerwać dobrowolne ubezpieczenie chorobowe. Najpierw trzeba ją wyjaśnić w ZUS.",
-      citationId: null,
-    });
-    return finish("needs_info", "Masz zaległość w składkach. Czy już ją uregulowałeś?", { missing: ["no_arrears"] });
-  } else missing.push("no_arrears");
+  if (!input.title || input.title === "business") {
+    if (input.noArrears === true) {
+      reasons.push({ ruleId: "R2-skladki", ok: true, text: "Profil potwierdza brak zaległości w składkach.", citationId: null });
+    } else if (input.noArrears === false) {
+      reasons.push({
+        ruleId: "R2-skladki",
+        ok: false,
+        text: "Do ustalenia wypłaty potrzebna jest kwota zaległości oraz informacja o jej spłacie.",
+        citationId: null,
+      });
+      return finish("needs_info", "Masz zaległość w składkach. Czy już ją uregulowałeś?", { missing: ["no_arrears"] });
+    } else missing.push("no_arrears");
+  }
 
   // R4 · parts already used
   if (partsUsed >= MAX_PARTS || available === 0) {
@@ -125,13 +141,19 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
   // R3 · child's age
   const birth = input.childBirthDate && isValidIso(input.childBirthDate) ? input.childBirthDate : null;
   if (!birth) missing.unshift("child_birth_date");
-  const lastAllowedDay = birth ? addDays(addMonths(birth, 12), -1) : null;
+  if (input.adoptionFinalOn === null || (input.adoptionFinalOn && (!isValidIso(input.adoptionFinalOn) || (birth && input.adoptionFinalOn < birth)))) {
+    return finish("needs_info", "Potwierdź datę prawomocności postanowienia o przysposobieniu.");
+  }
+  const window = birth ? paternityWindow(birth, input.adoptionFinalOn) : null;
+  const lastAllowedDay = window?.to ?? null;
+  const assessedOn = input.filedOn ?? input.today;
+  if (!isValidIso(assessedOn) || assessedOn > input.today) return finish("needs_info", "Potwierdź dzień złożenia wniosku.");
   if (birth && lastAllowedDay) {
-    if (input.today > lastAllowedDay) {
+    if (assessedOn > lastAllowedDay) {
       reasons.push({
         ruleId: "R3-wiek-dziecka",
         ok: false,
-        text: `Syn ukończył 12 miesięcy. Okres ojcowski można było wykorzystać do ${formatLong(lastAllowedDay)}`,
+        text: `Okres ojcowski można było wykorzystać do ${formatLong(lastAllowedDay)}`,
         citationId: "zam-info-okres",
       });
       return finish("not_eligible", null, { lastAllowedDay });
@@ -139,7 +161,7 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
     reasons.push({
       ruleId: "R3-wiek-dziecka",
       ok: true,
-      text: `Syn kończy 12 miesięcy ${formatLong(addMonths(birth, 12))} Okres musi się skończyć najpóźniej ${formatLong(lastAllowedDay)}`,
+      text: `Okres musi się skończyć najpóźniej ${formatLong(lastAllowedDay)}`,
       citationId: "zam-info-okres",
     });
   }
@@ -172,10 +194,10 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
 
   const end = addDays(start, days - 1);
   const period = { start, end, days };
-  const deadline = addDays(start, -1);
+  const deadline = addDays(start, input.title === "employee" ? -7 : -1);
 
-  if (birth && start < birth) {
-    return finish("needs_info", `Okres nie może zacząć się przed urodzeniem syna (${formatLong(birth)}). Od kiedy zacząć?`, {
+  if (window && start < window.from) {
+    return finish("needs_info", `Okres nie może zacząć się przed ${formatLong(window.from)}. Od kiedy zacząć?`, {
       missing: ["request_start"],
       lastAllowedDay,
     });
@@ -192,7 +214,7 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
       lastAllowedDay,
     });
   }
-  const clash = input.priorParts.find((part) => overlaps(part, period));
+  const clash = priorParts.find((part) => overlaps(part, period));
   if (clash) {
     return finish(
       "needs_info",
@@ -202,16 +224,19 @@ export function evaluatePaternity(input: PaternityInput): PaternityResult {
   }
 
   // R5 · deadline: before the period starts
-  const deadlinePassed = deadline < input.today;
+  const deadlinePassed = deadline < assessedOn;
   reasons.push({
     ruleId: "R5-termin",
     ok: !deadlinePassed,
-    text: deadlinePassed
+    text: input.title === "employee"
+      ? `Wniosek o urlop ojcowski do pracodawcy należy złożyć co najmniej 7 dni przed początkiem, do ${formatLong(deadline)}.`
+      : deadlinePassed
       ? `Wniosek trzeba złożyć przed początkiem okresu. Na start ${formatLong(start)} jest już za późno.`
       : `Wniosek złóż w ZUS przed początkiem okresu, czyli najpóźniej ${formatLong(deadline)}`,
-    citationId: "zus-termin-niepracownik",
+    citationId: input.title === "employee" ? "kp-art182-3" : "zus-termin-niepracownik",
   });
-  if (deadlinePassed) {
+  if (deadlinePassed && !(input.title === "employee" && input.employerGrantedLateLeave)) {
+    if (input.title === "employee") return finish("needs_info", "Czy pracodawca mimo spóźnienia udzielił urlopu za wskazany okres?", { lastAllowedDay, deadline, deadlinePassed });
     return finish("needs_info", "Wybierz późniejszy początek, żeby zdążyć ze złożeniem wniosku. Od kiedy zacząć?", {
       missing: ["request_start"],
       lastAllowedDay,

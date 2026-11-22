@@ -111,3 +111,32 @@ describe("ephemeral payroll variants", () => {
     }
   });
 });
+
+it("prices insured contractors and keeps a business balance independent of entitlement and gross amount", () => {
+  const set = (title: string) => [
+    ...right.filter(e => e.fact.field !== "insuranceTitle"), entry("insuranceTitle", code(title), "insurance"),
+    paid[0], paid[1], entry("payrollRegime", code("full_year_contribution_months"), "payroll"),
+    ...paid.filter(e => e.fact.field === "monthlyGrossPay").map(e => ({ ...e, fact: { ...e.fact, field: "monthlyContributionBasis" as const } })),
+  ];
+  expect(verdict(set("contract"))).toMatchObject({ status: "eligible", payer: "employer", grossAmountGrosze: 241612 });
+  const business = set("business");
+  expect(verdict(business)).toMatchObject({ status: "eligible", payer: "zus", grossAmountGrosze: 241612, paymentStatus: "needs_information" });
+  expect(verdict([...business, entry("accountArrears", money(4806), "insurance")])).toMatchObject({ paymentStatus: "payable" });
+  expect(verdict([...business, entry("accountArrears", money(4807), "insurance")])).toMatchObject({ paymentStatus: "needs_information", needed: [{field:"debtSettlement", request:expect.any(String)}] });
+});
+
+it("settles a complete uninterrupted 20-week claim and requires its course when the evidence is removed", () => {
+  const regular = { ...right[0], fact: { ...right[0].fact, validTo: "2026-11-11" } };
+  const facts = [regular, ...right.slice(1), ...paid, entry("birthChildCount", {kind:"count",count:1}, "certificate"),
+    entry("prenatalLeaveDays", {kind:"count",count:0}, "application"), entry("maternityCourse", code("ordinary_uninterrupted"), "certificate")];
+  expect(verdict(facts)).toMatchObject({ status: "eligible", from: "2026-06-25", to: "2026-11-11", grossAmountGrosze: 2416120 });
+  expect(verdict(facts.filter(e => e.fact.field !== "maternityCourse"))).toMatchObject({ status: "needs_information", needed: [{field:"maternityCourse", request:expect.any(String)}] });
+});
+
+it("separates repayment after the assessment date from repayment made on time", () => {
+  const business = [...right.filter(e => e.fact.field !== "insuranceTitle"), entry("insuranceTitle", code("business"), "insurance"), entry("accountArrears", money(4807), "insurance")];
+  const cleared = entry("debtSettlement", code("2026-07-08"), "insurance", { asOf:input.asOf });
+  expect(verdict([...business, cleared]).paymentStatus).toBe("payable");
+  expect(verdict([...business, entry("debtSettlement", code("unpaid"), "insurance", {asOf:input.asOf})]).paymentStatus).toBe("withheld");
+  expect(verdict([...business, entry("debtSettlement", code("2026-07-10"), "insurance", {asOf:input.asOf})]).paymentStatus).toBe("needs_information");
+});
