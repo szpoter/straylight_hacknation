@@ -18,7 +18,7 @@ Dźwięk: `media/*.flac` to przyjęty miks v2 (dialog, narrator, efekty, otoczen
 | Rewizja | Autor | Zawartość | Stan |
 | --- | --- | --- | --- |
 | r0 | koordynator | pusty zestaw, oryginalny Zusik w `zestaw.mjs` | zastąpiona |
-| r1 | dyrektor artystyczny | obsada, rekwizyty, plansza obsady, test obrotu | w realizacji |
+| r1 | dyrektor artystyczny | obsada, rekwizyty, plansza obsady, test obrotu; kanapa s=1,28 (zamiast 1,16) | przyjęta do produkcji |
 
 ## Autorzy ujęć · etap 1 (dwa klipy próbne)
 
