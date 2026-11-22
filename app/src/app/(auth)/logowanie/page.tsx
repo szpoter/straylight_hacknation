@@ -9,12 +9,12 @@ export default function FamilyEntryPage() {
   return (
     <AuthScreen
       service="Przewodnik Rodzica"
-      title="Profil rodziny Oli"
+      title="Import danych rodziny Oli"
       lead={`${OLA.mother} i ${OLA.father}`}
       back={{ href: "/", label: "Wróć do strony głównej" }}
     >
+      <p className="mb-5 text-on-surface-variant">Zaimportuj dane rodziny z mObywatela i mZUS, aby otworzyć wspólny plan Oli.</p>
       <OpenFamilyPlan />
-      <p className="mt-4 text-meta text-on-surface-variant">Profil rodziny Lisów zapisany w aplikacji. Brak połączenia z eZUS.</p>
     </AuthScreen>
   );
 }

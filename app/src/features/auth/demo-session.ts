@@ -1,6 +1,7 @@
 "use client";
 
 import { OLA } from "@/lib/family/ola";
+import { importFamilyProfile, type FamilyProfile } from "@/lib/family/import-profile";
 import { useSyncExternalStore } from "react";
 import type { FlowEntry, FlowOrigin } from "./flow";
 
@@ -12,7 +13,7 @@ const CHANGE_EVENT = "przewodnik-rodzica:sesja-demo-zmiana";
 export const DEMO_PROFILE = {
   firstName: OLA.mother.split(" ")[0],
   lastName: OLA.mother.split(" ")[1],
-  insurance: [{ label: "Tytuł ubezpieczenia", value: "Umowa o pracę" }],
+  insurance: [{ label: "Tytuł ubezpieczenia", value: importFamilyProfile().insuranceTitle }],
 } as const;
 
 export type DemoSession = {
@@ -21,6 +22,7 @@ export type DemoSession = {
   method: "local" | "mobywatel";
   origin: FlowOrigin;
   entry: FlowEntry;
+  family: FamilyProfile;
   /** pending: zalogowany, dane jeszcze się wczytują albo wczytanie się nie udało. */
   data: "local" | "pending" | "zus" | "manual";
 };
@@ -30,7 +32,8 @@ function read(): DemoSession | null {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<DemoSession>;
-    return parsed.version === 1 ? (parsed as DemoSession) : null;
+    if (parsed.version !== 1) return null;
+    return { ...(parsed as DemoSession), family: parsed.family ?? importFamilyProfile() };
   } catch {
     return null;
   }
@@ -48,7 +51,7 @@ function write(session: DemoSession | null) {
 }
 
 export function startDemoSession(origin: FlowOrigin, entry: FlowEntry) {
-  write({ version: 1, loggedInAt: new Date().toISOString(), method: "local", origin, entry, data: "local" });
+  write({ version: 1, loggedInAt: new Date().toISOString(), method: "local", origin, entry, data: "local", family: importFamilyProfile() });
 }
 
 export function setDemoData(data: DemoSession["data"]) {

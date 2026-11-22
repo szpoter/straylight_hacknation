@@ -10,5 +10,5 @@ export function OpenFamilyPlan() {
     startDemoSession("logowanie", "hero");
     router.replace("/plan");
   }
-  return <Button onClick={openPlan}>Otwórz plan Oli</Button>;
+  return <Button onClick={openPlan}>Importuj dane i otwórz plan</Button>;
 }

@@ -18,7 +18,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       <main className="mx-auto flex min-h-dvh max-w-column flex-col items-center justify-center gap-6 px-gutter-mobile text-center">
         <h1 className="font-serif text-headline-mobile md:text-headline">Plan rodziny Oli</h1>
         <p className="text-lead text-on-surface-variant">
-          Otwórz lokalny profil rodziny, żeby zobaczyć jej sprawy i terminy.
+          Otwórz profil rodziny, żeby zobaczyć jej sprawy i terminy.
         </p>
         <div className="flex w-full max-w-sm flex-col gap-3">
           <ButtonLink href={AUTH_PATHS.login}>Otwórz profil Oli</ButtonLink>

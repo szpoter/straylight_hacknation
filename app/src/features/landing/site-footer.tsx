@@ -34,7 +34,6 @@ export function SiteFooter() {
             <p className={styles.brandText}>
               Formalności, zasiłki i{NBSP}urlopy związane z{NBSP}rodzicielstwem w{NBSP}jednym planie.
             </p>
-            <p className={styles.profileNote}>Profil rodziny Lisów zapisany w aplikacji. Brak połączenia z eZUS.</p>
           </div>
 
           <nav className={styles.columns} aria-label="Stopka">
