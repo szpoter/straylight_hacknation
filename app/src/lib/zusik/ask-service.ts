@@ -2,7 +2,7 @@ import { normalizeSpaces, sha256, type Corpus, type Fragment } from "../rag/corp
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
 import { corpusFollowUp } from "../rag/corpus-search";
 import { relevantFragment } from "../rag/relevance";
-import { extractiveAnswer, needsStatutoryText } from "../rag/excerpt";
+import { extractiveAnswer, needsStatutoryText, withSourceException } from "../rag/excerpt";
 import { publicQuestion, type PublicQuestion } from "../rag/public-query";
 import { excludedTopics, expandQuery, explicitLocatorKeys, scopeGate } from "../rag/query";
 import { assembleEvidence, TOP_K, type KnowledgeSearch, type VectorHit } from "../rag/retrieve";
@@ -166,6 +166,11 @@ export async function answerQuestion(
 
   const { answer, report } = validateAnswer(corpus, fragments, generated.output);
   trace.report = report;
+  const complete = withSourceException(projected, answer, fragments);
+  if (complete) {
+    trace.quoteReason = "statutory_conditions";
+    return { answer: complete, trace };
+  }
   if (answer.status === "insufficient_evidence" || (answer.status === "answered" && needsStatutoryText(projected, answer))) {
     const quote = extractiveAnswer(corpus, projected, fragments, trace.vectorIds);
     if (quote) {

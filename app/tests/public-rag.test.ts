@@ -9,6 +9,23 @@ import { answerQuestion } from "@/lib/zusik/ask-service";
 const corpus = loadCorpus("publiczne");
 
 describe("public knowledge partitions", () => {
+  it("retains an explicit exception when an open-domain answer quotes only the general rule", async () => {
+    const fragment = corpus.fragments.get("uz-17-1")!;
+    const quote = "każda czynność mająca charakter zarobkowy";
+    const result = await answerQuestion({
+      corpus,
+      search: { search: async () => ({ status: "ok", ms: 1, hits: [
+        {logicalId: fragment.logicalId, fragmentSha256: fragment.fragmentSha256, score: 0.9},
+      ] }) },
+      generate: async () => ({ status: "ok", model: "test", ms: 0, output: {
+        status: "answered", message: "", claims: [{ text: quote, evidence: [{ id: fragment.logicalId, quote }] }],
+      } }),
+    }, "Co to jest praca zarobkowa?", undefined, { corpus: "publiczne", question: "Praca zarobkowa", fragmentId: fragment.logicalId });
+    expect(result.answer.status).toBe("answered");
+    expect(result.answer.claims[0].text).toContain("z wyłączeniem czynności incydentalnych");
+    expect(result.answer.citations[0].quote).toBe(fragment.sourceText);
+    expect(result.trace.quoteReason).toBe("statutory_conditions");
+  });
   it.each([
     "Kończy mi się zasiłek chorobowy. Nadal nie mogę pracować, ale leczenie daje szansę powrotu. Czy mogę dostać świadczenie rehabilitacyjne i na jak długo?",
     "Wyczerpałam zasiłek chorobowy, nadal nie mogę pracować, a lekarz przewiduje powrót po leczeniu. Czy jest świadczenie na dalszy okres i na jak długo?",
