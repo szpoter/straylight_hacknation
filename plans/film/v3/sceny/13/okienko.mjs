@@ -14,13 +14,17 @@ const S = 1.28;
 const PAPER = { x: 1005, y: 388, w: 120, h: 150, a: -10 };   // ZASIŁEK standing on the counter, tilted to Marta
 const SPINE = SPINE14, W = 150, FA = -4;                   // Paweł's open folder (hinge), panel width, angle
 const PEN_REST = [952, 471];                                  // pen lying on the counter top by the paper's lower-left edge
-const pp = (x, y) => { const d = rot(x, y, PAPER.a); return [PAPER.x + d[0], PAPER.y + d[1]]; };  // paper-local → world
+// 13/0 = 12/59: centre (816,463) on screen, −10°, height 151 px → world (976.5,405.5), scale .786; the clerk turns it
+// toward Marta and brings it forward (13/0–16) to the counter spot used in the rest of 13 and in 14.
+const paperNow = g => { const t = smr(g, 721, 736); return { x: lerp(976.5, PAPER.x, t), y: lerp(405.5, PAPER.y, t) - Math.sin(t * Math.PI) * 6, a: PAPER.a, sc: lerp(.786, 1, t), turn: lerp(.93, 1, t) }; };
+let CUR = paperNow(840);
+const pp = (x, y) => { const d = rot(x * CUR.sc * CUR.turn, y * CUR.sc, CUR.a); return [CUR.x + d[0], CUR.y + d[1]]; };  // paper-local → world
 const DATE = { x: -50, y: 24, size: 15 }, LINE2 = { x: -46, y: 50, size: 15 };
 const DATE_END = 21.4, LINE2_END = 10, HEAD_END = 20.6;   // Chrome getBBox (robocze/b13/mierz.mjs)                          // measured ink extents of the two handwritten strings (local px)
 
 function camera(g) {
-  const t = smr(g, 814, 828);                                 // 14/34 → 14/48
-  const z = lerp(1.4, 1, t), cx = lerp(805, 640, t), cy = lerp(338, 360, t);
+  const t = smr(g, 814, 828), t0 = smr(g, 720, 742);         // 13/0–22 push-in from the 12/59 layout; 14/34 → 14/48 pull-back
+  const z = lerp(lerp(1.28, 1.4, t0), 1, t), cx = lerp(lerp(839, 805, t0), 640, t), cy = lerp(lerp(325, 338, t0), 360, t);
   return `translate(640 360) scale(${r1(z * 1000) / 1000}) translate(${r1(-cx)} ${r1(-cy)})`;
 }
 
@@ -33,7 +37,7 @@ function pen(nib, ang = 128, len = 62) {                       // ang = directio
 const PEN_GRIP = 22;                                           // pinch point sits 22 px up the barrel from the nib
 
 // Handwriting on the form: date always, "do jutra" revealed up to `wr` (0..1) of its ink width.
-function form(k, cx, cy, a, wr, g) {
+function form(k, cx, cy, a, wr, g, sc = 1, turn = 1) {
   let s = k.paper(cx, cy, PAPER.w, PAPER.h, a, { header: "ZASIŁEK", boxes: false });
   const id = "dj" + g;
   s += `<g transform="translate(${r1(cx)} ${r1(cy)}) rotate(${r1(a)})">`
@@ -41,7 +45,8 @@ function form(k, cx, cy, a, wr, g) {
     + `<path d="M${DATE.x} ${DATE.y + 4}h${DATE_END - DATE.x + 2}" stroke="#98A6AC" stroke-width="1.2"/>`;
   if (wr > 0) s += `<clipPath id="${id}"><rect x="${LINE2.x - 2}" y="${LINE2.y - 20}" width="${r1((LINE2_END - LINE2.x + 4) * wr)}" height="28"/></clipPath>`
     + `<text clip-path="url(#${id})" x="${LINE2.x}" y="${LINE2.y}" font-family="Domine, Georgia, serif" font-style="italic" font-size="${LINE2.size}" fill="${HAND_INK}">do jutra</text>`;
-  return s + `</g>`;
+  s += `</g>`;
+  return sc === 1 && turn === 1 ? s : `<g transform="translate(${r1(cx)} ${r1(cy)}) rotate(${r1(a)}) scale(${r1(sc * turn * 1000) / 1000} ${r1(sc * 1000) / 1000}) rotate(${r1(-a)}) translate(${r1(-cx)} ${r1(-cy)})">${s}</g>`;
 }
 
 // ── timelines ──────────────────────────────────────────────────────────────────────────────────────────────
@@ -70,13 +75,15 @@ function clerkPose(k, g) {
   // screen-right hand (anatomical left): thumb on the paper's right edge at 45 % height, releases at 14/32
   const hold = pp(PAPER.w / 2 + 2, -PAPER.h / 2 + PAPER.h * .45);
   const rel = smr(g, 812, 820);
-  p = reach(k, "clerk", p, "right", [lerp(hold[0], hold[0] + 40, rel), lerp(hold[1], hold[1] + 50, rel)]);
+  const take = smr(g, 720, 726);
+  p = reach(k, "clerk", p, "right", [lerp(lerp(1150, hold[0], take), hold[0] + 40, rel), lerp(lerp(500, hold[1], take), hold[1] + 50, rel)]);
+  if (g < 725) p.rightGrip = "open";
   if (g >= 812) p.rightGrip = "open";
   // screen-left hand (anatomical right): point → pen
   let tip, grip = "point", penAt = null;
   const headerEnd = pp(HEAD_END + 9, -52), dateEnd = pp(DATE_END + 9, DATE.y - 5);
-  if (g < 732) tip = [lerp(headerEnd[0] + 30, headerEnd[0], smr(g, 720, 727)), lerp(headerEnd[1] - 20, headerEnd[1], smr(g, 720, 727))];
-  else if (g < 752) { const t = sm(span(g, 732, 751)); tip = [lerp(headerEnd[0], dateEnd[0], t) + Math.sin(t * Math.PI) * 10, lerp(headerEnd[1], dateEnd[1], t)]; }
+  if (g < 734) { const t = smr(g, 725, 733); tip = [lerp(hold[0] - 6, headerEnd[0], t), lerp(hold[1] + 4, headerEnd[1], t) - Math.sin(t * Math.PI) * 14]; grip = g < 725 ? "pinch" : "point"; }
+  else if (g < 752) { const t = sm(span(g, 734, 751)); tip = [lerp(headerEnd[0], dateEnd[0], t) + Math.sin(t * Math.PI) * 10, lerp(headerEnd[1], dateEnd[1], t)]; }
   else if (g < 768) tip = dateEnd;
   else if (g < 774) { const t = sm(span(g, 768, 774)); tip = [lerp(dateEnd[0], PEN_REST[0] + 30, t), lerp(dateEnd[1], PEN_REST[1] - 40, t) - Math.sin(t * Math.PI) * 18]; grip = "open"; }
   else {
@@ -115,9 +122,11 @@ function pawelState(k, g) {
     [822, { head: 0, gaze: 0, gazeDown: .9, nod: .5 }], [834, { head: -.3, gaze: -.4, gazeDown: .9, nod: .5, bow: .2 }]], g);
   let p = { ...p0, ...look, blink: blink(g, [770]) };
   // folder: spine glides a little right while he offers it (804–812), cover angle closes 40–51
+  const fs = lerp(.9, 1, smr(g, 720, 730)), fm = smr(g, 720, 730);
   const offer = smr(g, 804, 812) - smr(g, 820, 830) * .5;
-  const sx = SPINE[0] + offer * 16, sy = SPINE[1];
-  const theta = chan([[720, 108], [820, 108], [831, 0]], g);
+  const sx = lerp(810 - 67.5, SPINE[0], fm) + offer * 16, sy = lerp(419 + 4.7, SPINE[1], fm);
+  const theta = chan([[730, 0], [746, 108], [820, 108], [831, 0]], g);
+  // 13/0–10: the closed folder from 12/59 (screen ≈ (603,480), 174 px) slides to the hinge used below
   // paper: on counter → in Paweł's right hand (809) → onto back panel (813–825)
   let paper = { x: PAPER.x, y: PAPER.y, a: PAPER.a, inFolder: false };
   const tIn = sm(span(g, 813, 825));
@@ -126,7 +135,7 @@ function pawelState(k, g) {
     paper = { x: lerp(PAPER.x, dst[0], tIn), y: lerp(PAPER.y, dst[1], tIn) - Math.sin(tIn * Math.PI) * 30, a: lerp(PAPER.a, FA, tIn), inFolder: tIn > .99 };
   }
   // right hand: folder edge → paper left edge (804–809) → with paper → back to the panel edge (824–830)
-  const panelEdge = teczkaPt(sx, sy, W, FA, 1, 46);
+  const panelEdge = teczkaPt(sx, sy, W * fs, FA, 1, 46);
   const paperEdge = (() => { const d = rot(-PAPER.w / 2 + 2, 4, paper.a); return [paper.x + d[0], paper.y + d[1]]; })();
   let rT;
   if (g < 804) rT = panelEdge;
@@ -136,11 +145,12 @@ function pawelState(k, g) {
   p.rightGrip = g >= 806 && g < 824 ? "pinch" : "hold";
   if (g >= 831) p.rightGrip = "open";
   // left hand on the cover's free edge (top third) until closed; then the closed folder's right edge
-  let lT = g < 816 ? coverPt(sx, sy, W, FA, theta, .12, 78) : g < 820 ? (() => { const a = coverPt(sx, sy, W, FA, theta, .12, 78), b = coverPt(sx, sy, W, FA, theta, 1, 30), t = smr(g, 816, 820); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; })() : coverPt(sx, sy, W, FA, theta, 1, 30);
-  let folder = { sx, sy, theta, ang: FA };
+  const early = g < 752 ? (() => { const a = coverPt(sx, sy, W * fs, FA, theta, g < 730 ? .1 : 1, g < 730 ? -84 : 30), b = coverPt(sx, sy, W, FA, theta, .12, 78), t = smr(g, 746, 752); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; })() : null;
+  let lT = early ? early : g < 816 ? coverPt(sx, sy, W, FA, theta, .12, 78) : g < 820 ? (() => { const a = coverPt(sx, sy, W, FA, theta, .12, 78), b = coverPt(sx, sy, W, FA, theta, 1, 30), t = smr(g, 816, 820); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; })() : coverPt(sx, sy, W, FA, theta, 1, 30);
+  let folder = { sx, sy, theta, ang: FA, w: W * fs };
   if (g >= 831) {                                         // closed: continue on the shared drop path
     const d = folderDrop(g);
-    folder = { sx: d.sx, sy: d.sy, theta: 0, ang: d.ang };
+    folder = { sx: d.sx, sy: d.sy, theta: 0, ang: d.ang, w: W };
     lT = d.grip;
   }
   p = reach(k, "pawel", p, "right", g >= 831 ? [lerp(panelEdge[0], 880, smr(g, 831, 838)), lerp(panelEdge[1], 430, smr(g, 831, 838))] : rT);
@@ -151,15 +161,16 @@ function pawelState(k, g) {
 }
 
 export function okienko(g, k) {
+  CUR = paperNow(g);
   const { p: clerk, penAt } = clerkPose(k, g), marta = martaPose(g), { p: pawel, paper, folder } = pawelState(k, g);
   let w = k.queue({ counter: false });
   w += `<path d="M960 110H1280V470H960Z" fill="#E6EFEA" stroke="#A9BBAF" stroke-width="2.4"/><path d="M1120 110V470" stroke="#C9D6CD" stroke-width="2"/>`;
-  w += `<path d="M1200 130H1250V176H1200Z" fill="#FFFFFF" stroke="${INK}" stroke-width="2.2"/><text x="1225" y="165" text-anchor="middle" font-family="Inter, Arial" font-weight="700" font-size="30" fill="${INK}">2</text>`;
+  w += `<path d="M1116 131H1250V187H1116Z" fill="${INK}" stroke="${INK}" stroke-width="2.2"/><text x="1183" y="173" text-anchor="middle" font-family="Inter, Arial" font-weight="700" font-size="36" fill="#A6D0B8" letter-spacing="1.4">A17</text>`;   // queue display = 07–12 (A17)
   w += k.person("clerk", { ...clerk, parts: "body" });
   w += k.queueCounter();
   w += k.person("clerk", { ...clerk, parts: "right" });            // holding hand behind the sheet (fingers at the back)
   const wr = writeReveal(g);
-  if (!paper.inFolder && g < 813) w += form(k, paper.x, paper.y, paper.a, wr, g);
+  if (!paper.inFolder && g < 813) w += g < 736 ? form(k, CUR.x, CUR.y, CUR.a, wr, g, CUR.sc, CUR.turn) : form(k, paper.x, paper.y, paper.a, wr, g);
   if (!penAt) w += pen(PEN_REST, 176);
   w += k.person("marta", marta);
   w += k.person("pawel", { ...pawel, parts: "body" });
@@ -168,7 +179,7 @@ export function okienko(g, k) {
   const inP = teczkaPt(folder.sx, folder.sy, W, folder.ang, .5, 4);
   inner += k.paper(inP[0] - 4, inP[1] + 6, 112, 140, folder.ang + 3, { header: "URLOP", boxes: false });
   if (g >= 813) inner += form(k, paper.x, paper.y, paper.a, 1, g);
-  w += teczka(k, folder.sx, folder.sy, W, folder.ang, folder.theta, g >= 831 ? "" : inner);   // closed: papers hidden inside
+  w += teczka(k, folder.sx, folder.sy, folder.w, folder.ang, folder.theta, g >= 831 ? "" : inner);   // closed: papers hidden inside
   w += k.person("clerk", { ...clerk, parts: "left" });
   if (penAt) w += pen(penAt.nib, penAt.ang);
   w += k.person("pawel", { ...pawel, parts: "arms" });

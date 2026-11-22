@@ -32,3 +32,13 @@ Sprawdzone klatki (podgląd `robocze/b13/podglad.mjs` i `ujecie-720p.mp4`): 0, 7
 **Uwagi.** Pismo odręczne złożone krojem Domine italic (jedyny szeryfowy krój w media/) — do weryfikacji, czy nie wolimy pisma ręcznego. Kolor atramentu = granat tokenu, oznaczony „do weryfikacji”.
 
 Render: `ujecie-720p.mp4`, `klatki.jpg` (kl. 0/20/40/59), `pozy.jpg` (v2 u góry, v3 u dołu). Czytelność 360 px: `../../robocze/b13/w360.png`.
+
+**Poprawka po animatiku (styk 12/13).** 13/0 przejmuje 12/59 z `sceny/12` (b07): kamera świata b13 zaczyna od z 1,28 wokół (839,325), czyli druk na ekranie w (816,463), −10°, wysokość ≈151 px. Kciuk ekranowo lewej ręki pracownicy jest na prawej krawędzi w 45 %. Paweł trzyma zamkniętą teczkę (ekran ≈ (603,480)), Marta stoi po lewej, nad ladą wisi tablica A17 (zastępuje numer „2”, więc zmienia się też tło 14). Potem:
+- 0–22: dojazd kamery do z 1,4;
+- 1–16: pracownica obraca druk ku Marcie i podsuwa go na stałe miejsce (1005,388);
+- 0–6: prawa ręka przejmuje brzeg, lewa przechodzi do nagłówka (13) i daty (32–47, bez zmian);
+- 10–26: Paweł otwiera teczkę (okładka 0°→108°), od 32 jest jak dawniej.
+
+Od 13/40 i w całym 14 akcja się nie zmienia, styk 13/59 → 14/0 bez skoku. Sprawdzone 719/720 (`robocze/b13/styk-719-720.png`), 724–752, 779/780.
+
+Różnica do decyzji koordynatora: na druku z 12 nie ma daty, tylko linia „Podstawa”. W 13 od kl. 0 widać odręczne „11.01.2027”. Stary podgląd leży w `robocze/b13/stare/`.
