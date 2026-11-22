@@ -51,8 +51,8 @@ async function main() {
   for (const source of sources.filter((s) => complete.documents.has(s.sourceId))) {
     const snapshot = readFileSync(`corpus/${source.snapshot}`, "utf8");
     if (sha256(snapshot) !== source.snapshotSha256) throw new Error(`Snapshot digest mismatch: ${source.sourceId}`);
-    for (const { heading, fragmentId } of source.sections) {
-      if (extractOfficialParagraph(snapshot, heading) !== complete.fragments.get(fragmentId)?.sourceText) {
+    for (const { heading, fragmentId, paragraphStarts } of source.sections) {
+      if (extractOfficialParagraph(snapshot, heading, paragraphStarts) !== complete.fragments.get(fragmentId)?.sourceText) {
         throw new Error(`Snapshot paragraph mismatch: ${fragmentId}`);
       }
     }

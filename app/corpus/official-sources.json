@@ -17,6 +17,7 @@
     "snapshotSha256": "49184e96c64f4c5481e0091c2f8b5324091341a6990c443408ae59ee0dcc8975",
     "sections": [
       {"facet": "care", "heading": "Na kogo przysługuje świadczenie", "fragmentId": "zlobek-opieka"},
+      {"facet": "age", "heading": "Na kogo przysługuje świadczenie", "fragmentId": "zlobek-wiek", "paragraphStarts": ["Świadczenie przysługuje do końca roku szkolnego", "Nie ma początkowego wieku dziecka"]},
       {"facet": "recipient", "heading": "Komu wypłacamy świadczenie aktywnie w żłobku", "fragmentId": "zlobek-odbiorca"}
     ]
   }

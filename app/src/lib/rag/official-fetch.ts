@@ -74,7 +74,7 @@ export function officialEvidenceReader(request: typeof fetch = fetch) {
         }
         snapshot = await flight;
       }
-      const quote = extractOfficialParagraph(snapshot.html, heading);
+      const quote = extractOfficialParagraph(snapshot.html, heading, section.paragraphStarts);
       if (!quote) return { citation: null, fetches, unavailable: false };
       const hash = fragmentHash(quote);
       const citation: AskCitation = {

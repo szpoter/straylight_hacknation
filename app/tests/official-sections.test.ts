@@ -7,12 +7,12 @@ import sources from "../corpus/official-sources.json";
 const [source] = sources;
 const html = readFileSync(`corpus/${source.snapshot}`, "utf8");
 
-it.each(["care", "recipient"] as const)("extracts the exact imported %s paragraph", (facet) => {
+it.each(["care", "recipient", "age"] as const)("extracts the exact imported %s paragraph", (facet) => {
   const section = getOfficialSection(source.sourceId, facet);
   expect(section).toBeTruthy();
   if (!section) return;
   const fragment = loadCorpus("oferta").fragments.get(section.fragmentId);
-  expect(extractOfficialParagraph(html, section.heading)).toBe(fragment?.sourceText);
+  expect(extractOfficialParagraph(html, section.heading, section.paragraphStarts)).toBe(fragment?.sourceText);
   expect(getOfficialSection("unregistered", facet)).toBeNull();
 });
 
