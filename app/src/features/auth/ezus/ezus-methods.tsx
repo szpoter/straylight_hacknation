@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { SiteFooter } from "@/features/landing/site-footer";
+import { OLA } from "@/lib/family/ola";
 import { AuthShell } from "../auth-shell";
 import { AUTH_PATHS, flowHref, type Flow } from "../flow";
+import { OpenFamilyPlan } from "../open-family-plan";
 import { ChevronRightIcon, LoginGovIcon, PhoneOutlineIcon } from "../service-icons";
 import styles from "./ezus.module.css";
 
@@ -14,6 +16,13 @@ export function EzusMethods({ flow, title }: { flow: Flow; title: string }) {
     <AuthShell className={styles.screen} mainClassName={styles.methodsMain} footer={<SiteFooter sectionBase="/" />}>
       <h1 className="visually-hidden">{title}</h1>
       <ul className={styles.methods}>
+        {flow.origin === "logowanie" && (
+          <li>
+            <h2>Import danych rodziny Oli</h2>
+            <p className="mb-4">{OLA.mother} i {OLA.father} · dane z mObywatela i mZUS</p>
+            <OpenFamilyPlan />
+          </li>
+        )}
         <li>
           <Link className={styles.method} href={flowHref(AUTH_PATHS.zusApp, keep)}>
             <span className={styles.methodIcon}>

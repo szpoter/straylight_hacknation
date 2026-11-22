@@ -1,0 +1,425 @@
+{
+  "date": "2026-11-22",
+  "environment": "Local Mac, separate PostgreSQL 18.7, real local Ollama on loopback, synthetic public corpus inputs",
+  "schemaCompatibility": "Existing answer-only role consumed answer_evidence. Typed claim consumed plan_public. Worker role denied table SELECT and submission.",
+  "memory": {
+    "at": "2026-11-22T01:16:02.242Z",
+    "totalmem": 51539607552,
+    "freemem": 1489698816,
+    "models": [
+      {
+        "port": 11434,
+        "loaded": [
+          {
+            "model": "SpeakLeash/bielik-11b-v3.1-instruct:Q4_K_M",
+            "size": 13481164144,
+            "size_vram": 13481164144,
+            "context_length": 32768
+          }
+        ]
+      },
+      {
+        "port": 11439,
+        "loaded": [
+          {
+            "model": "hf.co/mradermacher/PLLuM-12B-chat-2512-GGUF:Q4_K_M",
+            "size": 8081692672,
+            "size_vram": 8081692672,
+            "context_length": 4096
+          }
+        ]
+      }
+    ]
+  },
+  "runs": [
+    {
+      "fixture": "stopped_worker_hosted_fallback",
+      "file": "outage.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "attemptId": "dec84a26-c722-4ce1-9a27-a2f3db33dca2",
+          "backend": "local-bielik",
+          "status": "unclaimed",
+          "fallback": "hosted",
+          "ms": 3709
+        },
+        {
+          "event": "rag_model_attempt",
+          "attemptId": "dec84a26-c722-4ce1-9a27-a2f3db33dca2",
+          "backend": "hosted",
+          "status": "ok",
+          "ms": 9759
+        },
+        {
+          "backend": "hosted",
+          "attemptId": "dec84a26-c722-4ce1-9a27-a2f3db33dca2",
+          "ms": 9759,
+          "verdict": "answered",
+          "citations": [
+            "kp-art182-1d-par1"
+          ],
+          "rejected": 0
+        }
+      ]
+    },
+    {
+      "fixture": "initial_advisory_roles",
+      "file": "roles.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "kind": "plan_public",
+          "attemptId": "64e2aa6d-dc30-44f2-8bec-8fc51060e711",
+          "backend": "local-pllum",
+          "status": "worker_error",
+          "ms": 8061
+        },
+        {
+          "kind": "plan_public",
+          "status": "worker_error",
+          "attemptId": "64e2aa6d-dc30-44f2-8bec-8fc51060e711",
+          "backend": "local-pllum",
+          "output": null,
+          "ms": 8061,
+          "passed": false
+        },
+        {
+          "event": "rag_model_attempt",
+          "kind": "verify_claim",
+          "attemptId": "beeb18a8-6394-4d68-b87c-e7bd43f9db4c",
+          "backend": "local-bielik",
+          "status": "worker_error",
+          "ms": 2010
+        },
+        {
+          "kind": "verify_claim",
+          "status": "worker_error",
+          "attemptId": "beeb18a8-6394-4d68-b87c-e7bd43f9db4c",
+          "backend": "local-bielik",
+          "output": null,
+          "ms": 2010,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "fixture": "mixed_advisory_roles",
+      "file": "roles-v2.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "kind": "plan_public",
+          "attemptId": "4b439646-e3bd-4001-943c-9b2c25d9ded6",
+          "backend": "local-pllum",
+          "status": "ok",
+          "ms": 4844
+        },
+        {
+          "kind": "plan_public",
+          "status": "ok",
+          "attemptId": "4b439646-e3bd-4001-943c-9b2c25d9ded6",
+          "backend": "local-pllum",
+          "output": {
+            "intent": "cite_previous",
+            "nextTool": "readPreviousEvidence",
+            "evidenceIds": [
+              "zlobek-odbiorca"
+            ],
+            "requiredFacts": []
+          },
+          "ms": 4844,
+          "passed": true
+        },
+        {
+          "event": "rag_model_attempt",
+          "kind": "verify_claim",
+          "attemptId": "3e29e7c7-41ca-4c4e-ab2b-fca854865d3d",
+          "backend": "local-bielik",
+          "status": "worker_error",
+          "ms": 2813
+        },
+        {
+          "kind": "verify_claim",
+          "status": "worker_error",
+          "attemptId": "3e29e7c7-41ca-4c4e-ab2b-fca854865d3d",
+          "backend": "local-bielik",
+          "output": null,
+          "ms": 2813,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "fixture": "selected_advisory_roles",
+      "file": "roles-selected.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "kind": "plan_public",
+          "attemptId": "c665106d-2e4c-4b83-b638-64e34dc1875e",
+          "backend": "local-pllum",
+          "status": "timeout",
+          "ms": 9015
+        },
+        {
+          "kind": "plan_public",
+          "status": "timeout",
+          "attemptId": "c665106d-2e4c-4b83-b638-64e34dc1875e",
+          "backend": "local-pllum",
+          "output": null,
+          "ms": 9015,
+          "passed": false
+        },
+        {
+          "event": "rag_model_attempt",
+          "kind": "verify_claim",
+          "attemptId": "b68fd557-be40-4958-96a8-83029ff4eea3",
+          "backend": "local-pllum",
+          "status": "ok",
+          "ms": 4827
+        },
+        {
+          "kind": "verify_claim",
+          "status": "ok",
+          "attemptId": "b68fd557-be40-4958-96a8-83029ff4eea3",
+          "backend": "local-pllum",
+          "output": {
+            "verdict": "missing",
+            "evidenceIds": []
+          },
+          "ms": 4827,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "selected_roles_context_4096",
+      "file": "roles-4096.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "kind": "plan_public",
+          "attemptId": "7f3b69bd-724c-4103-8d35-8e54a816ec73",
+          "backend": "local-pllum",
+          "status": "timeout",
+          "ms": 9015
+        },
+        {
+          "kind": "plan_public",
+          "status": "timeout",
+          "attemptId": "7f3b69bd-724c-4103-8d35-8e54a816ec73",
+          "backend": "local-pllum",
+          "output": null,
+          "ms": 9015,
+          "passed": false
+        },
+        {
+          "event": "rag_model_attempt",
+          "kind": "verify_claim",
+          "attemptId": "7007bd0a-47b9-4e7a-9da6-5dae5c6c44d8",
+          "backend": "local-pllum",
+          "status": "ok",
+          "ms": 4430
+        },
+        {
+          "kind": "verify_claim",
+          "status": "ok",
+          "attemptId": "7007bd0a-47b9-4e7a-9da6-5dae5c6c44d8",
+          "backend": "local-pllum",
+          "output": {
+            "verdict": "missing",
+            "evidenceIds": []
+          },
+          "ms": 4430,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "legacy_answer_before_fix",
+      "file": "answers.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "attemptId": "8cfb6644-876b-4209-b22d-334f717d5533",
+          "backend": "local-bielik",
+          "status": "worker_error",
+          "fallback": "hosted",
+          "ms": 2824
+        },
+        {
+          "event": "ask_model_error",
+          "attempt": 1,
+          "status": "error",
+          "ms": 2844,
+          "error": "AI_APICallError"
+        },
+        {
+          "event": "ask_model_error",
+          "attempt": 2,
+          "status": "error",
+          "ms": 2845,
+          "error": "AI_APICallError"
+        }
+      ]
+    },
+    {
+      "fixture": "legacy_answer_after_fix",
+      "file": "answers-legacy.log",
+      "events": [
+        {
+          "event": "rag_model_attempt",
+          "attemptId": "26bd5ccc-2817-4a2f-85e5-0fe169c5159c",
+          "backend": "local-bielik",
+          "status": "ok",
+          "ms": 20910
+        },
+        {
+          "backend": "local-bielik",
+          "attemptId": "26bd5ccc-2817-4a2f-85e5-0fe169c5159c",
+          "ms": 20910,
+          "verdict": "answered",
+          "citations": [
+            "kp-art182-1d-par1",
+            "kp-art182-1d-par1",
+            "kp-art182-1d-par1"
+          ],
+          "rejected": 0
+        },
+        {
+          "event": "rag_model_attempt",
+          "attemptId": "8f5e5b64-5102-4f9a-9e3c-8216950651d5",
+          "backend": "local-pllum",
+          "status": "ok",
+          "ms": 20473
+        },
+        {
+          "backend": "local-pllum",
+          "attemptId": "8f5e5b64-5102-4f9a-9e3c-8216950651d5",
+          "ms": 20473,
+          "verdict": "answered",
+          "citations": [
+            "kp-art182-1d-par1"
+          ],
+          "rejected": 0
+        }
+      ]
+    }
+  ],
+  "workerEvents": [
+    {
+      "event": "ollama_attempt",
+      "kind": "plan_public",
+      "attemptId": "64e2aa6d-dc30-44f2-8bec-8fc51060e711",
+      "backend": "local-pllum",
+      "state": "failed"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "plan_public",
+      "attemptId": "64e2aa6d-dc30-44f2-8bec-8fc51060e711",
+      "backend": "local-pllum",
+      "state": "failed"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "verify_claim",
+      "attemptId": "beeb18a8-6394-4d68-b87c-e7bd43f9db4c",
+      "backend": "local-bielik",
+      "state": "failed"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "verify_claim",
+      "attemptId": "beeb18a8-6394-4d68-b87c-e7bd43f9db4c",
+      "backend": "local-bielik",
+      "state": "failed"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "plan_public",
+      "attemptId": "4b439646-e3bd-4001-943c-9b2c25d9ded6",
+      "backend": "local-pllum",
+      "state": "generated"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "verify_claim",
+      "attemptId": "3e29e7c7-41ca-4c4e-ab2b-fca854865d3d",
+      "backend": "local-bielik",
+      "state": "failed",
+      "reason": "http_400"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "verify_claim",
+      "attemptId": "3e29e7c7-41ca-4c4e-ab2b-fca854865d3d",
+      "backend": "local-bielik",
+      "state": "failed",
+      "reason": "http_400"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "plan_public",
+      "attemptId": "c665106d-2e4c-4b83-b638-64e34dc1875e",
+      "backend": "local-pllum",
+      "state": "expired",
+      "reason": "timeout"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "verify_claim",
+      "attemptId": "b68fd557-be40-4958-96a8-83029ff4eea3",
+      "backend": "local-pllum",
+      "state": "generated"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "plan_public",
+      "attemptId": "7f3b69bd-724c-4103-8d35-8e54a816ec73",
+      "backend": "local-pllum",
+      "state": "expired",
+      "reason": "timeout"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "verify_claim",
+      "attemptId": "7007bd0a-47b9-4e7a-9da6-5dae5c6c44d8",
+      "backend": "local-pllum",
+      "state": "generated"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "answer_evidence",
+      "attemptId": "8cfb6644-876b-4209-b22d-334f717d5533",
+      "backend": "local-bielik",
+      "state": "failed",
+      "reason": "http_400"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "answer_evidence",
+      "attemptId": "8cfb6644-876b-4209-b22d-334f717d5533",
+      "backend": "local-bielik",
+      "state": "failed",
+      "reason": "http_400"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "answer_evidence",
+      "attemptId": "26bd5ccc-2817-4a2f-85e5-0fe169c5159c",
+      "backend": "local-bielik",
+      "state": "generated"
+    },
+    {
+      "event": "ollama_attempt",
+      "kind": "answer_evidence",
+      "attemptId": "8f5e5b64-5102-4f9a-9e3c-8216950651d5",
+      "backend": "local-pllum",
+      "state": "generated"
+    }
+  ],
+  "localAnswerDiagnosis": "The shared Bielik endpoint returned HTTP 400: Failed to initialize samplers: std::exception with the nested answer grammar. The pre-existing prompt-based decoding now validates answers with the shared parser. Both local generators then returned a source-validated answer in staging.",
+  "pairedAdvisoryGatePassed": false
+}

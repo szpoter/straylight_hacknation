@@ -10,6 +10,9 @@ import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { Pool } from "pg";
 import { CHECKPOINT_SCHEMA } from "../src/lib/zusik/config";
 
+import { migrateConversation } from "../src/lib/zusik/v1/migration";
+import { migrateMemory } from "../src/lib/zusik/memory/migration";
+
 const OP = "zusik:migrate";
 const S = `"${CHECKPOINT_SCHEMA}"`;
 
@@ -51,6 +54,8 @@ async function migrate(ownerPool: Pool, runtimeRole: string) {
     )`);
   const role = await ownerPool.query("SELECT 1 FROM pg_roles WHERE rolname = $1", [runtimeRole]);
   if (role.rowCount !== 1) throw new Error(`runtime role ${runtimeRole} does not exist on this branch`);
+  await migrateMemory(ownerPool, runtimeRole);
+  await migrateConversation(ownerPool, runtimeRole);
   const r = `"${runtimeRole}"`;
   await ownerPool.query(`GRANT USAGE ON SCHEMA ${S} TO ${r}`);
   await ownerPool.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ${S} TO ${r}`);

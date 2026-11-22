@@ -26,7 +26,7 @@ const SUPPORT = [
 const GUIDE = [
   { label: "Poznaj Zusika", href: "#agent" },
   { label: "Urlop w liczbach", href: "#liczby" },
-  { label: "Zaloguj się", href: "/logowanie" },
+  { label: "Otwórz profil Oli", href: "/logowanie" },
   { label: "Zarejestruj się", href: "/rejestracja" },
 ];
 

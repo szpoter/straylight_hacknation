@@ -49,13 +49,13 @@ const BIRTH_ONLY = [
   "swiadczenie-rehabilitacyjne",
   "macierzynski-przed",
   "przesiewowe",
+  "urlop-macierzynski",
   "z3",
   "zglos-urodzenie",
   "odpis",
   "praca",
 ];
-/** Tylko dla pracownic (umowa o pracę): ustawa zasiłkowa art. 30 ust. 3. */
-const EMPLOYEE_ONLY = ["urlop-macierzynski", "zasilek-likwidacja"];
+const EMPLOYEE_ONLY = ["urlop-macierzynski", "macierzynski-przed", "rodzicielski", "rodzicielski-praca", "zasilek-likwidacja"];
 
 const SECOND = new Set(["drugi-rodzic", "drugi-adopcyjny", "drugi-opiekun"]);
 
@@ -135,6 +135,7 @@ const PARENT_LEVEL = [
   "urlop-macierzynski",
   "urlop-ojcowski",
   "rodzicielski",
+  "rodzicielski-praca",
   "powrot",
   "praca",
 ];
@@ -194,6 +195,44 @@ export function buildPlan(answers: BuildAnswers, id: string, today: string = DEM
   return buildPlans(answers, id, today)[0];
 }
 
+/** Starsze plany mają zapisany cały katalog. Uaktualniamy wyłącznie sprawy urlopowe. */
+export function refreshSavedLeavePlan(plan: Plan): Plan {
+  if (!Array.isArray(plan?.stops)) return plan;
+  const plainId = (stop: Stop) => stop.id.replace(/^e-/, "");
+  const parental = plan.stops.find(s => plainId(s) === "rodzicielski");
+  const obsolete = plan.stops.some(s => (plainId(s) === "urlop-macierzynski" && s.kind !== "informacja")
+    || (plainId(s) === "macierzynski-przed" && !s.doc))
+    || (parental && !plan.stops.some(s => plainId(s) === "rodzicielski-praca"));
+  if (!obsolete) return plan;
+  const expected = plan.stops.some(s => s.id.startsWith("e-"));
+  const answers: BuildAnswers = plan.origin ? plan.origin.answers as BuildAnswers : {
+    situation: plan.situation ?? (expected ? "ciaza" : "urodzone"), date: plan.keyDate, name: plan.name,
+  };
+  let catalog: Plan | undefined;
+  try {
+    catalog = buildPlans(answers, plan.origin?.idBase ?? plan.id, plan.origin?.builtOn).find(p => p.id === plan.id);
+  } catch {
+    // Uszkodzony zapis nie powinien uniemożliwić otwarcia pozostałych planów.
+    return plan;
+  }
+  if (!catalog) return plan;
+  const updatedStops = new Map(catalog.stops.map(s => [s.id, s]));
+  const work = catalog.stops.find(s => plainId(s) === "rodzicielski-praca");
+  const addWork = work && !plan.stops.some(s => s.id === work.id);
+  const leaveIds = ["macierzynski-przed", "urlop-macierzynski", "urlop-ojcowski", "rodzicielski", "rodzicielski-praca"];
+  const stops = plan.stops.flatMap(old => {
+    if (!leaveIds.includes(plainId(old))) return [old];
+    const updated = updatedStops.get(old.id);
+    if (!updated) return [];
+    if (!updated.doc) return [{ ...updated, checked: old.checked ?? updated.checked }];
+    const progressed = old.doc && old.state && !["warunek", "aktualna"].includes(old.state);
+    const stop = { ...updated, sharedGroup: old.sharedGroup, ...(progressed && { state: old.state, doc: { ...updated.doc, ...old.doc } }) };
+    return old === parental && addWork
+      ? [stop, { ...work, sharedGroup: old.sharedGroup }] : [stop];
+  });
+  return { ...plan, stops };
+}
+
 /**
  * Plany z odpowiedzi onboardingu. Ciąża i planowanie → jeden plan (dzieci jeszcze nie mają imion).
  * Dziecko urodzone, adopcja, piecza → osobny plan dla każdego dziecka. Sprawy rodzica (urlopy,
@@ -245,8 +284,11 @@ function buildOne(
   let stops = (expected ? CATALOG.expected() : CATALOG.born()).map((s) => fresh(s, expected, STAGES.indexOf(s.stage) < Math.min(stageIndex, expected ? stageIndex : 2)));
   if (second) stops = stops.filter((s) => !BIRTHING_ONLY.includes(baseId(s)));
   if (care) stops = stops.filter((s) => !BIRTH_ONLY.includes(baseId(s)) && s.stage !== "ciaza");
-  // Urlop macierzyński u pracodawcy i zasiłek po upadłości pracodawcy: tylko przy umowie o pracę.
-  if (answers.employment && answers.employment !== "etat") stops = stops.filter((s) => !EMPLOYEE_ONLY.includes(baseId(s)));
+  if (situation === "piecza") stops = stops.filter(s => baseId(s) !== "urlop-ojcowski");
+  if (answers.employment && answers.employment !== "etat") {
+    // Przy planie matki status zatrudnienia ojca pozostaje nieznany.
+    stops = stops.filter(s => !EMPLOYEE_ONLY.includes(baseId(s)) && !(second && baseId(s) === "urlop-ojcowski"));
+  }
   // Rodzeństwo: sprawy rodzica (urlopy, zasiłek) są w planie każdego dziecka, ale to jedna sprawa —
   // `sharedGroup` każe zapisywać zmianę we wszystkich planach grupy (PlanProvider).
   if (child.count > 1 && child.group) stops = stops.map((s) => (PARENT_LEVEL.includes(baseId(s)) ? { ...s, sharedGroup: child.group } : s));
@@ -271,6 +313,8 @@ function buildOne(
       risk: undefined,
     };
     if (situation === "planuje" && next.state === "aktualna" && s.due) next = { ...next, state: "warunek", condition: "Po zajściu w ciążę" };
+    if (baseId(s) === "macierzynski-przed" && situation === "planuje") next = { ...next, state: "warunek", condition: "Po ustaleniu przewidywanej daty porodu", dueBasis: undefined };
+    if (baseId(s) === "urlop-ojcowski" && second) next = { ...next, institution: "Twój pracodawca", howTo: next.howTo && { ...next.howTo, doKogo: "Twój pracodawca" } };
     if (!expected && baseId(s) === "800plus" && keyDate) next = { ...next, due: addMonths(keyDate, 3), dueBasis: "3 miesiące od urodzenia — wtedy wypłata od dnia urodzenia" };
     if (child.count > 1 && ["zasilek-macierzynski", "urlop-macierzynski", "macierzynski-przed"].includes(baseId(s)) && next.state !== "minelo") {
       const who = CHILDREN_GEN[child.count] ?? "pięciorga i więcej dzieci";

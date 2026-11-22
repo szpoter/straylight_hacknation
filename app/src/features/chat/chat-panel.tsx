@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ScenarioMenu, type Scenario } from "./scenario-nav";
+import { ScenarioMenu } from "./scenario-nav";
+import type { CaseName } from "@/lib/zusik/conversation";
 import { CASE_LABEL } from "./case-data";
 import { CaseSteps, type CaseStepsProps } from "./case-steps";
 import { TurnView } from "./turn-view";
@@ -40,7 +41,7 @@ export function ChatPanel(props: Props) {
 
 export function ChatHeader({ label, scenario, fullscreen, onFullscreen, onCollapse }: {
   label: string;
-  scenario: Scenario;
+  scenario: CaseName;
   fullscreen?: boolean;
   onFullscreen?: () => void;
   onCollapse?: () => void;
@@ -134,7 +135,7 @@ function Thread(props: Props) {
           <div className={s.marginMascot} aria-hidden="true">
             {mascot}
           </div>
-          <div ref={content} className={s.messages} aria-live="polite" aria-relevant="additions">
+          <div ref={content} className={s.messages} role="log" aria-label="Przebieg rozmowy" aria-relevant="additions">
             {props.workflow ?? <CaseSteps {...steps} />}
             {conversation.map((item) => (
               <TurnView

@@ -8,7 +8,7 @@ export function Page({ children, className }: { children: React.ReactNode; class
 /** Tytuł strony: Headline 48 px, na telefonie 36/40 px. */
 export function PageTitle({ children, className, id }: { children: React.ReactNode; className?: string; id?: string }) {
   return (
-    <h1 id={id} className={cn("font-serif text-headline-mobile md:text-headline", className)}>
+    <h1 id={id} className={cn("wrap-anywhere font-serif text-headline-mobile md:text-headline", className)}>
       {children}
     </h1>
   );

@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { allFields, demoProfile, displayValue, initialValues, nextState, progress, sendEvents, validPesel, validate } from "@/features/documents/flow";
+import { describe, expect, it, vi } from "vitest";
+import { allFields, demoProfile, documentDraft, displayValue, initialValues, nextState, progress, sendEvents, validPesel, validate } from "@/features/documents/flow";
 import { buildTimeline } from "@/features/documents/timeline";
 import { childFiles, type DocCase } from "@/features/documents/model";
 import { FORMS, formFor, prefillContext } from "@/lib/demo/forms";
 import { getPlan } from "@/lib/demo/fixtures";
 import { docCases } from "@/lib/plan/docs";
+import { HANDOFF_RECORDED, IN_PERSON_COMPLETED, SIMULATED_HANDOFF, latestHandoff } from "@/lib/plan/status";
 
 const ola = getPlan("ola");
 const ctx = prefillContext(ola, demoProfile());
@@ -27,14 +28,41 @@ describe("formularze wniosków", () => {
 describe("podstawianie danych", () => {
   it("z planu Oli: imię dziecka, data urodzenia, rodzic i pracodawca z profilu", () => {
     const v = initialValues(FORMS["zasilek-macierzynski"], ctx);
-    expect(v.dziecko).toBe("Ola");
+    expect(v.dziecko).toBe("Ola Lis");
     expect(v.data_urodzenia).toBe("2026-11-10");
-    expect(v.rodzic).toBe("Anna Przykładowa");
-    expect(v.pracodawca).toBe("Kwiatek sp. z o.o.");
+    expect(v.rodzic).toBe("Marta Lis");
+    expect(v.pracodawca).toBe("Studio Lipa");
     expect(v.dziecko_pesel).toBeUndefined();
+  });
+  it("preserves the original draft, keeps deliberate edits and separates identifiers", () => {
+    const id = "zasilek-macierzynski";
+    const original = { rodzic: "Anna Przykładowa", pracodawca: "Kwiatek sp. z o.o.", dziecko: "Ola", rodzic_pesel: "old-parent", dziecko_pesel: "old-child", rachunek: "old-account", adres: "old-address", caly_okres: "Tak" };
+    const store: Record<string, Record<string, string>> = { [id]: { ...original } };
+    const read = (key: string) => store[key] ?? {};
+    const migrated = documentDraft("ola", id, read);
+    expect(migrated.values).toEqual({ rodzic: "Marta Lis", pracodawca: "Studio Lipa", dziecko: "Ola Lis", caly_okres: "Tak" });
+    store[migrated.key] = { ...migrated.values, rodzic: "Paweł Lis", rodzic_pesel: "confirmed" };
+    expect(documentDraft("ola", id, read).values.rodzic_pesel).toBe("confirmed");
+    expect(store[id]).toEqual(original);
+    const custom = { rodzic: "Inna osoba", dziecko: "Ola", dziecko_pesel: "deliberate", rachunek: "chosen" };
+    expect(documentDraft("ola", id, () => custom).values).toEqual(custom);
+    expect(documentDraft("inne", id, read).values).toEqual(original);
   });
   it("wartości wpisane przez rodzica wygrywają z podstawionymi", () => {
     expect(initialValues(FORMS["zasilek-macierzynski"], ctx, { dziecko: "Aleksandra" }).dziecko).toBe("Aleksandra");
+  });
+  it("starszy szkic SR-2 rozdziela zapisane imiona i nazwiska rodzica i dziecka", () => {
+    expect(initialValues(FORMS.becikowe, ctx, { rodzic: "Ewa Kłos", dziecko: "Jan Kłos" })).toMatchObject({
+      rodzic_imie: "Ewa", rodzic_nazwisko: "Kłos", dziecko_imie: "Jan", dziecko_nazwisko: "Kłos",
+    });
+  });
+  it("własny plan rozróżnia datę urodzenia, termin porodu i datę przyjęcia dziecka", () => {
+    const own = { ...getPlan("oczekiwane"), id: "moja-rodzina", name: "Jan Klon", keyDate: "2026-11-10" };
+    expect(prefillContext({ ...own, situation: "urodzone" }, demoProfile())).toMatchObject({ childName: "Jan Klon", birthDate: own.keyDate, dueDate: undefined });
+    for (const situation of ["adopcja", "piecza"] as const) {
+      expect(prefillContext({ ...own, situation }, demoProfile())).toMatchObject({ childName: "Jan Klon", birthDate: undefined, dueDate: undefined });
+    }
+    expect(prefillContext({ ...own, situation: "urodzone", name: "Dziecko 2" }, demoProfile()).childName).toBeUndefined();
   });
   it("plan oczekiwanego dziecka nie podstawia daty urodzenia", () => {
     const expected = prefillContext(getPlan("oczekiwane"), demoProfile());
@@ -78,8 +106,15 @@ describe("walidacja", () => {
     const errors = validate(def, { ...initialValues(def, ctx), wyplata: "Przekazem pocztowym" });
     expect(errors.rachunek).toBeUndefined();
   });
-  it("kompletny wniosek przechodzi; postęp liczy wymagane pola", () => {
-    const values = { ...initialValues(def, ctx), rodzic_pesel: "44051401359", dziecko_pesel: "44051401359", caly_okres: "Tak", rachunek: "PL12 3456 7890 1234 5678 9012 3456" };
+  it("kompletny wniosek przechodzi; postęp liczy wymagane pola", ({ onTestFinished }) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-22T12:00:00Z"));
+    onTestFinished(() => { vi.useRealTimers(); });
+    const values = {
+      ...initialValues(def, ctx), rodzic_pesel: "90051212349", dziecko_pesel: "26311000009", drugi_pesel: "44051401359",
+      dom: "8", kod: "45-001", miejscowosc: "Opole", miejsce_urodzenia: "Opole", nip: "5250001003",
+      platnik: "ZUS", caly_okres: "Tak", rachunek: "PL12 3456 7890 1234 5678 9012 3456",
+    };
     expect(validate(def, values)).toEqual({});
     const { done, total } = progress(def, values);
     expect(done).toBe(total);
@@ -107,13 +142,39 @@ describe("przejścia stanów", () => {
     const sent = { ...stop, state: "wyslano" as const, doc: { ...stop.doc!, events } } as DocCase;
     const timeline = buildTimeline(sent);
     expect(timeline[0].status).toBe("done");
-    expect(timeline[1].status).toBe("done");
-    expect(childFiles([sent]).map((f) => f.type)).toEqual(expect.arrayContaining(["Kopia wniosku", "Potwierdzenie"]));
+    expect(timeline[1].status).toBe("current");
+    expect(events.at(-1)).toMatchObject({ author: "Ty", date: "2026-11-21" });
+    expect(childFiles([sent]).map((f) => f.type)).toEqual(["Kopia wniosku"]);
   });
-  it("korekta zachowuje poprzednią wysyłkę jako zwykły wpis", () => {
-    const first = sendEvents([], "pue", "ZUS", "2026-11-21");
-    const second = sendEvents(first, "pue", "ZUS", "2026-11-22", true);
-    expect(second.filter((e) => e.title === "Wysłano w symulacji")).toHaveLength(1);
-    expect(second.map((e) => e.title)).toContain("Wysłano poprzednią wersję");
+  it("korekta zachowuje historię i kopie papierowych przekazań, także tego samego dnia", () => {
+    const first = sendEvents([], "pracodawca", "Kadry", "2026-11-21");
+    const events = sendEvents(first, "email", "Kadry", "2026-11-21", true);
+    const stop = docCases(ola.stops).find((s) => s.id === "urlop-ojcowski") as DocCase;
+    const sent = { ...stop, state: "wyslano" as const, doc: { ...stop.doc, events } };
+    expect(events[0]).toEqual(first[0]);
+    expect(latestHandoff(events)).toMatchObject({ title: HANDOFF_RECORDED, detail: expect.stringContaining("Korekta") });
+    expect(buildTimeline(sent)[0].detail).toContain("E-mailem");
+    expect(buildTimeline(sent)[2].entries).toContainEqual(first[0]);
+    const files = childFiles([sent]);
+    expect(files.map((file) => file.type)).toEqual(["Kopia wniosku", "Kopia wniosku"]);
+    expect(new Set(files.map((file) => file.id)).size).toBe(2);
+  });
+  it("online pokazuje przykładowe potwierdzenie tylko dla bieżącego sposobu złożenia", () => {
+    const events = sendEvents([], "pue", "ZUS", "2026-11-21");
+    const stop = docCases(ola.stops).find((s) => s.id === "800plus") as DocCase;
+    const sent = { ...stop, state: "wyslano" as const, doc: { ...stop.doc, events } };
+    expect(latestHandoff(events)).toMatchObject({ title: SIMULATED_HANDOFF, date: "2026-11-21", detail: expect.stringContaining("eZUS") });
+    expect(buildTimeline(sent)[1]).toMatchObject({ label: "Potwierdzenie w symulacji", date: "2026-11-21", detail: expect.stringContaining("UPP"), status: "done" });
+    expect(childFiles([sent]).map(f => f.type)).toEqual(["Przykładowe potwierdzenie"]);
+    const corrected = sendEvents(events, "poczta", "ZUS", "2026-11-22", true);
+    expect(buildTimeline({ ...sent, doc: { ...sent.doc, events: corrected } })[1].status).toBe("current");
+  });
+  it("wizyta w USC zapisana przez rodzica kończy sprawę bez urzędowego potwierdzenia", () => {
+    const events = sendEvents([], "usc", "USC", "2026-11-21");
+    const stop = docCases(ola.stops).find((s) => s.id === "zglos-urodzenie") as DocCase;
+    const completed = { ...stop, state: "zalatwione" as const, doc: { ...stop.doc, events } };
+    expect(events).toMatchObject([{ author: "Ty", title: IN_PERSON_COMPLETED }]);
+    expect(buildTimeline(completed)).toMatchObject([{ id: "wynik", status: "done", date: "2026-11-21", label: IN_PERSON_COMPLETED }]);
+    expect(childFiles([completed])).toEqual([]);
   });
 });

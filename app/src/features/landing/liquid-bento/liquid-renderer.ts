@@ -184,7 +184,6 @@ export function createLiquidRenderer(canvas: HTMLCanvasElement): LiquidRenderer 
       gl.deleteProgram(program);
       gl.deleteShader(vertex);
       gl.deleteShader(fragment);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
     },
   };
 }

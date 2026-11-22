@@ -14,13 +14,12 @@ export function ZusikFab() {
   const pathname = usePathname();
   const { plan, openZusik, zusik } = usePlan();
   const [inviting, setInviting] = useState(false);
-  const stop = plan.stops.find(item => pathname === "/dokumenty/" + item.id);
   if (pathname === "/plan") return null;
   return (
     <button
       hidden={Boolean(zusik && !zusik.collapsed && zusik.planId === plan.id)}
       type="button"
-      onClick={() => openZusik({ planId: plan.id, place: pathname, stopId: stop?.id, returnTo: pathname })}
+      onClick={() => openZusik({ planId: plan.id, place: pathname, followsPage: true, returnTo: pathname })}
       onPointerEnter={() => setInviting(true)}
       onPointerLeave={() => setInviting(false)}
       onFocus={() => setInviting(true)}
@@ -40,15 +39,21 @@ export function ZusikFab() {
 }
 
 const pageLabels: Record<string, string> = {
-  "/dokumenty": "Dokumenty", "/profil": "Profil", "/wsparcie": "Wsparcie", "/profil/sprawa-testowa": "Sprawa testowa",
+  "/plan": "Mój plan", "/dokumenty": "Dokumenty", "/profil": "Profil", "/wsparcie": "Wsparcie", "/profil/sprawa-testowa": "Sprawa testowa",
 };
 
 /** The map pawn, document actions and floating mascot open the same live chat. */
 export function FamilyChatShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const { plan, zusik, closeZusik } = usePlan();
   const context = zusik?.planId === plan.id ? zusik : null;
-  const stop = plan.stops.find(item => item.id === context?.stopId);
-  const title = stop?.title ?? (context && (pageLabels[context.place] ?? context.place));
+  // A tab navigation may finish after the floating mascot was clicked.
+  // Page help follows the committed route; an explicit stop or field stays selected.
+  const place = context?.followsPage ? pathname : context?.place;
+  const stop = plan.stops.find(item => context?.followsPage
+    ? pathname === "/dokumenty/" + item.id
+    : item.id === context?.stopId);
+  const title = stop?.title ?? (place && (pageLabels[place] ?? place));
   return (
     <ParentChat panel={{
       expanded: Boolean(context && !context.collapsed),

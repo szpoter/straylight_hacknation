@@ -1,0 +1,66 @@
+pages: 2
+  page 1: 595x842
+  page 2: 595x842
+Removing XFA form data as pdf-lib does not support reading or writing XFA
+acroform fields: 59
+  PDFTextField "topmostSubform[0].Page1[0].II01_NrNIP[0]"
+  PDFTextField "topmostSubform[0].Page1[0].II02_NrREGON[0]"
+  PDFTextField "topmostSubform[0].Page1[0].II03_NrPESEL[0]"
+  PDFDropdown "topmostSubform[0].Page1[0].II04_RodzajDokumentu[0]" options=["1","2"]
+  PDFTextField "topmostSubform[0].Page1[0].II05_SeriaNrDok[0]"
+  PDFTextField "topmostSubform[0].Page1[0].II06_NazwaSkrocona[0]"
+  PDFTextField "topmostSubform[0].Page1[0].II07_Nazwisko[0]"
+  PDFTextField "topmostSubform[0].Page1[0].II08_Imie[0]"
+  PDFTextField "topmostSubform[0].Page1[0].II09_DataUrodzenia[0]"
+  PDFTextField "topmostSubform[0].Page1[0].III01_NrPESEL[0]"
+  PDFDropdown "topmostSubform[0].Page1[0].III03_RodzajDokumentu[0]" options=["1","2"]
+  PDFTextField "topmostSubform[0].Page1[0].III04_SeriaNrDok[0]"
+  PDFTextField "topmostSubform[0].Page1[0].III05_Nazwisko[0]"
+  PDFTextField "topmostSubform[0].Page1[0].III06_Imie[0]"
+  PDFTextField "topmostSubform[0].Page1[0].III07_DataUrodzenia[0]"
+  PDFDropdown "topmostSubform[0].Page1[0].IV01A_zgloszenie[0]" options=["1","2"]
+  PDFTextField "topmostSubform[0].Page1[0].IV02A_DataUrodzenia[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV03A_NrPESEL[0]"
+  PDFDropdown "topmostSubform[0].Page1[0].IV05A_RodzajDokumentu[0]" options=["1","2"]
+  PDFTextField "topmostSubform[0].Page1[0].IV06A_SeriaNrDok[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV07A_Nazwisko[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV08A_Imie[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV09A_DataUrodzenia[0]"
+  PDFDropdown "topmostSubform[0].Page1[0].IV10A[0]" options=["01 – małżonek","11 – dziecko własne, przysposobione lub dziecko małżonka","21 – wnuk albo dziecko obce, dla którego ustanowiono opiekę, albo dziecko obce w ramach rodziny zastępczej lub rodzinnego domu dziecka","30 – matka","31 – ojciec","32 – macocha","33 –  ojczym","40 – babka","41 – dziadek","50 – osoby przysposabiające osoby ubezpieczone","60 – inni wstępni pozostający z ubezpieczonym we wspólnym gospodarstwie domowym"]
+  PDFCheckBox "topmostSubform[0].Page1[0].IV11A[0]"
+  PDFDropdown "topmostSubform[0].Page1[0].IV12A[0]" options=[" ","0 – osoba nieposiadająca orzeczenia o niepełnosprawności lub osoba, która posiada orzeczenie i nie przedłożyła go płatnikowi składek","1 – osoba, która przedłożyła płatnikowi składek orzeczenie o lekkim stopniu niepełnosprawności","2 – osoba, która przedłożyła płatnikowi składek orzeczenie o umiarkowanym stopniu niepełnosprawności","3 – osoba, która przedłożyła płatnikowi składek orzeczenie o znacznym stopniu niepełnosprawności","4 – osoba, która przedłożyła płatnikowi orzeczenie o niepełnosprawności wydawane osobom do 16 roku życia"]
+  PDFTextField "topmostSubform[0].Page1[0].IV01B_kodpocztowy[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV02B_miejscowosc[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV03B_gmina[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV04B_ulica[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV05B_nrdomu[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV06B_nrlokalu[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV07B_nrtelefonu[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV08B_syA[0]"
+  PDFTextField "topmostSubform[0].Page1[0].IV08B_syB[0]"
+  PDFDropdown "topmostSubform[0].Page2[0].V01A_zgloszenie[0]" options=["1","2"]
+  PDFTextField "topmostSubform[0].Page2[0].V02A_DataUrodzenia[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V03A_NrPESEL[0]"
+  PDFDropdown "topmostSubform[0].Page2[0].V05A_RodzajDokumentu[0]" options=["1","2"]
+  PDFTextField "topmostSubform[0].Page2[0].V06A_SeriaNrDok[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V07A_Nazwisko[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V08A_Imie[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V09A_DataUrodzenia[0]"
+  PDFDropdown "topmostSubform[0].Page2[0].V10A[0]" options=["01 – małżonek","11 – dziecko własne, przysposobione lub dziecko małżonka","21 – wnuk albo dziecko obce, dla którego ustanowiono opiekę, albo dziecko obce w ramach rodziny zastępczej lub rodzinnego domu dziecka","30 – matka","31 – ojciec","32 – macocha","33 –  ojczym","40 – babka","41 – dziadek","50 – osoby przysposabiające osoby ubezpieczone","60 – inni wstępni pozostający z ubezpieczonym we wspólnym gospodarstwie domowym"]
+  PDFCheckBox "topmostSubform[0].Page2[0].V11A[0]"
+  PDFDropdown "topmostSubform[0].Page2[0].V12A[0]" options=[" ","0 – osoba nieposiadająca orzeczenia o niepełnosprawności lub osoba, która posiada orzeczenie i nie przedłożyła go płatnikowi składek","1 – osoba, która przedłożyła płatnikowi składek orzeczenie o lekkim stopniu niepełnosprawności","2 – osoba, która przedłożyła płatnikowi składek orzeczenie o umiarkowanym stopniu niepełnosprawności","3 – osoba, która przedłożyła płatnikowi składek orzeczenie o znacznym stopniu niepełnosprawności","4 – osoba, która przedłożyła płatnikowi orzeczenie o niepełnosprawności wydawane osobom do 16 roku życia"]
+  PDFTextField "topmostSubform[0].Page2[0].V01B_kodpocztowy[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V02B_miejscowosc[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V03B_gmina[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V04B_ulica[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V05B_nrdomu[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V06B_nrlokalu[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V07B_nrtelefonu[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V08B_syA[0]"
+  PDFTextField "topmostSubform[0].Page2[0].V08B_syB[0]"
+  PDFTextField "topmostSubform[0].Page2[0].VI01_DataWypelnienia[0]"
+  PDFTextField "topmostSubform[0].Page2[0].VI02_PodpisPlatnika[0]"
+  PDFTextField "topmostSubform[0].Page2[0].VI01_PodpisZglaszanej[0]"
+  PDFTextField "topmostSubform[0].Page2[0].VI03_Pieczatka[0]"
+--- text page 1 (0 chars): 
+--- text page 2 (92 chars): przed dniem 1 płatnika składek lub płatnika składek Skład: Poligrafia ZUS/W-wa; zam. 2384/20

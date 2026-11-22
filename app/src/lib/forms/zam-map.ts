@@ -42,6 +42,8 @@ export type Slot = CellsSlot | TextSlot | CheckSlot;
 export const ZAM_MAP = {
   // Strona 1 · Twoje dane
   father_pesel: { type: "cells", page: 1, x: 239.0, y: 536, count: 11 },
+  applicant_birth: { type: "cells", page: 1, x: 239, y: 508.8, count: 8 },
+  applicant_document: { type: "text", page: 1, x: 239, y: 464, w: 313.6, h: 26.8 },
   father_first_name: { type: "text", page: 1, x: 239.0, y: 428, w: 313.6, h: 17.4 },
   father_last_name: { type: "text", page: 1, x: 239.0, y: 402, w: 313.6, h: 17.4 },
   father_street: { type: "text", page: 1, x: 239.0, y: 375, w: 313.6, h: 17.4 },
@@ -49,12 +51,17 @@ export const ZAM_MAP = {
   father_flat: { type: "text", page: 1, x: 399.7, y: 348, w: 71.5, h: 17.4 },
   father_postcode: { type: "text", page: 1, x: 239.0, y: 321, w: 71.5, h: 17.4 },
   father_city: { type: "text", page: 1, x: 399.7, y: 321, w: 152.9, h: 17.4 },
+  applicant_country: { type: "text", page: 1, x: 239, y: 294.2, w: 313.6, h: 17.4 },
   // Strona 1 · Dane płatnika składek (REGON and PESEL only when there is no NIP)
   payer_nip: { type: "cells", page: 1, x: 239.0, y: 194, count: 10 },
   payer_name: { type: "text", page: 1, x: 239.0, y: 60, w: 313.6, h: 17.4 },
   // Strona 2 · Rachunek bankowy
   bank_account: { type: "cells", page: 2, x: 42.8, y: 710, count: 26 },
   // Strona 2 · Zakres wniosku
+  maternity_check: { type: "check", page: 2, x: 42.8, y: 616.5 },
+  maternity_period: { type: "text", page: 2, x: 275, y: 589.8, w: 277.6, h: 44.3 },
+  maternity_end: { type: "cells", page: 2, x: 399.9, y: 339.5, count: 8 },
+  full_leave_intent: { type: "check", page: 2, x: 42.8, y: 303.3 },
   paternity_check: { type: "check", page: 2, x: 42.8, y: 420 },
   paternity_period: { type: "text", page: 2, x: 185.6, y: 402, w: 367.2, h: 36 },
   paternity_part: { type: "text", page: 2, x: 221.3, y: 366, w: 35.8, h: 17.4, align: "center" },
@@ -65,11 +72,15 @@ export const ZAM_MAP = {
   reason_birth: { type: "check", page: 2, x: 60.4, y: 150 },
   // Strona 3 · Dane dziecka
   child_data: { type: "text", page: 3, x: 60.4, y: 669, w: 491.9, h: 60, lines: 4 },
+  certificate_check: { type: "check", page: 3, x: 60.4, y: 636.6 },
+  certificate_names: { type: "text", page: 3, x: 221.4, y: 636.6, w: 331, h: 17.4 },
   // Strona 5 · Oświadczenie (urlop ojcowski z innego tytułu): TAK / NIE
   other_title_yes: { type: "check", page: 5, x: 42.8, y: 608 },
   other_title_no: { type: "check", page: 5, x: 96.3, y: 608 },
   // Strona 5 · Dane drugiego rodzica
   mother_pesel: { type: "cells", page: 5, x: 239.0, y: 387, count: 11 },
+  second_parent_birth: { type: "cells", page: 5, x: 239, y: 360, count: 8 },
+  second_parent_document: { type: "text", page: 5, x: 239, y: 315, w: 313.6, h: 26.8 },
   mother_first_name: { type: "text", page: 5, x: 239.0, y: 280, w: 313.6, h: 17.4 },
   mother_last_name: { type: "text", page: 5, x: 239.0, y: 253, w: 313.6, h: 17.4 },
   // Strona 5 · Data (ddmmrrrr); the signature stays empty for Kamil's hand

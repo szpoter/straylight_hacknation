@@ -20,3 +20,13 @@ export function localRagModel(value = process.env.ZUSIK_RAG_MODEL) {
   if (value === "hosted") return null;
   throw new Error("Unknown ZUSIK_RAG_MODEL");
 }
+
+
+/** Supplementary tasks require both a compatible queue consumer and an explicit role assignment. */
+export function modelForTask(kind: "answer_evidence" | "plan_public" | "verify_claim", env: Record<string, string | undefined> = process.env) {
+  if (kind === "answer_evidence") return localRagModel(env.ZUSIK_RAG_MODEL);
+  const configured = kind === "plan_public" ? env.ZUSIK_PLANNER_MODEL : env.ZUSIK_VERIFIER_MODEL;
+  if (!configured || configured === "off") return null;
+  if (configured === "bielik" || configured === "pllum") return configured;
+  throw Error("Unknown model for " + kind);
+}

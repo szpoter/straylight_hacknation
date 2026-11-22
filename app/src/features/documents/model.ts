@@ -1,6 +1,6 @@
 import type { Stop } from "@/lib/demo/types";
 import { formatLong } from "@/lib/demo/dates";
-import { docStatus, type DocGroup } from "@/lib/plan/status";
+import { HANDOFF_RECORDED, SIMULATED_HANDOFF, docStatus, latestHandoff, type DocGroup } from "@/lib/plan/status";
 
 export type DocCase = Stop & { doc: NonNullable<Stop["doc"]>; state: NonNullable<Stop["state"]> };
 
@@ -20,7 +20,7 @@ export function rowAction(c: DocCase): RowAction {
     case "wypelniony":
       return { label: "Sprawdź i zatwierdź", kind: "link", step: "sprawdz" };
     case "zatwierdzony":
-      return { label: "Przekaż", kind: "link", step: "przekaz" };
+      return { label: "Wybierz sposób przekazania", kind: "link", step: "przekaz" };
     case "wyslano":
       return { label: "Zobacz przebieg", kind: "link" };
     case "warunek":
@@ -37,8 +37,11 @@ export function rowDetail(c: DocCase): string | undefined {
   const parts: string[] = [];
   if (c.due && docStatus(c.state).group === "do-zalatwienia") parts.push(`Do ${formatLong(c.due)}`);
   if (c.doc.result) parts.push(c.doc.result);
-  if (c.doc.lastEvent) parts.push(c.doc.lastEvent);
-  else if (c.doc.note) parts.push(c.doc.note);
+  if (c.doc.lastEvent) {
+    const earlierHandoff = latestHandoff(c.doc.events)?.title === "Wysłano w symulacji"
+      && /^(Potwierdzono wpływ|Przekazano|Wysłano)/.test(c.doc.lastEvent);
+    parts.push(earlierHandoff ? "Wcześniejszy wpis o przekazaniu" : c.doc.lastEvent);
+  } else if (c.doc.note) parts.push(c.doc.note);
   return parts.join(" · ") || undefined;
 }
 
@@ -65,11 +68,11 @@ export type ChildFile = { id: string; name: string; type: string; date: string; 
 export function childFiles(cases: DocCase[]): ChildFile[] {
   const files: ChildFile[] = [];
   for (const c of cases) {
-    for (const e of c.doc.events ?? []) {
+    for (const [index, e] of (c.doc.events ?? []).entries()) {
       const base = { caseId: c.id, caseTitle: c.title, goal: c.doc.goal, date: e.date };
-      if (e.title === "Wysłano w symulacji") files.push({ ...base, id: `${c.id}-kopia`, name: `Kopia: ${c.title}`, type: "Kopia wniosku" });
-      if (e.title === "Potwierdzenie wpływu") files.push({ ...base, id: `${c.id}-upp`, name: `Potwierdzenie UPP: ${c.title}`, type: "Potwierdzenie" });
-      if (e.title === "Otrzymano wezwanie") files.push({ ...base, id: `${c.id}-pismo`, name: `Pismo z ${e.author ?? "urzędu"}: wezwanie do uzupełnienia`, type: "Pismo przychodzące" });
+      if (e.title === HANDOFF_RECORDED) files.push({ ...base, id: `${c.id}-kopia-${index}`, name: `Kopia: ${c.title}`, type: "Kopia wniosku" });
+      if (e.title === SIMULATED_HANDOFF && e.simulatedReceipt) files.push({ ...base, id: `${c.id}-demo-${index}`, name: e.simulatedReceipt, type: "Przykładowe potwierdzenie" });
+      if (e.title === "Otrzymano wezwanie") files.push({ ...base, id: `${c.id}-pismo-${index}`, name: `Pismo z ${e.author ?? "urzędu"}: wezwanie do uzupełnienia`, type: "Pismo przychodzące" });
     }
   }
   return files.sort((a, b) => b.date.localeCompare(a.date));

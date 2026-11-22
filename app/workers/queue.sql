@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS zusik_model.jobs (
   prompt text, expires_at timestamptz NOT NULL, lease uuid, lease_until timestamptz,
   attempts smallint NOT NULL DEFAULT 0, done boolean NOT NULL DEFAULT false, output text
 );
+ALTER TABLE zusik_model.jobs ADD COLUMN IF NOT EXISTS task_kind text NOT NULL DEFAULT 'answer_evidence'
+  CHECK (task_kind IN ('answer_evidence','plan_public','verify_claim'));
 ALTER TABLE zusik_model.jobs ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION zusik_model.submit(j uuid, m text, p text) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
@@ -15,22 +17,37 @@ BEGIN
   INSERT INTO zusik_model.jobs(id,model,prompt,expires_at) VALUES (j,m,p,now()+interval '42 seconds');
   PERFORM pg_notify('zusik_model_ready','');
 END $$;
+CREATE OR REPLACE FUNCTION zusik_model.submit_task(j uuid, m text, p text, kind text) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
+BEGIN
+  IF kind NOT IN ('plan_public','verify_claim') OR kind IS NULL THEN RAISE EXCEPTION 'unknown task'; END IF;
+  PERFORM zusik_model.submit(j,m,p);
+  UPDATE zusik_model.jobs SET task_kind=kind, expires_at=now()+interval '9 seconds' WHERE id=j;
+END $$;
 CREATE OR REPLACE FUNCTION zusik_model.result(j uuid) RETURNS TABLE(started boolean, done boolean, output text)
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog AS $$
   SELECT attempts>0, done, output FROM zusik_model.jobs WHERE id=j AND expires_at>now()
 $$;
 CREATE OR REPLACE FUNCTION zusik_model.discard(j uuid) RETURNS void
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog AS $$ DELETE FROM zusik_model.jobs WHERE id=j $$;
-CREATE OR REPLACE FUNCTION zusik_model.claim() RETURNS TABLE(id uuid, model text, prompt text, lease uuid, left_ms int)
+CREATE OR REPLACE FUNCTION zusik_model.claim_job(include_typed boolean) RETURNS TABLE(id uuid, model text, prompt text, lease uuid, left_ms int, task_kind text)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
 BEGIN
   DELETE FROM zusik_model.jobs q WHERE q.expires_at<=now();
   RETURN QUERY WITH next AS (
     SELECT q.id FROM zusik_model.jobs q WHERE NOT q.done AND q.attempts<2 AND q.expires_at>now()
-    AND (q.lease IS NULL OR q.lease_until<=now()) ORDER BY q.expires_at LIMIT 1 FOR UPDATE SKIP LOCKED
+    AND (include_typed OR q.task_kind='answer_evidence') AND (q.lease IS NULL OR q.lease_until<=now()) ORDER BY q.expires_at LIMIT 1 FOR UPDATE SKIP LOCKED
   ) UPDATE zusik_model.jobs q SET lease=gen_random_uuid(), lease_until=now()+interval '9 seconds', attempts=q.attempts+1
-    FROM next WHERE q.id=next.id RETURNING q.id,q.model,q.prompt,q.lease,(extract(epoch FROM q.expires_at-now())*1000)::int;
+    FROM next WHERE q.id=next.id RETURNING q.id,q.model,q.prompt,q.lease,(extract(epoch FROM q.expires_at-now())*1000)::int,q.task_kind;
 END $$;
+CREATE OR REPLACE FUNCTION zusik_model.claim() RETURNS TABLE(id uuid, model text, prompt text, lease uuid, left_ms int)
+LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog AS $$
+  SELECT j.id,j.model,j.prompt,j.lease,j.left_ms FROM zusik_model.claim_job(false) j
+$$;
+CREATE OR REPLACE FUNCTION zusik_model.claim_task() RETURNS TABLE(id uuid, model text, prompt text, lease uuid, left_ms int, task_kind text)
+LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog AS $$
+  SELECT * FROM zusik_model.claim_job(true)
+$$;
 CREATE OR REPLACE FUNCTION zusik_model.renew(j uuid, token uuid) RETURNS boolean
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog AS $$
   WITH changed AS (UPDATE zusik_model.jobs SET lease_until=now()+interval '9 seconds'
@@ -47,5 +64,5 @@ $$;
 REVOKE ALL ON ALL TABLES IN SCHEMA zusik_model FROM PUBLIC, zusik_model_worker, zusik_runtime;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA zusik_model FROM PUBLIC, zusik_model_worker, zusik_runtime;
 GRANT USAGE ON SCHEMA zusik_model TO zusik_model_worker, zusik_runtime;
-GRANT EXECUTE ON FUNCTION zusik_model.submit(uuid,text,text), zusik_model.result(uuid), zusik_model.discard(uuid) TO zusik_runtime;
-GRANT EXECUTE ON FUNCTION zusik_model.claim(), zusik_model.renew(uuid,uuid), zusik_model.finish(uuid,uuid,text) TO zusik_model_worker;
+GRANT EXECUTE ON FUNCTION zusik_model.submit(uuid,text,text), zusik_model.submit_task(uuid,text,text,text), zusik_model.result(uuid), zusik_model.discard(uuid) TO zusik_runtime;
+GRANT EXECUTE ON FUNCTION zusik_model.claim(), zusik_model.claim_task(), zusik_model.renew(uuid,uuid), zusik_model.finish(uuid,uuid,text) TO zusik_model_worker;

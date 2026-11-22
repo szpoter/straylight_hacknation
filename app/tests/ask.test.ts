@@ -82,17 +82,18 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
   });
   it("explains the saved calculator inputs, separates the legal deadline and preserves missing rates", async () => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-10", days: 3,
-      firstDaily: 123.45, secondDaily: null, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
-    const w = world({ readMarta: async session => ({ view: session === "calculator" ? view : null }) });
+      firstDaily: 123.45, secondDaily: null, firstName: "Marta Lis", secondName: "Paweł Lis", childName: "Ola Lis" }).view;
+    const foreign = view && { ...view, firstName: "Anna", childName: "Iga" };
+    const w = world({ readMarta: async session => ({ view: session === "calculator" ? view : foreign }) });
     const result = await w.ask().ask("calculator", "Skąd są te dane?", "req-case-context");
     const message = result.turn?.message.replace(/\s/g, " ");
-    expect(message).toContain("Anna — 3 dni × 123,45 zł dziennie = 370,35 zł brutto");
-    expect(message).toContain("Jan — brakuje stawki");
+    expect(message).toContain("Marta Lis — 3 dni × 123,45 zł dziennie = 370,35 zł brutto");
+    expect(message).toContain("Paweł Lis — brakuje stawki");
     expect(message).toContain("2027-02-10");
     expect(result.turn?.citations.map(c => c.fragmentId)).toEqual(["kp-art182-1d-par1"]);
     expect(result.turn?.claims.map(c => c.text).join(" ")).not.toMatch(/123|370|brutto/u);
     const fresh = await w.ask().ask("fresh", "Skąd te kwoty?", "req-case-context");
-    expect(fresh.turn?.message).toMatch(/przykładowe dane rodziny/u);
+    expect(fresh.turn?.message).toMatch(/profilu rodziny Oli/u);
     expect(fresh.turn?.message).not.toContain("Anna");
     expect(w.calls).toEqual({ sherlock: 0, qdrant: 0 });
   });
@@ -113,7 +114,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
 
   it("explains a calculator total requested explicitly after a legal answer, including a zero rate", async () => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-01-11", days: 4,
-      firstDaily: 0, secondDaily: 51.25, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
+      firstDaily: 0, secondDaily: 51.25, firstName: "Marta Lis", secondName: "Paweł Lis", childName: "Ola Lis" }).view;
     const w = world({ readMarta: async () => ({ view }) });
     await w.ask().ask("m", Q_ODPIS, "req-law");
     const { turn } = await w.ask().ask("m", "Skąd są te kwoty?", "req-total");
@@ -128,7 +129,7 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     ["Pokaż źródła z poprzedniej odpowiedzi", 1, "previous"],
   ] as const)("resolves %s with a checkpoint offset of %d ms to %s", async (question, offset, expected) => {
     const view = applyMarta(null, { type: "compare", version: 0, firstStart: "2027-02-01", days: 2,
-      firstDaily: 101, secondDaily: 99, firstName: "Anna", secondName: "Jan", childName: "Iga" }).view;
+      firstDaily: 101, secondDaily: 99, firstName: "Marta Lis", secondName: "Paweł Lis", childName: "Ola Lis" }).view;
     const snapshot = { view, savedAt: "" };
     const w = world({ readMarta: async () => snapshot });
     const law = await w.ask().ask("m", Q_ODPIS, "req-law");
@@ -143,11 +144,12 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     expect(w.calls).toEqual({ sherlock: 1, qdrant: 1 });
   });
 
-  it("emits progress for work performed and publishes the checked turn before saving", async () => {
+  it("emits progress for work performed and publishes the persisted turn", async () => {
     const w = world();
     const events: string[] = [];
     const res = await w.ask().ask("m", Q_ODPIS, "req-progress", s => events.push(s), turn => {
       expect(turn.citations[0].fragmentId).toBe("rozp-2025-322-par22");
+      expect(turn.completedAt).toBeTruthy();
       events.push("verified");
     });
     expect(events).toEqual(["Sprawdzam kontekst pytania…", "Szukam w źródłach urzędowych…",
@@ -281,7 +283,9 @@ describe("stage 1 step 2 — POST /api/zusik/ask contract", () => {
     it("Neon write failure surfaces as an error and the claim is released", async () => {
       const w = world();
       w.turns.failComplete = true;
-      await expect(w.ask().ask("s", Q_ODPIS, "req-neon-0001")).rejects.toThrow();
+      let shown = false;
+      await expect(w.ask().ask("s", Q_ODPIS, "req-neon-0001", undefined, () => { shown = true; })).rejects.toThrow();
+      expect(shown).toBe(false);
       w.turns.failComplete = false;
       const retry = await w.ask().ask("s", Q_ODPIS, "req-neon-0001");
       expect(retry.status).toBe(200);
@@ -389,5 +393,38 @@ describe("public searches in a continuing case", () => {
     expect(result.trace?.vectorIds).toEqual(["dobry-start"]);
     expect(result.trace?.evidenceIds).toEqual([]);
     expect(result.turn?.status).toBe("insufficient_evidence");
+  });
+});
+
+describe("catalog discovery through the saved conversation", () => {
+  it("only publishes a candidate backed by the active remote release", async () => {
+    const w = world();
+    const oferta = loadCorpus("oferta");
+    const ask = (match: boolean) => new AskService({
+      store: w.store, turns: w.turns, corpus, selectCorpus: () => oferta,
+      deadlineMs: Date.now() + 55_000,
+      publicTask: async input => {
+        expect(input.kind).toBe("plan_public");
+        expect(JSON.stringify(input)).not.toContain("Ewa");
+        return { status: "ok", attemptId: "034ce6d0-1a15-4cc5-b3f2-2241c43be5d0", backend: "local-pllum", ms: 3,
+          output: { intent: "discover", nextTool: "listOpportunities", requiredFacts: [], evidenceIds: input.candidates.slice().reverse() } };
+      },
+      asOf: () => "2026-11-22", generate: async () => { throw Error("Unexpected generation"); },
+      search: { search: async input => {
+        expect(input.query).not.toContain("babcia Ewa");
+        expect(input.lexical?.length).toBeGreaterThan(0);
+        return { status: "ok", ms: 1, hits: (input.lexical ?? []).map(h => ({ ...h,
+          fragmentSha256: match ? h.fragmentSha256 : "stale", score: 1 })) };
+      } },
+    });
+    const question = "Małą zajmie się babcia Ewa. Jakie opcje warto sprawdzić?";
+    const result = await ask(true).ask("visitor", question, "cards");
+    expect(result.turn?.opportunities?.length).toBeGreaterThan(0);
+    expect(result.trace?.advisory?.attemptId).toBe("034ce6d0-1a15-4cc5-b3f2-2241c43be5d0");
+    expect(result.turn?.opportunities?.every(c => c.citationIds.length && c.missingFacts.length)).toBe(true);
+    const replay = await ask(false).ask("visitor", question, "cards");
+    expect(replay.turn).toEqual(result.turn);
+    const missing = await ask(false).ask("other", question, "cards-missing");
+    expect(missing.turn).toMatchObject({ status: "insufficient_evidence", citations: [], opportunities: [] });
   });
 });

@@ -84,7 +84,7 @@ export function parseMessage(text: string, today: string, asked: string | null):
   else if (/\btydzien\b|\b7 dni\b|\bjeden tydz/.test(n)) out.days = 7;
 
   out.asksEligibility = /przysluguje|naleze? mi|czy dostane|wyplat|zasilek|czy moge/.test(n);
-  out.wantsDraft = /przygotuj|wypelnij|zrob wniosek|generuj|stworz wniosek|szkic/.test(n);
+  out.wantsDraft = /^(?:(?:tak|prosze)\s+)*(?:(?:przygotuj|wypelnij|zrob|wygeneruj|generuj|stworz)(?: mi)?|poprosze o)\s+(?:(?:szkic|projekt)(?: wniosku| formularza)?|wniosek|formularz|zam)(?: zam| o (?:urlop|zasilek) ojcowski)?(?: prosze)?[.! ]*$/u.test(n);
   out.wantsSend = /\bwyslij|\bzloz (go|wniosek)/.test(n);
 
   const reminderAt = n.search(/przypom/);

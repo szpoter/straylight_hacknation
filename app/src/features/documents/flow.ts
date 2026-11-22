@@ -1,21 +1,45 @@
 /**
  * Przebieg wniosku w „Dokumentach”: wartości pól, walidacja i przejścia stanów
  * (aktualna → szkic/wypełniony → zatwierdzony → wysłano → korekta). Czyste funkcje — testy w
- * tests/documents-flow.test.ts. Wysyłka i potwierdzenie wpływu są symulacją.
- * TODO(backend): przejścia stanów i zdarzenia zapisywane w sprawie, prawdziwa wysyłka.
+ * tests/documents-flow.test.ts. Przekazanie potwierdza rodzic.
  */
-import { PARENT_PROFILE } from "@/lib/demo/fixtures";
-import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/forms";
-import { formatLong } from "@/lib/demo/dates";
+import { isValidIso } from "@/lib/rules/dates";
+import { OLA } from "@/lib/family/ola";
+import { HANDOFF_RECORDED, IN_PERSON_COMPLETED, SIMULATED_HANDOFF } from "@/lib/plan/status";
+import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/form-fields";
+import { formatLong, todayInPoland } from "@/lib/demo/dates";
 import type { CaseEvent, CaseState } from "@/lib/demo/types";
 
 export type Values = Record<string, string>;
 export type Errors = Record<string, string>;
 
-/** Dane rodzica z profilu demonstracyjnego (Profil → Moje dane). */
 export function demoProfile(): { parentName: string; employer: string } {
-  const find = (label: string) => PARENT_PROFILE.find((r) => r.label === label)?.value ?? "";
-  return { parentName: find("Imię i nazwisko"), employer: find("Pracodawca").split(" · ")[0] };
+  return { parentName: OLA.mother, employer: OLA.employer };
+}
+
+/** Keep the original autosaved draft intact when updating the former Ola profile. */
+export function documentDraft(planId: string, stopId: string, read: (id: string) => Values) {
+  const original = read(stopId);
+  const customParent = original.rodzic && !["Anna Przykładowa", OLA.mother, OLA.father].includes(original.rodzic);
+  const previous = planId === "ola" && !customParent && (
+    original.rodzic === "Anna Przykładowa" || original.pracodawca === "Kwiatek sp. z o.o." || original.dziecko === "Ola"
+  );
+  if (!previous) return { key: stopId, values: original };
+  const key = `${stopId}:ola-lis`;
+  const updated = read(key);
+  if (Object.keys(updated).length) return { key, values: updated };
+
+  const values = { ...original };
+  if (values.rodzic === "Anna Przykładowa" && stopId !== "urlop-ojcowski") {
+    values.rodzic = OLA.mother;
+    for (const field of ["rodzic_pesel", "rachunek", "adres"]) delete values[field];
+  }
+  if (values.pracodawca === "Kwiatek sp. z o.o." && values.rodzic === OLA.mother) values.pracodawca = OLA.employer;
+  if (values.dziecko === "Ola") {
+    values.dziecko = OLA.child;
+    delete values.dziecko_pesel;
+  }
+  return { key, values };
 }
 
 export function allFields(def: FormDef): FormField[] {
@@ -24,9 +48,11 @@ export function allFields(def: FormDef): FormField[] {
 
 /** Wartości startowe: najpierw zapisane przez rodzica, w pustych miejscach podstawione z planu. */
 export function initialValues(def: FormDef, ctx: PrefillContext, saved: Values = {}): Values {
+  // Starsze szkice trzymały imię i nazwisko razem, także gdy nowy druk ma osobne rubryki.
+  const draftContext = { ...ctx, parentName: saved.rodzic?.trim() || ctx.parentName, childName: saved.dziecko?.trim() || ctx.childName };
   const values: Values = {};
   for (const f of allFields(def)) {
-    const prefilled = f.prefill?.(ctx);
+    const prefilled = f.prefill?.(draftContext);
     if (prefilled) values[f.id] = prefilled;
   }
   return { ...values, ...saved };
@@ -80,7 +106,7 @@ export function validateField(field: FormField, raw: string | undefined): string
     case "account":
       return accountError(value);
     case "date":
-      return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? undefined : "Wpisz datę, np. 10.11.2026";
+      return isValidIso(value) ? undefined : "Wpisz datę, np. 10.11.2026";
     case "select":
     case "radio":
       return field.options && !field.options.includes(value) ? "Wybierz jedną z odpowiedzi" : undefined;
@@ -90,8 +116,8 @@ export function validateField(field: FormField, raw: string | undefined): string
 }
 
 /** Błędy widocznych pól (ukryte przez `showIf` nie blokują wniosku). */
-export function validate(def: FormDef, values: Values): Errors {
-  const errors: Errors = {};
+export function validate(def: FormDef, values: Values, today = todayInPoland()): Errors {
+  const errors = { ...def.validate?.(values, today) };
   for (const f of allFields(def)) {
     if (!isVisible(f, values)) continue;
     const error = validateField(f, values[f.id]);
@@ -103,7 +129,8 @@ export function validate(def: FormDef, values: Values): Errors {
 /** Ile wymaganych pól jest już poprawnie uzupełnionych. */
 export function progress(def: FormDef, values: Values): { done: number; total: number } {
   const required = allFields(def).filter((f) => f.required && isVisible(f, values));
-  return { done: required.filter((f) => !validateField(f, values[f.id])).length, total: required.length };
+  const errors = validate(def, values);
+  return { done: required.filter((f) => !errors[f.id]).length, total: required.length };
 }
 
 /** Wartość do ekranu „Sprawdź odpowiedzi”. */
@@ -140,24 +167,16 @@ export function canEdit(state: CaseState): boolean {
   return state === "aktualna" || state === "szkic" || state === "wypelniony" || state === "zatwierdzony" || state === "wezwanie";
 }
 
-/** Zdarzenia symulowanej wysyłki. Tytuły są te same, które czyta przebieg sprawy (timeline.ts). */
-export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false): CaseEvent[] {
-  const via = CHANNEL_LABEL[channel].label.toLowerCase();
-  const sent: CaseEvent = {
-    date: today,
-    title: "Wysłano w symulacji",
-    detail: `${correction ? "Korekta wniosku" : "Wniosek"} przekazany ${via}. To symulacja — nic nie trafiło do urzędu.`,
-    author: "Ty",
-  };
-  const received: CaseEvent = {
-    date: today,
-    title: "Potwierdzenie wpływu",
-    detail: `${recipient.replace(/^Do /, "")} potwierdza wpływ (symulacja).`,
-    author: recipient.replace(/^Do /, ""),
-  };
-  // Przy korekcie poprzednia wysyłka zostaje w historii jako zwykły wpis.
-  const history = existing.map((e) =>
-    e.title === "Wysłano w symulacji" || e.title === "Potwierdzenie wpływu" ? { ...e, title: e.title === "Wysłano w symulacji" ? "Wysłano poprzednią wersję" : "Potwierdzono poprzednią wersję" } : e,
-  );
-  return [...history, sent, received];
+/** Każde przekazanie i korekta mają osobny wpis w historii. */
+export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false, receiptName?: string): CaseEvent[] {
+  const delivery = CHANNEL_LABEL[channel];
+  const detail = `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${delivery.label}.`;
+  if (delivery.mode === "online") {
+    const receipt = receiptName ?? delivery.receipt;
+    return [...existing, { date: today, title: SIMULATED_HANDOFF, author: "Demo", detail: `${detail} Przykładowe potwierdzenie: ${receipt}.`, simulatedReceipt: receipt }];
+  }
+  return [...existing, {
+    date: today, title: delivery.mode === "osobiscie" ? IN_PERSON_COMPLETED : HANDOFF_RECORDED,
+    author: "Ty", detail,
+  }];
 }

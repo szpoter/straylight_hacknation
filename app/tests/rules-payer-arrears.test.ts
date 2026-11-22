@@ -52,7 +52,10 @@ describe("contribution arrears (art. 2a)", () => {
   });
 
   it("paying within 6 months keeps the right; later it expires", () => {
-    expect(assessArrears({ ...base, arrears: 300, paidOn: "2027-03-01" }).status).toBe("paid");
+    expect(assessArrears({ ...base, arrears: 300, paidOn: "2027-06-08", today: "2027-06-08" }).status).toBe("paid");
+    for (const paidOn of ["2027-03-01", "2027-06-09"]) {
+      expect(assessArrears({ ...base, arrears: 300, paidOn }).status).toBe("withheld_until_paid");
+    }
     expect(assessArrears({ ...base, arrears: 300, today: "2027-06-09" }).status).toBe("expired");
     expect(assessArrears({ ...base, arrears: 300, paidOn: "2027-07-01", today: "2027-07-01" }).status).toBe("expired");
   });
@@ -66,4 +69,11 @@ describe("contribution arrears (art. 2a)", () => {
     const schedule = { "wage.minimum": [{ value: 5000, validFrom: "2027-01-01" }] };
     expect(assessArrears({ ...base, arrears: 0, rightArisesOn: "2027-01-04", schedule }).threshold).toBe(50);
   });
+});
+
+it("uses the first registration month for a new contribution payer including a contractor", () => {
+  const input = { situation: "contract" as const, payerInsuredCount: null, benefitDate: "2026-06-25", firstRegistrationMonth: "2026-03" };
+  expect(benefitPayer(input).question).toContain("w pierwszym miesiącu zgłoszeń 2026-03");
+  expect(benefitPayer({ ...input, payerInsuredCount: 20 }).payer).toBe("zus");
+  expect(benefitPayer({ ...input, payerInsuredCount: 21 }).payer).toBe("employer");
 });

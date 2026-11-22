@@ -74,10 +74,10 @@ export function StartPlaceholder() {
         </p>
         <h1 className={styles.startTitle}>W czym może pomóc Ci Zusik?</h1>
         <p className={styles.startLead}>
-          Zapytaj o świadczenie lub wybierz przykładową sprawę, żeby przejść z Zusikiem przez dokumenty.
+          Zapytaj o świadczenie lub dołącz dokumenty swojej sprawy w PDF.
         </p>
         <div className={styles.actions}>
-          <ButtonLink href="/app/sprawy">Wybierz przykładową sprawę</ButtonLink>
+          <ButtonLink href="/app/rozmowa">Otwórz rozmowę z Zusikiem</ButtonLink>
         </div>
 
         <section className={styles.dataCard} aria-labelledby="dane-zus">

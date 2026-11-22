@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useId, type ReactNode, type RefObject } from "react";
+import { ModelPicker } from "./model-picker";
 import s from "./zusik.module.css";
 
 type Props = {
@@ -14,10 +15,12 @@ type Props = {
   onSend: () => void;
   onAttach?: (file: File | null) => void;
   attachment?: File | null;
+  fileControl?: ReactNode;
 };
 
 /** The message field, laid out like Claude's: text on top, attachment left, send right. */
-export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAttach, attachment }: Props) {
+export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAttach, attachment, fileControl }: Props) {
+  const inputId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const canSend = !busy && text.trim().length > 0;
 
@@ -37,11 +40,11 @@ export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAt
         </p>
       )}
       <div className={`${s.composer} ${busy ? s.composerBusy : ""}`}>
-        <label className={s.srOnly} htmlFor="zusik-message">
+        <label className={s.srOnly} htmlFor={inputId}>
           Wiadomość do Zusika
         </label>
         <textarea
-          id="zusik-message"
+          id={inputId}
           ref={textareaRef}
           rows={1}
           maxLength={500}
@@ -57,15 +60,19 @@ export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAt
           }}
         />
         <div className={s.composerBar}>
-          {onAttach && <>
-            <input ref={fileInput} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={event=>{
-              const file=event.target.files?.[0];
-              if(file) onAttach(file);
-              event.target.value="";
-            }} />
-            <button type="button" className={s.iconButton} aria-label="Wybierz kopię aktu urodzenia" onClick={()=>fileInput.current?.click()}><PaperclipIcon /></button>
-            {attachment && <button type="button" className={s.secondaryButton} title={attachment.name} onClick={()=>onAttach(null)}>Usuń odpis</button>}
-          </>}
+          <div className={s.composerFiles}>
+            {fileControl}
+            {onAttach && <>
+              <input ref={fileInput} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={event=>{
+                const file=event.target.files?.[0];
+                if(file) onAttach(file);
+                event.target.value="";
+              }} />
+              <button type="button" className={s.iconButton} aria-label="Wybierz kopię aktu urodzenia" onClick={()=>fileInput.current?.click()}><PaperclipIcon /></button>
+              {attachment && <button type="button" className={s.secondaryButton} title={attachment.name} onClick={()=>onAttach(null)}>Usuń odpis</button>}
+            </>}
+          </div>
+          <ModelPicker />
           <button type="button" className={s.send} aria-label="Wyślij" disabled={!canSend} onClick={onSend}>
             <ArrowUpIcon />
           </button>

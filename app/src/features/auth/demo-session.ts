@@ -1,33 +1,32 @@
 "use client";
 
+import { OLA } from "@/lib/family/ola";
+import { importFamilyProfile, type FamilyProfile } from "@/lib/family/import-profile";
 import { useSyncExternalStore } from "react";
 import type { FlowEntry, FlowOrigin } from "./flow";
 
-// Sesja demo trwa do zamknięcia karty, odświeżenie nie wylogowuje (ui/NIKODEM.md, punkt 6),
-// dlatego żyje w sessionStorage. Nic nie trafia na serwer: logowanie i dane są symulowane.
+// A tab retains its local family profile across reloads.
 
 const STORAGE_KEY = "przewodnik-rodzica:sesja-demo";
 const CHANGE_EVENT = "przewodnik-rodzica:sesja-demo-zmiana";
 
-/** Fikcyjny profil podstawiany po „zalogowaniu” (SPEC.md, „Dane z ZUS · przykład”). */
 export const DEMO_PROFILE = {
-  firstName: "Anna",
-  lastName: "Przykładowa",
-  insurance: [
-    { label: "Ubezpieczenie chorobowe", value: "aktywne" },
-    { label: "Tytuł ubezpieczenia", value: "umowa o pracę" },
-    { label: "Początek okresu ubezpieczenia", value: "1 marca 2025 r." },
-  ],
+  firstName: OLA.mother.split(" ")[0],
+  lastName: OLA.mother.split(" ")[1],
+  insurance: [{ label: "Tytuł ubezpieczenia", value: importFamilyProfile().insuranceTitle }],
 } as const;
 
 export type DemoSession = {
   version: 1;
   loggedInAt: string;
-  method: "mobywatel";
+  method: "local" | "mobywatel";
   origin: FlowOrigin;
   entry: FlowEntry;
+  family: FamilyProfile;
+  refreshedAt?: string;
+  correspondence?: { at: string; text: string }[];
   /** pending: zalogowany, dane jeszcze się wczytują albo wczytanie się nie udało. */
-  data: "pending" | "zus" | "manual";
+  data: "local" | "pending" | "zus" | "manual";
 };
 
 function read(): DemoSession | null {
@@ -35,7 +34,8 @@ function read(): DemoSession | null {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<DemoSession>;
-    return parsed.version === 1 ? (parsed as DemoSession) : null;
+    if (parsed.version !== 1) return null;
+    return { ...(parsed as DemoSession), family: parsed.family ?? importFamilyProfile() };
   } catch {
     return null;
   }
@@ -53,12 +53,25 @@ function write(session: DemoSession | null) {
 }
 
 export function startDemoSession(origin: FlowOrigin, entry: FlowEntry) {
-  write({ version: 1, loggedInAt: new Date().toISOString(), method: "mobywatel", origin, entry, data: "pending" });
+  write({ version: 1, loggedInAt: new Date().toISOString(), method: "local", origin, entry, data: "local", family: importFamilyProfile() });
 }
 
 export function setDemoData(data: DemoSession["data"]) {
   const current = read();
   if (current) write({ ...current, data });
+}
+
+export function refreshDemoProfile() {
+  const current = read();
+  if (current) write({ ...current, family: importFamilyProfile(), refreshedAt: new Date().toISOString() });
+}
+
+export function sendDemoQuestion(question: string) {
+  const current = read();
+  const text = question.trim();
+  if (!current || !text || text.length > 1000) return false;
+  write({ ...current, correspondence: [...(current.correspondence ?? []), { at: new Date().toISOString(), text }] });
+  return read()?.correspondence?.at(-1)?.text === text;
 }
 
 export function endDemoSession() {

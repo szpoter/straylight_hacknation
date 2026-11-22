@@ -1,4 +1,14 @@
-import type { CaseState, Stop } from "../demo/types";
+import type { CaseEvent, CaseState, Stop } from "../demo/types";
+
+export const HANDOFF_RECORDED = "Rodzic oznaczył przekazanie";
+export const SIMULATED_HANDOFF = "Symulacja złożenia online";
+export const IN_PERSON_COMPLETED = "Załatwione w urzędzie";
+
+export const isHandoffEntry = (title: string) => [HANDOFF_RECORDED, SIMULATED_HANDOFF, IN_PERSON_COMPLETED, "Wysłano w symulacji", "Wcześniejszy wpis o przekazaniu"].includes(title);
+
+export function latestHandoff(events?: CaseEvent[]) {
+  return events?.findLast((event) => isHandoffEntry(event.title));
+}
 
 /** Skrót statusu na ścieżce („Jeden model statusów”). */
 export type PathStatus = "Przed Tobą" | "Do zrobienia" | "W trakcie" | "Wysłane" | "Wymaga uwagi" | "Załatwione" | "Za Tobą";
@@ -32,7 +42,7 @@ const DOC: Record<CaseState, { group: DocGroup; label: string }> = {
   szkic: { group: "do-zalatwienia", label: "Szkic" },
   wypelniony: { group: "do-zalatwienia", label: "Wypełniony · do sprawdzenia" },
   zatwierdzony: { group: "do-zalatwienia", label: "Zatwierdzony · do przekazania" },
-  wyslano: { group: "wyslane", label: "Wysłano w symulacji" },
+  wyslano: { group: "wyslane", label: "Przekazanie w planie" },
   wezwanie: { group: "do-zalatwienia", label: "Do uzupełnienia po wezwaniu" },
   "odmowa-w-terminie": { group: "zakonczone", label: "Odmowa · wymaga uwagi" },
   zalatwione: { group: "zakonczone", label: "Zakończone" },

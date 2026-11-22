@@ -16,9 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Przewodnik Rodzica · wersja demonstracyjna",
+  title: "Przewodnik Rodzica · rodzina Oli",
   description:
-    "Sprawdź, jakie formalności Cię dotyczą i z jakich zasiłków lub urlopów możesz skorzystać.",
+    "Plan rodziny Oli. Sprawy, dokumenty i terminy rodziców w jednym miejscu.",
 };
 
 export const viewport: Viewport = {

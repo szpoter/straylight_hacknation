@@ -3,8 +3,10 @@
  * wartości wpisane przez rodzica, ich zamiana na scenariusz reguły (`lib/rules/maternity.ts`)
  * i nałożenie wyniku na przystanki planu (terminy wniosków).
  */
-import { computeScenario, limitsFor, supplementaryWeeksFor, type BasisInput, type EventKind, type InsuranceTitle, type ParentInput, type PayVariant, type ScenarioInput, type ScenarioResult } from "@/lib/rules/maternity";
-import { DEMO_TODAY, formatLong } from "@/lib/demo/dates";
+import { maternityParametersOn } from "@/lib/rules/maternity-schedule";
+import { parameterOn, type RuleSchedule } from "@/lib/rules/parameters";
+import { basisMonthLabels, computeScenario, limitsFor, supplementaryWeeksFor, type BasisInput, type EventKind, type InsuranceTitle, type ParentInput, type PayVariant, type ScenarioInput, type ScenarioResult } from "@/lib/rules/maternity";
+import { todayInPoland, formatLong } from "@/lib/demo/dates";
 import { addDays } from "@/lib/rules/dates";
 import type { Plan, Stop } from "@/lib/demo/types";
 
@@ -125,11 +127,35 @@ export function toScenario(form: CalcForm): { scenario: ScenarioInput; problems:
 }
 
 /** Wynik albo null, gdy formularz nie ma jeszcze daty. */
-export function computeForm(form: CalcForm): { result: ScenarioResult | null; problems: FormProblem[] } {
+export function computeForm(form: CalcForm, { requireComplete = false, schedule }: { requireComplete?: boolean; schedule?: RuleSchedule } = {}): { result: ScenarioResult | null; problems: FormProblem[] } {
   const { scenario, problems } = toScenario(form);
+  if (schedule?.["contributions.employeePct"]?.length && /^\d{4}-\d{2}-\d{2}$/.test(form.date)) {
+    const months = basisMonthLabels(form.date);
+    const deductions = months.map(month => parameterOn(schedule, "contributions.employeePct", month + "-01").value / 100);
+    for (const [who, parent, input] of [["A", form.A, scenario.parentA], ["B", form.B, scenario.parentB]] as const) {
+      if (!input) continue;
+      if (input.basis.kind === "average") {
+        if (new Set(deductions).size > 1) problems.push({ field: who + ".average", text: "Stawka składek zmieniła się w okresie podstawy. Podaj kwoty miesiąc po miesiącu albo podstawę z decyzji." });
+        else input.basis = { kind: "months", months: [{ amount: input.basis.amount, deductionPct: deductions[0] }] };
+      } else if (input.basis.kind === "months") {
+        input.basis.months = parent.months.flatMap((m, i) => {
+          const amount = parseAmount(m.amount);
+          return amount === null ? [] : [{ amount, underHalf: m.underHalf, deductionPct: deductions[i] }];
+        });
+      }
+    }
+  }
+  if (requireComplete) {
+    if (form.event !== "birth" && !form.childBirthDate) problems.push({ field: "childBirthDate", text: "Podaj datę urodzenia dziecka." });
+    if (form.hospital && !form.hospitalDays) problems.push({ field: "hospitalDays", text: "Podaj liczbę dni pobytu w szpitalu." });
+    if (form.hasB && form.paternityDays > 0 && !form.paternityStart) problems.push({ field: "paternityStart", text: "Podaj datę rozpoczęcia urlopu ojcowskiego." });
+    if (problems.length) return { result: null, problems };
+  }
   if (problems.some((p) => p.field === "date" || p.field === "childBirthDate")) return { result: null, problems };
   try {
-    return { result: computeScenario(scenario), problems };
+    const result = computeScenario({ ...scenario, schedule });
+    if (requireComplete && !result.ok) return { result: null, problems: result.errors.map(({ text }) => ({ field: "scenario", text })) };
+    return { result, problems };
   } catch {
     return { result: null, problems: [...problems, { field: "date", text: "Sprawdź daty." }] };
   }
@@ -148,42 +174,57 @@ function childCount(plan: Plan): number {
   return c === "2" ? 2 : c === "3" ? 3 : 1;
 }
 
-/**
- * Start z danych planu: data i sytuacja z planu, pełna pula rodzicielskiego dla Ciebie,
- * drugi rodzic z 9 tygodniami. Wynagrodzenie to przykład do zmiany (ZUS nie podaje go w symulacji).
- */
-export function formFromPlan(plan: Plan, today: string = DEMO_TODAY): CalcForm {
-  const event: EventKind = plan.situation === "adopcja" ? "adoption" : plan.situation === "piecza" ? "foster" : "birth";
-  const children = childCount(plan);
-  const limits = limitsFor({ children, zaZyciem: false });
+export function blankCalculatorForm(): CalcForm {
   return {
-    event,
-    date: plan.keyDate ?? "",
-    children,
+    event: "birth",
+    date: "",
+    children: 1,
     zaZyciem: false,
     stillbirth: false,
     childBirthDate: "",
     schoolDeferred: false,
-    variant: "815",
-    A: parentForm("pracownik", "6500"),
-    hasB: true,
-    B: parentForm("pracownik", "6000"),
+    variant: "100-70",
+    A: parentForm(),
+    hasB: false,
+    B: parentForm(),
     weeksBeforeBirth: 0,
     transferWeeks: 0,
     hospital: false,
     hospitalDays: 0,
     extremePreterm: false,
     supplementaryParent: "A",
-    parentalWeeksA: limits.maxParentalOneParent,
-    parentalWeeksB: limits.exclusiveWeeks,
+    parentalWeeksA: 0,
+    parentalWeeksB: 0,
     parentalOrder: "sequential",
     workA: 0,
     workB: 0,
+    paternityDays: 0,
+    paternityStart: "",
+    pit2: false,
+    pitExempt: false,
+  };
+}
+
+/**
+ * Start z danych planu: data i sytuacja z planu, pełna pula rodzicielskiego dla Ciebie,
+ * drugi rodzic z 9 tygodniami. Podstawy wynagrodzenia podają rodzice.
+ */
+export function formFromPlan(plan: Plan, today: string = todayInPoland(), schedule?: RuleSchedule): CalcForm {
+  const event: EventKind = plan.situation === "adopcja" ? "adoption" : plan.situation === "piecza" ? "foster" : "birth";
+  const children = childCount(plan);
+  const limits = limitsFor({ children, zaZyciem: false, date: plan.keyDate ?? today }, schedule);
+  return {
+    ...blankCalculatorForm(),
+    event,
+    date: plan.keyDate ?? "",
+    children,
+    variant: "815",
+    hasB: true,
+    parentalWeeksA: limits.maxParentalOneParent,
+    parentalWeeksB: limits.exclusiveWeeks,
     paternityDays: 14,
-    // Dziecko już urodzone: urlop ojcowski najwcześniej za tydzień (wniosek co najmniej 7 dni przed).
     paternityStart: plan.keyDate ? (plan.keyDate < today ? addDays(today, 7) : plan.keyDate) : "",
     pit2: true,
-    pitExempt: false,
   };
 }
 
@@ -198,14 +239,14 @@ const baseId = (s: Stop) => s.id.replace(/^e-/, "");
  * Zapisany wynik kalkulatora na ścieżce: urlop rodzicielski dostaje termin wniosku i okresy,
  * zasiłek macierzyński — wybrany wariant i termin wniosku o 81,5%. Bez zapisu plan bez zmian.
  */
-export function applyCalculatorToPlan(plan: Plan, form: CalcForm | undefined): Plan {
+export function applyCalculatorToPlan(plan: Plan, form: CalcForm | undefined, schedule?: RuleSchedule): Plan {
   if (!form || !plan.keyDate) return plan;
   // Data z planu jest nadrzędna: zmiana daty w Profilu przelicza też terminy z kalkulatora.
-  const { result } = computeForm({ ...form, date: plan.keyDate });
+  const { result } = computeForm({ ...form, date: plan.keyDate }, { requireComplete: true, schedule });
   if (!result || !result.ok) return plan;
   const parental = result.periods.filter((p) => p.kind === "rodzicielski");
   const parentalDeadline = result.deadlines.find((d) => d.label.startsWith("Wniosek o urlop rodzicielski"));
-  const averaged = result.deadlines.find((d) => d.label.startsWith("Wniosek o zasiłek 81,5%"));
+  const averaged = result.deadlines.find((d) => d.source === "uz30a");
   const who = (p: { parent: "A" | "B" }) => (p.parent === "A" ? "Ty" : "drugi rodzic");
   const stops = plan.stops.map((s) => {
     if (s.state === "minelo") return s;
@@ -220,8 +261,10 @@ export function applyCalculatorToPlan(plan: Plan, form: CalcForm | undefined): P
       };
     }
     if (baseId(s) === "zasilek-macierzynski") {
-      const variant = form.variant === "815" ? "81,5% przez cały okres" : "100% za macierzyński, potem 70%";
-      const text = `Z kalkulatora: wariant ${variant}, łącznie ok. ${Math.round(result.totals.all).toLocaleString("pl-PL")} zł brutto.${averaged ? ` Wniosek o 81,5% do ${formatLong(averaged.date)}.` : ""}`;
+      const rates = maternityParametersOn(schedule, plan.keyDate ?? form.date);
+      const averagedPct = rates.rateAveraged.toLocaleString("pl-PL") + "%";
+      const variant = form.variant === "815" ? averagedPct + " przez cały okres" : "według rodzaju urlopu";
+      const text = `Z kalkulatora: wariant ${variant}, łącznie ok. ${Math.round(result.totals.all).toLocaleString("pl-PL")} zł brutto.${averaged ? ` Wniosek o ${averagedPct} do ${formatLong(averaged.date)}.` : ""}`;
       return { ...s, notes: [...(s.notes ?? []), { text, sources: [AMOUNT_SOURCE] }] };
     }
     return s;

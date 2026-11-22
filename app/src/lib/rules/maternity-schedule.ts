@@ -5,7 +5,6 @@ import { parameterOn, type RuleParameterId, type RuleSchedule } from "./paramete
  * The parent calculator's numbers (MATERNITY_PARAMETERS in lib/rules/maternity.ts) as published in
  * the admin panel, in the calculator's own units (rates and the deduction in percent, weeks, days,
  * PLN). Without a schedule it returns exactly MATERNITY_PARAMETERS (tests/rules-maternity-schedule).
- * The calculator's owner decides when to read its numbers from here (maternity.ts, TODO(admin)).
  * Numbers the panel does not change yet are passed through unchanged.
  */
 
@@ -21,6 +20,7 @@ export type MaternityParameters = Widen<typeof MATERNITY_PARAMETERS>;
 
 /** Calculator parameters valid on `day` (ISO), e.g. the day of birth or the benefit day. */
 export function maternityParametersOn(schedule: RuleSchedule | undefined, day: string): MaternityParameters {
+  if (!schedule || !day || day < "1900-01-01") return MATERNITY_PARAMETERS;
   const v = (id: RuleParameterId) => parameterOn(schedule, id, day).value;
   return {
     ...MATERNITY_PARAMETERS,

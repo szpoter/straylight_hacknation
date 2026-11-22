@@ -131,3 +131,12 @@ describe("paternity rule · Kamil", () => {
     expect(r.missing[0]).toBe("child_birth_date");
   });
 });
+
+it("assesses an employee's historical filing at the employer and checks adoption from the final court date", () => {
+  const r = { ...KAMIL, title: "employee" as const, noArrears: null, today: "2027-05-01", filedOn: "2026-12-01",
+    childBirthDate: "2013-01-01", adoptionFinalOn: "2026-11-01" };
+  expect(evaluatePaternity(r)).toMatchObject({ status: "eligible", deadline: "2026-12-01", lastAllowedDay: "2026-12-31" });
+  expect(evaluatePaternity({...r, filedOn: "2026-12-02"})).toMatchObject({ status: "needs_info", deadlinePassed: true });
+  expect(evaluatePaternity({...r, filedOn: "2026-12-02", employerGrantedLateLeave: true}).status).toBe("eligible");
+  expect(evaluatePaternity({...r, adoptionFinalOn: null}).status).toBe("needs_info");
+});

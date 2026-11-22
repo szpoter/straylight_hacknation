@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import { useRuleSchedule } from "@/features/family/RuleScheduleContext";
 import { usePlan } from "@/features/family/PlanProvider";
 import { ButtonLink } from "@/components/ui/AppButton";
 import { Panel } from "@/components/ui/Panel";
 import { Tag } from "@/components/ui/Tag";
-import { DEMO_TODAY, formatLong } from "@/lib/demo/dates";
+import { todayInPoland, formatLong } from "@/lib/demo/dates";
 import { computeForm, formFromPlan } from "@/lib/plan/benefit-form";
 import { Timeline } from "./Results";
 import { pln } from "./ui";
@@ -15,9 +16,10 @@ import { pln } from "./ui";
  * najbliższy termin i wejście do pełnego kalkulatora (/kalkulator).
  */
 export function Calculator() {
+  const schedule = useRuleSchedule();
   const { plan, calculator } = usePlan();
-  const form = useMemo(() => (calculator ? { ...calculator, date: plan.keyDate ?? calculator.date } : formFromPlan(plan)), [calculator, plan]);
-  const { result } = useMemo(() => computeForm(form), [form]);
+  const form = useMemo(() => (calculator ? { ...calculator, date: plan.keyDate ?? calculator.date } : formFromPlan(plan, undefined, schedule)), [calculator, plan, schedule]);
+  const { result } = useMemo(() => computeForm(form, { requireComplete: true, schedule }), [form, schedule]);
 
   if (!plan.keyDate || plan.situation === "planuje") {
     return (
@@ -37,7 +39,8 @@ export function Calculator() {
     );
   }
 
-  const next = result?.deadlines.find((d) => d.date >= DEMO_TODAY) ?? result?.deadlines[0];
+  const today = todayInPoland();
+  const next = result?.deadlines.find((deadline) => deadline.date >= today);
   return (
     <section id="kalkulator" aria-labelledby="calc-title" className="scroll-mt-24">
       <div className="mb-6 flex max-w-prose flex-col gap-2">
@@ -50,7 +53,7 @@ export function Calculator() {
               <Tag tone="brand">Zapisane w planie</Tag> <span className="ml-1">Twój podział urlopu i wariant wypłaty.</span>
             </>
           ) : (
-            "Przykładowe wynagrodzenia — wpisz swoje w kalkulatorze, a terminy trafią na ścieżkę."
+            "Do obliczenia kwot potrzebne są podstawy wynagrodzenia."
           )}
         </p>
       </div>
@@ -58,7 +61,7 @@ export function Calculator() {
         <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
           <Panel className="flex flex-col gap-4">
             <div>
-              <p className="text-meta text-on-surface-variant">Zasiłek łącznie, brutto · {form.variant === "815" ? "81,5% przez cały okres" : "100%, potem 70%"}</p>
+              <p className="text-meta text-on-surface-variant">Zasiłek łącznie, brutto · {form.variant === "815" ? "stawka uśredniona" : "stawka według rodzaju urlopu"}</p>
               <p className="font-serif text-headline-mobile">{pln(result.totals.all, false)}</p>
             </div>
             {result.span && (
@@ -79,7 +82,7 @@ export function Calculator() {
         </div>
       ) : (
         <Panel className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p>Zapisany podział wymaga poprawy — otwórz kalkulator.</p>
+          <p>Uzupełnij dane w kalkulatorze, aby obliczyć zasiłek i porównać warianty.</p>
           <ButtonLink href="/kalkulator" size="sm">
             Otwórz kalkulator
           </ButtonLink>

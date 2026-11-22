@@ -5,7 +5,7 @@ import "../zusik/zusik-globals.css";
 const literata = Literata({ subsets: ["latin", "latin-ext"], weight: "400", variable: "--font-serif" });
 const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans" });
 
-export const metadata: Metadata = { title: "Sprawy demonstracyjne · Zusik", robots: { index: false } };
+export const metadata: Metadata = { title: "Sprawy rodziny Oli · Zusik", robots: { index: false } };
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   return (

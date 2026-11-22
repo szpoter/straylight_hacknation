@@ -1,47 +1,41 @@
-/**
- * Treść PDF wniosku z „Dokumentów”: te same sekcje i wartości, które rodzic widzi na ekranie
- * „Sprawdź odpowiedzi” (ukryte pola pomijamy, daty i rachunek w formie do czytania).
- * Samo składanie PDF jest w `lib/forms/application-pdf.ts`.
- */
-import type { ApplicationDoc } from "@/lib/forms/application-pdf";
 import { formatLong } from "@/lib/demo/dates";
 import type { FormDef } from "@/lib/demo/forms";
-import { displayValue, isVisible, validate, type Values } from "./flow";
+import { buildApplicationPdf, type ApplicationFonts } from "@/lib/forms/application-pdf";
+import { allFields, isVisible, validate, type Values } from "./flow";
 
-export const PDF_NOTE = "Wygenerowano w wersji demonstracyjnej Zusika. Przed złożeniem sprawdź dane i podpisz wniosek.";
+export type PdfOptions = { recipient: string; date: string; correction?: boolean };
 
-/** Adresat: pracodawca albo przychodnia z wniosku, inaczej odbiorca sprawy. */
-function addressee(values: Values, recipient: string): string | undefined {
-  const named = values.pracodawca?.trim() || values.przychodnia?.trim();
-  if (named) return named;
-  if (recipient === "Do pracodawcy") return "Pracodawca";
-  return recipient.replace(/^Do /, "") || undefined;
-}
-
-export function applicationDoc(def: FormDef, values: Values, opts: { recipient: string; date: string; correction?: boolean }): ApplicationDoc {
-  const marks: string[] = [];
-  if (Object.keys(validate(def, values)).length > 0) marks.push("SZKIC");
+export async function renderFormPdf(def: FormDef, values: Values, opts: PdfOptions, fonts: ApplicationFonts): Promise<Uint8Array> {
+  if (def.pdf === "none") throw new Error("Ten wniosek nie ma wersji PDF.");
+  const incomplete = Object.keys(validate(def, values, opts.date)).length > 0;
+  // Zapisany szkic może zawierać odpowiedzi na pola ukryte przez późniejszy wybór.
+  const visible: Values = Object.fromEntries(
+    allFields(def).filter(field => isVisible(field, values)).map(field => [field.id, values[field.id]?.trim() ?? ""]),
+  );
+  if (def.pdf === "official") {
+    if (incomplete || !def.buildOfficial) throw new Error("Wypełnij dane urzędowego druku.");
+    return def.buildOfficial(visible, opts.date, fonts);
+  }
+  if (!def.letter) throw new Error("Brakuje treści pisma.");
+  const marks = [];
+  if (incomplete) marks.push("SZKIC");
   if (opts.correction) marks.push("KOREKTA");
-  return {
+  return buildApplicationPdf({
     title: def.name,
-    addressee: addressee(values, opts.recipient),
-    date: formatLong(opts.date),
+    sender: visible.rodzic || "……………………",
+    addressee: visible.pracodawca || visible.urzad || opts.recipient.replace(/^Do /, ""),
+    date: [visible.miejscowosc, formatLong(opts.date)].filter(Boolean).join(", "),
     marks,
-    sections: def.sections.map((section) => ({
-      title: section.title,
-      rows: section.fields.filter((f) => isVisible(f, values)).map((f) => ({ label: f.label, value: displayValue(f, values[f.id]?.trim()) })),
-    })),
-    note: `${def.fidelity} ${PDF_NOTE}`,
-  };
+    paragraphs: def.letter(visible, opts.date),
+  }, fonts);
 }
 
-/** „Wniosek o urlop rodzicielski” → „wniosek-o-urlop-rodzicielski.pdf”. */
 export function pdfFilename(def: FormDef, correction = false): string {
   const slug = def.name
     .toLowerCase()
     .replace(/ł/g, "l")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .slice(0, 60)
     .replace(/^-+|-+$/g, "");

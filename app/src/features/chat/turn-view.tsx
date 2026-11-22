@@ -50,7 +50,7 @@ export function Progress({ label }: { label: string }) {
 
 export function AnswerView({ answer }: { answer: Answer }) {
   if (answer.status === "conversation") return <div className={s.aiMessage}><p>{answer.message}</p></div>;
-  if (answer.status === "needs_clarification") {
+  if (answer.status === "needs_clarification" && !groundedClaims(answer).claims.length) {
     return (
       <div className={s.aiMessage}>
         <p className={s.aiQuestion}>{answer.message ?? "Doprecyzuj, proszę, o co pytasz."}</p>
@@ -162,6 +162,10 @@ function SourceCard({ citation, onClose }: { citation: Citation; onClose: () => 
           Zamknij źródło
         </button>
       </div>
+      {citation.origin && <p className={s.sourceMeta}>
+        {citation.origin === "official_live" ? "Pobrano ze strony ZUS" : "Z biblioteki źródeł"}
+        {citation.retrievedAt && <span> · <time dateTime={citation.retrievedAt}>{citation.retrievedAt.slice(0, 10)}</time></span>}
+      </p>}
       {citation.corpusVersion && <p className={s.sourceMeta}>Wersja materiałów: {citation.corpusVersion}</p>}
     </section>
   );

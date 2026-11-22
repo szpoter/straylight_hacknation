@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysLeftLabel, formatMoney } from "@/lib/demo/dates";
+import { daysLeftLabel, formatMoney, todayInPoland } from "@/lib/demo/dates";
 import { getPlan } from "@/lib/demo/fixtures";
 import type { Stop } from "@/lib/demo/types";
 import { nearestStop, openCountInStage, pawnRowIndex, toRows } from "@/lib/plan/path";
@@ -63,7 +63,8 @@ describe("statusy i formaty", () => {
     expect(docStatus("warunek").group).toBe("na-pozniej");
   });
   it("liczy dni do terminu i formatuje kwoty", () => {
-    expect(daysLeftLabel("2026-12-01")).toBe("zostało 10 dni");
+    expect(todayInPoland(new Date("2026-11-21T23:30:00Z"))).toBe("2026-11-22");
+    expect(daysLeftLabel("2026-12-01", "2026-11-21")).toBe("zostało 10 dni");
     expect(formatMoney(3920)).toBe("3\u00a0920\u00a0zł");
     expect(formatMoney(6860)).toBe("6\u00a0860\u00a0zł");
   });

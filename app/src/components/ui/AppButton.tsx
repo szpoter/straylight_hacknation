@@ -8,16 +8,16 @@ const VARIANT: Record<Variant, string> = {
   primary: "bg-primary text-on-primary hover:bg-on-surface disabled:bg-outline disabled:text-on-surface-variant",
   secondary: "bg-background text-on-surface border border-on-surface hover:bg-surface disabled:border-outline disabled:text-on-surface-variant",
   ink: "bg-on-surface text-on-primary hover:bg-primary",
-  quiet: "bg-transparent text-on-surface underline underline-offset-4 decoration-outline hover:decoration-on-surface px-0! h-auto!",
+  quiet: "bg-transparent text-on-surface underline underline-offset-4 decoration-outline hover:decoration-on-surface px-0! min-h-0!",
 };
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full h-12 md:h-14 px-card text-label font-medium whitespace-nowrap transition-colors duration-200 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-full max-w-full min-h-12 md:min-h-14 px-card text-center text-label font-medium transition-colors duration-200 disabled:cursor-not-allowed";
 
 type Common = { variant?: Variant; size?: "md" | "sm"; className?: string };
 
 function classes({ variant = "primary", size = "md", className }: Common) {
-  return cn(BASE, VARIANT[variant], size === "sm" && "h-10! md:h-10! px-4 text-meta", className);
+  return cn(BASE, VARIANT[variant], size === "sm" && "min-h-10! md:min-h-10! px-4 text-meta", className);
 }
 
 export function Button({ variant, size, className, type = "button", ...rest }: Common & ComponentProps<"button">) {

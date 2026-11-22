@@ -15,7 +15,7 @@ const FEATURES: { icon: ReactNode; text: ReactNode }[] = [
     icon: <DataIcon />,
     text: (
       <>
-        Dane z{NBSP}ZUS wczytują się same, <strong>bez przepisywania do każdego wniosku</strong>
+        <strong>Dane z{NBSP}profilu rodziny</strong> pomagają uzupełnić szkic wniosku
       </>
     ),
   },
@@ -59,9 +59,10 @@ export function Hero() {
 
           <div className={styles.cta}>
             <ButtonLink href="/logowanie" variant="primary" className={styles.button}>
-              Zaloguj się
+              Otwórz profil Oli
               <ArrowRightIcon />
             </ButtonLink>
+            <ButtonLink href="/app/rozmowa" variant="secondary">Rozmawiaj z Zusikiem</ButtonLink>
             <p className={styles.note}>
               <SourceIcon />
               <span>Na podstawie informacji ZUS i{NBSP}gov.pl</span>

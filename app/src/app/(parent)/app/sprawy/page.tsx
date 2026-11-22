@@ -12,6 +12,9 @@ export default function CasesPage() {
         </header>
         <nav className={s.card} aria-label="Sprawy demonstracyjne">
           <p>
+            <Link href="/app/rozmowa">Rozmowa z Zusikiem i dokumenty własnej sprawy</Link>
+          </p>
+          <p>
             <Link href="/app">Marta i Paweł · porównanie urlopów i wniosek do pracodawcy</Link>
           </p>
           <p>
@@ -19,6 +22,9 @@ export default function CasesPage() {
           </p>
           <p>
             <Link href="/app/chorobowe">Chorobowe w ciąży · ocena dokumentów</Link>
+          </p>
+          <p>
+            <Link href="/sprawdz">Sprawy z zestawu ZUS · prawo do zasiłku macierzyńskiego i wgranie PDF</Link>
           </p>
         </nav>
       </main>

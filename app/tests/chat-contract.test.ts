@@ -3,7 +3,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { answerFromAskBody, groundedClaims, pdfPage, turnsFromView, type Answer } from "@/features/chat/contract";
 import { AnswerView, TurnView } from "@/features/chat/turn-view";
+import { OpportunityCards } from "@/features/chat/case-review";
+import type { CaseMessage } from "@/features/chat/case-api";
 import { mergeConversation } from "@/features/chat/use-zusik-case";
+import { chatStarters, conversationInput } from "@/lib/zusik/conversation";
+import { ChatStarters } from "@/features/chat/scenario-nav";
 
 // Sample answers shaped like the proposed /ask contract (PLAN-ETAP-1-KROK-2.md, section 4).
 // Component tests only: the real answers come from the backend.
@@ -77,6 +81,13 @@ describe("answerFromAskBody", () => {
 });
 
 describe("turnsFromView", () => {
+  it("restores the origin and timestamp of the exact quotation shown before reload", () => {
+    const citation = { ...odpis.citations[0], origin: "official_live", retrievedAt: "2026-11-22T14:50:00Z" };
+    const turn = { ...odpis, requestId: "r1", question: "Źródło?", citations: [citation] };
+    expect(answerFromAskBody({ turn }, "r1")?.citations[0]).toEqual(citation);
+    expect(turnsFromView({ turns: [turn] })[0].citations[0]).toEqual(citation);
+  });
+
   it("returns an empty list for the step-1 view and skips invalid turns", () => {
     expect(turnsFromView({ state: "completed" })).toEqual([]);
     const turns = turnsFromView({ turns: [{ ...odpis, requestId: "r1", question: "Q" }, { bad: true }] });
@@ -117,6 +128,20 @@ describe("TurnView", () => {
   });
 });
 
+it("shows three starter questions as actions in the current conversation", () => {
+  const html = renderToStaticMarkup(createElement(ChatStarters, { onSelect: () => undefined, disabled: false }));
+  expect(html).toContain("Sprawdź ubezpieczenie");
+  expect(html).toContain("Oblicz wysokość zasiłku");
+  expect(html).toContain("Sprawdź dokumenty i terminy");
+  expect(html.match(/<button /g)).toHaveLength(3);
+  expect(html).not.toContain("href=");
+});
+
+it.each(chatStarters)("starts $label with a relevant request for the user’s own data", starter => {
+  expect(conversationInput(starter.prompt, "ogolna").reply).toBe(starter.reply);
+  expect(conversationInput(starter.prompt + " Mam jeszcze jeden dokument.", "ogolna").reply).toBeNull();
+});
+
 describe("AnswerView", () => {
   it("shows each claim with its own footnote, sources collapsed", () => {
     const html = renderToStaticMarkup(createElement(AnswerView, { answer: odpis }));
@@ -146,6 +171,15 @@ describe("AnswerView", () => {
     );
     expect(html).toContain("Pytasz o wniosek do pracodawcy czy o wypłatę zasiłku?");
   });
+
+  it("keeps supported claims visible when one personal fact is still needed", () => {
+    const html = renderToStaticMarkup(createElement(AnswerView, {
+      answer: { ...odpis, status: "needs_clarification", message: "Czy dokument jest już w aktach?" },
+    }));
+    expect(html).toContain(odpis.claims[0].text);
+    expect(html).toContain("Źródło 1");
+    expect(html).toContain("Czy dokument jest już w aktach?");
+  });
 });
 
 describe("pdfPage", () => {
@@ -153,4 +187,20 @@ describe("pdfPage", () => {
     expect(pdfPage("https://eli.gov.pl/api/acts/DU/2026/1245/text.pdf#page=66")).toBe(66);
     expect(pdfPage("https://www.gov.pl/web/rodzina/urlop-rodzicielski")).toBeNull();
   });
+});
+
+it("shows alternatives with their own public sources and excludes unsupported cards", () => {
+  const message: CaseMessage = {
+    id:"turn", state:"completed", input:{intent:"public_question",publicQuestion:"Porównaj programy."},
+    answer:"", caseRevision:1, profileRevision:1,
+    citations:["dom", "zlobek"].map(ref => ({ref, kind:"public_source", version:"v1", publicUrl:"https://www.zus.pl/" + ref})),
+    opportunities:["dom", "zlobek", "bez-dowodu"].map(id => ({id,title:id,citationIds:[id],missingFacts:["careType"],exclusiveGroup:"rodzic"})),
+  };
+  const html = renderToStaticMarkup(createElement(OpportunityCards, {message}));
+  expect(html.match(/<article/g)).toHaveLength(2);
+  expect(html.match(/Alternatywa w tym samym programie/g)).toHaveLength(2);
+  expect(html).toContain("https://www.zus.pl/dom");
+  expect(html).toContain("https://www.zus.pl/zlobek");
+  expect(html).toContain("Czy dziecko będzie chodziło do żłobka");
+  expect(html).not.toContain("bez-dowodu");
 });

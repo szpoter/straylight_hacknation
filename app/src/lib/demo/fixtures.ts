@@ -3,6 +3,8 @@
  * Ola urodzona 10.11.2026, etap „Narodziny”. Wyłącznie dane fikcyjne.
  * TODO(backend): zastąpić danymi z API, zachowując typy z `types.ts`.
  */
+import { OLA } from "../family/ola";
+import { formatLong } from "./dates";
 import { S } from "./stop-details";
 import type { CalculatorPlan, Plan, ProfileRow, StageId, Stop } from "./types";
 
@@ -18,7 +20,7 @@ const SRC = {
   zusDocs: { label: "zus.pl · Zasiłek macierzyński — niezbędne dokumenty", url: "https://www.zus.pl/swiadczenia/zasilki/zasilek-macierzynski/niezbedne-dokumenty" },
   zusAmount: { label: "zus.pl · Wysokość zasiłku macierzyńskiego", url: "https://www.zus.pl/pl/swiadczenia/zasilki/zasilek-macierzynski/wysokosc" },
   nfzInsurance: { label: "pacjent.gov.pl · Jak ubezpieczyć członka rodziny", url: "https://pacjent.gov.pl/artykul/jak-ubezpieczyc-czlonka-rodziny" },
-  plus800: { label: "zus.pl · Termin złożenia wniosku o 800+", url: "https://www.zus.pl/en/-/termin-z%C5%82o%C5%BCenia-wniosku-o-800-plus-ma-znaczenie" },
+  plus800: { label: "zus.pl · Świadczenie wychowawcze 800+", url: "https://www.zus.pl/swiadczenia/swiadczenia-dla-rodzin/swiadczenie-wychowawcze-800-plus" },
   becikowe: { label: "gov.pl · Uzyskaj becikowe", url: "https://www.gov.pl/web/gov/uzyskaj-becikowe" },
   poz: { label: "pacjent.gov.pl · Wybierz dziecku lekarza rodzinnego", url: "https://pacjent.gov.pl/aktualnosc/wybierz-dziecku-lekarza-rodzinnego" },
   prenatal: { label: "pacjent.gov.pl · Program badań prenatalnych", url: "https://pacjent.gov.pl/program-profilaktyczny/program-badan-prenatalnych" },
@@ -26,7 +28,7 @@ const SRC = {
   vaccines: { label: "pacjent.gov.pl · Kalendarz szczepień 2026", url: "https://pacjent.gov.pl/kalendarz-szczepien-dzieci-i-mlodziezy-na-2026-rok" },
   parental: { label: "gov.pl · Urlop rodzicielski", url: "https://www.gov.pl/web/rodzina/urlop-rodzicielski" },
   aktywny: { label: "gov.pl · Program Aktywny Rodzic", url: "https://www.gov.pl/web/rodzina/pytania-i-odpowiedzi---program-aktywny-rodzic" },
-  pip: { label: "pip.gov.pl · Uprawnienia rodzicielskie", url: "https://www.pip.gov.pl/" },
+  pip: { label: "pip.gov.pl · Uprawnienia rodzicielskie", url: "https://www.pip.gov.pl/dla-pracodawcow/porady-prawne/rodzicielstwo" },
   poradnikPozor: S.poradnikPozor,
   poradnikSick: S.poradnikSick,
   uzArt30: S.uzArt30,
@@ -55,7 +57,7 @@ function olaStops(): Stop[] {
       checked: true,
       institution: "ZUS",
       forWhom: "Dla Ciebie",
-      why: "Szacunek z Twoich podstaw składek w ZUS. Przy umowie o pracę składniki wynagrodzenia poda pracodawca w Z-3.",
+      why: "Do obliczeń w kalkulatorze wpisz podstawę z dokumentów dotyczących Twojego wynagrodzenia.",
       source: SRC.zusAmount,
       action: { label: "Jak ZUS liczy zasiłek" },
     },
@@ -139,8 +141,15 @@ function olaStops(): Stop[] {
       institution: "Pracodawca",
       forWhom: "Dla Ciebie",
       why: "Najwyżej 6 tygodni przed przewidywaną datą porodu. Ten czas zmniejsza urlop po porodzie.",
-      source: SRC.zusDocs,
+      howTo: {
+        co: "Wniosek o część urlopu macierzyńskiego przed porodem",
+        doKogo: "Pracodawca, papierowo lub elektronicznie",
+        doKiedy: "Przed rozpoczęciem urlopu",
+        zalaczniki: "Kopia zaświadczenia lekarskiego o przewidywanej dacie porodu, jeżeli nie ma jej w aktach osobowych",
+      },
+      source: S.govMaternity,
       action: { label: "Zobacz szczegóły" },
+      doc: { goal: "urlopy", recipient: "Do pracodawcy", optional: true },
     },
     {
       id: "zaplanuj-urlopy",
@@ -171,7 +180,7 @@ function olaStops(): Stop[] {
     {
       id: "z3",
       stage: "narodziny",
-      title: "Pracodawca przekaże Z-3 do ZUS",
+      title: "Zaświadczenie Z-3 od pracodawcy",
       kind: "dzieje-sie-samo",
       institution: "Pracodawca",
       forWhom: "Dla Ciebie",
@@ -191,11 +200,11 @@ function olaStops(): Stop[] {
       dueBasis: "21 dni od wystawienia karty urodzenia (10 listopada 2026)",
       institution: "Urząd stanu cywilnego",
       forWhom: "Dla Oli",
-      why: "Zgłoszenie urodzenia nadaje dziecku numer PESEL. Bez niego nie zgłosisz Oli do ubezpieczenia ani nie złożysz wniosku o 800+.",
-      prepare: ["Karta urodzenia (szpital przekazuje ją do USC)", "Dowód osobisty", "Profil zaufany lub e-dowód, jeśli zgłaszasz online", "Adres do e-Doręczeń przy zgłoszeniu online"],
+      why: "USC sporządzi akt urodzenia Oli i wyda pierwszy odpis skrócony bez opłaty.",
+      prepare: ["Imię lub dwa imiona dziecka i dane rodziców", "W USC dowód osobisty lub paszport", "Przy zgłoszeniu online skrzynka do e-Doręczeń"],
       howTo: {
         co: "Zgłoszenie urodzenia dziecka",
-        doKogo: "Dowolny urząd stanu cywilnego albo online na gov.pl",
+        doKogo: "USC miejsca urodzenia dziecka, osobiście lub przez gov.pl albo aplikację mObywatel",
         doKiedy: "1 grudnia 2026 · 21 dni od wystawienia karty urodzenia",
         zalaczniki: "Brak, kartę urodzenia przekazuje szpital",
       },
@@ -211,44 +220,31 @@ function olaStops(): Stop[] {
       state: "szkic",
       parallelWith: "zglos-urodzenie",
       due: "2026-12-01",
-      dueBasis: "21 dni od porodu",
-      institution: "Pracodawca",
+      dueBasis: "21 dni po porodzie na wybór stawki 81,5%",
+      institution: "Pracodawca lub ZUS",
       forWhom: "Dla Ciebie",
-      why: "Wniosek o 81,5% za cały okres trzeba złożyć do 21 dni po porodzie. Później zostaje wariant 100%, potem 70%.",
-      prepare: ["Dane Oli: imię, nazwisko, PESEL, data i miejsce urodzenia (po zgłoszeniu urodzenia)", "Dane pracodawcy"],
+      why: "Jeśli wybierasz stawkę 81,5%, złóż wniosek w ciągu 21 dni po porodzie. Za 9 tygodni zarezerwowanych dla drugiego rodzica przysługuje 70%.",
+      prepare: ["Dane Oli i drugiego rodzica", "Adres, dane pracodawcy z NIP oraz okres urlopu", "Odpis skrócony aktu urodzenia, jeśli zasiłek wypłaca pracodawca"],
       howTo: {
-        co: "Wniosek o zasiłek macierzyński w wysokości 81,5%",
-        doKogo: "Pracodawca · zatrudnia do 20 osób, więc przekaże wniosek i Z-3 do ZUS",
+        co: "ZAM z deklaracją wykorzystania pełnego wymiaru urlopów",
+        doKogo: "Do kadr lub bezpośrednio do ZUS, jeżeli ZUS wypłaca zasiłek",
         doKiedy: "1 grudnia 2026 · 21 dni od porodu",
-        zalaczniki: "Brak — we wniosku podajesz dane Oli",
+        zalaczniki: "Gdy płaci pracodawca, odpis skrócony aktu urodzenia. Gdy płaci ZUS, dane do pobrania aktu z rejestru i Z-3 od pracodawcy.",
       },
       source: SRC.zusDocs,
       action: { label: "Dokończ z Zusikiem", href: "/dokumenty/zasilek-macierzynski" },
-      doc: { goal: "swiadczenia", recipient: "Do pracodawcy", note: "Brakuje numeru PESEL Oli", hasDraft: true },
+      doc: { goal: "swiadczenia", recipient: "Do płatnika zasiłku", note: "Uzupełnij dane Oli i wybierz płatnika zasiłku", hasDraft: true },
     },
     {
       id: "urlop-macierzynski",
       stage: "narodziny",
-      title: "Wniosek o urlop macierzyński",
-      kind: "na-wniosek",
-      state: "wyslano",
+      title: "Urlop macierzyński po porodzie",
+      kind: "informacja",
       institution: "Pracodawca",
       forWhom: "Dla Ciebie",
-      why: "Urlop macierzyński trwa 20 tygodni przy jednym dziecku. Co najmniej 14 tygodni po porodzie wykorzystuje matka.",
-      howTo: {
-        co: "Wniosek o udzielenie urlopu macierzyńskiego",
-        doKogo: "Pracodawca",
-        doKiedy: "Po porodzie, przed rozpoczęciem urlopu",
-        zalaczniki: "Brak",
-      },
-      source: SRC.zusDocs,
-      action: { label: "Zobacz przebieg sprawy", href: "/dokumenty/urlop-macierzynski" },
-      doc: {
-        goal: "urlopy",
-        recipient: "Do pracodawcy",
-        lastEvent: "Przekazano 12 listopada 2026",
-        events: [{ date: "2026-11-12", title: "Wysłano w symulacji", detail: "Przekazano pracodawcy przez e-mail kadr." }],
-      },
+      why: "Gdy nie korzystałaś z urlopu przed porodem, urlop zaczyna się w dniu porodu. Nie składasz wniosku o jego udzielenie.",
+      source: S.govMaternity,
+      action: { label: "Sprawdź zasady urlopu" },
     },
     {
       id: "ubezpieczenie-dziecka",
@@ -260,12 +256,12 @@ function olaStops(): Stop[] {
       dueBasis: "7 dni od nadania numeru PESEL",
       institution: "Pracodawca",
       forWhom: "Dla Oli",
-      why: "Rejestracja urodzenia nie zgłasza dziecka automatycznie. Jako pracownica zgłaszasz Olę przez pracodawcę.",
+      why: "W ciągu 7 dni od nadania numeru PESEL przekaż kadrom dane Oli. Pracodawca zgłosi ją do ZUS na druku ZCNA. Wystarczy zgłoszenie przez jednego rodzica.",
       howTo: {
-        co: "Zgłoszenie członka rodziny do ubezpieczenia zdrowotnego",
-        doKogo: "Pracodawca (przedsiębiorca sam, na ZUS ZCNA)",
+        co: "Pismo o zgłoszenie dziecka do ubezpieczenia zdrowotnego",
+        doKogo: "Do pracodawcy lub działu kadr",
         doKiedy: "7 dni od nadania numeru PESEL",
-        zalaczniki: "Numer PESEL dziecka",
+        zalaczniki: "W piśmie podaj PESEL dziecka i datę uzyskania uprawnień. Wymień dokumenty, które dołączasz na prośbę kadr.",
       },
       source: SRC.nfzInsurance,
       action: { label: "Zobacz, co przygotować" },
@@ -280,8 +276,9 @@ function olaStops(): Stop[] {
       condition: "Po zgłoszeniu urodzenia",
       institution: "Urząd stanu cywilnego",
       forWhom: "Dla Oli",
-      why: "Odpis przyda się w sytuacjach szczególnych, np. przy uzupełniającym urlopie macierzyńskim. Przy zwykłym wniosku o zasiłek wystarczą dane dziecka.",
-      source: SRC.usc,
+      why: "Pierwszy odpis skrócony dostaniesz po rejestracji. Dodatkowy możesz zamówić w dowolnym USC, listownie albo przez gov.pl.",
+      prepare: ["Data i miejsce urodzenia Oli", "Cel wydania odpisu", "Potwierdzenie opłaty, jeśli jest należna"],
+      source: { label: "gov.pl · Uzyskaj odpis aktu stanu cywilnego", url: "https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu" },
       action: { label: "Zobacz, co przygotować" },
       doc: { goal: "rejestracja", recipient: "Urząd stanu cywilnego", note: "Po zgłoszeniu urodzenia", optional: true },
     },
@@ -298,10 +295,10 @@ function olaStops(): Stop[] {
       howTo: {
         co: "Wniosek o urlop ojcowski",
         doKogo: "Pracodawca drugiego rodzica",
-        doKiedy: "Co najmniej 7 dni przed rozpoczęciem, najpóźniej do 10 listopada 2027",
-        zalaczniki: "Brak — we wniosku podajesz dane Oli",
+        doKiedy: "Co najmniej 7 dni przed rozpoczęciem. Cały urlop po urodzeniu dziecka wykorzystaj przed jego pierwszymi urodzinami.",
+        zalaczniki: "Odpis skrócony aktu urodzenia lub jego kopia i oświadczenie o wykorzystanym urlopie. Dokumentu z akt osobowych nie dołączasz ponownie.",
       },
-      source: SRC.zusDocs,
+      source: S.govPaternity,
       action: { label: "Dokończ z Zusikiem", href: "/dokumenty/urlop-ojcowski" },
       doc: { goal: "urlopy", recipient: "Do pracodawcy", note: "Brakuje daty rozpoczęcia", optional: true, hasDraft: true },
     },
@@ -315,16 +312,16 @@ function olaStops(): Stop[] {
       institution: "ZUS",
       forWhom: "Dla Oli",
       why: "Wniosek złożony do 3 miesięcy od urodzenia daje wypłatę od dnia urodzenia.",
-      howTo: { co: "Wniosek SW-R o świadczenie wychowawcze", doKogo: "ZUS, wyłącznie elektronicznie", doKiedy: "10 lutego 2027 · 3 miesiące od urodzenia", zalaczniki: "Brak" },
+      howTo: { co: "Wniosek SW-R o świadczenie wychowawcze", doKogo: "ZUS przez eZUS, mZUS, bank lub Emp@tię", doKiedy: "10 lutego 2027 · 3 miesiące od urodzenia na wyrównanie", zalaczniki: "Przy opiece naprzemiennej dołącz orzeczenie sądu. Przy pobycie cudzoziemca mogą być potrzebne dokumenty pobytowe." },
       source: SRC.plus800,
       action: { label: "Zobacz przebieg sprawy", href: "/dokumenty/800plus" },
       doc: {
         goal: "swiadczenia",
         recipient: "Do ZUS",
-        lastEvent: "Potwierdzono wpływ 15 listopada 2026",
+        lastEvent: "Wpis planu o przekazaniu z 15 listopada 2026",
         events: [
-          { date: "2026-11-15", title: "Wysłano w symulacji", detail: "Wniosek SW-R przez eZUS." },
-          { date: "2026-11-15", title: "Potwierdzenie wpływu", detail: "UPP z eZUS." },
+          { date: "2026-11-15", title: "Wcześniejszy wpis o przekazaniu", detail: "Wpis planu dotyczący wniosku SW-R." },
+          { date: "2026-11-15", title: "Wcześniejszy wpis planu o wpływie" },
         ],
       },
     },
@@ -334,28 +331,47 @@ function olaStops(): Stop[] {
       title: "Wybierz przychodnię dla Oli",
       kind: "na-wniosek",
       state: "warunek",
-      condition: "Po nadaniu numeru PESEL",
+      condition: "Po narodzinach, gdy wybierasz opiekę POZ",
       institution: "Przychodnia lub IKP",
       forWhom: "Dla Oli",
-      why: "Deklarację wyboru lekarza POZ złożysz na koncie dziecka w IKP albo w przychodni.",
+      why: "Możesz wybrać lekarza, pielęgniarkę i położną POZ dla Oli. Dla każdej osoby składasz osobną deklarację.",
       source: SRC.poz,
       action: { label: "Zobacz, co przygotować" },
-      doc: { goal: "zdrowie", recipient: "Przychodnia", note: "Po nadaniu numeru PESEL" },
+      doc: { goal: "zdrowie", recipient: "Przychodnia", note: "Na koncie dziecka w IKP lub u świadczeniodawcy" },
     },
     {
       id: "rodzicielski",
       stage: "po",
       title: "Urlop rodzicielski",
       kind: "na-wniosek",
-      state: "warunek",
-      condition: "Po urlopie macierzyńskim · od 30 marca 2027",
+      state: "aktualna",
       dueBasis: "Wniosek co najmniej 21 dni przed rozpoczęciem",
       institution: "Pracodawca",
       forWhom: "Dla Was obojga",
-      why: "41 tygodni dla rodziców, po 9 tygodni zastrzeżone dla każdego z Was.",
+      why: "Zaplanuj okres urlopu i sprawdź dotychczasowe wykorzystanie przez oboje rodziców. Każde z Was ma 9 tygodni tylko dla siebie.",
+      howTo: {
+        co: "Wniosek o udzielenie urlopu rodzicielskiego",
+        doKogo: "Pracodawca, papierowo lub elektronicznie",
+        doKiedy: "Co najmniej 21 dni przed rozpoczęciem wybranej części",
+        zalaczniki: "Dokument urodzenia, oświadczenie o planach drugiego rodzica i kopia zaświadczenia „Za życiem”, jeśli korzystasz z dłuższego wymiaru.",
+      },
       source: SRC.parental,
       action: { label: "Policz podział urlopu", href: "#kalkulator" },
-      doc: { goal: "urlopy", recipient: "Do pracodawcy", note: "Wniosek do 9 marca 2027" },
+      doc: { goal: "urlopy", recipient: "Do pracodawcy" },
+    },
+    {
+      id: "rodzicielski-praca",
+      stage: "po",
+      title: "Łączenie urlopu rodzicielskiego z pracą",
+      kind: "na-wniosek",
+      state: "aktualna",
+      institution: "Pracodawca",
+      forWhom: "Dla rodzica korzystającego z urlopu",
+      why: "Możesz pracować do połowy pełnego etatu u pracodawcy udzielającego urlopu. W osobnym piśmie wskaż okres i wymiar pracy.",
+      dueBasis: "Co najmniej 21 dni przed rozpoczęciem pracy",
+      source: S.govParental,
+      action: { label: "Rozpocznij wniosek" },
+      doc: { goal: "urlopy", recipient: "Do pracodawcy", optional: true },
     },
     {
       id: "szczepienia",
@@ -373,14 +389,19 @@ function olaStops(): Stop[] {
       stage: "po",
       title: "Becikowe",
       kind: "na-wniosek",
-      state: "warunek",
-      condition: "Po zgłoszeniu urodzenia",
+      state: "aktualna",
       dueBasis: "Do 12 miesięcy od urodzenia",
       institution: "Urząd gminy",
       forWhom: "Dla Oli",
       why: "1000 zł przy dochodzie do 1922 zł netto na osobę i opiece medycznej od 10. tygodnia ciąży.",
+      howTo: {
+        co: "Wniosek o becikowe (SR-2)",
+        doKogo: "Gmina lub OPS właściwe dla miejsca zamieszkania, osobiście, pocztą lub przez Emp@tię",
+        doKiedy: "10 listopada 2027 · 12 miesięcy od urodzenia",
+        zalaczniki: "Zaświadczenie lekarza lub położnej. Zależnie od sytuacji również oświadczenia dochodowe, dokumenty dotyczące alimentów, opieki lub pobytu.",
+      },
       source: SRC.becikowe,
-      action: { label: "Zobacz, co przygotować" },
+      action: { label: "Przygotuj wniosek", href: "/dokumenty/becikowe" },
       doc: { goal: "swiadczenia", recipient: "Urząd gminy", note: "Do 10 listopada 2027", optional: true },
     },
     {
@@ -429,7 +450,7 @@ function expectedStops(): Stop[] {
         case "chorobowy-ciaza":
           return { ...common, state: "warunek", condition: "Jeśli lekarz wystawi zwolnienie w ciąży", doc: undefined };
         case "macierzynski-przed":
-          return { ...common, state: "warunek", condition: "Najwcześniej 6 tygodni przed terminem · od 2 kwietnia 2027" };
+          return { ...common, state: "aktualna", dueBasis: "Pierwszy możliwy dzień urlopu: 2 kwietnia 2027" };
         case "zaplanuj-urlopy":
           return { ...common, kind: "na-wniosek", checked: undefined, state: "aktualna", due: "2027-06-04", dueBasis: "21 dni od planowanej daty porodu" };
       }
@@ -486,7 +507,7 @@ function testStops(): Stop[] {
           from: "ZUS",
           due: "2026-12-05",
           text: "Prosimy o dołączenie zaświadczenia ze szpitala potwierdzającego datę urodzenia dziecka.",
-          tasks: ["Dołącz zaświadczenie ze szpitala wskazane w piśmie", "Sprawdź adresata i załączniki", "Wyślij uzupełnienie w symulacji"],
+          tasks: ["Dołącz zaświadczenie ze szpitala wskazane w piśmie", "Sprawdź adresata i załączniki", "Przekaż uzupełnienie odbiorcy"],
         },
         events: [
           ...(stop.doc!.events ?? []),
@@ -559,9 +580,9 @@ export const PLANS: Plan[] = [
     id: "ola",
     name: "Ola",
     kind: "rejestr",
-    shortInfo: "11 dni",
-    keyDateLabel: "Urodzona 10 listopada",
-    keyDate: "2026-11-10",
+    shortInfo: "Ola Lis",
+    keyDateLabel: `ur. ${formatLong(OLA.birthDate)}`,
+    keyDate: OLA.birthDate,
     stage: "narodziny",
     stages: birthStages(),
     stops: olaStops(),
@@ -612,28 +633,20 @@ export function getPlan(id: string): Plan {
 
 export const STAGE_IDS: StageId[] = ["przed", "ciaza", "narodziny", "po"];
 
-/**
- * Fikcyjny rodzic z symulacji logowania. Imię, ubezpieczenie i jego początek jak w profilu demo
- * logowania (`features/auth/demo-session.ts`, DEMO_PROFILE) i w SPEC.md „Dane z ZUS · przykład”
- * — test `tests/profile-consistency.test.ts` pilnuje zgodności. Pracodawca: tylko w tej symulacji.
- */
 export const PARENT_PROFILE: ProfileRow[] = [
-  { label: "Imię i nazwisko", value: "Anna Przykładowa", source: "login", editable: false },
-  { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "zus", editable: false },
-  { label: "Ubezpieczenie chorobowe", value: "Aktywne", source: "zus", editable: false },
-  { label: "Początek okresu ubezpieczenia", value: "1 marca 2025 r.", source: "zus", editable: false },
-  { label: "Pracodawca", value: "Kwiatek sp. z o.o. · do 20 ubezpieczonych", source: "zus", editable: false },
-  { label: "Rola w planie", value: "Urodziłam dziecko", source: "rodzic", editable: true, options: ["Urodziłam dziecko", "Jestem drugim rodzicem"] },
-  { label: "Zmiana pracy przed porodem", value: "Nie", source: "rodzic", editable: true, options: ["Tak", "Nie", "Nie wiem"] },
+  { label: "Imię i nazwisko", value: OLA.mother, source: "rodzic", editable: false },
+  { label: "Drugi rodzic", value: OLA.father, source: "rodzic", editable: false },
+  { label: "Tytuł ubezpieczenia", value: "Umowa o pracę", source: "rodzic", editable: false },
+  { label: "Pracodawca", value: OLA.employer, source: "rodzic", editable: false },
 ];
 
 export const SOURCE_LABEL: Record<ProfileRow["source"], string> = {
-  zus: "ZUS · symulacja",
-  rejestr: "Rejestr",
-  rodzic: "Podane przez Ciebie",
-  demo: "Profil demonstracyjny",
+  zus: "Dokumenty rodziny",
+  rejestr: "Profil rodziny",
+  rodzic: "Podane przez rodzinę",
+  demo: "Profil rodziny",
   zalozenie: "Moje założenie",
-  login: "mObywatel · login.gov.pl",
+  login: "Profil rodziny",
 };
 
 /**

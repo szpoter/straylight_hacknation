@@ -1,4 +1,4 @@
-/** Run from app/: node --env-file=.env.local --import tsx scripts/zusik-eval-public.ts */
+/** Run from app/: node --env-file=.env.local --import tsx scripts/zusik-eval-public.ts [--retrieval-only] */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { generateAnswer, locateQuote } from "../src/lib/rag/answer";
@@ -27,13 +27,15 @@ async function main() {
     apiKey: requireEnv(dedicated ? "QDRANT_KNOWLEDGE_READ_KEY" : "QDRANT_READ_KEY"),
     model: process.env.QDRANT_EMBED_MODEL,
   });
+  const retrievalOnly = process.argv.includes("--retrieval-only");
   const rows = [];
   for (const example of examples) {
+    const measureGeneration = example.generate && !retrievalOnly;
     const plan = publicQuestion(example.question);
     const corpus = loadCorpus(plan?.corpus ?? "marta");
     const result = await answerQuestion({
       corpus, search, selectCorpus: loadCorpus,
-      generate: async (q, evidence, activeCorpus) => example.generate
+      generate: async (q, evidence, activeCorpus) => measureGeneration
         ? generateAnswer({ baseURL: requireEnv("SHERLOCK_BASE_URL"), apiKey: requireEnv("SHERLOCK_API_KEY"), model: requireEnv("SHERLOCK_MODEL") }, activeCorpus, q, evidence)
         : { status: "ok", output: { status: "insufficient_evidence", message: "", claims: [] }, model: "retrieval-only", ms: 0 },
     }, example.question);
@@ -47,22 +49,22 @@ async function main() {
     });
     const pass = example.pack === null
       ? !plan && answer.status === "insufficient_evidence" && trace.calls.qdrant === 0 && trace.calls.sherlock === 0
-      : plan?.corpus === example.pack && evidenceHit && (!example.generate || (verified && answer.status === "answered"
+      : plan?.corpus === example.pack && evidenceHit && (!measureGeneration || (verified && answer.status === "answered"
         && cited.some((id) => example.expected.includes(id))
         && answer.claims.every((c) => c.citationIds.length > 0)
         && new RegExp(example.word, "iu").test(answer.claims.map((c) => c.text).join(" "))));
     rows.push({
-      id: example.id, mode: example.generate ? "retrieval+model" : example.pack ? "retrieval" : "abstention",
-      pass, rawHit, evidenceHit, version: answer.corpusVersion, status: !example.pack || example.generate ? answer.status : "not_measured",
-      top5: trace.vectorIds, evidence: trace.evidenceIds, citations: example.generate ? answer.citations : [],
-      claims: example.generate ? answer.claims : [], message: example.generate ? answer.message : undefined,
-      modelProposedStatus: example.generate ? trace.proposedStatus : undefined, quoteReason: example.generate ? trace.quoteReason : undefined,
-      model: example.generate ? trace.model : undefined, modelMs: example.generate ? trace.modelMs : undefined,
+      id: example.id, mode: measureGeneration ? "retrieval+model" : example.pack ? "retrieval" : "abstention",
+      pass, rawHit, evidenceHit, version: answer.corpusVersion, status: !example.pack || measureGeneration ? answer.status : "not_measured",
+      top5: trace.vectorIds, evidence: trace.evidenceIds, citations: measureGeneration ? answer.citations : [],
+      claims: measureGeneration ? answer.claims : [], message: measureGeneration ? answer.message : undefined,
+      modelProposedStatus: measureGeneration ? trace.proposedStatus : undefined, quoteReason: measureGeneration ? trace.quoteReason : undefined,
+      model: measureGeneration ? trace.model : undefined, modelMs: measureGeneration ? trace.modelMs : undefined,
     });
     console.log(example.id, pass ? "PASS" : "FAIL", "vector", rawHit, "evidence", evidenceHit, answer.status, cited.join(","));
   }
   const passed = rows.filter((r) => r.pass).length;
-  writeFileSync(join(target, "eval-report.json"), JSON.stringify({ evaluatedAt: new Date().toISOString(), collection, passed, total: rows.length, rows }, null, 2) + "\n");
+  writeFileSync(join(target, retrievalOnly ? "eval-report-retrieval.json" : "eval-report.json"), JSON.stringify({ evaluatedAt: new Date().toISOString(), collection, passed, total: rows.length, rows }, null, 2) + "\n");
   if (passed !== rows.length) process.exitCode = 1;
 }
 

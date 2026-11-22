@@ -27,8 +27,8 @@ const PLAN: GuideStep[] = [
   },
   {
     target: "child",
-    title: "Plan dla każdego dziecka",
-    body: "Tu przełączasz dziecko. Ścieżka, dokumenty i kalkulator zmieniają się razem z wyborem.",
+    title: "Twoja rodzina",
+    body: "Imię dziecka w pasku prowadzi do profilu rodziny: dane rodziców, dziecka i konto w ZUS.",
   },
   {
     target: "path",
@@ -65,18 +65,23 @@ const CALCULATOR: GuideStep[] = [
   },
   {
     target: "calc-start",
-    title: "Zacznij od gotowych danych",
-    body: "„Mój plan” wczytuje daty z Twojego planu. Przykładowe sprawy ZUS pokazują, jak kalkulator radzi sobie z prawdziwymi przypadkami.",
+    title: "Przykład albo własny PDF",
+    body: "Formularz startuje z danymi Twojego planu. Rozwiń tę sekcję, żeby wczytać przykładową sprawę z zestawu ZUS albo odczytać podstawę z dokumentu PDF. Plik czytamy na tym urządzeniu.",
   },
   {
     target: "calc-situation",
     title: "Twoja sytuacja",
-    body: "Data porodu lub przyjęcia dziecka i to, kto z rodziców jest ubezpieczony. Od tego zależy długość urlopów. Jeśli czegoś brakuje, pole podpowie, co uzupełnić.",
+    body: "Urodzenie albo przyjęcie dziecka, data i liczba dzieci. Od tego zależy długość urlopów. Jeśli czegoś brakuje, pole podpowie, co uzupełnić.",
   },
   {
     target: "calc-basis",
     title: "Podstawa zasiłku",
-    body: "Wpisz zarobki z ostatnich 12 miesięcy. Kalkulator sam policzy podstawę, osobno dla każdego rodzica.",
+    body: "Wybierz tytuł ubezpieczenia i wpisz kwoty z 12 miesięcy. Kalkulator sam policzy podstawę, osobno dla każdego rodzica.",
+  },
+  {
+    target: "calc-payer",
+    title: "Kto wypłaca zasiłek",
+    body: "Rozwiń przy każdym rodzicu i podaj liczbę osób zgłoszonych u płatnika. Zobaczysz, czy wniosek trafia do pracodawcy, czy do ZUS.",
   },
   {
     target: "calc-split",
@@ -162,7 +167,7 @@ const CASE: GuideStep[] = [
   {
     target: "case-send",
     title: "Wybierz, jak przekazać",
-    body: "Przez PUE/eZUS, do pracodawcy, e-mailem jako PDF albo przez ePUAP, zależnie od wniosku. Przy każdej drodze widać, jakie potwierdzenie dostaniesz.",
+    body: "Na przykład przez eZUS, mZUS, e-Doręczenia albo bank, zależnie od wniosku. Przy każdej drodze widać, jakie potwierdzenie dostaniesz.",
   },
   {
     target: "case-timeline",
@@ -180,17 +185,17 @@ const CASE: GuideStep[] = [
 const PROFILE: GuideStep[] = [
   {
     title: "Profil rodziny",
-    body: "Tu są dane, z których Zusik wypełnia wnioski, i lista planów dla dzieci.",
+    body: "Tu są dane rodziny, z których Zusik układa plan i wypełnia wnioski.",
   },
   {
     target: "profile-data",
-    title: "Twoje dane",
-    body: "Dane, z których korzysta plan. Przy każdym widać, skąd pochodzi. Te, które możesz zmienić, mają przycisk „Zmień”.",
+    title: "Rodzice",
+    body: "Dane rodziców z logowania: imiona, tytuł ubezpieczenia i pracodawca. Z nich korzysta plan i wnioski.",
   },
   {
     target: "profile-plans",
-    title: "Dzieci i plany",
-    body: "Każde dziecko i każda ciąża ma swój plan. Po zmianie daty terminy wszystkich spraw w planie przeliczą się same.",
+    title: "Dziecko",
+    body: "Data urodzenia, od której liczą się terminy w planie. Przycisk otwiera plan dziecka.",
   },
   {
     target: "profile-zus",
@@ -198,14 +203,14 @@ const PROFILE: GuideStep[] = [
     body: "Podgląd danych z ZUS: ubezpieczenia, podstawa zasiłku, zwolnienia. Tylko do odczytu, w tej wersji to symulacja eZUS.",
   },
   {
-    target: "profile-test",
-    title: "Sprawa testowa",
-    body: "Przejdź przez fikcyjny przykład albo pozwól Zusikowi odczytać Twój plik PDF, bez łączenia z Twoimi danymi.",
+    target: "profile-ezus",
+    title: "Konto eZUS na próbę",
+    body: "Odśwież dane rodziny, wystaw przykładowe zaświadczenie o zadłużeniu, zobacz zwolnienia e-ZLA albo zadaj pytanie do ZUS. Wszystko w symulacji.",
   },
   {
-    target: "profile-reset",
-    title: "Zacznij od nowa",
-    body: "Postęp i wpisane wnioski są zapisane tylko w tej przeglądarce. Ten przycisk je usuwa i zaczyna wersję demo od nowa.",
+    target: "profile-test",
+    title: "Sprawdź swoją sprawę",
+    body: "Otwórz rozmowę z Zusikiem i dołącz dokumenty w PDF, sprawdź prawo do zasiłku na sprawach z zestawu ZUS albo przejdź przez przykładową sprawę.",
   },
   ZUSIK,
 ];
@@ -229,6 +234,39 @@ const SUPPORT: GuideStep[] = [
     target: "support-formal",
     title: "Sprawy formalne",
     body: "Krótka lista tego, co trzeba będzie załatwić, z odnośnikiem do źródła. Możesz wrócić do niej później.",
+  },
+  ZUSIK,
+];
+
+const CHECK: GuideStep[] = [
+  {
+    title: "Sprawdź prawo do zasiłku",
+    body: "Reguła oparta na ustawie zasiłkowej rozstrzyga, czy zasiłek przysługuje. Każdy powód ma przypis do przepisu.",
+  },
+  {
+    target: "check-howto",
+    title: "Jak przetestować",
+    body: "Krótka instrukcja: sprawy z zestawu ZUS, wgranie PDF, kalkulator do kwot i panel administracyjny.",
+  },
+  {
+    target: "check-mode",
+    title: "Skąd wziąć fakty",
+    body: "Wybierz sprawę z zestawu ZUS, wgraj PDF sprawy albo wpisz własne fakty. PDF czytamy na tym urządzeniu, plik nie trafia na serwer.",
+  },
+  {
+    target: "check-cases",
+    title: "Sprawy z zestawu",
+    body: "Przy każdej sprawie widać, jak rozstrzygnął ją ZUS. Kliknij, żeby wczytać jej fakty.",
+  },
+  {
+    target: "check-facts",
+    title: "Fakty sprawy",
+    body: "Zmień dowolny fakt i zobacz, jak zmienia się wynik. „Przywróć fakty z akt” cofa zmiany.",
+  },
+  {
+    target: "check-verdict",
+    title: "Wynik z przypisami",
+    body: "Rozstrzygnięcie reguły, powody z odnośnikami do przepisów i porównanie z decyzją ZUS z akt.",
   },
   ZUSIK,
 ];
@@ -265,5 +303,6 @@ export function stepsFor(pathname: string): GuideStep[] {
   if (pathname === "/profil") return PROFILE;
   if (pathname === "/profil/sprawa-testowa") return TEST_CASE;
   if (pathname === "/wsparcie") return SUPPORT;
+  if (pathname === "/sprawdz") return CHECK;
   return [];
 }
