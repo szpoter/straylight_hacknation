@@ -134,7 +134,7 @@ function Thread(props: Props) {
           <div className={s.marginMascot} aria-hidden="true">
             {mascot}
           </div>
-          <div ref={content} className={s.messages} aria-live="polite" aria-relevant="additions">
+          <div ref={content} className={s.messages} role="log" aria-label="Przebieg rozmowy" aria-relevant="additions">
             {props.workflow ?? <CaseSteps {...steps} />}
             {conversation.map((item) => (
               <TurnView

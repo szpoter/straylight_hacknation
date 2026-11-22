@@ -26,6 +26,47 @@ async function navigationDuringLoad(page: Page) {
   console.log("PASS Wsparcie → otwarcie czatu podczas przejścia → Profil");
 }
 
+async function caseShortcuts(page: Page) {
+  const cards = [
+    { label: "Porównaj warianty urlopu", path: "/app", api: "/api/zusik/marta" },
+    { label: "Przygotuj wniosek o urlop ojcowski", path: "/app/kamil", api: "/api/kamil" },
+    { label: "Sprawdź chorobowe w ciąży", path: "/app/chorobowe", api: "/api/zusik/sickness" },
+  ];
+  for (const { label, path, api } of cards) {
+    await openChat(page);
+    const shortcuts = conversation(page).getByRole("navigation", { name: "Rozpocznij sprawę" });
+    await shortcuts.waitFor();
+    assert.equal(await shortcuts.getByRole("link").count(), 3);
+    const caseResponse = (method = "GET") => page.waitForResponse(res => new URL(res.url()).pathname === api && res.request().method() === method);
+    const loaded = caseResponse(path === "/app/kamil" ? "POST" : "GET");
+    await shortcuts.getByRole("link", { name: label, exact: true }).click();
+    await page.waitForURL(url => url.pathname === path);
+    let first = (await (await loaded).json()).view;
+    if (path === "/app") {
+      assert.equal(first, null, "Porównanie powstaje po działaniu rodzica");
+      const saved = caseResponse("POST");
+      await page.getByRole("button", { name: "Porównaj warianty", exact: true }).click();
+      first = (await (await saved).json()).view;
+      assert.equal(first.variants.sequential.calendarDays, 56);
+    }
+    if (path === "/app/chorobowe") {
+      assert.equal(first, null);
+      const received = caseResponse("POST");
+      await conversation(page).getByRole("textbox", { name: "Wiadomość do Zusika" }).fill("Czy za dni zwolnienia dostanę zasiłek?");
+      await conversation(page).getByRole("button", { name: "Wyślij", exact: true }).click();
+      first = (await (await received).json()).view;
+    }
+    assert.ok(first?.version > 0);
+    const restored = caseResponse();
+    await page.reload();
+    assert.equal((await (await restored).json()).view.version, first.version);
+    await conversation(page).getByRole("textbox", { name: "Wiadomość do Zusika" }).waitFor();
+    assert.equal(await page.getByRole("log", { name: "Przebieg rozmowy" }).count(), 1);
+    console.log("PASS", page.viewportSize()?.width, label, path, "F5", first.version);
+    await page.goto(origin + "/start");
+  }
+}
+
 async function nurseryConversation(page: Page) {
   const state = page.waitForResponse(res => new URL(res.url()).pathname === "/api/zusik/state" && res.request().method() === "GET");
   await openChat(page);
@@ -45,6 +86,7 @@ async function nurseryConversation(page: Page) {
   }
   await ask(first);
   assert.match(await turn(first).innerText(), /aktywnie w żłobku/iu);
+  assert.equal(await chat.getByRole("navigation", { name: "Rozpocznij sprawę" }).count(), 0);
   await page.reload();
   await openChat(page);
   await turn(first).getByRole("button", { name: /^Źródło / }).first().waitFor();
@@ -58,11 +100,12 @@ async function nurseryConversation(page: Page) {
     assert.match(quote, /rachunek bankowy podmiotu, który prowadzi żłobek/iu);
     const url = await card.getByRole("link").getAttribute("href");
     assert.equal(new URL(url ?? "", origin).hostname, "www.zus.pl");
-    const live = mode === "official_live";
-    await card.getByText(live ? /Pobrano ze strony ZUS/ : /Z biblioteki źródeł/).waitFor();
+    const provenance = mode.startsWith("cards-") ? /Pobrano ze strony ZUS|Z biblioteki źródeł/
+      : mode === "official_live" ? /Pobrano ze strony ZUS/ : /Z biblioteki źródeł/;
+    const from = await card.getByText(provenance).innerText();
     const date = await card.locator("time").getAttribute("datetime");
     assert.ok(date && Number.isFinite(Date.parse(date)));
-    return { quote, url, date };
+    return { quote, url, date, from };
   }
   const savedSource = await openSource();
   await page.reload();
@@ -73,10 +116,11 @@ async function nurseryConversation(page: Page) {
 }
 
 async function run() {
-  assert.ok(["navigation", "corpus", "official_live"].includes(mode), "Podaj navigation, corpus lub official_live");
+  assert.ok(["navigation", "corpus", "official_live", "cards-mobile", "cards-desktop"].includes(mode), "Nieznany tryb testu");
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
+    const viewport = mode === "cards-desktop" ? { width: 1440, height: 900 } : { width: 390, height: 844 };
+    const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
     page.setDefaultTimeout(15_000);
     await page.goto(origin);
     await page.locator("header").getByRole("link", { name: "Zaloguj się", exact: true }).click();
@@ -84,6 +128,7 @@ async function run() {
     await page.getByRole("link", { name: /^Aplikacja mObywatel/i }).click();
     await page.getByRole("button", { name: "Symuluj zeskanowanie kodu" }).click();
     await page.waitForURL("**/start");
+    if (mode.startsWith("cards-")) await caseShortcuts(page);
     await (mode === "navigation" ? navigationDuringLoad : nurseryConversation)(page);
   } finally {
     await browser.close();
