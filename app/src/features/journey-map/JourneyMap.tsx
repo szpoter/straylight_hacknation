@@ -89,7 +89,7 @@ export function JourneyMap() {
             </button>
           )}
         </p>
-        <Button variant="secondary" size="sm" className={cn(!listView && "hidden md:inline-flex")} onClick={() => setListView((v) => !v)} aria-pressed={listView}>
+        <Button variant="secondary" size="sm" className={cn(!listView && "hidden md:inline-flex")} onClick={() => setListView((v) => !v)} aria-pressed={listView} data-tour="path-view">
           {listView ? <MapIcon size={18} /> : <ListIcon size={18} />}
           {listView ? "Ścieżka" : "Lista"}
         </Button>
@@ -105,7 +105,7 @@ export function JourneyMap() {
         </>
       ) : (
         <>
-          <div className="hidden md:block">
+          <div className="hidden md:block" data-tour="path">
             <HorizontalPath
               items={items}
               pawnIndex={pawn}
@@ -119,7 +119,7 @@ export function JourneyMap() {
               focusPawnSignal={focusPawn}
             />
           </div>
-          <div className="md:hidden">
+          <div className="md:hidden" data-tour="path">
             <VerticalPath
               items={items}
               pawnIndex={pawn}
@@ -136,7 +136,7 @@ export function JourneyMap() {
         </>
       )}
 
-      {!listView && <NearestPanel stop={nearest} upcoming={pawnStop} onOpen={select} />}
+      {!listView && <div data-tour="nearest"><NearestPanel stop={nearest} upcoming={pawnStop} onOpen={select} /></div>}
 
       <BottomSheet
         open={Boolean(selected)}

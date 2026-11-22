@@ -12,10 +12,10 @@ export default function ProfilePage() {
     <Page>
       <PageTitle className="mb-stack">Profil rodziny</PageTitle>
       <div className="flex flex-col gap-stack pb-section-mobile md:pb-section">
-        <MyData />
-        <PlansSection />
-        <ZusAccount />
-        <Panel aria-labelledby="sprawa-testowa">
+        <div data-tour="profile-data"><MyData /></div>
+        <div data-tour="profile-plans"><PlansSection /></div>
+        <div data-tour="profile-zus"><ZusAccount /></div>
+        <Panel aria-labelledby="sprawa-testowa" data-tour="profile-test">
           <SectionTitle id="sprawa-testowa" className="mb-2">
             Przetestuj przykładową sprawę
           </SectionTitle>
@@ -26,7 +26,7 @@ export default function ProfilePage() {
             Wybierz sprawę
           </ButtonLink>
         </Panel>
-        <ResetDemo />
+        <div data-tour="profile-reset"><ResetDemo /></div>
       </div>
     </Page>
   );

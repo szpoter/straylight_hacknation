@@ -142,7 +142,7 @@ export function CaseDetail({ id }: { id: string }) {
                   </button>
                 </p>
               )}
-              <FormEditor
+              <div data-tour="case-form"><FormEditor
                 def={def}
                 values={values}
                 onChange={saveValues}
@@ -158,16 +158,16 @@ export function CaseDetail({ id }: { id: string }) {
                   setNotice("Szkic zapisany. Wrócisz do niego w każdej chwili.");
                   go();
                 }}
-              />
+              /></div>
             </>
           )}
           {step === "sprawdz" && (
             <>
-              {pdf()}
-              <CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} />
+              <div data-tour="case-pdf">{pdf()}</div>
+              <div data-tour="case-check"><CheckAnswers def={def} values={values} onChangeField={(f) => go("wniosek", f)} onApprove={approve} onBack={() => go()} /></div>
             </>
           )}
-          {step === "przekaz" && <SendStep channels={def.channels} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} />}
+          {step === "przekaz" && <div data-tour="case-send"><SendStep channels={def.channels} recipient={c.doc.recipient} pdf={pdf("Pobierz wniosek PDF")} onSend={send} onBack={() => go()} /></div>}
           {step === "podglad" && (
             <>
               {pdf("Pobierz kopię PDF")}
@@ -200,7 +200,7 @@ export function CaseDetail({ id }: { id: string }) {
         </p>
       )}
 
-      <Panel className="mt-stack max-w-prose" aria-labelledby="teraz">
+      <Panel className="mt-stack max-w-prose" aria-labelledby="teraz" data-tour="case-now">
         <SectionTitle id="teraz">Czy mam teraz coś zrobić?</SectionTitle>
         <NowCard
           c={c}
@@ -214,7 +214,7 @@ export function CaseDetail({ id }: { id: string }) {
       </Panel>
 
       {c.howTo && (
-        <section aria-labelledby="jak-zlozyc" className="mt-stack max-w-prose">
+        <section aria-labelledby="jak-zlozyc" data-tour="case-howto" className="mt-stack max-w-prose">
           <SectionTitle id="jak-zlozyc" className="mb-4 md:mb-6">
             Jak złożyć
           </SectionTitle>
@@ -237,7 +237,7 @@ export function CaseDetail({ id }: { id: string }) {
       )}
 
       {sentOrLater && (
-        <section aria-labelledby="przebieg" className="mt-section-mobile md:mt-stack">
+        <section aria-labelledby="przebieg" data-tour="case-timeline" className="mt-section-mobile md:mt-stack">
           <SectionTitle id="przebieg" className="mb-card">
             Przebieg sprawy
           </SectionTitle>
@@ -245,7 +245,7 @@ export function CaseDetail({ id }: { id: string }) {
         </section>
       )}
 
-      <p className="mt-stack text-meta text-on-surface-variant">
+      <p data-tour="case-source" className="mt-stack text-meta text-on-surface-variant">
         Źródło:{" "}
         <a href={c.source.url} target="_blank" rel="noreferrer" className="underline decoration-outline underline-offset-4 hover:decoration-on-surface">
           {c.source.label}

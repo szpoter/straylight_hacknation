@@ -61,7 +61,7 @@ export function BenefitCalculator() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" data-tour="calc-start">
         <p className="text-label font-medium">Zacznij od</p>
         <div className="flex flex-wrap gap-2">
           <Chip active={!presetId} onClick={loadPlan}>
@@ -87,12 +87,12 @@ export function BenefitCalculator() {
 
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-          <SituationSection form={form} update={update} problems={problems} />
-          <BasisSection form={form} update={update} problems={problems} basisA={result?.basis.A ?? null} basisB={result?.basis.B ?? null} />
-          <SplitSection form={form} update={update} />
+          <div data-tour="calc-situation"><SituationSection form={form} update={update} problems={problems} /></div>
+          <div data-tour="calc-basis"><BasisSection form={form} update={update} problems={problems} basisA={result?.basis.A ?? null} basisB={result?.basis.B ?? null} /></div>
+          <div data-tour="calc-split"><SplitSection form={form} update={update} /></div>
         </div>
 
-        <aside id="wynik" aria-label="Wynik" className="flex min-w-0 scroll-mt-24 flex-col gap-4 lg:sticky lg:top-24">
+        <aside id="wynik" aria-label="Wynik" data-tour="calc-result" className="flex min-w-0 scroll-mt-24 flex-col gap-4 lg:sticky lg:top-24">
           {result ? (
             <>
               <Summary result={result} other={other} form={form} onSwitchVariant={() => update({ variant: form.variant === "815" ? "100-70" : "815" })}>
@@ -136,13 +136,13 @@ export function BenefitCalculator() {
       {result && (
         <div className="grid items-start gap-6 md:gap-8 lg:grid-cols-2">
           <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-            <Timeline result={result} />
+            <div data-tour="calc-timeline"><Timeline result={result} /></div>
             <Periods result={result} />
           </div>
           <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-            <Deadlines result={result} />
+            <div data-tour="calc-deadlines"><Deadlines result={result} /></div>
             <MonthlyTable result={result} form={form} />
-            <HowCalculated result={result} />
+            <div data-tour="calc-how"><HowCalculated result={result} /></div>
           </div>
         </div>
       )}

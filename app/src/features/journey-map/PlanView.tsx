@@ -61,12 +61,12 @@ Urlopy i zasiłek to wspólne sprawy — są w każdym planie i zmieniają się 
         {/* Wejście do „Wsparcia” z planu (SPEC-PO-LOGOWANIU: dostępne z każdego miejsca planu). */}
         <p className="text-meta text-on-surface-variant">
           Trudna sytuacja — strata, wcześniak, choroba dziecka?{" "}
-          <Link href="/wsparcie" className="font-medium text-on-surface underline underline-offset-4 decoration-outline hover:decoration-on-surface">
+          <Link href="/wsparcie" data-tour="support" className="font-medium text-on-surface underline underline-offset-4 decoration-outline hover:decoration-on-surface">
             Zobacz wsparcie
           </Link>
         </p>
       </div>
-      <Calculator key={`calc-${plan.id}`} />
+      <div data-tour="plan-calculator"><Calculator key={`calc-${plan.id}`} /></div>
     </Page>
   );
 }

@@ -26,6 +26,7 @@ export function ZusikFab() {
       onFocus={() => setInviting(true)}
       onBlur={() => setInviting(false)}
       aria-label="Otwórz czat z Zusikiem"
+      data-tour="zusik"
       className="fixed bottom-16 right-0 z-[45] overflow-visible rounded-lg px-4 pt-12 pb-4 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-on-surface md:bottom-2 md:right-6"
     >
       {/* Pole przycisku jest większe niż Bąbelek (padding, u góry więcej na podskoki), więc animacje
