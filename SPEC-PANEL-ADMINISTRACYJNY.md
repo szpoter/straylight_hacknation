@@ -415,7 +415,8 @@ Panel działa w `app/` pod `/admin` (produkcja: https://straylight-hacknation.ve
 | Zmiana parametru (§7) | ✅ dla łącznego wymiaru ojcowskiego | Szkic, „Sprawdź zmianę” na prawdziwej regule, publikacja od daty, wpis w historii. Wartość trafia do sprawy Kamila w aplikacji rodzica (sprawdzone na produkcji). „Pokaż oczami rodzica” otwiera sprawę Kamila z wartością ze szkicu i paskiem „Podgląd szkicu” na 30 minut. |
 | Sprawy testowe (§6) | ✅ 8 spraw syntetycznych | Sprawa Kamila w 8 wariantach, liczona na żywo regułą. Oczekiwane wyniki jak w `app/tests/kamil-rules.test.ts`. |
 | Historia zmian (§8) | ✅ | Publikacje z sesji z autorem, godziną, podstawą i wynikiem sprawdzenia. Wycofanie zaplanowanej zmiany. Wpisy przykładowe są oznaczone. |
-| Treści i źródła (§5) | ✅ | 3 pakiety wiedzy, 13 dokumentów, ostrzeżenie po 6 miesiącach od pobrania. |
+| Treści i źródła (§5) | ✅ | Pakiety wiedzy Zusika z manifestów korpusu i ostrzeżeniem po 6 miesiącach od pobrania. Organizacje wsparcia (zadanie s. 13 pkt i): 6 fundacji z KRS, opisem i kontaktem ze strony organizacji, datą weryfikacji 22.11.2026 i ostrzeżeniem po 6 miesiącach (`app/src/lib/support/organizations.ts`). |
+| Kto wypłaca i zadłużenie (§3.4, §3.5) | ✅ reguły | `lib/rules/payer.ts` (art. 61: płatnik powyżej 20 ubezpieczonych na 30 listopada poprzedniego roku, inaczej ZUS) i `lib/rules/arrears.ts` (art. 2a: zadłużenie powyżej 1% płacy minimalnej wstrzymuje świadczenie do spłaty, przedawnienie po 6 miesiącach). W panelu jako „W aplikacji”. Ekrany rodzica jeszcze z nich nie korzystają. |
 | Telefon i komputer (§12 pkt 6) | ✅ | |
 
 ### Decyzje wdrożeniowe [D]

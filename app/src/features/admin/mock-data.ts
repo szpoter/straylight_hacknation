@@ -134,17 +134,6 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
     history: [{ value: "270 dni", from: "2016-01-01", state: "Obowiązuje" }],
   },
   {
-    id: "payer-threshold",
-    group: "Kto wypłaca",
-    name: "Próg płatnika uprawnionego do wypłaty",
-    value: "20 ubezp.",
-    from: "2016-01-01",
-    state: "Obowiązuje",
-    source: "ZUS s. 1",
-    usedIn: "Plan, kierowanie wniosku",
-    history: [{ value: "20 ubezp.", from: "2016-01-01", state: "Obowiązuje" }],
-  },
-  {
     id: "base-contrib",
     group: "Podstawa",
     name: "Pomniejszenie o składki społeczne",
@@ -154,22 +143,6 @@ const SPEC_VALUES: Omit<Parameter, "origin">[] = [
     source: "Zał.",
     usedIn: "Kalkulator",
     history: [{ value: "13,71%", from: "2016-01-01", state: "Obowiązuje" }],
-  },
-  {
-    id: "base-min-wage",
-    group: "Podstawa",
-    name: "Płaca minimalna",
-    value: "4 806 zł",
-    from: "2026-01-01",
-    state: "Obowiązuje",
-    source: "Zał.",
-    usedIn: "Kalkulator",
-    planned: { value: "4 950 zł", from: "2027-01-01" },
-    history: [
-      { value: "4 950 zł", from: "2027-01-01", state: "Zaplanowana" },
-      { value: "4 806 zł", from: "2026-01-01", state: "Obowiązuje" },
-      { value: "4 666 zł", from: "2025-01-01", state: "Historyczna" },
-    ],
   },
   {
     id: "deadline-averaged",
@@ -242,7 +215,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-04",
-    parameterId: "base-min-wage",
+    parameterId: "app-wage-minimum",
     scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2026-11-18 09:40",
     parameter: "Płaca minimalna",
@@ -290,7 +263,7 @@ const SAMPLE_HISTORY: HistoryEntry[] = [
   },
   {
     id: "H-01",
-    parameterId: "base-min-wage",
+    parameterId: "app-wage-minimum",
     scope: "Wszystkie sprawy tego świadczenia",
     publishedAt: "2025-12-30 11:20",
     parameter: "Płaca minimalna",
