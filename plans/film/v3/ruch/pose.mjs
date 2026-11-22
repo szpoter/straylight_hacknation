@@ -124,6 +124,30 @@ export function armChain(root,b,pose,side,input,grip) {
   return {S,E,W,depthZ:b.L2*Math.sin(depth*D),angles:[shoulder,elbow,wrist],reach:Math.hypot(S[0]-root[0],S[1]-root[1])>.01?"shoulder":"ok"};
 }
 
+// The seated model sheet shows the knees closer to the lens than the hips.
+// Find the joint on its viewing ray at exactly one bone length from its parent.
+const seatedFocalLength = 280;
+const dot3 = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function jointOnRay(pixel, parent, length, branch) {
+  const f=seatedFocalLength, ray=[pixel[0],pixel[1],f];
+  const unit=ray.map(v=>v/Math.hypot(...ray));
+  const along=dot3([parent[0],parent[1],parent[2]+f],unit);
+  const closest=[unit[0]*along,unit[1]*along,unit[2]*along-f];
+  const radial=closest.map((v,i)=>v-parent[i]);
+  const distance=Math.hypot(...radial);
+  if(distance>length) return parent.map((v,i)=>v+radial[i]*length/distance);
+  const offset=branch*Math.sqrt(length*length-distance*distance);
+  return closest.map((v,i)=>v+unit[i]*offset);
+}
+function seatedLeg(root, knee, foot, thigh, shin, ankle) {
+  const hip=[...root,0], k=jointOnRay(knee,hip,thigh,-1), a=jointOnRay(foot,k,shin,1);
+  const u=k.map((v,i)=>v-hip[i]), l=a.map((v,i)=>v-k[i]);
+  const project=([x,y,z])=>[x,y].map(v=>v*seatedFocalLength/(seatedFocalLength+z));
+  const flex=Math.acos(clamp(dot3(u,l)/(thigh*shin),-1,1))/D;
+  const angles=[Math.atan2(-u[2],u[1])/D,flex,ankle];
+  return {S:root,E:project(k),W:project(a),local3D:[hip,k,a],angles,lengths:[thigh,shin]};
+}
+
 export function legChain(b,root,foot,knee,pose,index) {
   const st=b.stand, thigh=Math.hypot(st.kneeX-b.hipJ[0],st.knee-b.hipJ[1]), shin=Math.hypot(st.ankleX-st.kneeX,st.ankle-st.knee);
   const side=index?"legR":"legL", authored=pose.angles?.[side];
@@ -131,6 +155,7 @@ export function legChain(b,root,foot,knee,pose,index) {
     const K=add(root,vector(authored[0],thigh)), W=add(K,vector(authored[0]+authored[1],shin));
     return {S:root,E:K,W,z:0,angles:authored,lengths:[thigh,shin]};
   }
+  if(pose.seat && pose.seatPerspective) return seatedLeg(root,knee,foot,thigh,shin,pose[index?"ankleR":"ankleL"]??0);
   // The knee bends toward camera in a seated/front view. Rotate its IK plane about the hip–ankle line.
   const dx=foot[0]-root[0],dy=foot[1]-root[1],d=Math.hypot(dx,dy),ux=d?dx/d:0,uy=d?dy/d:1;
   const r=clamp(d,Math.abs(thigh-shin)+.001,thigh+shin), slide=clamp(d-r,-12,12);

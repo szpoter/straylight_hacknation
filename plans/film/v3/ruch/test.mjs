@@ -25,7 +25,9 @@ export async function auditShot(id) {
         for(const [chain,z1,z2,lengths,name] of [[arm,arm.upperZ??0,arm.depthZ,[r.b.L1,r.b.L2],"arm"+side],[leg,leg.z,leg.z,leg.lengths,"leg"+side]]) {
           if(p.legs===false && chain===leg) continue;
           for(const [j,[a,b,z]] of [[chain.S,chain.E,z1],[chain.E,chain.W,z2]].entries()) {
-            const actual=Math.hypot(dist(a,b),z);
+            const actual=chain.local3D
+              ? dist(chain.local3D[j],chain.local3D[j+1])
+              : Math.hypot(dist(a,b),z);
             check("lengthPct",Math.abs(actual/lengths[j]-1)*100,.49999,f,role+"."+name+j);
           }
           chain.angles.forEach((v,j)=>angles[name+j]=v);
@@ -98,6 +100,15 @@ function selfCheck() {
   assert.ok(grip.thumb<grip.t && grip.t>0 && grip.t<1);
   const cacheKey={}, source=f=>({f});
   assert.equal(endPose(source,cacheKey),endPose(source,cacheKey));
+  for(const role of ["marta","pawel"]) {
+    const pose=kit.sofaPose(role,"przekazanie"), drawing=kit.rig(role,pose);
+    const seated=kit.rig(role,{...pose,r2:true,seatPerspective:true});
+    for(const [i,leg] of seated.legs.entries()) {
+      assert.ok(dist(leg.E,drawing.knees[i])<precision && dist(leg.W,drawing.feet[i])<precision);
+      assert.ok(leg.local3D[1][2]<leg.local3D[0][2]);
+      for(let j=0;j<2;j++) assert.ok(Math.abs(dist(leg.local3D[j],leg.local3D[j+1])-leg.lengths[j])<precision);
+    }
+  }
   for(const role of ["marta","pawel","clerk"]) for(const view of [0,.5,1]){
     for(const down of [0,32]){
       const target=[615,388],pose=reach(role,{bodyView:view,x:640,y:480,s:1.2,leftGrip:grip,downPole:{left:down}},"left",target);

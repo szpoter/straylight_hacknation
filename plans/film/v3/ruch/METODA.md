@@ -19,6 +19,8 @@ Scena oblicza `motionFrame(f,k)` raz dla klatki 0–59. Zwraca pozy aktorów, ko
 
 ## Dane do pomiaru
 
+Na kanapie `seatPerspective:true` zachowuje widziane z kamery położenie kolana i podpartej kostki. Model znajduje kolano na promieniu kamery w odległości jednego uda od biodra, a następnie kostkę w odległości jednej goleni od kolana. Bliższe kolano i cofnięta kostka dają skrót znany z planszy obsady. Test mierzy oba odcinki na trzech punktach przestrzennych przed rzutowaniem na obraz.
+
 `motionFrame` podaje `actors` jako mapę nazwy postaci na pozę. W `contacts` i `supports` każdy wpis ma `role`, `joint`, `id` i `target` w przestrzeni sceny. `props` przechowuje punkty odniesienia rekwizytów. Kamera może mieć pola `z,cx,cy` lub macierz SVG `[a,b,c,d,e,f]`. Model szczegółu może wyeksportować własne punkty przez `details`; `visible` ogranicza zestaw do narysowanych części. `sampleShot(id,f)` przelicza punkty na podgląd 1280 × 720.
 
 Przy zmianie dekoracji `cutTransform` przelicza układ całej sceny, a `cutKeys` wymienia wspólne punkty. Przestawienie konkretnej postaci wymaga opisania przesunięcia w SPEC i wpisu do `cutOffsets`. Test pokazuje osobno `cutWorld` przed takim wyrównaniem i `cutPx` po nim. Zmiana między postacią na fotografii i osobą trzymającą fotografię może mieć osobny `segment`.
