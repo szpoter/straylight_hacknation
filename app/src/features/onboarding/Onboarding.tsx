@@ -9,7 +9,6 @@ import {
   DateField,
   Disclosure,
   FieldError,
-  LockIcon,
   ProgressBar,
   Segmented,
   SummaryList,
@@ -21,8 +20,6 @@ import {
 } from "@/components/ui";
 import { useDemoSession } from "@/features/auth/demo-session";
 import { ParentChat } from "@/features/chat/parent-chat";
-import { firstVisitAfterLogin } from "@/features/family/LoginGate";
-import { hasCreatedPlans, usePlan } from "@/features/family/PlanProvider";
 import type { Plan } from "@/lib/demo/types";
 import { buildPlans } from "@/lib/plan/build";
 import {
@@ -112,12 +109,13 @@ function choicePatch(step: StepId, value: string): Partial<Answers> {
  * pasek postępu, krótka reakcja na odpowiedź nad pytaniem (bez maskotki). Wybór karty tylko zaznacza — dalej idzie się
  * przyciskiem „Dalej”. Na końcu plan układa się na oczach rodzica i widać konkretne liczby.
  *
- * Gdy z rejestru znamy już dziecko (plan z kłódką), rodzic może od razu przejść do jego planu,
- * bez odpowiadania na pytania.
+ * Demo ma jedną rodzinę (Oli), więc onboarding jest pokazem: odpowiedzi budują ekran „Twój plan
+ * jest gotowy”, ale nie zmieniają planu. Na końcu rodzic trafia na plan Oli z otwartym
+ * przewodnikiem „Jak to działa?” (`?przewodnik=1`). Odpowiedzi zgodne ze sprawą Oli: „Dziecko już
+ * się urodziło”, „Urodziłam dziecko”, 10.11.2026, „Jedno dziecko”, „Ola”, „Umowa o pracę”.
  */
 export function Onboarding() {
   const router = useRouter();
-  const { plans, addPlans, selectPlan } = usePlan();
   const session = useDemoSession();
   // „Wpisz dane samodzielnie” albo nieudane wczytanie: bez podpowiedzi z ZUS.
   const zusData = session?.data === "zus";
@@ -138,17 +136,9 @@ export function Onboarding() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const loaded = useRef(false);
 
-  // Dzieci znane z rejestru (dane urzędowe) — można od razu przejść do ich planu.
-  const known = plans.filter((p) => p.kind === "rejestr");
-
   // Wznowienie przerwanej rozmowy od ostatniego pytania.
   useEffect(() => {
     const saved = loadSaved();
-    // Logowanie kończy się na /start. Rodzic, który ma już plan i nie jest w trakcie pytań, wraca od razu do planu.
-    if (session && firstVisitAfterLogin(session.loggedInAt) && (!saved || saved.screen === "start") && hasCreatedPlans()) {
-      router.replace("/plan");
-      return;
-    }
     if (saved) {
       /* eslint-disable react-hooks/set-state-in-effect -- odczyt po hydratacji */
       const restored = sanitize(saved.answers ?? {});
@@ -161,7 +151,7 @@ export function Onboarding() {
       /* eslint-enable react-hooks/set-state-in-effect */
     }
     loaded.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- tylko przy wejściu na ekran (sesja jest już znana: LoginGate)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tylko przy wejściu na ekran
   }, []);
 
   useEffect(() => {
@@ -264,23 +254,10 @@ export function Onboarding() {
     if (screen === "jobChange") advance(update({ jobChange: "pominieto" }));
   }
 
-  function finish() {
-    if (builtPlans.length === 0) return;
+  /** Koniec pokazu (albo „Pomiń pytania”): plan Oli i przewodnik „Jak to działa?”. */
+  function goToPlan() {
     clearSaved();
-    addPlans(builtPlans);
-    router.push("/plan");
-  }
-
-  function openKnown(id: string) {
-    clearSaved();
-    selectPlan(id);
-    router.push("/plan");
-  }
-
-  function browseExample() {
-    clearSaved();
-    selectPlan("przyklad");
-    router.push("/plan");
+    router.push("/plan?przewodnik=1");
   }
 
   if (screen === "start") {
@@ -296,37 +273,11 @@ export function Onboarding() {
             <p className="text-lead text-on-surface-variant">Kilka krótkich pytań, ok. 1 minuty. Na końcu zobaczysz wszystkie sprawy z terminami.</p>
           </div>
 
-          {known.length > 0 && (
-            <section aria-labelledby="znane-dzieci" className="w-full rounded-lg border border-outline bg-background p-gutter-mobile text-left md:p-card">
-              <h2 id="znane-dzieci" className="font-serif text-title">
-                {known.length > 1 ? "Znamy już Twoje dzieci" : "Znamy już Twoje dziecko"}
-              </h2>
-              <p className="mt-1 text-on-surface-variant">
-                Dane z rejestru PESEL (symulacja). Plan jest gotowy — nie musisz odpowiadać na pytania.
-              </p>
-              <ul className="mt-4 flex flex-col gap-3">
-                {known.map((p) => (
-                  <li key={p.id} className="flex flex-col gap-3 rounded-sm bg-surface p-4 sm:flex-row sm:items-center">
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="font-medium">{p.name}</span>
-                      <span className="inline-flex items-center gap-1 text-meta text-on-surface-variant">
-                        <LockIcon size={14} /> {p.keyDateLabel} · rejestr PESEL
-                      </span>
-                    </span>
-                    <Button onClick={() => openKnown(p.id)} className="sm:min-w-48">
-                      Otwórz plan
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           <div className="flex w-full max-w-sm flex-col items-center gap-4">
-            <Button variant={known.length > 0 ? "secondary" : "primary"} onClick={() => enter("situation", answers)} className="w-full">
-              {known.length > 0 ? "Dodaj inne dziecko albo ciążę" : "Zaczynamy"}
+            <Button onClick={() => enter("situation", answers)} className="w-full">
+              Zaczynamy
             </Button>
-            <TextButton onClick={browseExample}>Najpierw rozejrzę się na przykładzie</TextButton>
+            <TextButton onClick={goToPlan}>Pomiń pytania i przejdź do planu</TextButton>
             <Link href="/wsparcie" className="text-meta underline underline-offset-4 decoration-outline hover:decoration-on-surface">
               Potrzebuję wsparcia w trudnej sytuacji
             </Link>
@@ -357,7 +308,7 @@ export function Onboarding() {
             plans={builtPlans}
             estimatedDate={estimatedDate}
             headingRef={headingRef}
-            onFinish={finish}
+            onFinish={goToPlan}
             review={
               <Disclosure summary="Sprawdź odpowiedzi" className="border-y border-outline">
                 <SummaryList

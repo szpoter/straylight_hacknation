@@ -31,20 +31,3 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }
   return <>{children}</>;
 }
-
-const AFTER_LOGIN_KEY = "zusik.afterLogin";
-
-/**
- * Pierwsze wejście na /start po danym zalogowaniu (logowanie zawsze kończy się na /start).
- * Zapamiętuje chwilę logowania w sessionStorage, więc kolejne wejścia — np. „Dodaj dziecko
- * albo ciążę” — już nie są „pierwsze”.
- */
-export function firstVisitAfterLogin(loggedInAt: string): boolean {
-  try {
-    if (window.sessionStorage.getItem(AFTER_LOGIN_KEY) === loggedInAt) return false;
-    window.sessionStorage.setItem(AFTER_LOGIN_KEY, loggedInAt);
-    return true;
-  } catch {
-    return false;
-  }
-}

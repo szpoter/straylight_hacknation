@@ -118,16 +118,6 @@ function writeStorage(key: string, value: string) {
   }
 }
 
-/** Czy rodzic ma już plany dodane w onboardingu (odczyt zapisu poza Reactem, np. przed wczytaniem stanu). */
-export function hasCreatedPlans(): boolean {
-  try {
-    const saved = JSON.parse(readStorage(STATE_KEY) ?? "{}") as Partial<Saved>;
-    return Array.isArray(saved.created) && saved.created.length > 0;
-  } catch {
-    return false;
-  }
-}
-
 /** Klucz zapisu kalkulatora: rodzeństwo z jednego porodu ma wspólne urlopy, więc jeden kalkulator. */
 export function calculatorKey(plan: Pick<Plan, "id" | "family">): string {
   return plan.family?.groupId ?? plan.id;
