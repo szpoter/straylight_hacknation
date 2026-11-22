@@ -2,7 +2,7 @@
 
 Aplikacja webowa, w której rodzic sprawdza, jakie świadczenia rodzicielskie mu przysługują, liczy zasiłek dla obojga rodziców i przygotowuje wnioski do pracodawcy lub ZUS. Odpowiada na zadanie konkursowe ZUS na HackNation 2026.
 
-**[Otwórz demo](https://straylight-hacknation.vercel.app)** · [Film, 60 s](plans/film/v1/przewodnik-rodzica-1080p.mp4) · [Prezentacja, 6 slajdów](zgloszenie/przewodnik-rodzica.pdf) · [Zrzuty ekranu](zgloszenie/)
+**[Otwórz demo](https://straylight-hacknation.vercel.app)** · [Zrzuty ekranu](zgloszenie/)
 
 | Komputer | Telefon |
 |---|---|
