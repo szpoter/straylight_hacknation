@@ -117,11 +117,12 @@ export function CaseDetail({ id }: { id: string }) {
     }
     const today = todayInPoland();
     const delivery = CHANNEL_LABEL[channel];
-    const events = sendEvents(c.doc.events, channel, def.recipientFor?.(values, channel) ?? c.doc.recipient, today, correction);
+    const recipient = def.recipientFor?.(values, channel) ?? c.doc.recipient;
+    const events = sendEvents(c.doc.events, channel, recipient, today, correction, def.receipts?.[channel]);
     const lastEvent = events[events.length - 1];
     patchStop(c.id, {
       state: delivery.mode === "osobiscie" ? "zalatwione" : nextState(c.state, "send", true),
-      doc: { events, lastEvent: `${lastEvent.title} · ${formatLong(today)}`, note: undefined, hasDraft: false },
+      doc: { recipient, events, lastEvent: `${lastEvent.title} · ${formatLong(today)}`, note: undefined, hasDraft: false },
     });
     saveValues({ ...values, [CORRECTION]: "", _przekazanaKorekta: correction ? "1" : "" });
     setNotice(delivery.mode === "online" ? lastEvent.detail

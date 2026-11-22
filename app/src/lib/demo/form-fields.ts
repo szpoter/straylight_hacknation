@@ -30,6 +30,7 @@ export type FormDef = {
   letter?: (values: Record<string, string>, dateISO: string) => string[];
   buildOfficial?: (values: Record<string, string>, dateISO: string, fonts: ApplicationFonts) => Promise<Uint8Array>;
   validate?: (values: Record<string, string>, todayISO: string) => Record<string, string>;
+  receipts?: Partial<Record<Channel, string>>;
   recipientFor?: (values: Record<string, string>, channel: Channel) => string;
   validateChannel?: (values: Record<string, string>, channel: Channel) => Record<string, string>;
   bring?: string;

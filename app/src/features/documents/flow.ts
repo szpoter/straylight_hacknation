@@ -168,11 +168,12 @@ export function canEdit(state: CaseState): boolean {
 }
 
 /** Każde przekazanie i korekta mają osobny wpis w historii. */
-export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false): CaseEvent[] {
+export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false, receiptName?: string): CaseEvent[] {
   const delivery = CHANNEL_LABEL[channel];
   const detail = `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${delivery.label}.`;
   if (delivery.mode === "online") {
-    return [...existing, { date: today, title: SIMULATED_HANDOFF, author: "Demo", detail: `${detail} Przykładowe potwierdzenie: ${delivery.receipt}.`, simulatedReceipt: delivery.receipt }];
+    const receipt = receiptName ?? delivery.receipt;
+    return [...existing, { date: today, title: SIMULATED_HANDOFF, author: "Demo", detail: `${detail} Przykładowe potwierdzenie: ${receipt}.`, simulatedReceipt: receipt }];
   }
   return [...existing, {
     date: today, title: delivery.mode === "osobiscie" ? IN_PERSON_COMPLETED : HANDOFF_RECORDED,
