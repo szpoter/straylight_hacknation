@@ -11,9 +11,9 @@ Marta i Paweł chcą zostać z Olą **razem**. Terminy mają już zaznaczone w p
 | Czas orientacyjny | Co opowiadamy | Po czym widz pozna, że część się skończyła |
 | --- | --- | --- |
 | 0:00–0:38 | Narodziny, kolejka, pomylony druk, powrót na kanapę. Paweł chce wziąć wolne, żeby zawieźć wniosek. | Teczka puszcza. Papier zalewa pokój. Klik i zatrzymanie. |
-| 0:38–1:00 | Głos zespołu prowadzi Martę od logowania przez mapę Oli i rozmowę z Zusikiem do wniosku z załącznikiem. | Nazwa odbiorcy łączy animację z rzeczywistym szkicem Marty. |
-| 1:00–2:35 | Działające demo. Jedna sprawa rodziny od danych wejściowych przez wybór do skutku i następnego kroku. Krótki dowód gotowości do wdrożenia. | Widz potrafi powiedzieć, co wybrali rodzice, co mają zrobić i skąd wzięła się odpowiedź. |
-| 2:35–2:48 | Powrót do kuchni. Na stole zostaje kartka z decyzją, którą przed chwilą widzieliśmy. Adres działającego demo. | Paweł odkłada teczkę i bierze Olę od Marty. |
+| 0:38–1:00 | Głos zespołu prowadzi Martę od logowania przez mapę Oli i rozmowę z Zusikiem do wniosku z załącznikiem. | Wniosek cofa się w stos dokumentów, a stos odsłania prawdziwy landing. |
+| 1:00–2:42 | Działające demo od strony startowej przez plan, formularze, Zusika, kalkulator, profil i statusy po panel administratora. | Widz potrafi powiedzieć, co wybrali rodzice, co mają zrobić i skąd wzięła się odpowiedź. |
+| 2:42–2:48 | Powrót do wyniku rodziny i właściwego dokumentu. | Adres demo pozostaje czytelny do końca. |
 
 Przyjmuję początek realnego nagrania w okolicy **1:00 od początku filmu**. Docelowe 2:48 daje 12 sekund zapasu do konkursowego limitu trzech minut. [Wymagania formalne, s. 14–15](<Materiały hackathonowe/ZUS - Pełna treść zadania konkursowego.pdf#page=14>)
 
@@ -51,18 +51,31 @@ Przyjmuję początek realnego nagrania w okolicy **1:00 od początku filmu**. Do
 | 50–52 s | **Źródło.** Odnośnik zostaje w tym samym miejscu. Spod niego rozwija się wycinek przywołanego materiału ZUS. Miętowe podkreślenie biegnie pod jednym rzeczywistym zdaniem. Kamera i tekst zatrzymują się na pełną sekundę. | „Zusik sięga do materiałów ZUS.” |
 | 52–54 s | **Wybór staje się wnioskiem.** Cięcie po podkreśleniu na zaznaczony okres wspólnego urlopu. W środku stoją daty. Kamera odjeżdża, pod daty wsuwa się pole rzeczywistego formularza. Na końcu odczytujemy nagłówek wniosku, a te same daty są już w środku. To główny ruch całej sekwencji. | „Pomaga jej wypełnić wniosek…” |
 | 54–56 s | **Załącznik.** Twarde cięcie niżej w tym samym formularzu. Po lewej wycinek „Plików dziecka”, po prawej miejsce na załącznik. Wiersz odpisu pokonuje odstęp między nimi. Nazwa pliku pozostaje czytelna przez cały ruch. Krótki, matowy stuk, gdy wiersz osiada. | „…dołączyć odpis aktu urodzenia…” |
-| 56–58 s | **Podgląd.** Odjazd wokół osadzonego wiersza odsłania tytuł wniosku, wybrany okres i odbiorcę w ich rzeczywistym układzie. Boczna lista plików wychodzi poza obraz. Podczas pauzy lektora cały podgląd pozostaje nieruchomy. | „…i sprawdzić…” |
-| 58–60 s | **Wejście w nagranie.** Przy słowach „do kogo” krótki najazd na wartość „Pracodawca”. Do 59,5 s kamera ma już docelową skalę, pozycję i tło pierwszej klatki nagrania. Pół sekundy na odczyt. W 1:00 cięcie na identycznie wykadrowany produkt. Dopiero tam rusza kursor. | „…do kogo trafi dokument.” |
+| 56–58 s | Kamera odsuwa się od odpisu i zatrzymuje na odbiorcy „Pracodawca”. Widać jednocześnie nazwę wniosku i odbiorcę. | „…i sprawdzić, do kogo trafi dokument.” |
+| 58–60 s | Wniosek Marty rusza w głąb ekranu. Spod dolnej krawędzi przez to samo miejsce przelatują kolejne własne formularze demo. Najbliższy jest duży i ostry, wcześniejsze maleją i układają się warstwami za nim. Na „dokumentem” stos znika za Zusikiem. Na jego pozycji cięcie do prawdziwej strony startowej. Jeden szelest wygasa razem z ruchem. | „I tak z każdym innym dokumentem.” |
 
 **Reżyseria od kliku.** Od 0:38 obraz składa się z fragmentów właściwego produktu, firmowej typografii i oryginalnego SVG Zusika. Na osi HyperFrames wyznaczamy 11 ujęć po 60 klatek przy 30 kl./s. Z Motionmaxxing bierzemy szybki nacisk z wyhamowaniem (snapSettle) przy logowaniu i łagodne osiadanie (softLand) przy załączniku. Z podejścia „product tour with claims” w Bang Motion bierzemy jedną relację do pokazania na ujęcie. Na mapie to kolejność spraw, w rozmowie związek odpowiedzi ze źródłem, w szkicu przejście wybranych dat do formularza. Teksty interfejsu i zawartość źródła pobieramy z wybranego przebiegu. [Motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing) · [Bang Motion](https://github.com/bangtutorial/bang-motion) · [HyperFrames](https://github.com/heygen-com/hyperframes)
 
-**Od 1:00 · głos zespołu nad rzeczywistym nagraniem.** Kursor rusza dopiero po cięciu. Marta sprawdza swój szkic i oznacza przekazanie pracodawcy. Po jej decyzji wracamy na mapę. Osobny przykład Kamila pozwala pokazać wysyłkę do ZUS w symulacji. Tekst do obu przebiegów:
+## Nagranie produktu · 1:00–2:48
 
-„Ten wniosek Marta składa u swojego pracodawcy. Sprawdza daty, zagląda do załącznika i zatwierdza dokument. Kiedy przekaże go do kadr, zaznacza to w planie. Jej sprawa jest załatwiona. Paweł wciąż ma swoją.”
+W każdym wierszu zmieniamy kadr lub punkt skupienia co dwie sekundy. Głos czyta zdanie w całości. Przy kwocie, terminie i statusie kursor odjeżdża na margines. Przegląd formularzy montujemy z nagrań ośmiu wzorów dostępnych w produkcie. Zestawienie parami jest zabiegiem filmowym. [Katalog formularzy](app/src/lib/demo/forms.ts) · [Przebieg rodziny](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
 
-„U Kamila wygląda to inaczej. Prowadzi firmę, więc jego wniosek trafia do ZUS. Kamil sprawdza odbiorcę i potwierdza wysyłkę. W naszym demie jest ona symulowana. Potwierdzenie zostaje przy sprawie.”
+| Czas | Reżyseria nagrania | Tekst mówiony |
+| --- | --- | --- |
+| 1:00–1:08 · Landing | Szeroki pierwszy ekran → przewinięcie do „Poznaj Zusika” → jego istniejąca animacja z teczką i ołówkiem → kursor na „Zaloguj się”. | „Tutaj rodzic poznaje Zusika. Może go zapytać o świadczenie, sprawdzić źródło odpowiedzi, a potem razem z nim wypełnić wniosek.” |
+| 1:08–1:16 · Logowanie i import | „Zaloguj się” → login.gov.pl i wybór aplikacji mObywatel → symulacja skanu → dane startowe na profilu Marty. Widoczne oznaczenie demonstracji. | „Marta wybiera mObywatel. W tej symulacji z logowania mamy jej imię i nazwisko, a z ZUS — pracodawcę i ubezpieczenie.” |
+| 1:16–1:26 · Onboarding | Zbliżenie na dane z podpisanym źródłem → etap rodziny → data urodzenia Oli → potwierdzenie danych → otwarcie gotowego planu. | „Zusik dopytuje o to, czego jeszcze nie wie. Ola jest już na świecie. Marta podaje datę jej urodzenia, sprawdza podsumowanie i otwiera plan.” |
+| 1:26–1:36 · Mapa | Cała oś → „Planowanie” i „Ciąża” → „Narodziny” i „Po narodzinach” → punkt dotyczący rodziny → otwarta karta z odbiorcą i terminem. | „Plan zmienia się razem z rodziną. W ciąży ważne są inne sprawy niż po porodzie. Każdy punkt to jedna rzecz do załatwienia. Po otwarciu widać gdzie i do kiedy.” |
+| 1:36–1:48 · Formularze | Cztery cięcia po 2 s. W każdej parze nagłówki na tej samej wysokości: zgłoszenie urodzenia i odpis aktu, zgłoszenie do ubezpieczenia i 800+, urlop macierzyński i zasiłek macierzyński, urlop ojcowski i rodzicielski. Ostatnie 4 s na powiększenie wniosku rodzicielskiego i wskazanie pracodawcy. | „Tu są sprawy Oli, od zgłoszenia urodzenia po osiemset plus. A tu urlopy rodziców. Otwórzmy ten, o który Marta pytała w kolejce.” |
+| 1:48–2:00 · Zusik | Otworzyć rozmowę → pytanie „Czy możemy z Pawłem wziąć urlop razem?” → odpowiedź → źródło → pytanie o początek urlopu → odpowiedź Marty i porównanie wariantów. Źródło dobrać do faktycznej odpowiedzi. | „Marta pyta po swojemu: czy możemy wziąć urlop razem? Zusik znajduje odpowiedź w materiałach ZUS i pokazuje jej odpowiedni fragment. Do porównania brakuje jeszcze daty. O nią właśnie pyta.” |
+| 2:00–2:14 · Kalkulator | Dwie osie → wariant razem → wariant kolejno → wspólna suma brutto → rozwinięcie podstawy wyliczenia → wybór wspólnego okresu → te same daty w szkicu. | „Spójrzcie na te dwie kreski. Cztery tygodnie z Olą razem albo osiem na zmianę. U tej pary suma zasiłków za cały okres jest taka sama: sześć tysięcy osiemset sześćdziesiąt złotych brutto. Marta wybiera wspólny urlop.” |
+| 2:14–2:20 · Szkic i załącznik | Potwierdzenie okresu Pawła → wybór kopii odpisu z plików Oli → w podglądzie widać odpis oraz odbiorcę. | „Daty są już we wniosku. Marta dołącza odpis z plików Oli i sprawdza dokument dla swoich kadr.” |
+| 2:20–2:24 · Ustawienia | Otworzyć profil rodziny → zbliżyć się do informacji o źródle i danych podanych przez rodzica. | „W profilu sprawdza, skąd pochodzą jej dane.” |
+| 2:24–2:32 · Statusy | Dokumenty → zatwierdzony szkic Marty → potwierdzenie samodzielnego przekazania pracodawcy → osobno otwarta sprawa ZUS z demonstracyjną wysyłką i historią. | „Wniosek jest gotowy. Marta zaznacza, kiedy przekazała go do kadr. Przy symulowanej wysyłce do ZUS może otworzyć potwierdzenie.” |
+| 2:32–2:42 · Administrator | Cięcie na „Reguły świadczeń” → szkic zmiany wymiaru ojcowskiego z datą → „Sprawdź zmianę” → wynik spraw testowych → „Pokaż oczami rodzica”. Wartości opisane jako podgląd testowy. | „A kiedy zmieniają się zasady? Administrator ustawia nowy wymiar urlopu i datę. Sprawdza zmianę na przykładowych sprawach i widzi, jaką odpowiedź dostanie rodzic.” |
+| 2:42–2:48 · Finał | Powrót do osi Marty i Pawła → gotowy wniosek z odbiorcą → nazwa produktu, Zusik i adres działającego demo. | „Ile dostaną? Co złożyć i gdzie? Marta i Paweł mogą już zaplanować czas z Olą.” |
 
-[Przebiegi Marty i Kamila](TECH-SPEC-AGENT.md#etap-1--marta-wybiera-wariant-i-wznawia-przygotowanie-wniosku)
+Plansza finałowa może pokazać adres już od 2:44. W montażu zostawić cichą muzykę pod głosem, zdjąć ją po „z Olą”. Przed nagraniem odczytać wszystkie kwoty, nazwy statusów i odbiorcę z wybranego przebiegu. Podgląd administratora dotyczy testowej zmiany wymiaru ojcowskiego. [Próba w panelu administratora](ZGLOSZENIE-PANEL-ADMINISTRACYJNY.md#jak-przetestować-około-3-minut)
 
 ## Muzyka, efekty i głosy
 
@@ -77,7 +90,7 @@ Fala papieru dostaje jeden narastający szelest po ostatnim słowie Pawła. Klik
 1. **Odpowiedzieć Marcie.** Przy porównaniu wariantów zbliżenie powinno pozwolić odczytać wynik dla wybranego wariantu wraz z okresem i jednostką kwoty. Kursor odsuwa się na czas czytania. Jeśli aplikacja pokazuje stawkę lub źródło wyliczenia, rodzic otwiera je jednym rzeczywistym ruchem.
 2. **Doprowadzić sprawę do użytecznego końca.** Widz śledzi jeden wybór i jego skutek. Na końcu powinien zobaczyć właściwy dokument, termin i adresata. W egzemplarzu konkursowym logowanie lub przekazanie do zewnętrznego systemu ma widoczne oznaczenie symulacji. Kwestie lektora sprawdzimy z faktycznie zarejestrowanym przebiegiem.
 3. **Pokazać, co jury może powtórzyć.** Zarezerwować w tej części krótkie ujęcie wyboru lub wczytania własnego, syntetycznego PDF-u i sprawdzenia stanu ubezpieczenia, jeśli przebieg przejdzie próbę. Wyliczenie kalkulatora również musi dać się powtórzyć. Jeśli potrzebna jest inna sprawa niż Marty, podpisujemy ją oddzielnie. Publiczne nagranie korzysta wyłącznie z własnych materiałów demonstracyjnych. Zestawy spraw udostępnione przez ZUS mają ograniczenie kopiowania i rozpowszechniania. [Opis zadania, s. 11–15](<Materiały hackathonowe/ZUS - Pełna treść zadania konkursowego.pdf#page=12>)
-4. **Zamknąć historię.** Po potwierdzeniu wyniku można krótko wrócić do kuchni. Propozycja ostatniej kwestii Marty: „Dobra. Ja biorę wniosek. Ty weź Olę.” Paweł już wyciąga ręce. Na ostatniej planszy zostaje adres demo. Wartość świadczenia i ostateczne zdania o działaniu aplikacji wpiszemy po wyborze rzeczywistego przebiegu.
+4. **Zamknąć historię.** Zestawić wynik dla wspólnego urlopu z dokumentem do kadr. Na końcu zostawić nazwę i adres działającego demo.
 
 ## Co zobaczy jury
 
@@ -175,4 +188,4 @@ Wagi pochodzą z opisu zadania. Regulamin w § 2 wskazuje, że jury ocenia proje
 
 Mapa opiera się na publicznych opisach narzędzi i przykładach twórców. Zastosowania do Oli i Zusika to wybory reżyserskie zespołu. Jakość proceduralnego dźwięku i zgodność bibliotek na jednej osi czasu wymagają późniejszej próby produkcyjnej.
 
-**Do następnej rozmowy:** pierwsze sekundy prawdziwego nagrania od odbiorcy wniosku Marty do sprawdzenia szkicu.
+**Do następnej rozmowy:** próba głosu do 2:48 oraz wybór rzeczywistych kadrów do nagrania.
