@@ -48,7 +48,7 @@ Panel nie używa AI. Wartości, sprawdzenia i wyniki spraw testowych liczy kod r
 
 ## Czego jeszcze nie ma
 
-- Zmieniona stawka, kwota świadczenia rodzicielskiego, próg płatnika, statusy formularzy i organizacje wsparcia działają w regułach i panelu, ale ekrany rodzica (kalkulator, dokumenty, wsparcie) jeszcze z nich nie korzystają.
+- Zmieniona stawka, kwota świadczenia rodzicielskiego, wymiary urlopów, próg płatnika, statusy formularzy i organizacje wsparcia działają w regułach i panelu, ale ekrany rodzica (kalkulator, dokumenty, wsparcie) jeszcze z nich nie korzystają. Dla kalkulatora jest gotowe przejście (`lib/rules/maternity-schedule.ts`).
 - Reguła podwyższenia nie liczy zaliczki na podatek: przyjmuje zasiłek po zaliczce jako daną.
 - Odczyt wgranego wniosku PDF w „Sprawach testowych”.
 - Zmiana parametrów urlopu rodzicielskiego tym samym mechanizmem.
