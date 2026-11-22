@@ -1,4 +1,4 @@
-// Przewodnik Rodzica v3 · shared cast models, revision r1 (owner: art director / model sheet author).
+// Przewodnik Rodzica v3 · shared cast models, revision r2 (owner: art director / model sheet author).
 // Pure functions returning SVG fragments (strings) in the 1280×720 frame space, no outer <svg>.
 // Works in the browser and in Node (no DOM, no dependencies).
 //
@@ -58,7 +58,8 @@
 // Palette: ink #283754 · skin #FFEBDB · Marta sage #B2CAAD · Paweł navy #2D3950 · background #F5FAF7.
 // Values not in DESIGN.md tokens are marked "do weryfikacji".
 
-export const REWIZJA = "r1";
+import { armChain, legChain, gripPoint, mix } from "../ruch/pose.mjs";
+export const REWIZJA = "r2";
 
 const INK = "#283754", SKIN = "#FFEBDB", SKIN_LINE = "#C9A893", NAVY = "#2D3950", SAGE = "#B2CAAD";
 const SAGE_DARK = "#8FAE8A";          // do weryfikacji: jacket fold lines
@@ -517,7 +518,9 @@ const BODY = {
 // Upper-body deformation: lean (deg) / bow / twist applied with a weight growing from the waist up.
 function bender(p) {
   const lean = (p.lean ?? 0) * D2R, bow = clamp(p.bow ?? 0, 0, 1), tw = clamp(p.twist ?? 0, -1, 1);
+  const yaw = (p.bodyView ?? 0) * Math.PI / 2;
   return ([x, y]) => {
+    if (yaw) x = x * (.36 + .64 * Math.cos(yaw)) + Math.sin(yaw) * 15 * (1 - Math.min(1,Math.abs(x)/54));
     const w = clamp((-y - 15) / 115, 0, 1), ws = w * w * (3 - 2 * w);
     x = x * (1 - .16 * Math.abs(tw) * ws * (Math.abs(x) > 20 ? 1 : .4)) + tw * 13 * ws;
     y = y * (1 - .3 * bow * ws);
@@ -563,8 +566,11 @@ export function rig(role, pose = {}) {
   const shL = bend([-b.sh[0], b.sh[1]]), shR = bend([b.sh[0], b.sh[1]]);
   const def = DEFAULT_ARMS[seated ? "seat" : "stand"];
   const L = pose.left ?? def.left, R = pose.right ?? def.right;
-  const armL = ik(shL, [L[2], L[3]], b.L1, b.L2, [L[0], L[1]]);
-  const armR = ik(shR, [R[2], R[3]], b.L1, b.L2, [R[0], R[1]]);
+  const gL = pose.leftGrip ?? pose.grip ?? "open", gR = pose.rightGrip ?? pose.grip ?? "open";
+  const arm = (sh,input,side,g) => pose.r2
+    ? armChain(sh,b,pose,side,input,gripPoint(GRIP_POINT,g))
+    : ik(sh,input.slice(2),b.L1,b.L2,input.slice(0,2));
+  const armL = arm(shL,L,"left",gL), armR = arm(shR,R,"right",gR);
   // legs
   let knees, feet;
   if (seated) { knees = pose.knees ?? b.seatKnees; feet = pose.feet ?? b.seatFeet; }
@@ -573,17 +579,19 @@ export function rig(role, pose = {}) {
     knees = pose.knees ?? [[-st.kneeX, st.knee], [st.kneeX, st.knee]];
     feet = pose.feet ?? [[-st.ankleX, st.ankle], [st.ankleX, st.ankle]];
   }
-  const hipL = [-b.hipJ[0], b.hipJ[1]], hipR = [b.hipJ[0], b.hipJ[1]];
-  const wristAng = (arm, side) => Math.atan2(arm.W[1] - arm.E[1], arm.W[0] - arm.E[0]) / D2R + (side < 0 ? pose.wristL ?? 0 : pose.wristR ?? 0);
+  const width = .36 + .64 * Math.cos((pose.bodyView ?? 0) * Math.PI / 2);
+  let hipL = [-b.hipJ[0] * width, b.hipJ[1]], hipR = [b.hipJ[0] * width, b.hipJ[1]];
+  const legs = pose.r2 ? [hipL,hipR].map((h,i)=>legChain(b,h,feet[i],knees[i],pose,i)) : null;
+  if (legs) { [hipL,hipR] = legs.map(l=>l.S); knees=legs.map(l=>l.E); feet=legs.map(l=>l.W); }
+  const wristAng = (arm, side) => Math.atan2(arm.W[1] - arm.E[1], arm.W[0] - arm.E[0]) / D2R + (arm.angles?.[2] ?? (side < 0 ? pose.wristL ?? 0 : pose.wristR ?? 0));
   const gripAt = (arm, side, grip) => {
-    const g = GRIP_POINT[grip] ?? GRIP_POINT.open, a = wristAng(arm, side) * D2R, flip = side < 0 ? (pose.leftFlip ? -1 : 1) : (pose.rightFlip ? 1 : -1);
-    const hs = b.hand / 24, gx = g[0] * hs, gy = g[1] * flip * hs;
+    const g = gripPoint(GRIP_POINT,grip), a = wristAng(arm, side) * D2R, flip = side < 0 ? (pose.leftFlip ? -1 : 1) : (pose.rightFlip ? 1 : -1);
+    const hs = b.hand / 24, gx = g[0] * hs * (arm.handProjection??1), gy = g[1] * flip * hs * Math.cos((pose.roll?.[side<0?"left":"right"]??0)*D2R);
     return [arm.W[0] + gx * Math.cos(a) - gy * Math.sin(a), arm.W[1] + gx * Math.sin(a) + gy * Math.cos(a)];
   };
-  const gL = pose.leftGrip ?? pose.grip ?? "open", gR = pose.rightGrip ?? pose.grip ?? "open";
   return {
     role, b, seated, sc, x: pose.x ?? 640, y: pose.y ?? 470, bend, neckBase, neckTop, shL, shR, armL, armR, knees, feet, hipL, hipR,
-    gripL: gripAt(armL, -1, gL), gripR: gripAt(armR, 1, gR), gL, gR, wristAng,
+    legs, gripL: gripAt(armL, -1, gL), gripR: gripAt(armR, 1, gR), gL, gR, wristAng,
   };
 }
 
@@ -619,7 +627,43 @@ const HAND_LINES = {
   open: "", pinch: "M14 2.2Q16 3 17.6 4.2M11 5.6Q13 6.8 14.6 8.2", hold: "M15 -2.4Q18 -1.2 20.8 .6M14 2.4Q17 3.4 19.6 5.6",
   point: "M14 1.6Q15.8 2.6 16.8 4.6", grab: "M15 -1.5Q19 -.5 23.6 .8M14 3Q17.6 4.6 22.4 6.8",
 };
+// Uniform arc-length samples let the five existing silhouettes share one contour during a grip change.
+function outlines(paths) {
+  return Object.fromEntries(Object.entries(paths).map(([name,d])=>{
+    const pts=[], lengths=[];
+    for(const [,cmd,coords] of d.matchAll(/([MLCZ])([^MLCZ]*)/g)) {
+      const v=coords.trim().split(/\s+/).map(Number), a=pts.at(-1);
+      if(cmd==="C") {
+        for(let i=1;i<=12;i++) {
+          const t=i/12,u=1-t;
+          pts.push([0,1].map(j=>u**3*a[j]+3*u*u*t*v[j]+3*u*t*t*v[j+2]+t**3*v[j+4]));
+        }
+      } else pts.push(cmd==="Z"?pts[0]:v);
+    }
+    let total=0;
+    for(let i=0;i<pts.length;i++) {
+      if(i) total+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+      lengths.push(total);
+    }
+    const samples=Array.from({length:81},(_,i)=>{
+      const d=i/80*total, j=Math.max(1,lengths.findIndex(l=>l>=d));
+      const t=(d-lengths[j-1])/(lengths[j]-lengths[j-1]||1);
+      return pts[j].map((v,k)=>mix(pts[j-1][k],v,t));
+    });
+    return [name,samples];
+  }));
+}
+const PALMS=outlines(HAND),THUMBS=outlines(THUMB);
 export function hand(x, y, angle = 0, size = 1, grip = "open", flip = false, lw = 2.7) {
+  if (typeof grip === "object") {
+    const {from,to,t,thumb}=grip;
+    const path = (shapes,phase,closed) => {
+      const a=shapes[from], b=shapes[to];
+      return a.map(([x,y],i)=>(i?"L":"M")+f1(mix(x,b[i][0],phase))+" "+f1(mix(y,b[i][1],phase))).join("")+(closed?"Z":"");
+    };
+    const body=P(path(PALMS,t,true),SKIN,INK,lw/size*.85)+P(path(THUMBS,thumb,false),SKIN,INK,lw/size*.85);
+    return G(`translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(${size} ${flip?-size:size})`,body);
+  }
   const sy = flip ? -1 : 1, g = HAND[grip] ? grip : "open";
   const body = P(HAND[g], SKIN, INK, lw / size * .85) + P(THUMB[g], SKIN, INK, lw / size * .85) + (HAND_LINES[g] ? P(HAND_LINES[g], "none", INK, lw / size * .6) : "");
   return G(`translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(${f1(size * 100) / 100} ${f1(size * sy * 100) / 100})`, body);
@@ -637,7 +681,8 @@ function armSvg(r, side, pose, palette, lw) {
   const grip = side < 0 ? r.gL : r.gR, flipBase = side < 0 ? !!pose.leftFlip : !pose.rightFlip;
   const ang = r.wristAng(arm, side);
   const hs = b.hand / 24;
-  let s = hand(arm.W[0], arm.W[1], ang, hs, grip, flipBase, lw);
+  const roll=pose.roll?.[side<0?"left":"right"]??0;
+  let s = (roll || arm.handProjection!=null) ? G(`translate(${arm.W}) rotate(${ang}) scale(${arm.handProjection??1} ${Math.cos(roll*D2R)})`,hand(0,0,0,hs,grip,flipBase,lw)) : hand(arm.W[0], arm.W[1], ang, hs, grip, flipBase, lw);
   const S = arm.S, El = arm.E, W = arm.W;
   // the shoulder end of the upper arm starts a little inside the torso so no cap shows on the chest
   const Sin = [S[0] - side * rS * .35, S[1] + rS * .2];
@@ -751,6 +796,12 @@ function shoeSvg(a, side, kind, lw, role, heelOut = 0, scale = 1) {
 }
 
 function legsSvg(r, pose, lw) {
+  if (pose.bodyView) {
+    const yaw=pose.bodyView*Math.PI/2, width=.48+.52*Math.cos(yaw);
+    const expand=q=>[q[0]/width,q[1]];
+    const local={...r,knees:r.knees.map(expand),feet:r.feet.map(expand),hipL:expand(r.hipL),hipR:expand(r.hipR)};
+    return G(`scale(${width} 1)`,legsSvg(local,{...pose,bodyView:0},lw));
+  }
   const { role, b, seated, knees, feet, hipL, hipR } = r;
   const patient = pose.outfit === "patient";
   const shoes = pose.shoes ?? ["shoe", "shoe"], heel = pose.heelOut ?? [0, 0];
@@ -758,6 +809,10 @@ function legsSvg(r, pose, lw) {
   const skirt = role === "marta" && !patient;
   const trouserFill = role === "clerk" ? CLERK_TROUSERS : role === "pawel" ? TROUSERS : patient ? GOWN : SKIN;
   const hips = [hipL, hipR];
+  const shoe=(i,scale=1)=>{
+    const [x,y]=feet[i],svg=shoeSvg([x,y+2],i?1:-1,shoes[i],lw,role,heel[i],scale),angle=r.legs?.[i].angles[2]??0;
+    return angle?G(`rotate(${angle} ${x} ${y})`,svg):svg;
+  };
   if (seated) {
     // shins (behind the knee caps), then feet
     const shins = [], thighs = [];
@@ -772,7 +827,7 @@ function legsSvg(r, pose, lw) {
       const A = feet[i], rr = role === "pawel" ? 16 : 14.5;
       s += P(`M${f1(A[0] - rr)} ${f1(A[1] - 6)}Q${f1(A[0])} ${f1(A[1] - 2)} ${f1(A[0] + rr)} ${f1(A[1] - 6)}`, "none", INK, lw * .7);
     }
-    for (let i = 0; i < 2; i++) s += shoeSvg([feet[i][0], feet[i][1] + 2], i ? 1 : -1, shoes[i], lw, role, heel[i], feet[i][1] > 168 ? 1.06 : 1);
+    for (let i = 0; i < 2; i++) s += shoe(i,feet[i][1] > 168 ? 1.06 : 1);
     if (skirt || patient) {
       // ONE skirt outline across both thighs, hem resting on both knees
       const [K1, K2] = knees, hemY = Math.max(K1[1], K2[1]) + 34;
@@ -800,7 +855,7 @@ function legsSvg(r, pose, lw) {
   if (!skirt && !patient) legs.unshift({ d: smooth([[-b.hipW + 10, -16], [b.hipW - 10, -16], [b.hipW - 6, 14], [0, 22], [-b.hipW + 6, 14]], true, .6), fill: trouserFill });
   s += union(legs, lw);
   if (!skirt && !patient) for (let i = 0; i < 2; i++) { s += P(`M${f1(hips[i][0] * .3)} 20L${f1(lerp(hips[i][0], knees[i][0], .9))} ${f1(knees[i][1] - 20)}`, "none", "none", 0); }
-  for (let i = 0; i < 2; i++) s += shoeSvg([feet[i][0], feet[i][1] + 2], i ? 1 : -1, shoes[i], lw, role, heel[i]);
+  for (let i = 0; i < 2; i++) s += shoe(i);
   if (skirt || patient) {
     const hem = role === "marta" ? 122 : 130;
     s += P(smooth([[-b.waist - 2, -40], [-b.hipW - 2, 6], [-b.hipW - 12, hem - 4], [-20, hem + 3], [0, hem], [20, hem + 3], [b.hipW + 12, hem - 4], [b.hipW + 2, 6], [b.waist + 2, -40]], true, .6), patient ? GOWN : DRESS, INK, lw);
@@ -841,6 +896,44 @@ export function head(role, pose = {}) {
 // ── OLA ────────────────────────────────────────────────────────────────────────────────────────────────────
 // Sleeping baby under a blanket with ONE wide green stripe. x,y = centre of the head; s scale; angle deg;
 // breath 0..1 lifts the blanket; blanket:false draws the head only; facing 1 = face toward screen-right.
+export function babyHand(layer, close = [0, 0, 0, 0], opts = {}) {
+  const INK = "#283754", SKIN = "#FFEBDB", lw = opts.line ?? 3.4;
+  const P = (d, fill, stroke = INK, w = lw) => `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>`;
+  let g = "";
+  if (layer === "back") {
+    // forearm out of the onesie sleeve (sleeve cuff = the "szew rękawa" checked on the 01/02 cut)
+    let arm = P("M-60 280C-20 250 60 196 120 168L158 196C110 228 60 256 -30 312Z", SKIN);
+    arm += P("M118 172q12 10 12 22", "none", "#C9A893", lw * .7);
+    // onesie sleeve: a wider tube that starts 110 units down the forearm; its open end is the cuff seam
+    arm += P("M52 206C20 222 -40 246 -96 262L-70 330C-20 312 40 290 74 262C82 246 70 214 52 206Z", "#FBFAF3");
+    arm += P("M58 210Q76 236 70 258", "none", "#C9D6CD", lw * .8);
+    g += `<g transform="rotate(${opts.armBend ?? -47} 140 186)">${arm}</g>`;
+    const press = opts.press ?? 0; // palm pad flattening under the fingertip
+    g += P(`M128 168C130 136 152 116 180 ${f1(118 + press * 3)}C206 ${f1(120 + press * 4)} 220 142 214 166C208 192 182 206 156 202C140 200 128 188 128 168Z`, SKIN);
+    if (press > .05) g += P(`M188 ${f1(132 + press * 3)}q10 4 14 ${f1(10 + press * 2)}`, "none", "#C9A893", lw * .6);
+  } else {
+    // chubby capsule fingers: open = small fan away from the incoming finger; shut = curled over it (grasp(1) tips)
+    const C = [171, 160];
+    for (const i of [3, 2, 1, 0]) {
+      const t = clamp(close[i],0,1), e = t * t * (3 - 2 * t);
+      const bx = 150 + i * 17, by = 128 - i * 4, B = [bx + 1, by + 7];
+      const dir = Math.atan2(B[1] - C[1], B[0] - C[0]) - (10 + i * 4) * D2R;
+      const open = [B[0] + Math.cos(dir) * 30, B[1] + Math.sin(dir) * 30], shut = [bx + 22, by + 20];
+      // the tip travels on an arc (over the top of the adult finger), not through it
+      const T = [lerp(open[0], shut[0], e) + Math.sin(e * Math.PI) * 10, lerp(open[1], shut[1], e) - Math.sin(e * Math.PI) * 16];
+      const M = [lerp(B[0], T[0], .5) + (T[1] - B[1]) * -.12 * (1 - e) - 6 * e, lerp(B[1], T[1], .5) - 8 * Math.sin(e * Math.PI) - 4 * e];
+      const r0 = 8.4, r1 = 7.2;
+      const n0 = Math.atan2(M[1] - B[1], M[0] - B[0]) + Math.PI / 2, n1 = Math.atan2(T[1] - M[1], T[0] - M[0]) + Math.PI / 2;
+      const nm = (n0 + n1) / 2;
+      const pt = (q, a, r) => `${f1(q[0] + Math.cos(a) * r)} ${f1(q[1] + Math.sin(a) * r)}`;
+      g += P(`M${pt(B, n0, r0)}Q${pt(M, nm, (r0 + r1) / 2 + 1)} ${pt(T, n1, r1)}A${r1} ${r1} 0 0 0 ${pt(T, n1 + Math.PI, r1)}Q${pt(M, nm + Math.PI, (r0 + r1) / 2 + 1)} ${pt(B, n0 + Math.PI, r0)}Z`, SKIN, INK, lw * .85);
+    }
+    const th = clamp(opts.thumb ?? 0,0,1);
+    g += P(`M138 186C${f1(lerp(132, 146, th))} ${f1(lerp(206, 208, th))} ${f1(lerp(160, 172, th))} ${f1(lerp(214, 212, th))} ${f1(lerp(178, 190, th))} ${f1(lerp(206, 200, th))}C${f1(lerp(184, 194, th))} ${f1(lerp(200, 194, th))} ${f1(lerp(176, 184, th))} 194 166 196`, SKIN, INK, lw * .8);
+  }
+  return g;
+}
+
 export function ola(pose = {}) {
   const x = pose.x ?? 0, y = pose.y ?? 0, s = pose.s ?? 1, br = clamp(pose.breath ?? 0, 0, 1), lw = 2.4 * (pose.line ?? 1), fc = pose.facing ?? 1;
   let g = "";
@@ -854,6 +947,7 @@ export function ola(pose = {}) {
   // closed lids
   for (const ex of [fc * 2, fc * 13]) g += P(`M${ex - 4} 1q4 3.5 8 0`, "none", INK, lw * .85);
   g += P(`M${fc * 10} 11q${fc * 2} 1.5 ${fc * 4} 0`, "none", INK, lw * .7);
+  if (pose.openHand) g += hand(fc * 23, 16, fc > 0 ? -38 : 218, .46, pose.openHand === true ? "open" : pose.openHand, fc < 0, 1.25);
   if (pose.blanket !== false) {
     const lift = br * 3;
     g += P(`M-44 18C-30 ${f1(10 - lift)} 24 ${f1(8 - lift)} 52 ${f1(16 - lift * .5)}L56 44C24 54 -22 54 -48 44Z`, "#FBFAF3", INK, lw);
@@ -904,4 +998,4 @@ export function sofaPose(role, variant = "przekazanie", over = {}) {
   return JSON.parse(JSON.stringify({ ...base, ...v, ...over }));
 }
 
-export const obsada = { person, head, hand, ola, rig, joints, sofaPose, SOFA, headGuides, GRIP_POINT };
+export const obsada = { person, head, hand, babyHand, ola, rig, joints, sofaPose, SOFA, headGuides, GRIP_POINT };
