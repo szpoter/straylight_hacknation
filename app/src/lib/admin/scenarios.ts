@@ -102,10 +102,10 @@ export const PATERNITY_SCENARIOS: Scenario[] = [
   },
   {
     id: "K-08",
-    title: "Brak potwierdzenia ubezpieczenia",
-    tag: "Brakujące dane",
-    input: { ...KAMIL, insuranceConfirmed: null },
-    expect: { status: "needs_info" },
+    title: "Ubezpieczenie potwierdzone na koncie ZUS, 14 dni naraz",
+    tag: "Dane uzupełnione",
+    input: { ...KAMIL, request: { start: "2026-12-08", days: 14 } },
+    expect: { status: "eligible", period: "8–21 grudnia 2026 r.", deadline: "07.12.2026", part: "1" },
   },
 ];
 
@@ -211,6 +211,8 @@ export interface RateScenario {
   kind: RateKind;
   /** Daily base of the benefit in PLN; null = not known yet. */
   dailyBase: number | null;
+  /** Where the daily base comes from, when it was worked out from a document. */
+  baseNote?: string;
   start: string;
   days: number;
   /** Worked out by hand from the task's rates, independent of the rule code. */
@@ -261,13 +263,14 @@ export const RATE_SCENARIOS: RateScenario[] = [
   },
   {
     id: "R-05",
-    title: "Brak podstawy wymiaru zasiłku",
-    tag: "Brakujące dane",
+    title: "Podstawa wymiaru uzupełniona z zaświadczenia Z-3",
+    tag: "Dane uzupełnione",
     kind: "parental",
-    dailyBase: null,
+    dailyBase: 172.58,
+    baseNote: "Z-3: przeciętne wynagrodzenie 6 000,00 zł − 13,71% składek = 5 177,40 zł, ÷ 30",
     start: "2027-01-04",
     days: 28,
-    expect: null,
+    expect: { rate10: 700, dailyGrosze: 12081, totalGrosze: 338268 },
   },
 ];
 
@@ -292,6 +295,7 @@ export function rateTestCases(schedule: RuleSchedule = {}): TestCase[] {
     const inputs = [
       { label: "Okres", value: `${RATE_LABEL[s.kind]}, ${s.days} dni od ${formatShort(s.start)}` },
       { label: "Podstawa dzienna", value: s.dailyBase === null ? "—" : formatGrosze(Math.round(s.dailyBase * 100)) },
+      ...(s.baseNote ? [{ label: "Skąd podstawa", value: s.baseNote }] : []),
     ];
     if (s.dailyBase === null || !s.expect) {
       return {

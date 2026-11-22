@@ -302,6 +302,12 @@ function statute(corpus: Corpus | null, id: string): Pick<Parameter, "source" | 
   return { source: `${doc.shortTitle}, ${fragment.locator}`, sourceUrl: citationUrl(corpus, fragment), quote: fragment.sourceText };
 }
 
+/** Source, link and verbatim text from the corpus for values that name their statute unit (`lawId`). */
+export function citeStatutes(params: Parameter[]): Parameter[] {
+  const publiczne = tryCorpus("publiczne");
+  return params.map((p) => (p.lawId ? { ...p, ...(statute(publiczne, p.lawId) ?? {}) } : p));
+}
+
 /** Rules ready for the parent's plan (lib/rules/payer.ts, lib/rules/arrears.ts); screens come later. */
 function payerAndArrearsParameters(corpus: Corpus | null, state: RuleVersionsState, today: string): Parameter[] {
   const params: Parameter[] = [];

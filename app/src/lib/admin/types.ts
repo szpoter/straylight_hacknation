@@ -40,6 +40,8 @@ export interface Parameter {
   sourceUrl?: string;
   /** Verbatim fragment of that text, when the corpus has it. */
   quote?: string;
+  /** Corpus fragment (logicalId) the value rests on; `citeStatutes` fills source, link and quote from it. */
+  lawId?: string;
   usedIn: string;
   /** Defaults to all cases of the benefit when omitted. */
   scope?: string;

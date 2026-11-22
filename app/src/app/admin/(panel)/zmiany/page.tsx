@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ChangeView } from "@/features/admin/change-view";
 import { SPEC_PARAMETERS } from "@/features/admin/mock-data";
 import { ParameterChangeView } from "@/features/admin/parameter-change-view";
-import { appParameters } from "@/lib/admin/catalog";
+import { appParameters, citeStatutes } from "@/lib/admin/catalog";
 import { changeSpecFor } from "@/lib/admin/parameter-changes";
 import { draftFor, scheduleOf } from "@/lib/admin/rule-versions";
 import { readRuleState } from "@/lib/admin/rule-store";
@@ -20,7 +20,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const parameterId = Array.isArray(parametr) ? parametr[0] : parametr;
   const state = await readRuleState();
   const today = new Date().toISOString().slice(0, 10);
-  const parameters = [...appParameters(state, today), ...SPEC_PARAMETERS];
+  const parameters = [...appParameters(state, today), ...citeStatutes(SPEC_PARAMETERS)];
 
   // Parameters in the change registry change for real; the rest keep the preview flow.
   const spec = parameterId ? changeSpecFor(parameterId) : null;

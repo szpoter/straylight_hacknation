@@ -68,7 +68,7 @@ describe("amount test cases", () => {
       ["R-02", "zgodna"],
       ["R-03", "zgodna"],
       ["R-04", "zgodna"],
-      ["R-05", "brak-danych"],
+      ["R-05", "zgodna"],
     ]);
     const after = rateTestCases({ "rate.parental": [{ value: 750, validFrom: "2027-01-01" }] });
     expect(after[0].status).toBe("do-aktualizacji");
