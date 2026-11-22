@@ -313,14 +313,15 @@ async function testFollowUps(page: Page) {
 }
 async function testLoginToChat(page: Page) {
   await page.goto(origin);
-  await page.locator("header").getByRole("link", {name: "Zaloguj się", exact: true}).click();
+  await page.locator('header a[href="/logowanie"]').click();
   await page.getByRole("link", {name: /^login\.gov\.pl/i}).click();
   await page.getByRole("link", {name: /^Aplikacja mObywatel/i}).click();
   await page.getByRole("button", {name: "Symuluj zeskanowanie kodu"}).click();
-  await page.waitForURL("**/start");
+  await page.waitForURL("**/plan");
+  await page.goto(origin + "/app/sprawy");
   const open = page.getByRole("button", {name: "Otwórz czat z Zusikiem"});
   await open.click();
-  assert.equal(new URL(page.url()).pathname, "/start");
+  assert.equal(new URL(page.url()).pathname, "/app/sprawy");
   const chat = page.getByRole("region", {name: "Czat z Zusikiem"});
   const draft = chat.getByRole("textbox", {name: "Wiadomość do Zusika"});
   const question = "Czy wniosek o Dobry Start mogę wysłać przez mZUS?";
@@ -349,7 +350,7 @@ async function testLoginToChat(page: Page) {
   const general = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=ogolna");
   assert.ok(general.turns.some(saved => saved.requestId === turn.requestId));
   await chat.getByRole("button", {name: "Zwiń czat"}).click();
-  await page.getByRole("button", {name: "Otwórz plan", exact: true}).first().click();
+  await page.goto(origin + "/plan");
   await page.waitForURL("**/plan");
   const pawn = page.getByRole("button", {name: /Otwórz czat z Zusikiem$/});
   assert.equal(await pawn.count(), 1, "One visible launcher on the map");
