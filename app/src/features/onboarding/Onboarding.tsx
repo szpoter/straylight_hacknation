@@ -22,6 +22,7 @@ import {
   type DateParts,
 } from "@/components/ui";
 import { useDemoSession } from "@/features/auth/demo-session";
+import { ParentChat } from "@/features/chat/parent-chat";
 import { firstVisitAfterLogin } from "@/features/family/LoginGate";
 import { hasCreatedPlans, usePlan } from "@/features/family/PlanProvider";
 import type { Plan } from "@/lib/demo/types";
@@ -286,9 +287,13 @@ export function Onboarding() {
   }
 
   if (screen === "start") {
+    // Po logowaniu rodzic trafia tutaj — czat z Zusikiem (zakres Juliana, `features/chat/parent-chat.tsx`)
+    // jest dostępny obok ekranu startowego. Na ekranach pytań go nie ma: przycisk czatu w rogu
+    // zasłaniałby na telefonie przyklejony pasek „Dalej”; tam rodzic ma Zusika w dymku.
     return (
+      <ParentChat>
       <Shell>
-        <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 text-center md:pt-14", ENTER)}>
+        <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 pb-20 text-center md:pt-14", ENTER)}>
           <Zusik size={128} animated entrance state="available" toward={270} />
           <div className="flex flex-col gap-3">
             <h1 className="font-serif text-headline-mobile md:text-headline">Ułóżmy Twój plan</h1>
@@ -341,6 +346,7 @@ export function Onboarding() {
           </Disclosure>
         </div>
       </Shell>
+      </ParentChat>
     );
   }
 
@@ -661,7 +667,7 @@ function ActionBar({ children }: { children: React.ReactNode }) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex min-h-dvh w-full flex-col">
       <header className="px-gutter-mobile pt-4 md:px-gutter-desktop md:pt-6">
         <span className="font-serif text-title">Zusik</span>
       </header>

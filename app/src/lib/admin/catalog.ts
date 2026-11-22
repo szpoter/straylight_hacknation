@@ -2,8 +2,10 @@ import { CITATIONS, ZAM_FORM } from "../kamil/sources";
 import { citationUrl, type Corpus } from "../rag/corpus";
 import { loadCorpus } from "../rag/corpus-fs";
 import { formatShort } from "../rules/dates";
-import { RULE_PARAMETERS, valueOn } from "../rules/parameters";
+import { ARREARS_RULES_VERSION, MINIMUM_WAGE } from "../rules/arrears";
+import { RULE_PARAMETERS, valueOn, valueWithDefaults, type RuleSchedule } from "../rules/parameters";
 import { MAX_PARTS, PATERNITY_RULES_VERSION, TOTAL_DAYS } from "../rules/paternity";
+import { DEFAULT_INSURED_THRESHOLD, PAYER_RULES_VERSION } from "../rules/payer";
 import { LAW_IDS, assessedOn } from "../rules/sickness";
 import { EMPTY_STATE, draftFor, labelOf, scheduleOf, type RuleVersionsState } from "./rule-versions";
 import type { HistoryEntry, KnowledgePackage, KnowledgeSource, Parameter, ParameterGroup, ParameterVersion } from "./types";
@@ -163,7 +165,95 @@ function formParameters(): Parameter[] {
 
 /** Parameters the application applies, read from its code, with versions published in this demo session. */
 export function appParameters(state: RuleVersionsState = EMPTY_STATE, today = new Date().toISOString().slice(0, 10)): Parameter[] {
-  return [...paternityParameters(state, today), ...sicknessParameters(tryCorpus("publiczne")), ...formParameters()];
+  const publiczne = tryCorpus("publiczne");
+  return [
+    ...paternityParameters(state, today),
+    ...sicknessParameters(publiczne),
+    ...payerAndArrearsParameters(publiczne, scheduleOf(state), today),
+    ...formParameters(),
+  ];
+}
+
+/** Statute unit from the corpus as source, link and verbatim text; empty when the corpus is missing. */
+function statute(corpus: Corpus | null, id: string): Pick<Parameter, "source" | "sourceUrl" | "quote"> | null {
+  const fragment = corpus?.fragments.get(id);
+  const doc = fragment ? corpus?.documents.get(fragment.documentId) : undefined;
+  if (!corpus || !fragment || !doc) return null;
+  return { source: `${doc.shortTitle}, ${fragment.locator}`, sourceUrl: citationUrl(corpus, fragment), quote: fragment.sourceText };
+}
+
+/** Rules ready for the parent's plan (lib/rules/payer.ts, lib/rules/arrears.ts); screens come later. */
+function payerAndArrearsParameters(corpus: Corpus | null, schedule: RuleSchedule, today: string): Parameter[] {
+  const params: Parameter[] = [];
+  const art61 = statute(corpus, "uz-61-1");
+  if (art61) {
+    const threshold = valueOn(schedule, "payer.insuredThreshold", today, DEFAULT_INSURED_THRESHOLD).value;
+    params.push({
+      id: "app-payer-threshold",
+      group: "Kto wypłaca",
+      name: "Płatnik wypłaca zasiłki sam, gdy zgłasza do ubezpieczenia chorobowego ponad",
+      value: `${threshold} ubezp.`,
+      from: "—",
+      state: "Obowiązuje",
+      ...art61,
+      usedIn: "Reguła „kto wypłaca” dla planu rodzica: płatnik albo ZUS i zaświadczenie płatnika",
+      scope: "Pracownicy. Prowadzącym działalność, duchownym i po ustaniu ubezpieczenia zawsze wypłaca ZUS",
+      origin: "app",
+      appSource: `lib/rules/payer.ts · ${PAYER_RULES_VERSION}`,
+      details: [
+        { label: "Liczbę ubezpieczonych ustala się", value: "na 30 listopada poprzedniego roku (art. 61 ust. 2)" },
+        { label: "Zawsze ZUS", value: "działalność i współpraca, duchowni, po ustaniu ubezpieczenia, pracodawca zagraniczny" },
+      ],
+      history: [{ value: `${threshold} ubezp.`, from: "—", state: "Obowiązuje" }],
+    });
+  }
+
+  const wage = valueWithDefaults(schedule, "wage.minimum", today, MINIMUM_WAGE);
+  const nextWage = MINIMUM_WAGE.find((w) => w.validFrom > today);
+  const zl = (v: number) => `${v.toLocaleString("pl-PL", { useGrouping: "always" })} zł`;
+  params.push({
+    id: "app-wage-minimum",
+    group: "Podstawa",
+    name: "Minimalne wynagrodzenie za pracę",
+    value: zl(wage.value),
+    from: wage.validFrom ?? "—",
+    state: "Obowiązuje",
+    source: "Rozporządzenie Rady Ministrów z 14.09.2026 (Dz.U. 2026 poz. 1213) dla 2027 r.",
+    sourceUrl: "https://eli.gov.pl/eli/DU/2026/1213/ogl",
+    planned: nextWage ? { value: zl(nextWage.value), from: nextWage.validFrom } : undefined,
+    usedIn: "Próg zadłużenia składkowego (1%) w regule zadłużenia",
+    origin: "app",
+    appSource: `lib/rules/arrears.ts · MINIMUM_WAGE`,
+    details: [{ label: "Wartości w kodzie", value: MINIMUM_WAGE.map((w) => `${w.validFrom.slice(0, 4)}: ${zl(w.value)}`).join(", ") }],
+    history: [...MINIMUM_WAGE]
+      .reverse()
+      .map((w) => ({
+        value: zl(w.value),
+        from: w.validFrom,
+        state: (w.validFrom > today ? "Zaplanowana" : w.validFrom === wage.validFrom ? "Obowiązuje" : "Historyczna") as ParameterVersion["state"],
+      })),
+  });
+
+  const art2a = statute(corpus, "uz-2a-1");
+  if (art2a) {
+    const threshold = Math.round(wage.value) / 100;
+    params.push({
+      id: "app-arrears-threshold",
+      group: "Podstawa",
+      name: "Zadłużenie składkowe wstrzymujące świadczenie: powyżej 1% minimalnego wynagrodzenia",
+      value: `${threshold.toLocaleString("pl-PL", { minimumFractionDigits: 2 })} zł`,
+      from: wage.validFrom ?? "—",
+      state: "Obowiązuje",
+      ...art2a,
+      usedIn: "Reguła zadłużenia dla osób opłacających składki same (działalność): stan na dzień powstania prawa",
+      scope: "Prowadzący działalność i osoby z nimi współpracujące, duchowni, marynarze (art. 2a ust. 1)",
+      origin: "app",
+      appSource: `lib/rules/arrears.ts · ${ARREARS_RULES_VERSION}`,
+      details: [{ label: "Bez spłaty w 6 miesięcy", value: "prawo do świadczenia się przedawnia (art. 2a ust. 2)" }],
+      history: [{ value: `${threshold.toLocaleString("pl-PL", { minimumFractionDigits: 2 })} zł`, from: wage.validFrom ?? "—", state: "Obowiązuje" }],
+    });
+  }
+  return params;
 }
 
 /* ---------- change history ---------- */

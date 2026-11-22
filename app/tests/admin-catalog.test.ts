@@ -80,3 +80,23 @@ describe("admin catalogue · test cases computed by the paternity rule", () => {
     expect(cases.find((c) => c.id === "K-08")?.missing).toMatch(/ubezpieczenie chorobowe/);
   });
 });
+
+describe("admin catalogue · payer and arrears rules", () => {
+  const params = appParameters(undefined, "2026-11-22");
+  const byId = (id: string) => params.find((p) => p.id === id);
+
+  it("shows the art. 61 threshold and the art. 2a arrears threshold from the code", () => {
+    expect(byId("app-payer-threshold")).toMatchObject({ value: "20 ubezp.", group: "Kto wypłaca", origin: "app" });
+    expect(byId("app-payer-threshold")?.sourceUrl).toMatch(/^https:\/\/eli\.gov\.pl\/.+#page=\d+$/);
+    expect(byId("app-arrears-threshold")?.value).toBe("48,06 zł");
+  });
+
+  it("shows the minimum wage in force with the next year's value planned", () => {
+    // pl-PL groups thousands with a no-break space.
+    const wage = byId("app-wage-minimum");
+    const plain = (s?: string) => s?.replace(/\u00a0/g, " ");
+    expect(plain(wage?.value)).toBe("4 806 zł");
+    expect(plain(wage?.planned?.value)).toBe("4 950 zł");
+    expect(wage?.planned?.from).toBe("2027-01-01");
+  });
+});

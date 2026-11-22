@@ -55,6 +55,7 @@ app/
 │     ├─ zusik/                   ✅ agent: graf, sesja, Qdrant, Sherlock, magazyn spraw z dzierżawą
 │     ├─ demo/                    ✅ typy i dane fikcyjne widoków rodzica (do podmiany na API)
 │     ├─ plan/                    ✅ reguła pionka, najbliższa sprawa, model statusów
+│     ├─ support/                 ✅ organizacje wsparcia (zadanie s. 13 pkt i), dane ze stron organizacji z datą weryfikacji
 │     ├─ rules/                   reguły świadczeń w TS: daty, kwoty, zaokrąglenia, ID reguły
 │     ├─ rag/                     podział źródeł, import, wyszukiwanie hybrydowe, cytaty po ID
 │     ├─ cases/                   szkic sprawy: fakty ze źródłem, wersja, klucz operacji

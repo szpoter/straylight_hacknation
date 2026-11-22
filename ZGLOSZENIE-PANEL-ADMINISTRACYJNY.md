@@ -14,7 +14,7 @@ Panel pozwala osobie odpowiedzialnej za zasady wyliczania świadczeń zmienić p
 | Przygotuj zmianę | Dla łącznego wymiaru zasiłku za okres urlopu ojcowskiego: szkic, wpływ na rodzinę „Obecnie / Po zmianie”, „Sprawdź zmianę” na prawdziwej regule (wniosek na limicie, ponad limit, dzień przed zmianą, druga część, sprawy sprzed daty bez zmian), publikacja od daty. „Pokaż oczami rodzica” otwiera sprawę rodzica z wartością ze szkicu, oznaczoną jako podgląd. |
 | Sprawy testowe | 8 spraw syntetycznych liczonych na żywo regułą, z oczekiwanym wynikiem, zgodnością i uzasadnieniem. Wyszukiwanie odporne na polskie znaki. |
 | Historia zmian | Kto, kiedy, od jakiej daty, poprzednia i nowa wartość, podstawa, wynik sprawdzenia. Wycofanie zmiany zaplanowanej na przyszłość. |
-| Treści i źródła | Akty prawne i strony ZUS, z których odpowiada asystent, z datą pobrania i ostrzeżeniem po 6 miesiącach. |
+| Treści i źródła | Akty prawne i strony ZUS, z których odpowiada asystent, oraz organizacje wsparcia (fundacje dla rodziców po stracie, wcześniaków, ciężko chorych dzieci, w żałobie), z datą weryfikacji i ostrzeżeniem po 6 miesiącach. |
 
 ## Jak przetestować (około 3 minut)
 
