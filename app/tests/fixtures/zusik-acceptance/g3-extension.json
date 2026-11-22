@@ -1,0 +1,18 @@
+{
+  "sourceId": "zus-wspierajace-holdout",
+  "logicalId": "wzon-kolejnosc",
+  "title": "Świadczenie wspierające dla osób z niepełnosprawnością",
+  "url": "https://www.zus.pl/swiadczenia/inne-swiadczenia-z-zus/wiadczenie-wspierajace-dla-osob-z-niepelnosprawnoscia",
+  "heading": "Co trzeba zrobić, aby uzyskać świadczenie wspierające",
+  "hash": "edf9962075fd34d49d597aec17ed53b23c5e5736a11ba15f952062384aaa43b6",
+  "code": "da524af0cbe7b2792d7234a8446a7ceaa02f1832",
+  "full": "zusik_test_extension_20261122_full",
+  "withdrawn": "zusik_test_extension_20261122_withdrawn",
+  "questions": [
+    "Czy w sprawie świadczenia wspierającego najpierw składa się pismo do ZUS czy do zespołu wojewódzkiego?",
+    "Mam już decyzję WZON. Kiedy wysłać wniosek o świadczenie wspierające?",
+    "Czy mogę wystąpić do ZUS o wsparcie, gdy decyzja o poziomie potrzeby wsparcia jeszcze nie jest ostateczna?",
+    "Co zrobi ZUS, jeśli wniosek o to świadczenie wyprzedzi decyzję wojewódzkiego zespołu?"
+  ],
+  "officialText": "Aby otrzymać świadczenie wspierające, złóż wniosek o wydanie decyzji ustalającej poziom potrzeby wsparcia do wojewódzkiego zespołu ds. orzekania o niepełnosprawności (WZON). Wniosek do ZUS o przyznanie świadczenia wspierającego możesz złożyć dopiero wtedy, gdy decyzja ustalająca poziom potrzeby wsparcia wydana przez WZON stanie się ostateczna. Decyzja ustalająca poziom potrzeby wsparcia stanie się ostateczna po upływie 14 dni od dnia jej doręczenia, jeżeli w tym terminie nie złożysz wniosku o ponowne rozpatrzenie sprawy. Jeżeli złożysz taki wniosek, WZON po jego rozpatrzeniu wyda decyzję, która stanie się ostateczna w dniu jej wydania. Jeśli najpierw złożysz do ZUS wniosek o świadczenie wspierające i nie będziesz mieć decyzji WZON o ustaleniu poziomu potrzeby wsparcia, ZUS zgodnie z przepisami pozostawi taki wniosek bez rozpatrzenia."
+}
