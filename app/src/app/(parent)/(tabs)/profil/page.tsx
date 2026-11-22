@@ -4,9 +4,12 @@ import { MyData } from "@/features/family/profile/MyData";
 import { PlansSection } from "@/features/family/profile/PlansSection";
 import { ZusAccount } from "@/features/family/profile/ZusAccount";
 
+import { EzusDemo } from "@/features/family/profile/EzusDemo";
+import { publishedSchedule } from "@/lib/admin/rule-store";
+
 export const metadata: Metadata = { title: "Profil rodziny · Zusik" };
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
   return (
     <Page>
       <PageTitle className="mb-stack">Rodzina Oli Lis</PageTitle>
@@ -14,6 +17,7 @@ export default function ProfilePage() {
         <MyData />
         <PlansSection />
         <ZusAccount />
+        <EzusDemo schedule={await publishedSchedule()} />
         <Panel aria-labelledby="sprawa-testowa">
           <SectionTitle id="sprawa-testowa" className="mb-2">
             Sprawdź swoją sprawę

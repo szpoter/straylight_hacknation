@@ -23,6 +23,8 @@ export type DemoSession = {
   origin: FlowOrigin;
   entry: FlowEntry;
   family: FamilyProfile;
+  refreshedAt?: string;
+  correspondence?: { at: string; text: string }[];
   /** pending: zalogowany, dane jeszcze się wczytują albo wczytanie się nie udało. */
   data: "local" | "pending" | "zus" | "manual";
 };
@@ -57,6 +59,19 @@ export function startDemoSession(origin: FlowOrigin, entry: FlowEntry) {
 export function setDemoData(data: DemoSession["data"]) {
   const current = read();
   if (current) write({ ...current, data });
+}
+
+export function refreshDemoProfile() {
+  const current = read();
+  if (current) write({ ...current, family: importFamilyProfile(), refreshedAt: new Date().toISOString() });
+}
+
+export function sendDemoQuestion(question: string) {
+  const current = read();
+  const text = question.trim();
+  if (!current || !text || text.length > 1000) return false;
+  write({ ...current, correspondence: [...(current.correspondence ?? []), { at: new Date().toISOString(), text }] });
+  return read()?.correspondence?.at(-1)?.text === text;
 }
 
 export function endDemoSession() {
