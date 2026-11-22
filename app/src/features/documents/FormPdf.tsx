@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Button, ButtonAnchor, FileIcon, TextButton } from "@/components/ui";
-import { buildApplicationPdf, type ApplicationDoc, type ApplicationFonts } from "@/lib/forms/application-pdf";
+import type { ApplicationFonts } from "@/lib/forms/application-pdf";
+import type { FormDef } from "@/lib/demo/forms";
+import { validate, type Values } from "./flow";
+import { pdfFilename, renderFormPdf, type PdfOptions } from "./pdf";
 
 /** Czcionki z polskimi znakami, pobierane raz na sesję (te same co w ZAM). */
 let fonts: Promise<ApplicationFonts> | null = null;
@@ -23,38 +26,41 @@ function loadFonts(): Promise<ApplicationFonts> {
   return fonts;
 }
 
-type Built = { key: string; url?: string; failed?: boolean };
+type Props = PdfOptions & { def: FormDef; values: Values; label?: string };
 
-/**
- * PDF wniosku składany w przeglądarce z wpisanych wartości: przycisk „Pobierz” i podgląd
- * w nowej karcie. Nic nie trafia na serwer — wartości wniosków są w przeglądarce (PlanProvider).
- */
-export function FormPdf({ doc, filename, label }: { doc: ApplicationDoc; filename: string; label: string }) {
-  const key = JSON.stringify(doc);
-  const [built, setBuilt] = useState<Built | null>(null);
+export function FormPdf({ def, values, recipient, date, correction, label }: Props) {
+  if (def.pdf === "none") return null;
+  const incomplete = Object.keys(validate(def, values, date)).length > 0;
+  if (incomplete && def.pdf === "official") {
+    return <p className="text-meta text-on-surface-variant">Uzupełnij wymagane dane, aby pobrać urzędowy druk.</p>;
+  }
+  const data = JSON.stringify({ values, recipient, date, correction });
+  return <PdfDownload key={def.name + data} def={def} data={data} filename={pdfFilename(def, correction)} label={incomplete ? "Pobierz szkic PDF" : label ?? "Pobierz wniosek PDF"} />;
+}
+
+function PdfDownload({ def, data, filename, label }: { def: FormDef; data: string; filename: string; label: string }) {
+  const [current, setCurrent] = useState<{ url?: string; failed?: boolean }>();
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     let url: string | undefined;
+    const { values, ...options }: PdfOptions & { values: Values } = JSON.parse(data);
     loadFonts()
-      .then((f) => buildApplicationPdf(JSON.parse(key) as ApplicationDoc, f))
+      .then((fonts) => renderFormPdf(def, values, options, fonts))
       .then((bytes) => {
         if (cancelled) return;
         url = URL.createObjectURL(new Blob([bytes.slice().buffer], { type: "application/pdf" }));
-        setBuilt({ key, url });
+        setCurrent({ url });
       })
       .catch(() => {
-        if (!cancelled) setBuilt({ key, failed: true });
+        if (!cancelled) setCurrent({ failed: true });
       });
     return () => {
       cancelled = true;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [key, attempt]);
-
-  // Po zmianie wartości stary plik znika od razu, nowy pojawia się po złożeniu.
-  const current = built?.key === key ? built : null;
+  }, [def, data, attempt]);
 
   if (current?.failed) {
     return (
@@ -62,7 +68,7 @@ export function FormPdf({ doc, filename, label }: { doc: ApplicationDoc; filenam
         Nie udało się przygotować PDF.
         <TextButton
           onClick={() => {
-            setBuilt(null);
+            setCurrent(undefined);
             setAttempt((n) => n + 1);
           }}
         >
