@@ -264,7 +264,7 @@ export function Onboarding() {
     // maskotki (prośba zespołu) — czat jest dostępny dopiero na planie.
     return (
       <Shell>
-        <div className={cn("flex flex-1 flex-col items-center gap-stack pt-8 pb-20 text-center md:pt-14", ENTER)}>
+        <div className={cn("flex flex-1 flex-col items-center justify-center gap-stack py-8 text-center", ENTER)}>
           <div className="flex flex-col gap-3">
             <h1 className="font-serif text-headline-mobile md:text-headline">Ułóżmy Twój plan</h1>
             <p className="text-lead text-on-surface-variant">Kilka krótkich pytań, ok. 1 minuty. Na końcu zobaczysz wszystkie sprawy z terminami.</p>
