@@ -7,7 +7,8 @@ const choice = (id: string, label: string, options: string[]): FormField => ({ i
 const when = (fields: FormField[], field: string, equals: string): FormField[] => fields.map(f => ({ ...f, showIf: { field, equals } }));
 const ELECTRONIC = "Na skrzynkę do e-Doręczeń";
 const MAIL = "Pocztą na adres zamieszkania";
-const receipt = choice("odbior", "Sposób odbioru", ["Osobiście w urzędzie", MAIL, ELECTRONIC]);
+const MAIL_OTHER = "Pocztą na inny adres do korespondencji";
+const receipt = choice("odbior", "Sposób odbioru", ["Osobiście w urzędzie", MAIL, MAIL_OTHER, ELECTRONIC]);
 const birthplace = text("miejsce", "Miejscowość urodzenia dziecka");
 const futureBirth = (v: Record<string, string>, today: string): Record<string, string> => v.data_urodzenia > today
   ? { data_urodzenia: "Data urodzenia nie może być w przyszłości." } : {};
@@ -31,6 +32,15 @@ const pozChoice = (id: string, label: string): FormField[] => [
   ...when([text(id + "_opis", "Opisz przyczynę po stronie przychodni")], id, POZ_CHOICES[3]),
 ];
 const EXEMPT = "Sprawa zwolniona z opłaty skarbowej";
+const PAID = "Sprawa płatna";
+const ONLINE_PAYMENT = "Płatność online w usłudze gov.pl";
+const TRANSFER = "Przelew bankowy lub pocztowy z potwierdzeniem";
+const TRUSTED = "Podpis zaufany";
+const QUALIFIED = "Podpis kwalifikowany";
+const personalSignature = "Podpis osobisty";
+const loginOptions = ["Profil zaufany", "E-dowód z czytnikiem i potwierdzonym profilem zaufanym"];
+const optionalChoice = (id: string, label: string, options: string[]): FormField => ({ ...choice(id, label, options), required: false });
+const stampDuty = (v: Record<string, string>) => Number(v.liczba) * (v.rodzaj === "Zupełny" ? 33 : 22);
 const blank = "……………………";
 
 export const civilForms: Record<string, FormDef> = {
@@ -77,24 +87,54 @@ export const civilForms: Record<string, FormDef> = {
   odpis: {
     name: "Wniosek o wydanie odpisu aktu urodzenia dziecka",
     pdf: "letter",
-    fidelity: "Wniosek rodzica do dowolnego USC. Za egzemplarz odpisu skróconego lub wielojęzycznego zapłacisz 22 zł, a za zupełny 33 zł. W sprawach zwolnionych ustawowo opłata wynosi 0 zł.",
+    fidelity: "Na gov.pl składasz formularz elektroniczny. PDF do złożenia osobiście lub pocztą to pismo pomocnicze rodzica. Wybrany USC może udostępniać własny wzór.",
     channels: ["govpl", "usc-papier", "poczta"],
     receipts: { govpl: "Potwierdzenie na skrzynce e-Doręczeń (UPP)" },
     recipientFor: v => v.urzad || "Wybrany urząd stanu cywilnego",
+    channelInfo(v, channel) {
+      if (v.oplata === EXEMPT) return "Zwolnienie z opłaty ze względu na wskazany cel. Do zapłaty 0 zł.";
+      const fee = stampDuty(v);
+      if (v.oplata !== PAID || !v.rodzaj || !Number.isSafeInteger(fee) || fee < 1) return;
+      if (channel === "govpl" && !v.platnosc) return `Opłata skarbowa wynosi ${fee} zł. Przy płatności online operator doliczy 0,59 zł.`;
+      if (channel !== "govpl" || v.platnosc !== ONLINE_PAYMENT) return `Opłata skarbowa wynosi ${fee} zł. Dołącz potwierdzenie opłaty.`;
+      const automatic = v.odbior === ELECTRONIC && v.rodzaj !== "Wielojęzyczny"
+        ? " Gov.pl może wydać odpis aktu Twojego dziecka automatycznie na skrzynkę do e-Doręczeń, jeśli system potwierdzi dane w rejestrze i pozostałe warunki. Taki odpis ma pieczęć ministra cyfryzacji." : "";
+      return `Do zapłaty ${fee},59 zł, w tym ${fee} zł opłaty skarbowej i 0,59 zł prowizji operatora za płatność.${automatic}`;
+    },
+    validateChannel(v, channel) {
+      const errors: Record<string, string> = {};
+      if (channel !== "govpl") return errors;
+      if (!loginOptions.includes(v.logowanie)) errors.logowanie = "Wybierz metodę logowania w symulacji gov.pl.";
+      if (v.oplata === PAID && ![ONLINE_PAYMENT, TRANSFER].includes(v.platnosc)) errors.platnosc = "Wybierz sposób zapłaty za odpis w symulacji gov.pl.";
+      if (![TRUSTED, QUALIFIED].includes(v.podpis)) errors.podpis = "Wybierz podpis w symulacji gov.pl.";
+      if (v.oplata === PAID && v.platnosc === ONLINE_PAYMENT && v.podpis === QUALIFIED) errors.podpis = "Przy płatności online wybierz podpis zaufany. Podpis kwalifikowany jest dostępny przy przelewie.";
+      return errors;
+    },
     bring: "Podpisz wniosek. Przy sprawie płatnej dołącz potwierdzenie opłaty. Na wizytę w USC zabierz dowód osobisty lub paszport.",
     sections: [
+      { id: "logowanie", title: "Wejście do usługi gov.pl", fields: [
+        { ...optionalChoice("logowanie", "Jak zalogujesz się w symulacji gov.pl?", loginOptions), hint: "Wybierz samą metodę. Przy wniosku papierowym pomiń ten krok." },
+      ] },
       { id: "ty", title: "Rodzic i urząd", fields: [
         parent(), text("adres", "Adres zamieszkania rodzica"), text("urzad", "Nazwa i miejscowość wybranego USC"),
       ] },
       { id: "akt", title: "Akt urodzenia dziecka", fields: [child, birth, birthplace,
+        { ...childPesel, required: false, hint: "Jeśli znasz numer, pomoże odszukać akt." },
+        text("usc_aktu", "USC, który sporządził akt", false),
         text("numer_aktu", "Numer aktu (jeśli znasz)", false),
       ] },
       { id: "odpis", title: "Odpis i opłata", fields: [
         { ...choice("rodzaj", "Rodzaj odpisu", ["Skrócony", "Zupełny", "Wielojęzyczny"]), prefill: () => "Skrócony" },
         { ...text("liczba", "Liczba egzemplarzy"), prefill: () => "1" },
         receipt, ...when([text("ade", "Twój adres do e-Doręczeń")], "odbior", ELECTRONIC),
-        choice("oplata", "Czy sprawa podlega opłacie?", ["Sprawa płatna", EXEMPT]),
+        ...when([text("adres_pocztowy", "Adres do korespondencji")], "odbior", MAIL_OTHER),
+        choice("oplata", "Czy sprawa podlega opłacie?", [PAID, EXEMPT]),
         { ...text("cel", "Do jakiej sprawy potrzebujesz odpisu?"), hint: "Przy zwolnieniu wskaż konkretny cel, np. postępowanie o zasiłek w ZUS." },
+      ] },
+      { id: "podpisanie", title: "Płatność i podpis w symulacji gov.pl", fields: [
+        ...when([{ ...optionalChoice("platnosc", "Jak opłacisz wniosek na gov.pl?", [ONLINE_PAYMENT, TRANSFER]),
+          hint: "22 zł za odpis skrócony lub wielojęzyczny, 33 zł za zupełny. Przy płatności online bank i urząd muszą obsługiwać usługę, a operator dolicza 0,59 zł za transakcję. Przy przelewie dołączasz potwierdzenie." }], "oplata", PAID),
+        { ...optionalChoice("podpis", "Jak podpiszesz wniosek na gov.pl?", [TRUSTED, QUALIFIED]), hint: "Płatność online wymaga podpisu zaufanego. Przy przelewie lub zwolnieniu możesz też wybrać podpis kwalifikowany." },
       ] },
     ],
     validate(v, today) {
@@ -105,13 +145,16 @@ export const civilForms: Record<string, FormDef> = {
     },
     letter(v) {
       const copies: Record<string, string> = { Skrócony: "skrócony", Zupełny: "zupełny", Wielojęzyczny: "skrócony na druku wielojęzycznym" };
-      const fee = Number(v.liczba) * (v.rodzaj === "Zupełny" ? 33 : 22);
+      const fee = stampDuty(v);
       return [
+        "Pismo pomocnicze rodzica do urzędu stanu cywilnego.",
         `Adres wnioskodawcy: ${v.adres || blank}.`,
         `Jako rodzic proszę o odpis ${copies[v.rodzaj] || blank} aktu urodzenia mojego dziecka. Liczba egzemplarzy: ${v.liczba || blank}.`,
         `Imię i nazwisko dziecka: ${v.dziecko || blank}. Data i miejsce urodzenia: ${v.data_urodzenia ? formatShort(v.data_urodzenia) : blank}, ${v.miejsce || blank}.` + (v.numer_aktu ? ` Numer aktu: ${v.numer_aktu}.` : ""),
+        ...(v.dziecko_pesel ? [`PESEL dziecka: ${v.dziecko_pesel}.`] : []),
+        ...(v.usc_aktu ? [`USC, który sporządził akt: ${v.usc_aktu}.`] : []),
         `Cel wydania odpisu: ${v.cel || blank}.`,
-        `Sposób odbioru: ${v.odbior || blank}` + (v.odbior === ELECTRONIC ? ` (${v.ade || blank})` : v.odbior === MAIL ? ` (${v.adres || blank})` : "") + ".",
+        `Sposób odbioru: ${[v.odbior || blank, v.odbior === ELECTRONIC && v.ade, v.odbior === MAIL && v.adres, v.odbior === MAIL_OTHER && v.adres_pocztowy].filter(Boolean).join(", ")}.`,
         v.oplata === EXEMPT ? "Wnoszę o wydanie odpisu bez opłaty skarbowej ze względu na wskazany cel. Załączniki: brak."
           : `Załącznik: potwierdzenie wniesienia opłaty skarbowej${v.rodzaj && v.liczba && Number.isSafeInteger(fee) && fee > 0 ? ` w wysokości ${fee} zł` : ""}.`,
       ];
@@ -121,7 +164,14 @@ export const civilForms: Record<string, FormDef> = {
     name: "Deklaracja wyboru przychodni i osoby sprawującej opiekę POZ",
     pdf: "official",
     fidelity: "Osobną deklarację składasz dla lekarza, pielęgniarki lub położnej. Papierowy druk podpisuje przedstawiciel ustawowy. Przesyłając go elektronicznie do placówki, użyj podpisu zaufanego, osobistego albo kwalifikowanego i uzgodnionego adresu.",
-    channels: ["ikp", "przychodnia", "email"],
+    channels: ["ikp", "przychodnia", "podpis-elektroniczny"],
+    validateChannel(v, channel) {
+      const errors: Record<string, string> = {};
+      if (channel === "ikp" && v.dostep_ikp !== "Tak") errors.dostep_ikp = "Do wysłania przez IKP potrzebujesz dostępu do konta dziecka. Zaznacz go lub wybierz złożenie deklaracji w przychodni.";
+      if (channel === "ikp" && v.identyfikator === "Dokument tożsamości") errors.identyfikator = "IKP dziecka wymaga nadanego numeru PESEL. Z dokumentem tożsamości przekaż deklarację bezpośrednio do przychodni.";
+      if (channel === "podpis-elektroniczny" && ![TRUSTED, personalSignature, QUALIFIED].includes(v.podpis_poz)) errors.podpis_poz = "Wybierz podpis zaufany, osobisty lub kwalifikowany dla dokumentu do przychodni.";
+      return errors;
+    },
     recipientFor: v => v.przychodnia || "Wybrana przychodnia POZ",
     bring: "Podpisz deklarację odręcznie na wydruku lub elektronicznie podpisem zaufanym, osobistym albo kwalifikowanym. Wzór dla rodzica nie wymaga załączników.",
     buildOfficial: async (values, date, fonts) => (await import("../forms/poz-fill")).buildPoz(values, date, fonts),
@@ -148,6 +198,12 @@ export const civilForms: Record<string, FormDef> = {
         ...pozChoice("wybor_przychodni", "Który raz wybierasz przychodnię w tym roku?"),
         text("lekarz", "Imię i nazwisko wybranego lekarza, pielęgniarki lub położnej"),
         ...pozChoice("wybor_medyka", "Który raz w tym roku wybierasz osobę w tej roli?"),
+      ] },
+      { id: "online", title: "Elektroniczne przekazanie deklaracji", fields: [
+        { ...optionalChoice("dostep_ikp", "Czy masz dostęp do konta dziecka w IKP?", YES_NO),
+          hint: "Dostęp uzyskuje rodzic zgłaszający dziecko do ubezpieczenia w ZUS lub KRUS albo drugi rodzic z upoważnieniem. Aktualizacja w IKP może potrwać do 21 dni." },
+        { ...optionalChoice("podpis_poz", "Jak podpiszesz dokument przesyłany bezpośrednio do przychodni?", [TRUSTED, personalSignature, QUALIFIED]),
+          hint: "Uzgodnij elektroniczną drogę z placówką. W IKP wystarczy zatwierdzić deklarację, a papier podpisujesz odręcznie." },
       ] },
     ],
     validate(v, today) {

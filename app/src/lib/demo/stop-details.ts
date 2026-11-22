@@ -273,9 +273,11 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
   odpis: {
     paragraphs: [
       "Przy zgłoszeniu urodzenia dostajesz jeden bezpłatny odpis skrócony aktu urodzenia.",
-      "Odpis skrócony zawiera aktualną treść aktu, a odpis zupełny całą treść razem z późniejszymi zmianami. Jest też odpis wielojęzyczny, wydawany tylko na papierze, który w niektórych krajach UE nie wymaga tłumaczenia.",
+      "Odpis skrócony zawiera aktualną treść aktu, a odpis zupełny całą treść razem z późniejszymi zmianami. Wielojęzyczny odpis skrócony urząd wydaje wyłącznie na papierze.",
       "Wniosek przekaż do dowolnego USC w Polsce osobiście, listownie albo przez gov.pl. Papierowy odpis odbierzesz w urzędzie lub pocztą. Elektroniczny trafi na Twoją skrzynkę do e-Doręczeń.",
       "Każdy dodatkowy odpis kosztuje zwykle 22 zł za skrócony lub wielojęzyczny i 33 zł za zupełny. Wskaż we wniosku konkretny cel. Między innymi w sprawach ubezpieczenia społecznego i alimentów odpis jest bezpłatny.",
+      "W usłudze gov.pl do przelewu bankowego lub pocztowego dołączasz potwierdzenie. Jeśli wybierzesz płatność online, operator doliczy 0,59 zł za transakcję. W tym wariancie podpisujesz wniosek podpisem zaufanym.",
+      "Przy płatności online i odbiorze na skrzynkę do e-Doręczeń system może automatycznie wydać odpis aktu Twojego dziecka z pieczęcią ministra cyfryzacji po weryfikacji danych w rejestrze. Elektroniczny odpis przekaż odbiorcy jako plik.",
     ],
     sources: [S.usc, S.odpisInfo],
     checked: "2026-11-22",
@@ -309,12 +311,12 @@ export const STOP_DETAILS: Record<string, StopDetails> = {
   poz: {
     paragraphs: [
       "Wybierasz osobno lekarza, pielęgniarkę lub położną. Podpisany druk możesz złożyć w przychodni. Dokument elektroniczny przekaż drogą uzgodnioną z placówką i podpisz podpisem zaufanym, osobistym albo kwalifikowanym.",
-      "Automatyczny dostęp do IKP dziecka ma rodzic, który zgłosił je do ubezpieczenia w ZUS lub KRUS. Drugi rodzic może dostać dostęp przez upoważnienie.",
+      "Automatyczny dostęp do IKP dziecka ma rodzic, który zgłosił je do ubezpieczenia w ZUS lub KRUS. Aktualizacja danych może potrwać do 21 dni. Drugi rodzic może dostać dostęp przez upoważnienie.",
       "W przeglądarce przejdź na konto dziecka w IKP. W sekcji POZ wybierz przychodnię i osobę, prześlij deklarację i sprawdź jej status. W aplikacji mojeIKP znajdziesz dane kontaktowe.",
       "Przychodnia może odrzucić deklarację, np. gdy lekarz ma pełną listę pacjentów. Wtedy skontaktuj się z nią bezpośrednio.",
       "Pierwsze dwa wybory w roku kalendarzowym są bezpłatne. Następny kosztuje 80 zł, chyba że zachodzi ustawowy wyjątek, np. przeprowadzka lub zaprzestanie udzielania świadczeń.",
     ],
-    sources: [S.poz, S.pozDruki, S.pozUstawa],
+    sources: [S.poz, S.pozDruki, S.pozUstawa, { label: "pacjent.gov.pl · Dostęp do konta dziecka", url: "https://pacjent.gov.pl/aktualnosc/gdzie-moje-dziecko" }],
     checked: "2026-11-22",
   },
 

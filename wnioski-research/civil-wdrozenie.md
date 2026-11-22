@@ -29,3 +29,17 @@ Repozytorium przechowuje oryginalny dziesięciostronicowy PDF. `pdf-lib` wykrywa
 ## Weryfikacja
 
 `app/tests/forms-civil.test.ts` sprawdza trzy warianty deklaracji, ich strony, tekst, pola w konkretnych pozycjach, znaki wyboru i ukryte dane, a także odrzucenie zmienionego szablonu. Dodatkowe przypadki obejmują rodzaje odpisu, opłatę za wiele egzemplarzy, zwolnienie oraz zgłoszenie urodzenia. Obejrzano render trzech wypełnionych deklaracji i pisma o dwa odpisy zupełne. Dane testowe pozostały lokalne.
+
+### Uzupełnienie A8 i B8
+
+W symulacji gov.pl rodzic wybiera metodę logowania i podpisu z listy. Przy płatnym wniosku wybiera płatność online albo przelew z potwierdzeniem. Ekran przekazania pokazuje łączną kwotę dla wybranej liczby i rodzaju odpisów. Przy płatności online prowizja 0,59 zł jest naliczana raz, a do podpisu służy podpis zaufany. Przy przelewie lub zwolnieniu dostępny jest także podpis kwalifikowany. Zwolnienie daje kwotę 0 zł. Przy płatności online i odbiorze na e-Doręczenia pojawia się informacja o możliwości automatycznego wydania po weryfikacji danych przez rejestr. Na wydruku widnieje oznaczenie „Pismo pomocnicze rodzica do urzędu stanu cywilnego”. [Gov.pl, instrukcja usługi](https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu)
+
+Symulacja IKP wymaga potwierdzenia dostępu przedstawiciela do konta dziecka z nadanym PESEL. Rodzic zgłaszający dziecko do ubezpieczenia otrzymuje dostęp po aktualizacji danych. Drugi rodzic może otrzymać upoważnienie. Odrębny kanał dokumentu podpisanego elektronicznie do przychodni wymaga wybrania podpisu zaufanego, osobistego albo kwalifikowanego. Faktyczny podpis składa się poza aplikacją. [Dostęp do IKP dziecka](https://pacjent.gov.pl/aktualnosc/gdzie-moje-dziecko) · [Art. 10 ustawy o POZ](https://eli.gov.pl/api/acts/DU/2025/515/text.pdf)
+
+| Scenariusz QA | Pola i oczekiwany wynik |
+| --- | --- |
+| Dwa odpisy zupełne przez gov.pl | Wybierz „Profil zaufany” w `logowanie`, „Płatność online w usłudze gov.pl” w `platnosc` i „Podpis zaufany” w `podpis`. Suma 66,59 zł. Przy odbiorze na e-Doręczenia pojawia się informacja o możliwym automatycznym wydaniu. |
+| Przelew lub zwolnienie | Wybierz „Przelew bankowy lub pocztowy z potwierdzeniem”. Dwa odpisy zupełne kosztują 66 zł. Zwolnienie daje 0 zł i pomija wybór płatności. Podpis kwalifikowany jest dostępny w obu przypadkach. |
+| Pismo pomocnicze | `dziecko_pesel`, `usc_aktu` i `numer_aktu` są opcjonalne. Przy opcji „Pocztą na inny adres do korespondencji” podaj `adres_pocztowy`. Sprawdź oznaczenie pisma i adres na wydruku. |
+| POZ przez IKP | `dostep_ikp` = „Tak” i identyfikator „PESEL” pozwalają przejść dalej. Przy braku dostępu rodzic może wybrać papier w przychodni. |
+| POZ podpisana elektronicznie | Kanał `podpis-elektroniczny` wymaga wyboru `podpis_poz`. Wszystkie trzy ustawowe podpisy są dostępne. Wydruk w kanale `przychodnia` nie wymaga wypełnienia tego pola. |

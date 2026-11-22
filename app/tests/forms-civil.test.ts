@@ -79,3 +79,48 @@ it("odpis wielojęzyczny wymaga papieru, pismo uwzględnia liczbę, opłatę, ce
   expect(form.letter!({ ...v, rodzaj: "Zupełny" }, date).join(" ")).toContain("66 zł");
   expect(form.letter!({ ...v, oplata: "Sprawa zwolniona z opłaty skarbowej" }, date).join(" ")).toContain("Załączniki: brak");
 });
+
+it("oblicza cenę odpisów dla wybranego kanału i nalicza prowizję raz na transakcję", () => {
+  const form = civilForms.odpis;
+  const v = { rodzaj: "Zupełny", liczba: "2", oplata: "Sprawa płatna", platnosc: "Płatność online w usłudze gov.pl", odbior: "Na skrzynkę do e-Doręczeń" };
+  const info = form.channelInfo!(v, "govpl");
+  expect(info).toContain("66,59 zł");
+  expect(info).toContain("może wydać");
+  expect(form.channelInfo!({ ...v, rodzaj: "Skrócony", liczba: "1" }, "govpl")).toContain("22,59 zł");
+  expect(form.channelInfo!({ ...v, odbior: "Osobiście w urzędzie" }, "govpl")).not.toContain("automatycznie");
+  expect(form.channelInfo!({ ...v, platnosc: "Przelew bankowy lub pocztowy z potwierdzeniem" }, "govpl")).toBe("Opłata skarbowa wynosi 66 zł. Dołącz potwierdzenie opłaty.");
+  expect(form.channelInfo!(v, "usc-papier")).not.toContain("0,59");
+  expect(form.channelInfo!({ ...v, oplata: "Sprawa zwolniona z opłaty skarbowej" }, "govpl")).toContain("Do zapłaty 0 zł");
+});
+
+it("ogranicza podpis kwalifikowany przy płatności online, a papier pomija kroki elektroniczne", () => {
+  const form = civilForms.odpis;
+  const v = { oplata: "Sprawa płatna", platnosc: "Płatność online w usłudze gov.pl", podpis: "Podpis kwalifikowany", logowanie: "Profil zaufany" };
+  expect(Object.keys(form.validateChannel!({ oplata: v.oplata }, "govpl")).sort()).toEqual(["logowanie", "platnosc", "podpis"]);
+  expect(form.validateChannel!(v, "govpl")).toHaveProperty("podpis");
+  expect(form.validateChannel!({ ...v, podpis: "Podpis zaufany" }, "govpl")).toEqual({});
+  expect(form.validateChannel!({ ...v, platnosc: "Przelew bankowy lub pocztowy z potwierdzeniem" }, "govpl")).toEqual({});
+  expect(form.validateChannel!({ ...v, oplata: "Sprawa zwolniona z opłaty skarbowej" }, "govpl")).toEqual({});
+  expect(form.validateChannel!({}, "poczta")).toEqual({});
+});
+
+it("drukuje pomocnicze pismo z dodatkowymi danymi aktu i właściwym adresem", () => {
+  const v = { dziecko_pesel: "26311000009", usc_aktu: "USC Gdańsk", numer_aktu: "123/2026", odbior: "Pocztą na inny adres do korespondencji", adres_pocztowy: "Polna 2, 00-001 Warszawa", logowanie: "Profil zaufany", podpis: "Podpis zaufany" };
+  const print = civilForms.odpis.letter!(v, date).join(" ");
+  for (const value of ["Pismo pomocnicze", v.dziecko_pesel, v.usc_aktu, v.numer_aktu, v.adres_pocztowy]) expect(print).toContain(value);
+  expect(print).not.toMatch(/Profil zaufany|Podpis zaufany/);
+  expect(civilForms.odpis.letter!({ ...v, odbior: "Osobiście w urzędzie" }, date).join(" ")).not.toContain(v.adres_pocztowy);
+});
+
+it("sprawdza dostęp do IKP i metodę podpisu tylko dla wybranej drogi POZ", () => {
+  const form = civilForms.poz;
+  expect(form.channels).toEqual(["ikp", "przychodnia", "podpis-elektroniczny"]);
+  expect(form.validateChannel!({ dostep_ikp: "Nie" }, "ikp")).toHaveProperty("dostep_ikp");
+  expect(form.validateChannel!({ dostep_ikp: "Tak", identyfikator: "Dokument tożsamości" }, "ikp")).toHaveProperty("identyfikator");
+  expect(form.validateChannel!({ dostep_ikp: "Tak" }, "ikp")).toEqual({});
+  expect(form.validateChannel!({ dostep_ikp: "Nie" }, "przychodnia")).toEqual({});
+  expect(form.validateChannel!({ podpis_poz: "Skan" }, "podpis-elektroniczny")).toHaveProperty("podpis_poz");
+  for (const podpis_poz of ["Podpis osobisty", "Podpis zaufany", "Podpis kwalifikowany"]) {
+    expect(form.validateChannel!({ podpis_poz }, "podpis-elektroniczny")).toEqual({});
+  }
+});
