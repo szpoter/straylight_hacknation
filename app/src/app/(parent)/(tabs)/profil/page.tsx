@@ -17,13 +17,13 @@ export default function ProfilePage() {
         <ZusAccount />
         <Panel aria-labelledby="sprawa-testowa">
           <SectionTitle id="sprawa-testowa" className="mb-2">
-            Przetestuj przykładową sprawę
+            Sprawdź swoją sprawę
           </SectionTitle>
           <p className="mb-4 max-w-prose text-on-surface-variant">
-            Przejdź przez fikcyjny przykład Alicji albo wybierz sprawę, w której Zusik odczyta Twój plik PDF.
+            Dołącz dokumenty sprawy w PDF lub zadaj Zusikowi własne pytanie.
           </p>
-          <ButtonLink href="/profil/sprawa-testowa" variant="secondary">
-            Wybierz sprawę
+          <ButtonLink href="/app/rozmowa" variant="secondary">
+            Otwórz rozmowę z Zusikiem
           </ButtonLink>
         </Panel>
         <ResetDemo />

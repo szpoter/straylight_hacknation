@@ -110,8 +110,8 @@ export function ChildSelector({ className }: { className?: string }) {
             <Link href="/start" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-surface" onClick={() => setOpen(false)}>
               <PlusIcon size={18} /> Dodaj dziecko albo ciążę
             </Link>
-            <Link href="/profil/sprawa-testowa" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-surface" onClick={() => setOpen(false)}>
-              <PlusIcon size={18} /> Wczytaj przykładową sprawę
+            <Link href="/app/rozmowa" className="flex items-center gap-2 rounded-sm px-3 py-2.5 hover:bg-surface" onClick={() => setOpen(false)}>
+              <PlusIcon size={18} /> Sprawdź sprawę z Zusikiem
             </Link>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { usePlan } from "@/features/family/PlanProvider";
 import { Button, TextButton } from "@/components/ui/AppButton";
 import { cn } from "@/components/ui/cn";
 import { Page, PageTitle } from "@/components/ui/Page";
-import { computeForm, formFromPlan, otherVariant, type CalcForm } from "@/lib/plan/benefit-form";
+import { blankCalculatorForm, computeForm, formFromPlan, otherVariant, type CalcForm } from "@/lib/plan/benefit-form";
 import { BENEFIT_PRESETS } from "@/lib/plan/benefit-presets";
 import { pln } from "./ui";
 import { BasisSection, SituationSection, SplitSection } from "./FormSections";
@@ -18,20 +18,27 @@ import { Deadlines, HowCalculated, MonthlyTable, Periods, PresetCheckList, Probl
  * wcześniak, indywidualna podstawa i przykładowe sprawy z zestawu ZUS.
  */
 export function BenefitCalculator() {
-  const { plan, calculator, saveCalculator, clearCalculator } = usePlan();
-  const [draft, setDraft] = useState<CalcForm | null>(null);
+  const family = usePlan();
+  return <BenefitCalculatorForm family={family} />;
+}
+
+type CalculatorFamily = Pick<ReturnType<typeof usePlan>, "plan" | "calculator" | "saveCalculator" | "clearCalculator">;
+
+export function BenefitCalculatorForm({ family }: { family?: CalculatorFamily }) {
+  const fromChat = !family;
+  const [draft, setDraft] = useState<CalcForm | null>(() => fromChat ? blankCalculatorForm() : null);
   const [presetId, setPresetId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const form = draft ?? calculator ?? formFromPlan(plan);
+  const form = draft ?? (family ? family.calculator ?? formFromPlan(family.plan) : blankCalculatorForm());
   const preset = BENEFIT_PRESETS.find((p) => p.id === presetId) ?? null;
   const update = (patch: Partial<CalcForm>) => {
     setDraft({ ...form, ...patch });
     setStatus(null);
   };
 
-  const { result, problems } = useMemo(() => computeForm(form), [form]);
-  const other = useMemo(() => (result ? computeForm(otherVariant(form)).result : null), [form, result]);
+  const { result, problems } = useMemo(() => computeForm(form, { requireComplete: fromChat }), [form, fromChat]);
+  const other = useMemo(() => (result ? computeForm(otherVariant(form), { requireComplete: fromChat }).result : null), [form, result, fromChat]);
 
   const loadPreset = (id: string) => {
     const p = BENEFIT_PRESETS.find((x) => x.id === id);
@@ -42,38 +49,43 @@ export function BenefitCalculator() {
   };
   const loadPlan = () => {
     setPresetId(null);
-    setDraft(formFromPlan(plan));
+    if (family) setDraft(formFromPlan(family.plan));
     setStatus(null);
   };
   const save = () => {
-    saveCalculator({ ...form, date: plan.keyDate ?? form.date });
+    if (!family) return;
+    family.saveCalculator({ ...form, date: family.plan.keyDate ?? form.date });
     setDraft(null);
-    setStatus(`Zapisano w planie „${plan.name}”. Terminy wniosków są na ścieżce w „Moim planie”.`);
+    setStatus(`Zapisano w planie „${family.plan.name}”. Terminy wniosków są na ścieżce w „Moim planie”.`);
   };
-  const canSave = Boolean(result?.ok) && !presetId && Boolean(plan.keyDate) && form.date === plan.keyDate;
+  const canSave = Boolean(result?.ok) && !presetId && Boolean(family?.plan.keyDate) && form.date === family?.plan.keyDate;
 
   return (
     <Page className="flex flex-col gap-10 pb-section-mobile md:gap-12 md:pb-section">
       <div className="flex max-w-prose flex-col gap-4">
         <PageTitle>Kalkulator zasiłku macierzyńskiego</PageTitle>
         <p className="text-lead text-on-surface-variant">
-          Ile czasu i ile pieniędzy — dla Ciebie i drugiego rodzica. Liczymy jak ZUS: z Twojej podstawy, dzień po dniu, z terminami wniosków.
+          {fromChat
+            ? "Ręczna symulacja dla Twojej sprawy. Wpisz kwoty i daty z dokumentów oraz wybierz założenia do obliczeń."
+            : "Ile czasu i ile pieniędzy — dla Ciebie i drugiego rodzica. Liczymy jak ZUS: z Twojej podstawy, dzień po dniu, z terminami wniosków."}
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <p className="text-label font-medium">Zacznij od</p>
-        <div className="flex flex-wrap gap-2">
-          <Chip active={!presetId} onClick={loadPlan}>
-            Mój plan: {plan.name}
-          </Chip>
-          {BENEFIT_PRESETS.map((p) => (
-            <Chip key={p.id} active={presetId === p.id} onClick={() => loadPreset(p.id)}>
-              Sprawa ZUS: {p.title}
+      {family && (
+        <div className="flex flex-col gap-3">
+          <p className="text-label font-medium">Zacznij od</p>
+          <div className="flex flex-wrap gap-2">
+            <Chip active={!presetId} onClick={loadPlan}>
+              Mój plan: {family.plan.name}
             </Chip>
-          ))}
+            {BENEFIT_PRESETS.map((p) => (
+              <Chip key={p.id} active={presetId === p.id} onClick={() => loadPreset(p.id)}>
+                Sprawa ZUS: {p.title}
+              </Chip>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {result && (
         <a href="#wynik" className="-mt-4 flex items-center justify-between gap-4 rounded-lg bg-surface px-gutter-mobile py-4 lg:hidden">
@@ -97,19 +109,19 @@ export function BenefitCalculator() {
             <>
               <Summary result={result} other={other} form={form} onSwitchVariant={() => update({ variant: form.variant === "815" ? "100-70" : "815" })}>
                 <div className="flex flex-col gap-3 empty:hidden">
-                  {!presetId && (
+                  {family && !presetId && (
                     <Button onClick={save} disabled={!canSave}>
-                      {calculator ? "Zapisz zmiany w planie" : "Zapisz w planie"}
+                      {family.calculator ? "Zapisz zmiany w planie" : "Zapisz w planie"}
                     </Button>
                   )}
-                  {!presetId && !canSave && result.ok && plan.keyDate && form.date !== plan.keyDate && (
+                  {family && !presetId && !canSave && result.ok && family.plan.keyDate && form.date !== family.plan.keyDate && (
                     <p className="text-meta text-on-surface-variant">Data różni się od daty w planie — zapis w planie używa daty z planu. Zmień ją w Profilu albo wróć do „Mój plan”.</p>
                   )}
-                  {calculator && !presetId && (
+                  {family && family.calculator && !presetId && (
                     <TextButton
                       className="self-start"
                       onClick={() => {
-                        clearCalculator();
+                        family.clearCalculator();
                         setDraft(null);
                         setStatus("Usunięto zapis kalkulatora z planu.");
                       }}
@@ -128,7 +140,9 @@ export function BenefitCalculator() {
               {preset && <PresetCheckList preset={preset} result={result} />}
             </>
           ) : (
-            <p className="rounded-lg border border-outline p-gutter-mobile text-on-surface-variant md:p-card">Podaj datę, żeby zobaczyć wynik.</p>
+            <p className="rounded-lg border border-outline p-gutter-mobile text-on-surface-variant md:p-card">
+              {fromChat ? problems.map((problem) => problem.text).join(" ") : "Podaj datę, żeby zobaczyć wynik."}
+            </p>
           )}
         </aside>
       </div>

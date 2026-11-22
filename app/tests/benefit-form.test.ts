@@ -1,6 +1,9 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import ManualCalculatorPage from "@/app/app/kalkulator/page";
 import { describe, expect, it } from "vitest";
 import { getPlan } from "@/lib/demo/fixtures";
-import { applyCalculatorToPlan, computeForm, formFromPlan, otherVariant, parseAmount, toScenario } from "@/lib/plan/benefit-form";
+import { applyCalculatorToPlan, blankCalculatorForm, computeForm, formFromPlan, otherVariant, parseAmount, toScenario } from "@/lib/plan/benefit-form";
 import { BENEFIT_PRESETS } from "@/lib/plan/benefit-presets";
 
 describe("przykładowe sprawy ZUS w kalkulatorze", () => {
@@ -15,6 +18,24 @@ describe("przykładowe sprawy ZUS w kalkulatorze", () => {
 });
 
 describe("formularz kalkulatora", () => {
+  it("otwiera publiczny formularz jurora bez sesji i bez kontekstu rodziny", () => {
+    const html = renderToStaticMarkup(createElement(ManualCalculatorPage));
+    expect(html).toContain("Ręczna symulacja dla Twojej sprawy");
+    expect(html).not.toMatch(/Mój plan:|Sprawa ZUS:|Zapisz w planie|Łącznie, brutto|value="6500"/);
+  });
+
+  it("symulacja z czatu wymaga własnych danych i ukrywa wynik błędnego scenariusza", () => {
+    const blank = blankCalculatorForm();
+    const calculate = (form: typeof blank) => computeForm(form, { requireComplete: true });
+    expect(blank).toMatchObject({ date: "", hasB: false, A: { average: "", known: "" }, B: { average: "" } });
+    const dated = { ...blank, date: "2026-06-03" };
+    expect(calculate(dated).result).toBeNull();
+    const filled = { ...dated, A: { ...dated.A, average: "6000" } };
+    expect(calculate(filled).result?.periods[0].daily).toBe(172.58);
+    expect(calculate({ ...filled, event: "adoption" }).result).toBeNull();
+    expect(calculate({ ...filled, parentalWeeksA: 99 }).result).toBeNull();
+  });
+
   it("kwoty z polskim przecinkiem i spacjami", () => {
     expect(parseAmount("6 500,50")).toBe(6500.5);
     expect(parseAmount("6500")).toBe(6500);

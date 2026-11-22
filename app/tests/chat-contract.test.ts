@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { answerFromAskBody, groundedClaims, pdfPage, turnsFromView, type Answer } from "@/features/chat/contract";
 import { AnswerView, TurnView } from "@/features/chat/turn-view";
 import { mergeConversation } from "@/features/chat/use-zusik-case";
-import { ScenarioShortcuts } from "@/features/chat/scenario-nav";
+import { chatStarters, conversationInput } from "@/lib/zusik/conversation";
+import { ChatStarters } from "@/features/chat/scenario-nav";
 
 // Sample answers shaped like the proposed /ask contract (PLAN-ETAP-1-KROK-2.md, section 4).
 // Component tests only: the real answers come from the backend.
@@ -125,12 +126,18 @@ describe("TurnView", () => {
   });
 });
 
-it("opens the corresponding case from each empty-chat shortcut", () => {
-  const html = renderToStaticMarkup(createElement(ScenarioShortcuts));
-  expect(html).toContain('href="/app">Porównaj warianty urlopu</a>');
-  expect(html).toContain('href="/app/kamil">Przygotuj wniosek o urlop ojcowski</a>');
-  expect(html).toContain('href="/app/chorobowe">Sprawdź chorobowe w ciąży</a>');
-  expect(html.match(/<a /g)).toHaveLength(3);
+it("shows three starter questions as actions in the current conversation", () => {
+  const html = renderToStaticMarkup(createElement(ChatStarters, { onSelect: () => undefined, disabled: false }));
+  expect(html).toContain("Sprawdź ubezpieczenie");
+  expect(html).toContain("Oblicz wysokość zasiłku");
+  expect(html).toContain("Sprawdź dokumenty i terminy");
+  expect(html.match(/<button /g)).toHaveLength(3);
+  expect(html).not.toContain("href=");
+});
+
+it.each(chatStarters)("starts $label with a relevant request for the user’s own data", starter => {
+  expect(conversationInput(starter.prompt, "ogolna").reply).toBe(starter.reply);
+  expect(conversationInput(starter.prompt + " Mam jeszcze jeden dokument.", "ogolna").reply).toBeNull();
 });
 
 describe("AnswerView", () => {

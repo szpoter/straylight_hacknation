@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chromium, type Page } from "playwright-core";
+import { chromium, type Browser, type Page } from "playwright-core";
 
 const origin = new URL(process.argv[2]).origin;
 const mode = process.argv[3] ?? "corpus";
@@ -26,20 +26,51 @@ async function navigationDuringLoad(page: Page) {
   console.log("PASS Wsparcie → otwarcie czatu podczas przejścia → Profil");
 }
 
-async function caseShortcuts(page: Page) {
+async function starterPrompts(browser: Browser, viewport: { width: number; height: number }) {
+  const prompts = [
+    ["Sprawdź ubezpieczenie", "Jak sprawdzić, czy mam ubezpieczenie chorobowe na dzień, od którego ubiegam się o zasiłek?"],
+    ["Oblicz wysokość zasiłku", "Jak obliczyć wysokość mojego zasiłku macierzyńskiego i jakie dane o wynagrodzeniu mam podać?"],
+    ["Sprawdź dokumenty i terminy", "Jakie dokumenty są potrzebne do zasiłku macierzyńskiego, gdzie je złożyć i w jakim terminie?"],
+  ];
+  for (const [label, question] of prompts) {
+    const testPage = await browser.newPage({ viewport, reducedMotion: "reduce" });
+    try {
+      await testPage.goto(origin + "/app/rozmowa");
+      const chat = conversation(testPage);
+      const starters = chat.getByRole("group", { name: "Zacznij od pytania" });
+      await starters.waitFor();
+      assert.equal(await starters.getByRole("button").count(), 3);
+      const submitted: string[] = [];
+      testPage.on("request", request => {
+        if (new URL(request.url()).pathname === "/api/zusik/ask" && request.method() === "POST") submitted.push(request.postDataJSON().question);
+      });
+      const response = testPage.waitForResponse(res => new URL(res.url()).pathname === "/api/zusik/ask" && res.request().method() === "POST");
+      await starters.getByRole("button", { name: label, exact: true }).click();
+      assert.equal((await response).status(), 200);
+      await chat.getByRole("log").getByText(question, { exact: true }).waitFor();
+      assert.deepEqual(submitted, [question]);
+      if (label === "Oblicz wysokość zasiłku") {
+        assert.equal(await chat.getByRole("link", { name: "Otwórz kalkulator dla swojej sprawy" }).getAttribute("href"), "/app/kalkulator");
+      }
+      assert.equal(new URL(testPage.url()).pathname, "/app/rozmowa");
+      assert.equal(await starters.count(), 0);
+      console.log("PASS", viewport.width, label);
+    } finally {
+      await testPage.close();
+    }
+  }
+}
+
+async function legacyCaseRoutes(page: Page) {
   const cards = [
     { label: "Porównaj warianty urlopu", path: "/app", api: "/api/zusik/marta" },
     { label: "Przygotuj wniosek o urlop ojcowski", path: "/app/kamil", api: "/api/kamil" },
     { label: "Sprawdź chorobowe w ciąży", path: "/app/chorobowe", api: "/api/zusik/sickness" },
   ];
   for (const { label, path, api } of cards) {
-    await openChat(page);
-    const shortcuts = conversation(page).getByRole("navigation", { name: "Rozpocznij sprawę" });
-    await shortcuts.waitFor();
-    assert.equal(await shortcuts.getByRole("link").count(), 3);
     const caseResponse = (method = "GET") => page.waitForResponse(res => new URL(res.url()).pathname === api && res.request().method() === method);
     const loaded = caseResponse(path === "/app/kamil" ? "POST" : "GET");
-    await shortcuts.getByRole("link", { name: label, exact: true }).click();
+    await page.goto(origin + path);
     await page.waitForURL(url => url.pathname === path);
     let first = (await (await loaded).json()).view;
     if (path === "/app") {
@@ -86,7 +117,7 @@ async function nurseryConversation(page: Page) {
   }
   await ask(first);
   assert.match(await turn(first).innerText(), /aktywnie w żłobku/iu);
-  assert.equal(await chat.getByRole("navigation", { name: "Rozpocznij sprawę" }).count(), 0);
+  assert.equal(await chat.getByRole("group", { name: "Zacznij od pytania" }).count(), 0);
   await page.reload();
   await openChat(page);
   await turn(first).getByRole("button", { name: /^Źródło / }).first().waitFor();
@@ -128,7 +159,10 @@ async function run() {
     await page.getByRole("link", { name: /^Aplikacja mObywatel/i }).click();
     await page.getByRole("button", { name: "Symuluj zeskanowanie kodu" }).click();
     await page.waitForURL("**/start");
-    if (mode.startsWith("cards-")) await caseShortcuts(page);
+    if (mode.startsWith("cards-")) {
+      await starterPrompts(browser, viewport);
+      await legacyCaseRoutes(page);
+    }
     await (mode === "navigation" ? navigationDuringLoad : nurseryConversation)(page);
   } finally {
     await browser.close();

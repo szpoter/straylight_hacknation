@@ -125,11 +125,19 @@ export function toScenario(form: CalcForm): { scenario: ScenarioInput; problems:
 }
 
 /** Wynik albo null, gdy formularz nie ma jeszcze daty. */
-export function computeForm(form: CalcForm): { result: ScenarioResult | null; problems: FormProblem[] } {
+export function computeForm(form: CalcForm, { requireComplete = false } = {}): { result: ScenarioResult | null; problems: FormProblem[] } {
   const { scenario, problems } = toScenario(form);
+  if (requireComplete) {
+    if (form.event !== "birth" && !form.childBirthDate) problems.push({ field: "childBirthDate", text: "Podaj datę urodzenia dziecka." });
+    if (form.hospital && !form.hospitalDays) problems.push({ field: "hospitalDays", text: "Podaj liczbę dni pobytu w szpitalu." });
+    if (form.hasB && form.paternityDays > 0 && !form.paternityStart) problems.push({ field: "paternityStart", text: "Podaj datę rozpoczęcia urlopu ojcowskiego." });
+    if (problems.length) return { result: null, problems };
+  }
   if (problems.some((p) => p.field === "date" || p.field === "childBirthDate")) return { result: null, problems };
   try {
-    return { result: computeScenario(scenario), problems };
+    const result = computeScenario(scenario);
+    if (requireComplete && !result.ok) return { result: null, problems: result.errors.map(({ text }) => ({ field: "scenario", text })) };
+    return { result, problems };
   } catch {
     return { result: null, problems: [...problems, { field: "date", text: "Sprawdź daty." }] };
   }
@@ -148,6 +156,37 @@ function childCount(plan: Plan): number {
   return c === "2" ? 2 : c === "3" ? 3 : 1;
 }
 
+export function blankCalculatorForm(): CalcForm {
+  return {
+    event: "birth",
+    date: "",
+    children: 1,
+    zaZyciem: false,
+    stillbirth: false,
+    childBirthDate: "",
+    schoolDeferred: false,
+    variant: "100-70",
+    A: parentForm(),
+    hasB: false,
+    B: parentForm(),
+    weeksBeforeBirth: 0,
+    transferWeeks: 0,
+    hospital: false,
+    hospitalDays: 0,
+    extremePreterm: false,
+    supplementaryParent: "A",
+    parentalWeeksA: 0,
+    parentalWeeksB: 0,
+    parentalOrder: "sequential",
+    workA: 0,
+    workB: 0,
+    paternityDays: 0,
+    paternityStart: "",
+    pit2: false,
+    pitExempt: false,
+  };
+}
+
 /**
  * Start z danych planu: data i sytuacja z planu, pełna pula rodzicielskiego dla Ciebie,
  * drugi rodzic z 9 tygodniami. Wynagrodzenie to przykład do zmiany (ZUS nie podaje go w symulacji).
@@ -157,33 +196,19 @@ export function formFromPlan(plan: Plan, today: string = DEMO_TODAY): CalcForm {
   const children = childCount(plan);
   const limits = limitsFor({ children, zaZyciem: false });
   return {
+    ...blankCalculatorForm(),
     event,
     date: plan.keyDate ?? "",
     children,
-    zaZyciem: false,
-    stillbirth: false,
-    childBirthDate: "",
-    schoolDeferred: false,
     variant: "815",
     A: parentForm("pracownik", "6500"),
     hasB: true,
     B: parentForm("pracownik", "6000"),
-    weeksBeforeBirth: 0,
-    transferWeeks: 0,
-    hospital: false,
-    hospitalDays: 0,
-    extremePreterm: false,
-    supplementaryParent: "A",
     parentalWeeksA: limits.maxParentalOneParent,
     parentalWeeksB: limits.exclusiveWeeks,
-    parentalOrder: "sequential",
-    workA: 0,
-    workB: 0,
     paternityDays: 14,
-    // Dziecko już urodzone: urlop ojcowski najwcześniej za tydzień (wniosek co najmniej 7 dni przed).
     paternityStart: plan.keyDate ? (plan.keyDate < today ? addDays(today, 7) : plan.keyDate) : "",
     pit2: true,
-    pitExempt: false,
   };
 }
 

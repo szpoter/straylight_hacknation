@@ -385,11 +385,10 @@ async function testLoginToChat(page: Page) {
     assert.ok(!isolated.turns.some(saved => saved.requestId === contextual.turn.requestId), "Conversation isolated: " + other);
   }
   await page.goto(origin + "/app/sprawy");
-  await open.click();
+  await page.waitForURL("**/app/rozmowa");
   await chat.getByText(question, {exact: true}).waitFor();
-  await chat.getByText("Zmień sprawę", {exact: true}).click();
-  await chat.getByRole("link", {name: /Marta i Paweł/}).click();
-  await page.waitForURL("**/app");
+  assert.equal(await chat.getByText("Zmień sprawę", {exact: true}).count(), 0);
+  await page.goto(origin + "/app");
   const view = await read<{turns: AskTurn[]}>(page, "/api/zusik/state?scenario=marta");
   assert.ok(!view.turns.some(turn => turn.question === question), "General conversation stays outside Marta's case");
 }
