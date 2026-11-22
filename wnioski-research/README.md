@@ -14,8 +14,10 @@ Dziesięć spraw z pierwotnego zestawienia prowadzi teraz do właściwych kanał
 | Ubezpieczenie dziecka | Pismo pracownika do kadr. Zgłoszenie ZCNA do ZUS składa płatnik. | [ZAM i ubezpieczenie](insurance-wdrozenie.md) |
 | 800+ | Symulację SW-R w eZUS, mZUS, banku lub Emp@tii. | [Research świadczeń](800plus-becikowe.md) · [Wdrożenie](benefits-wdrozenie.md) |
 | Becikowe | Urzędowy wzór SR-2 z odpowiednimi załącznikami na papier albo symulację w Emp@tii. | [Research świadczeń](800plus-becikowe.md) · [Wdrożenie](benefits-wdrozenie.md) |
-| Dodatkowy odpis aktu urodzenia | Pismo papierowe do wybranego USC lub symulację online. Wniosek uwzględnia liczbę i rodzaj odpisów oraz podstawę zwolnienia z opłaty. | [USC i POZ](civil-wdrozenie.md) |
-| Wybór POZ | Właściwą deklarację lekarza, pielęgniarki lub położnej do podpisu albo symulację złożenia przez IKP. | [USC i POZ](civil-wdrozenie.md) |
+| Dodatkowy odpis aktu urodzenia | Pismo pomocnicze do wybranego USC lub symulację gov.pl. Rodzic widzi koszt wszystkich odpisów z uwzględnieniem płatności online, przelewu lub zwolnienia z opłaty. | [USC i POZ](civil-wdrozenie.md) |
+| Wybór POZ | Deklarację wyboru lekarza, pielęgniarki lub położnej do podpisu na papierze albo podpisu elektronicznego. Rodzic z dostępem do IKP dziecka może także przejść symulację złożenia przez IKP. | [USC i POZ](civil-wdrozenie.md) |
+
+Końcowe raporty źródłowe opisują też warianty ZAM i ZCNA z edytowalnymi polami. W ZAM aplikacja wypełnia już używany przez projekt wzór z 24 października 2026 r. Jego sumę kontrolną i pozycje danych sprawdzają testy. Dla ZCNA rodzic otrzymuje pismo do płatnika. [Research ZAM i ZCNA](zam-zcna.md) · [Research odpisu i POZ](odpis-poz.md)
 
 Nazwy przykładowych potwierdzeń odpowiadają usługom. Wniosek do ZUS przez eZUS ma UPP, odpis przez gov.pl ma UPP na skrzynce do e-Doręczeń, a zgłoszenie urodzenia ma potwierdzenie wysłania. Emp@tia określa potwierdzenie w eWnioskach jako UPO. [ZUS](https://www.zus.pl/-/16-sierpnia-to-ostatni-dzien-na-skladanie-wnioskow-o-swiadczenie-postojowe) · [Odpis aktu](https://www.gov.pl/web/gov/uzyskaj-odpis-aktu-stanu-cywilnego-urodzenia-malzenstwa-zgonu) · [Zgłoszenie urodzenia](https://www.gov.pl/web/gov/zglos-urodzenie-dziecka) · [Instrukcja Emp@tii](https://empatia.gov.pl/documents/d/empatia/instrukcja-ewnioski_v14)
 
@@ -23,7 +25,7 @@ Nazwy przykładowych potwierdzeń odpowiadają usługom. Wniosek do ZUS przez eZ
 
 Produkcyjna wersja lokalna przeszła 35 scenariuszy w Chrome na danych fikcyjnych. Sprawdzono 11 formularzy i wszystkie 33 połączenia formularza z kanałem, a także dwa dodatkowe warianty deklaracji POZ. Test wpisuje dane, zatwierdza wniosek, weryfikuje pobrany PDF lub przykładowe potwierdzenie i odczytuje historię po odświeżeniu strony. Wydruki ZAM dla obu wyborów stawki sprawdzono również po położeniu znaków na stronach 2 i 5.
 
-Skrypt można uruchomić z katalogu `app` poleceniem `node --import tsx scripts/documents-browser.ts http://127.0.0.1:3419`, podając adres działającej aplikacji. Pełny zestaw Vitest przeszedł 514 testów. Sprawdzono też TypeScript oraz produkcyjną kompilację Next.js.
+Skrypt można uruchomić z katalogu `app` poleceniem `node --import tsx scripts/documents-browser.ts http://127.0.0.1:3420`, podając adres działającej aplikacji. Pełny zestaw Vitest przeszedł 531 testów. Sprawdzono też TypeScript, ESLint dla modułu dokumentów i produkcyjną kompilację Next.js.
 
 ---
 
