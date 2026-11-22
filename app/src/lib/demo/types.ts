@@ -38,6 +38,7 @@ export type CaseEvent = {
   title: string;
   detail?: string;
   author?: string;
+  simulatedReceipt?: string;
 };
 
 export type Stop = {
