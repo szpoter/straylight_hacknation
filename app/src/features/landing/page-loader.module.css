@@ -1,6 +1,6 @@
 /*
  * Ekran ładowania: kurtyna w kolorze primary (kolor marki na dużej płaszczyźnie, DESIGN.md),
- * biały napis (kontrast 4,62:1). Logo: duże białe kółko i małe bursztynowe (tertiary).
+ * białe logo jak w stopce (kontrast 4,62:1).
  */
 .loader {
   position: fixed;
@@ -22,39 +22,9 @@
   gap: 32px;
 }
 
-.mark {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
+/* Logo wjeżdża od dołu tak jak wcześniej napis z nazwą */
 .logo {
-  overflow: visible;
-}
-
-.parent {
-  fill: var(--color-on-primary);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: parent-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* Małe kółko wskakuje z góry do dużego, z lekkim odbiciem; obwódka w kolorze tła je oddziela */
-.child {
-  fill: var(--color-tertiary);
-  stroke: var(--color-primary);
-  stroke-width: 3;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: child-in 650ms cubic-bezier(0.34, 1.56, 0.64, 1) 280ms both;
-}
-
-.name {
-  font-family: var(--font-serif);
-  font-size: 28px;
-  line-height: 1;
-  letter-spacing: -0.01em;
+  height: 64px;
   animation: rise-in 600ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
 }
 
@@ -95,20 +65,6 @@
   animation: content-out 500ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 
-@keyframes parent-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
-@keyframes child-in {
-  from {
-    opacity: 0;
-    transform: translateY(-36px) scale(0.7);
-  }
-}
-
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -137,9 +93,7 @@
 
 /* Ograniczenie ruchu: bez animacji wejścia i kurtyny, na końcu tylko szybkie zniknięcie */
 @media (prefers-reduced-motion: reduce) {
-  .parent,
-  .child,
-  .name,
+  .logo,
   .content,
   .fill {
     animation: none;

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Logo } from "@/components/ui/Logo";
 import styles from "./site-footer.module.css";
 
 // Stopka strony głównej. Treść według SPEC.md („Po bento — wejście do demo i stopka”) i wymagań
@@ -39,10 +40,7 @@ export function SiteFooter({ sectionBase = "" }: { sectionBase?: string }) {
       <div className={styles.inner}>
         <div className={styles.top}>
           <div className={styles.brand}>
-            <p className={styles.brandName}>
-              <BrandMark />
-              Przewodnik Rodzica
-            </p>
+            <Logo tone="on-primary" label="Przewodnik Rodzica" className={styles.logo} />
             <p className={styles.brandText}>
               Formalności, zasiłki i{NBSP}urlopy związane z{NBSP}rodzicielstwem w{NBSP}jednym planie.
             </p>
@@ -121,15 +119,5 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
       </svg>
       <span className="visually-hidden"> (otwiera się w nowej karcie)</span>
     </a>
-  );
-}
-
-function BrandMark() {
-  // Logo jak w nawigacji: duże koło (rodzic) i małe (dziecko); na zielonym tle duże jest białe
-  return (
-    <svg className={styles.mark} width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="var(--color-on-primary)" />
-      <circle cx="20.5" cy="19.5" r="6.5" fill="var(--color-tertiary)" stroke="var(--color-primary)" strokeWidth="2" />
-    </svg>
   );
 }

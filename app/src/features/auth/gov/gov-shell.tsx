@@ -2,13 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import promoPhoto from "../../../../assets/login-promo.jpg";
-import { BrandMark, DemoBar } from "../auth-shell";
+import { Logo } from "@/components/ui/Logo";
+import { DemoBar } from "../auth-shell";
 import authStyles from "../auth.module.css";
 import styles from "./gov.module.css";
 
 // Rama ekranów login.gov.pl i „Aplikacja mObywatel”: lewa kolumna z treścią i stopką,
 // po prawej przyklejony panel ze zdjęciem (od 1024 px). Pasek demo zostaje na górze.
-// Zamiast godła i logotypu gov.pl jest nazwa przewodnika (ui/NIKODEM.md, punkt 6).
+// Zamiast godła i logotypu gov.pl jest logo przewodnika (ui/NIKODEM.md, punkt 6).
 
 const FOOTER_LINKS = ["Polityka cookies", "Klauzula informacyjna", "Deklaracja dostępności", "Kontakt"];
 
@@ -23,10 +24,7 @@ export function GovShell({ demoNote, children }: { demoNote?: ReactNode; childre
         <div className={styles.column}>
           <header className={styles.header}>
             <Link href="/" className={styles.brand} aria-label="Przewodnik Rodzica, strona główna">
-              <span className={styles.brandMark}>
-                <BrandMark />
-              </span>
-              <span className={styles.brandName}>Przewodnik Rodzica</span>
+              <Logo className={styles.logo} />
             </Link>
           </header>
 

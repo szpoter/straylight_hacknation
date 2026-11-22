@@ -33,11 +33,10 @@
   max-width: calc(var(--container) - 2 * 40px);
   height: 56px;
   margin-inline: auto;
-  padding: 0 8px 0 16px;
+  padding: 0 8px 0 24px;
   border: 1px solid transparent;
   border-radius: var(--rounded-full);
   background: transparent;
-  --bar-bg: var(--color-background);
   transition:
     background-color 200ms ease,
     border-color 200ms ease;
@@ -46,35 +45,21 @@
 .bar[data-scrolled="true"] {
   border-color: var(--color-outline);
   background: var(--color-surface);
-  --bar-bg: var(--color-surface);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   min-width: 0;
   color: var(--color-on-surface);
   text-decoration: none;
   border-radius: var(--rounded-full);
 }
 
-.mark {
+/* 32 px: w 56-pikselowej pigułce zostaje po 12 px wolnego miejsca nad i pod logo */
+.logo {
   flex: none;
-}
-
-/* Obwódka małego koła w kolorze tła paska, żeby koła się rozdzielały */
-.markChild {
-  stroke: var(--bar-bg);
-  transition: stroke 200ms ease;
-}
-
-.brandName {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
+  height: 32px;
 }
 
 .nav {
@@ -130,23 +115,14 @@
   }
 }
 
-/* Wąski telefon: nazwa i „Zaloguj się” muszą zmieścić się obok siebie w pigułce */
+/* Wąski telefon: logo i „Zaloguj się” muszą zmieścić się obok siebie w pigułce */
 @media (max-width: 400px) {
   .bar {
-    padding-left: 14px;
+    padding-left: 18px;
   }
 
-  .brand {
-    gap: 8px;
-  }
-
-  .mark {
-    width: 24px;
-    height: 24px;
-  }
-
-  .brandName {
-    font-size: 16px;
+  .logo {
+    height: 30px;
   }
 
   .actions a {
@@ -156,5 +132,4 @@
 
 @media (max-width: 319px) {
   .bar { gap: 4px; padding-left: 8px; }
-  .mark { display: none; }
 }

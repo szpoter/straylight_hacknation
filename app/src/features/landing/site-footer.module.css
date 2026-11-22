@@ -34,17 +34,9 @@
   gap: 48px;
 }
 
-.brandName {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-serif);
-  font-size: var(--type-title-size);
-  line-height: 1;
-}
-
-.mark {
-  flex: none;
+/* Na zieleni logo jest całe białe: pastelowe PRZEWODNIK nie odcinałoby się od tła */
+.logo {
+  height: 56px;
 }
 
 .brandText {
