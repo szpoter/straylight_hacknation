@@ -31,6 +31,7 @@ export type FormDef = {
   buildOfficial?: (values: Record<string, string>, dateISO: string, fonts: ApplicationFonts) => Promise<Uint8Array>;
   validate?: (values: Record<string, string>, todayISO: string) => Record<string, string>;
   receipts?: Partial<Record<Channel, string>>;
+  channelInfo?: (values: Record<string, string>, channel: Channel) => string | undefined;
   recipientFor?: (values: Record<string, string>, channel: Channel) => string;
   validateChannel?: (values: Record<string, string>, channel: Channel) => Record<string, string>;
   bring?: string;
@@ -54,6 +55,7 @@ export const CHANNEL_LABEL = {
   email: { mode: "pdf", label: "E-mailem jako PDF", hint: "Wyślij podpisany dokument na adres uzgodniony z odbiorcą." },
   gmina: { mode: "pdf", label: "W gminie lub OPS", hint: "Złóż podpisany druk w jednostce wyznaczonej przez gminę." },
   poczta: { mode: "pdf", label: "Pocztą", hint: "Wyślij podpisany druk i wymagane załączniki do adresata." },
+  "podpis-elektroniczny": { mode: "pdf", label: "Podpisana elektronicznie deklaracja do przychodni", hint: "Podpisz dokument podpisem zaufanym, osobistym albo kwalifikowanym i przekaż na adres uzgodniony z placówką." },
   przychodnia: { mode: "pdf", label: "W przychodni", hint: "Przekaż podpisaną deklarację wybranej przychodni." },
   zus: { mode: "pdf", label: "Papierowo w ZUS", hint: "Przekaż podpisany wniosek do ZUS." },
 } as const satisfies Record<string, Delivery>;
@@ -93,7 +95,7 @@ export const YES_NO = ["Tak", "Nie"];
 export const parent = (label = "Imię i nazwisko"): FormField => ({ id: "rodzic", label, type: "text", required: true, prefill: (c) => c.parentName });
 export const parentPesel: FormField = { id: "rodzic_pesel", label: "Twój numer PESEL", type: "pesel", required: true, hint: "11 cyfr" };
 export const child: FormField = { id: "dziecko", label: "Imię i nazwisko dziecka", type: "text", required: true, prefill: (c) => c.childName };
-export const childPesel: FormField = { id: "dziecko_pesel", label: "Numer PESEL dziecka", type: "pesel", required: true, hint: "Z odpisu aktu urodzenia albo z mObywatela" };
+export const childPesel: FormField = { id: "dziecko_pesel", label: "Numer PESEL dziecka", type: "pesel", required: true, hint: "Z powiadomienia o nadaniu numeru PESEL lub z danych dziecka w mObywatelu" };
 export const birth: FormField = { id: "data_urodzenia", label: "Data urodzenia dziecka", type: "date", required: true, prefill: (c) => c.birthDate };
 export const employer: FormField = { id: "pracodawca", label: "Pracodawca", type: "text", required: true, prefill: (c) => c.employer };
 export const payout: FormField[] = [

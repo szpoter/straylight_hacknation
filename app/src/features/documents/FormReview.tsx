@@ -101,6 +101,7 @@ export function SendStep({ def, values, recipient, pdf, onSend, onBack, onEdit }
   const [channel, setChannel] = useState<Channel>(def.channels[0]);
   const delivery = CHANNEL_LABEL[channel];
   const destination = def.recipientFor?.(values, channel) ?? recipient;
+  const info = def.channelInfo?.(values, channel);
   const missing = Object.entries(def.validateChannel?.(values, channel) ?? {});
   return (
     <div className="flex flex-col gap-stack">
@@ -111,6 +112,7 @@ export function SendStep({ def, values, recipient, pdf, onSend, onBack, onEdit }
         onChange={(value) => setChannel(value as Channel)}
         columns={2}
       />
+      {info && <p className="max-w-prose" aria-live="polite">{info}</p>}
       {delivery.mode === "online" ? (
         <p className="max-w-prose">To symulacja. Dane zostaną w Twoim planie. Po zatwierdzeniu zobaczysz przykładowe potwierdzenie.</p>
       ) : (
