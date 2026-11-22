@@ -23,12 +23,19 @@ export default async function ProfilePage() {
             Sprawdź swoją sprawę
           </SectionTitle>
           <p className="mb-4 max-w-prose text-on-surface-variant">
-            Dołącz dokumenty sprawy w PDF lub zadaj Zusikowi własne pytanie.
+            Dołącz dokumenty sprawy w PDF lub zadaj Zusikowi własne pytanie. Prawo do zasiłku możesz też sprawdzić na sprawach z zestawu ZUS.
           </p>
-          <ButtonLink href="/app/rozmowa" variant="secondary">
-            Otwórz rozmowę z Zusikiem
-          </ButtonLink>
-          <ButtonLink href="/profil/sprawa-testowa" variant="secondary">Wybierz przykładową sprawę</ButtonLink>
+          <div className="flex flex-wrap gap-3">
+            <ButtonLink href="/app/rozmowa" variant="secondary">
+              Otwórz rozmowę z Zusikiem
+            </ButtonLink>
+            <ButtonLink href="/sprawdz" variant="secondary">
+              Sprawdź sprawę z zestawu ZUS
+            </ButtonLink>
+            <ButtonLink href="/profil/sprawa-testowa" variant="secondary">
+              Wybierz przykładową sprawę
+            </ButtonLink>
+          </div>
         </Panel>
       </div>
     </Page>

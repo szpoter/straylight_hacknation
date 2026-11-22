@@ -23,6 +23,9 @@ export default function CasesPage() {
           <p>
             <Link href="/app/chorobowe">Chorobowe w ciąży · ocena dokumentów</Link>
           </p>
+          <p>
+            <Link href="/sprawdz">Sprawy z zestawu ZUS · prawo do zasiłku macierzyńskiego i wgranie PDF</Link>
+          </p>
         </nav>
       </main>
     </ParentChat>
