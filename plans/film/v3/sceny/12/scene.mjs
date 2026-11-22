@@ -1,12 +1,11 @@
 // 12 · Przy okienku. Próba r2: przekazanie narożnika, pauza na odczytanie, odłożenie druku.
-import { cam, shoot, world, key, lips, mix, ss, span, rot, folderHold, HIP_Y } from "../07/kolejka.mjs";
+import { cam, shoot, world, key, lips, mix, ss, span, rot, gripBar, folderHold } from "../07/kolejka.mjs";
 import { Z_BL, motionFrame as previous } from "../11/scene.mjs";
 
 import { reach, endPose, gripKeys, angleKeys, spatialAngles } from "../../ruch/pose.mjs";
 
-export const CAM12 = { z: 1.8, cx: 885, cy: 254 };
+export const CAM12 = { z: 1.35, cx: 852, cy: 235 };
 export const TOUCH_F = 12, RELEASE_F = 18;
-export const MARTA12 = 640, PAWEL12 = 850;
 const toWorld = (sx, sy) => [CAM12.cx + (sx - 640) / CAM12.z, CAM12.cy + (sy - 360) / CAM12.z];
 export const Z_FINAL = { ...(([x, y]) => ({ x, y }))(toWorld(816, 463)), ang: -10 };
 
@@ -20,13 +19,7 @@ export function zAt(f,entry={x:872,y:332,ang:6}) {
 
 function blocked12(f,k) {
   const g = 660 + f;
-  const last=endPose(previous,k), exit=last.st.free[0], dx=PAWEL12-last.actors.pawel.x, dy=HIP_Y.pawel-last.actors.pawel.y;
-  const entry={x:exit.x+dx,y:exit.y+dy,ang:exit.ang}, Z=zAt(f,entry);
-  const place=(actor,x,y)=>{
-    const p=last.actors[actor], tx=x-p.x,ty=y-p.y;
-    const pins=Object.fromEntries(Object.entries(p.pins??{}).map(([side,pin])=>[side,{...pin,target:[pin.target[0]+tx,pin.target[1]+ty]}]));
-    return {...p,x,y,pins};
-  };
+  const last=endPose(previous,k), Z=zAt(f,last.st.free[0]);
   // ── clerk: reaches with the screen-left hand, thumb on the printed side of the shared corner
   const edge = rot(Z.x, Z.y, Z.ang, ...Z_BL);
   let clerk = {
@@ -44,29 +37,27 @@ function blocked12(f,k) {
   clerk={...clerk,downPole:{left:28}};
   clerk=reach("clerk",clerk,"left",toward);
   // ── Paweł: hands the print by its corner, lets go on 18, hand back to the folder
-  const hip = [PAWEL12, HIP_Y.pawel];
-  const F={...last.st.folder,x:last.st.folder.x+dx,y:last.st.folder.y+dy};
-  let pawel={...place("pawel",...hip), ...lips("pawel",g),
+  const F=last.st.folder;
+  let pawel={...last.actors.pawel, ...lips("pawel",g),
     lean:key(f,[[0,last.actors.pawel.lean],[18,3],[30,0]]),
     head:key(f,[[0,last.actors.pawel.head],[16,.45],[26,.3],[40,.35]]),nod:key(f,[[0,last.actors.pawel.nod],[20,.2],[40,.25]]),
     gaze:key(f,[[0,.8],[20,.5],[40,.6]]),gazeDown:key(f,[[0,.1],[20,.4],[40,.5]]),
     leftGrip:gripKeys(f,[[0,"pinch"],[21,"open"],[35,"hold"]]),rightGrip:"hold"};
-  const lastAngles=k.rig("pawel",last.actors.pawel).armL.angles;
-  pawel.angles={...pawel.angles,left:angleKeys(f,[[0,lastAngles],[17,[55,-65,0]],[24,[111,-110,3]],[34,[143,-115,2]]])};
   pawel=reach("pawel",pawel,"right",folderHold(F));
   const top=edge;
   const back=rot(F.x,F.y,F.ang,-30,-44), ret=ss(span(f,17,36));
   const towardFolder=[mix(top[0],back[0],ret),mix(top[1],back[1],ret)-Math.sin(ret*Math.PI)*12];
   pawel=reach("pawel",pawel,"left",towardFolder);
-  const inFolder=last.st.inFolder.map(p=>({...p,x:p.x+dx,y:p.y+dy}));
+  const inFolder=last.st.inFolder;
   // ── Marta: waits, then reads the title as it turns to her
-  const marta={...place("marta",MARTA12,last.actors.marta.y),head:key(f,[[0,last.actors.marta.head],[20,.6],[40,.45]]),
+  const marta={...last.actors.marta,head:key(f,[[0,last.actors.marta.head],[20,.6],[40,.45]]),
     nod:key(f,[[0,last.actors.marta.nod],[37,.15],[53,.3]]),gaze:key(f,[[0,.8],[24,.6],[44,.5]]),
     gazeDown:key(f,[[0,0],[37,.2],[53,.45]]),brow:key(f,[[30,-.2],[53,-.4]])};
 
-  const st = { disp: 17, marta, pawel, folder: F, inFolder, free: [{ id: "Z", ...Z }], clerk };
+  const st = { disp: 17,pram:last.st.pram, marta, pawel, folder: F, inFolder, free: [{ id: "Z", ...Z }], clerk };
   const actors={marta,pawel,clerk};
-  const contacts=[{role:"pawel",joint:"gripR",id:"folder.edge",target:folderHold(F)}];
+  const bar=gripBar(last.st.pram.x,.55);
+  const contacts=[{role:"marta",joint:"gripL",id:"bar.l",target:bar},{role:"pawel",joint:"gripR",id:"folder.edge",target:folderHold(F)}];
   if(f<=17) contacts.push({role:"pawel",joint:"gripL",id:"Z.corner",target:top});
   if(f>=12) contacts.push({role:"clerk",joint:"gripL",id:"Z.corner",target:edge});
   if(f>=36) contacts.push({role:"pawel",joint:"gripL",id:"folder.cover",target:rot(F.x,F.y,F.ang,-30,-44)});
@@ -74,19 +65,25 @@ function blocked12(f,k) {
   for(const role of ["marta","pawel"]) for(const [i,joint] of ["ankleL","ankleR"].entries()){
     const p=actors[role];supports.push({role,joint,id:"floor",target:[p.x+p.feet[i][0],p.y+p.feet[i][1]]});
   }
-  const cutOffsets={marta:[MARTA12-last.actors.marta.x,0],pawel:[dx,dy],clerk:[0,0],Z:[dx,dy],folder:[dx,dy]};
-  return {st,actors,contacts,supports,props:{Z:[Z.x,Z.y],folder:[F.x,F.y]},cutOffsets,camera:cam(CAM12.z,CAM12.cx,CAM12.cy)};
+  return {st,actors,contacts,supports,props:{Z:[Z.x,Z.y],folder:[F.x,F.y],bar},camera:cam(CAM12.z,CAM12.cx,CAM12.cy)};
 }
 const approaches=new WeakMap();
 export function motionFrame(f,k) {
   const state=blocked12(f,k);
-  if(f<=1 || f>=TOUCH_F) return state;
   if(!approaches.has(k)) {
-    const keys=[1,TOUCH_F].map(n=>[n,spatialAngles(k.rig("clerk",blocked12(n,k).actors.clerk).armL)]);
-    approaches.set(k,keys);
+    const keys=(role,frames)=>frames.map(n=>[n,spatialAngles(k.rig(role,blocked12(n,k).actors[role]).armL)]);
+    approaches.set(k,{clerk:keys("clerk",[1,TOUCH_F]),pawel:keys("pawel",[17,26,36])});
   }
+  if(f>17 && f<36){
+    const p=state.actors.pawel, paper=state.st.free[0],corner=rot(paper.x,paper.y,paper.ang,...Z_BL);
+    const angles=angleKeys(f,approaches.get(k).pawel);
+    const weight=1-ss(span(f,17,21));
+    const pose=reach("pawel",{...p,spatial:{left:angles}},"left",corner,weight);
+    state.actors.pawel=state.st.pawel=pose;
+  }
+  if(f<=1 || f>=TOUCH_F) return state;
   const p=state.actors.clerk, paper=state.st.free[0], corner=rot(paper.x,paper.y,paper.ang,...Z_BL);
-  const pose=reach("clerk",{...p,spatial:{left:angleKeys(f,approaches.get(k))}},"left",corner,ss(span(f,8,12)));
+  const pose=reach("clerk",{...p,spatial:{left:angleKeys(f,approaches.get(k).clerk)}},"left",corner,ss(span(f,8,12)));
   state.actors.clerk=state.st.clerk=pose;
   return state;
 }

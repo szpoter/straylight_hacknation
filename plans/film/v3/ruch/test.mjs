@@ -70,6 +70,14 @@ export async function auditShot(id) {
 export function auditCut(last,first) {
   const p=last.frames.at(-1),q=first.frames[0], offsets=q.cutOffsets??{};
   const a={...p.worldPoints,...p.worldProps}, b={...q.worldPoints,...q.worldProps};
+  if(last.id===11 && first.id===12){
+    assert.deepEqual(Object.keys(offsets),[],"The queue and window share one set");
+    for(const old of p.contacts){
+      const current=q.contacts.find(c=>c.role===old.role && c.joint===old.joint && c.id===old.id);
+      assert.ok(current,`Lost cut contact: ${old.role}.${old.joint} ${old.id}`);
+      assert.ok(dist(old.worldTarget,current.worldTarget)<=1,`Cut contact slid: ${old.id}`);
+    }
+  }
   const keys=q.cutKeys??Object.keys(a).filter(k=>b[k] && (!k.includes(".")||/\.(shoulder|elbow|wrist)/.test(k)));
   for(const key of keys) {
     assert.ok(a[key]&&b[key],`cut ${last.id}/${first.id} missing ${key}`);

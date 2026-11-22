@@ -159,3 +159,29 @@ export function pinWindow(f,start,end,fade=4) {
   if(fade<3) throw Error("Contact ramp needs at least three frames");
   return ease((f-start+fade)/fade)*ease((end+fade-f)/fade);
 }
+
+// Each track moves one foot between world-space footholds. The pelvis follows their
+// midpoint and lowers for wide double support. The ankle remains on its original floor.
+export function walkPose(base,rig,f,tracks,prepare) {
+  const footAt=(i)=>{
+    let x=base.x+base.feet[i][0], lift=0;
+    for(const [start,end,to,height] of tracks[i]){
+      if(f<start) break;
+      const t=clamp((f-start)/(end-start));
+      if(t<1) return [mix(x,to,ease(t)),height*Math.sin(Math.PI*t)**2];
+      x=to;
+    }
+    return [x,lift];
+  };
+  const feet=[footAt(0),footAt(1)];
+  const x=(feet[0][0]+feet[1][0]-base.feet[0][0]-base.feet[1][0])/2;
+  const range=rig.legs[0].lengths.reduce((a,b)=>a+b)-8;
+  const drops=feet.map(([wx],i)=>{
+    const hx=x+(i?rig.hipR:rig.hipL)[0], side=wx-hx;
+    const vertical=Math.sqrt(Math.max(0,range*range-side*side));
+    return base.feet[i][1]-rig.b.hipJ[1]-vertical;
+  });
+  const widest=(drops[0]+drops[1]+Math.hypot(drops[0]-drops[1],1))/2;
+  const drop=ease((f-prepare)/12)*Math.max(0,widest);
+  return {x,y:base.y+drop,feet:feet.map(([wx,h],i)=>[wx-x,base.feet[i][1]-drop-h])};
+}

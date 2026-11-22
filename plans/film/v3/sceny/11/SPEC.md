@@ -38,17 +38,17 @@ Sprawdzone 23 (szczelina), 24 (kontakt pod rogiem), 25 (kciuk), 35/36 (dłoń Pa
 
 ## Ruch v3.1
 
-**Próba C · FAIL.** Marta łapie w 24 dolny lewy narożnik druku. Paweł odbiera ten sam punkt, a przez klatki 36–39 obie dłonie jadą z papierem. Zmiana względem r2 wynika z wymogu wspólnego punktu przekazania. Wyświetlacz nadal zmienia się w 6. Model r2 stopniowo domyka palce. Przestrzenny biegun prowadzi łokieć pod barkiem. Dojście Pawła między 25 i 36 korzysta z interpolacji orientacji obu odcinków, a w 32–36 z narastającego przypięcia.
+**Próba D · testy PASS dla wszystkich 60 klatek.** Marta podpiera w 24 dolny lewy narożnik kartki. Paweł przejmuje ten sam punkt, gdy od 36 do 39 oboje trzymają papier. Sygnał wyświetlacza nadal wypada w 6. Miednica obniża się na początku kroku i przy szerokim rozstawie stóp. Poza stopy w fazie podparcia przechodzi na kolejną klatkę w tym samym miejscu. Paweł kończy krok w stronę okienka w 59 przy x=850, Marta toczy wózek do x bioder 433,5. Teczka jedzie z miednicą Pawła.
 
-| Pomiar dla 60 klatek w 720p | Wynik |
+| Pomiar w 720p | Największa wartość |
 | --- | ---: |
-| Maksymalna odchyłka długości czterech odcinków | <0,001% |
-| Największy krok kąta stawu | 19,38°/kl. |
-| Największe przyspieszenie | **22,59°/kl²** (limit 12) |
-| Największa odległość dłoni od punktu rekwizytu | 0,07 px po zaokrągleniu w górę |
+| Odchyłka długości ramienia, przedramienia, uda i goleni | <0,001% |
+| Krok kątowy stawu | 18,63°/kl. |
+| Przyspieszenie kątowe | 10,83°/kl² |
+| Odległość dłoni od rekwizytu | 0,07 px |
 | Przesunięcie stopy podporowej | 0,00 px |
-| Podwójny kontakt | 36–39, 4/4 klatki |
+| Wspólny kontakt | 36–39, wszystkie 4 klatki |
 
-Granicę przyspieszenia przekraczają kolana Marty w 14, 22, 26, 51 i 53, kolana Pawła w 42, 49, 52 i 59 oraz jego łokieć w 30 i 31. Najsilniej widać zmianę przy kończeniu kroku Marty. Próba A podnosiła łokieć do skroni podczas prowadzenia druku. Próby B i C kierują go pod bark. Do wznowienia potrzebne są łagodniejsze przejęcie ciężaru przez kolana i rozłożenie zgięcia łokcia na sąsiednie klatki.
+Wersja C przekraczała limit przy zmianach podpory kolan (maksimum 22,59°/kl²) i na drodze lewej ekranowo ręki Pawła w 30–31. W D przedramię przechodzi głębiej przed piersią podczas dojścia do papieru. Po puszczeniu w 40 ręka Marty wygasza więzy wokół punktu oddania, zanim Paweł zabierze kartkę. Efekt widać na [śladach ruchu](ruch.jpg) i [fazach podania](fazy.jpg).
 
-Wyjście do 12 eksportuje rzeczywistą pozę, kartkę i teczkę. Zmiana rozstawienia postaci i wyniki cięcia są podane w SPEC 12. Wejścia 10/59 nie zweryfikowano metodą r2.
+W odbiorze wariantu D obejrzano tempo 1×, klatki podtrzymania i puszczenia papieru oraz cięcie do okienka. Ruch przyjęty.

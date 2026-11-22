@@ -38,17 +38,17 @@ Sprawdzone 0, 11 (przed kontaktem), 12 (kontakt), 15 (oba chwyty), 22 (prześwit
 
 ## Ruch v3.1
 
-**Próba C · FAIL.** Paweł i pracownica trzymają dolny lewy narożnik „ZASIŁKU” miejscowo pod tym samym punktem. W 12 zaczyna się kontakt pracownicy, przez 13–17 trwa wspólne obciążenie, a po 17 ręka Pawła wraca do teczki. Pracownica pozostała za swoim okienkiem. Dojście 1–12 wykorzystuje klucze kątowe i domknięcie więzu przez cztery klatki. Nadruk wraca na koniec do (816,463) w skali podglądu.
+**Próba D · testy PASS dla wszystkich 60 klatek.** W 12 pracownica dotyka dolnego lewego narożnika. Przez 13–17 obie dłonie dzielą punkt rekwizytu. W 18–21 kciuk Pawła odchodzi, a wygaszanie więzu pozwala ręce wyhamować. Przy powrocie do teczki łokieć przechodzi przez odrębną pozę w 26. W 53 druk opiera się na blacie, a na końcu jego środek wypada w (816,463). Pracownica pozostaje na osi okienka.
 
-| Pomiar dla 60 klatek w 720p | Wynik |
+| Pomiar w 720p | Największa wartość |
 | --- | ---: |
-| Maksymalna odchyłka długości czterech odcinków | <0,001% |
-| Największy krok kąta stawu | 18,74°/kl. |
-| Największe przyspieszenie | **17,62°/kl²** (limit 12) |
-| Największa odległość dłoni od punktu rekwizytu | 0,12 px po zaokrągleniu w górę |
+| Odchyłka długości ramienia, przedramienia, uda i goleni | <0,001% |
+| Krok kątowy stawu | 15,93°/kl. |
+| Przyspieszenie kątowe | 10,05°/kl² |
+| Odległość dłoni od rekwizytu | 0,10 px po zaokrągleniu w górę |
 | Przesunięcie stopy podporowej | 0,00 px |
-| Podwójny kontakt | 13–17, 5/5 klatek |
+| Wspólny kontakt | 13–17, wszystkie 5 klatek |
 
-W 21 łokieć Pawła przyspiesza powyżej limitu po oddaniu ciężaru. Figurę pracownicy i jej chwyt należy czytać łącznie z ułożeniem szyby i przesłonięciem przez statystów w poprzednim szerokim planie. Kontrola przyspieszenia zablokowała dalszą migrację.
+**Cięcie 11/59 → 12/0.** Kamera 12 obejmuje bliższy plan przy 1,35× wokół (852,235). Biodra Marty, Pawła i pracownicy, oba łokcie i nadgarstki, arkusz, teczka i rączka wózka pozostają w rzeczywistym położeniu z 11/59. Różnica po cofnięciu samej kamery wynosi **0,00 px**. Test wymaga także ciągłości wszystkich trzech kontaktów obecnych na wyjściu z 11. W historii wersji C przy tej zmianie planu Marta przemieszczała się o 282 px. Wersja D utrzymuje tę samą geometrię dekoracji, a rodzice wykonują drogę jeszcze przed cięciem. [Ślady ruchu](ruch.jpg) · [Fazy podania](fazy.jpg)
 
-**Cięcie 11/59 → 12/0.** Po zdjęciu zoomu i przesunięcia kamery Marta jest przesunięta o +282 px, Paweł wraz z kartką i teczką o +104,60 px, pracownica pozostaje na miejscu. To celowa zmiana rozstawienia rodziców dla bliższego planu, odziedziczona po realizacji r2. Maksymalna różnica przestrzenna w skali planu ogólnego wynosi **282,00 px**. Po wyrównaniu oddzielnie każdej postaci różnica samej pozy barku, łokcia i nadgarstka wynosi <0,01 px. Wózek znika z kadru zgodnie z inscenizacją tego zbliżenia. Wejście pobiera pozycje z modułu 11. Styku z niemigrowanym 13 nie zweryfikowano metodą r2.
+W odbiorze wariantu D obejrzano tempo 1×, wspólny chwyt, powrót dłoni Pawła i wejście z szerokiego planu. Ruch przyjęty.
