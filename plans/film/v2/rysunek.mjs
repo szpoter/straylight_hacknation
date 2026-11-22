@@ -66,7 +66,7 @@ export function person(role,p={}){
   function shoulder(side){const point=torsoJoint.getTransform().point({x:side*52,y:-108});return [point.x,point.y]}
   const left=arm(...shoulder(-1),ll,coat,p.leftGrip??p.grip??"open",-1);
   const right=arm(...shoulder(1),rr,coat,p.rightGrip??p.grip??"open",1);
-  return poseGroup(x,y,s,0,legs+core+left+right);
+  return poseGroup(x,y,s,0,(p.legsSVG??legs)+core+left+right);
 }
 export function grasp(t=1,offsetX=0){
   const q=Math.max(0,Math.min(1,t));
