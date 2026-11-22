@@ -2,7 +2,7 @@
 
 Materiałem odniesienia jest przyjęty [animatik r2](../v3/podglady/animatik-720p-r2.mp4), rewizja 6225951. Pierwsza seria obejmuje **19 pojedynczych klipów**, po jednym wierszu z tabeli. Proponowany model to Veo 3.1 Lite, Frames to Video, 16:9, 720p, 8 s, jeden wynik na żądanie. Przy 5 kredytach za wynik na Ultra daje to 95 kredytów, przy 10 na pozostałych planach 190. Potwierdź dostęp do obu klatek i cenę w selektorze przed pierwszą próbą. Zmiana modelu, wyższa cena lub powtórka wymaga osobnej decyzji Juliana. [Cennik Google](https://support.google.com/flow/answer/16526234?hl=en)
 
-[Projekt Google Flow](https://flow.google.com/project/d4d3ab4b-9ca2-4efb-8894-89fe66fa40e6). Panel konta Plus pokazał 250 kredytów. W ręcznym trybie Frames z Veo 3.1 Lite i x1 cena wynosi 10 kredytów. W edytorze są dwa kadry i prompt 01. Proponowany pierwszy wydatek to 10 kredytów za samą 01. Pozostałe 180 czeka na ocenę pilota i zgodę Juliana.
+[Projekt Google Flow](https://flow.google.com/project/d4d3ab4b-9ca2-4efb-8894-89fe66fa40e6). Panel konta Plus pokazał 250 kredytów. W ręcznym trybie Frames z Veo 3.1 Lite i x1 cena wynosi 10 kredytów. Julian zatwierdził pierwszą próbę każdego z 19 ujęć, łącznie do 190 kredytów. Veo przyjął 19 zleceń, dostarczył 18 klipów i zgłosił błąd generacji audio dla 11. Po zwrocie saldo wyniosło 70, wydatek netto 180.
 
 ## Materiały dla Flow
 
@@ -10,7 +10,7 @@ Wygląd Marty, Pawła i Oli bierzemy z wcześniejszych ilustracji. [Rodzina Oli]
 
 **Ujęcie 01.** Wbudowany ImageGen przygotował [początek](ilustracje/01-start.png) na podstawie ilustracji narodzin i rodziny Oli. Drugi rysunek to edycja tej samej kompozycji. Na [końcu](ilustracje/01-koniec.png) dłoń Pawła jest bliżej, a między palcami zostaje prześwit. Oryginalna ilustracja narodzin pokazuje już zamknięty chwyt i nadaje się jako odniesienie dla końca 02.
 
-**Ujęcia 02–19.** Numery w tabeli wyznaczają pozycje w animatiku. Eksporty w `kadry/` są storyboardem ruchu do lokalnego porównania. Pary ilustracji do Flow przygotowujemy według powyższych wzorców, zachowując ustawienie kamery, kierunek i punkt styku dłoni. Po klatce 1132 montaż dokłada oryginalnego Zusika. Dla ujęć po pilocie pary ilustracji czekają na przygotowanie.
+**Ujęcia 02–19.** Numery w tabeli wyznaczają pozycje w animatiku. Eksporty w `kadry/` są storyboardem ruchu do lokalnego porównania. Pary ilustracji do Flow przygotowujemy według powyższych wzorców, zachowując ustawienie kamery, kierunek i punkt styku dłoni. Po klatce 1132 montaż dokłada oryginalnego Zusika. Pary użyte w produkcji są w katalogu `ilustracje/`. 02 i 10 zaczynają się od własnych detali `NN-in.png`, 11 przejmuje szeroki plan z końca 09, a 15 zaczyna się od `15-in.png`. Inne ujęcia przejmują poprzednią ilustrację końcową. Kadry wyjściowe noszą nazwy `NN-out.png`.
 
 Do angielskiego opisu gestu dopisz poniższy opis stylu. Po montażu lokalna klatka 0 to wejście ujęcia, 59 to wyjście, a w 19 koniec ruchu wypada na 52.
 
@@ -48,7 +48,7 @@ Każdy wiersz to **Frames, 1 próba, do 10 kredytów**. Kolejność bloków daje
 
 ## Próby i odbiór
 
-Stan początkowy dla 01–19: 0 prób, 0 wybranych. Po każdym wyniku zapisać tu numer ujęcia i próby, nazwę pobranego pliku w `surowe/`, koszt, decyzję i konkretny powód. Obejrzeć przy 1× z miksem i klatka po klatce. Sprawdzić twarz względem ilustracji rodziny i obu nowych kadrów, ubranie, liczbę i zasłanianie palców, styk dłoni, sztywność rekwizytu i płaski styl. Po trzech nieudanych próbach danego ujęcia zatrzymać pracę nad nim.
+Pierwsza seria. Pobrane klipy noszą nazwy `surowe/NN-p1.mp4`. Ujęcie 11 otrzymało w Flow komunikat „Audio generation failed” i zwrot 10 kredytów. Pozostałe 18 klipów pobrano w oryginalnym 720p. Po każdym wyniku zapisać tu numer ujęcia i próby, nazwę pobranego pliku w `surowe/`, koszt, decyzję i konkretny powód. Obejrzeć przy 1× z miksem i klatka po klatce. Sprawdzić twarz względem ilustracji rodziny i obu nowych kadrów, ubranie, liczbę i zasłanianie palców, styk dłoni, sztywność rekwizytu i płaski styl. Po trzech nieudanych próbach danego ujęcia zatrzymać pracę nad nim.
 
 W montażu kontrolować chwyt w kl. 65, „Chyba tak” przy 10,85 s (najbliższa kl. 326), biodro 508 i zatrzymanie kół 514, sygnał 606, „do jutra” przy okienku, teczkę 846 i but 1038. W 19 klik wypada na 1132, oryginalny Zusik wchodzi od 1133. Od 1140 do 1799 włącznie źródłem jest A w rozdzielczości montażu. Po odbiorze wszystkich prób obejrzeć całe B z miksem, osobno cięcia oraz styk 37,7–38 s, potem wyciszony obraz o szerokości 360 px. W raporcie dopisać URL projektu, faktyczny model, koszt i najmocniejsze oraz najsłabsze ujęcie.
 
