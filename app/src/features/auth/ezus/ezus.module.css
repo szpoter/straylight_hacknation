@@ -344,3 +344,87 @@
     line-height: 28px;
   }
 }
+
+/*
+ * Skrót „Szybki test” nad metodami eZUS. To element przewodnika, nie eZUS, więc bierze
+ * tokeny DESIGN.md (surface, outline, kroje strony), a nie kolory eZUS.
+ */
+.quickItem {
+  display: grid;
+  gap: 22px;
+}
+
+.quick {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 28px 32px;
+  border: 1px solid var(--color-outline);
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.quickText {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.quickEyebrow {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.methodsMain .quickTitle {
+  margin: 0;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.quickLead {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--color-on-surface-variant);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.quickDivider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 0;
+  color: var(--color-on-surface-variant);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.quickDivider::before,
+.quickDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-outline);
+}
+
+@media (max-width: 767px) {
+  .quick {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    padding: 22px 20px;
+  }
+
+  .methodsMain .quickTitle {
+    font-size: 22px;
+  }
+}
