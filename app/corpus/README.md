@@ -4,7 +4,7 @@
 | --- | --- | ---: | --- |
 | `marta` | `marta-v1` | 23 | Urlop rodzicielski pracownika, wniosek do pracodawcy i wyjątki w załącznikach |
 | `publiczne` | `rodzina-2026-11-v1` | 487 | Akty prawne z materiałów konkursowych, poradnik rodziców ZUS, instrukcje chorobowego i ZAM |
-| `oferta` | `programy-2026-11-v3` | 8 | 800+, Dobry Start, Aktywny Rodzic oraz trzy fragmenty o opiece, wieku i odbiorcy przelewu w żłobku |
+| `oferta` | `programy-2026-11-v4` | 387 | 800+, Dobry Start, trzy warianty Aktywnego Rodzica, rodzicielstwo, chorobowe, opieka i formularze |
 
 [Inwentarz materiałów](materialy.json) rozlicza wszystkie 95 plików merytorycznych, organizacyjnych i akt. Oryginalne 87 plików akt spraw pozostaje poza wspólnym indeksem. Ich kopie zawierają 86 różnych dokumentów. Cztery wyciągi konkursowe mają odpowiedniki ze zbioru ELI. Sumy SHA-256 identyfikują pliki źródłowe, a strony PDF i jednostki redakcyjne prowadzą do konkretnych przepisów. Materiał szkoleniowy o stawkach i czasie świadczeń ma odsyłacze do źródeł ustawowych.
 
@@ -22,6 +22,18 @@ node --env-file=.env.local --import tsx scripts/zusik-import-marta.ts --corpus=o
 
 Opcja `--collection=nazwa` wskazuje drugą fizyczną kolekcję przy migracji. Importer wysyła brakujące punkty w partiach po 16, po czym porównuje wszystkie identyfikatory i hashe z manifestem. Wznowienie polecenia po awarii uzupełnia brakującą partię. Zmiana treści istniejącego fragmentu wymaga nadania nowej wersji. Aplikacja filtruje wersję przy każdym wyszukiwaniu. Stara sonda wybiera wyłącznie dokumenty bez pola `corpusVersion`.
 
+## Wydanie v4
+
+Kolekcja stagingowa `zusik_test_family_20261122_v4` zawiera 897 punktów. Odczyt 22 listopada 2026 r. potwierdził deterministyczny UUID, ID fragmentu i SHA-256 każdego punktu. Po wymuszonym przerwaniu procesu zostało 16 z 387 punktów oferty. Wznowienie dopisało 371. Ponowny import wszystkich trzech pakietów dopisał 0 punktów. Odczyt operatora potwierdził sumy wersji i wymiary domyślnego wektora 384, metrykę Cosine oraz indeksy słów kluczowych dla `corpusVersion`, `logicalId` i `topic`. Identyfikator modelu w Qdrant Cloud Inference to `intfloat/multilingual-e5-small`. Usługa nie podała rewizji wag w odpowiedzi importera. Produkcyjny czytnik nadal jest ograniczony do poprzedniej kolekcji.
+
+| Pakiet | Punkty | Początek digestu ID i hashy |
+| --- | ---: | --- |
+| Marta | 23 | `62ad9dea11189bcc` |
+| Publiczne | 487 | `4a5492908873b2bb` |
+| Oferta | 387 | `a4f16ab2053f7081` |
+
+W aplikacji [karty programów](opportunities.json) odwołują się do ID dowodów przy warunkach, kanałach i konfliktach. [Macierz pokrycia](pokrycie.md) prowadzi do konkretnych sekcji urzędowych. [Rejestr aktualnych druków](forms.json) podaje daty i SHA-256 oryginałów ZAM i Z-15.
+
 ## Ewaluacja
 
 ### Pierwsza próba „Aktywnie w żłobku”
@@ -34,9 +46,9 @@ Pakiet zachowuje pełną treść artykułu ZUS w postaci migawki HTML. Manifest 
 | Wiek | `zlobek-wiek` | „Na kogo przysługuje świadczenie”, akapity 4 i 5, górna granica z wyjątkiem i warunek rozpoczęcia |
 | Adresat przelewu | `zlobek-odbiorca` | „Komu wypłacamy świadczenie aktywnie w żłobku”, akapit 1, podmiot prowadzący placówkę albo dzienny opiekun |
 
-Na tym etapie poza indeksem pozostają wyłączenia, kwota, termin, dokumenty, kanał złożenia i kolizje świadczeń opisane szerzej w migawce. [Strona ZUS](https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku)
+W wydaniu v3 próba obejmowała wyłącznie trzy powyższe fragmenty. Wydanie v4 włącza m.in. warunek kosztu pobytu, okres, dokumenty oraz kolizje świadczeń. [Macierz źródeł](pokrycie.md). [Strona ZUS](https://www.zus.pl/aktywnyrodzic/wiadczenie-aktywnie-w-zlobku)
 
-Do powtórzenia próby użyj dwóch nowych, fizycznych kolekcji testowych. Druga pomija dokładnie jeden fragment. Ponowne wywołanie tych samych poleceń sprawdza ID i hashe oraz powinno wykazać zapis zera nowych punktów.
+Do odtworzenia pierwotnej próby użyj źródeł w wersji Git `28ed4f6` i dwóch fizycznych kolekcji testowych. Druga pomija dokładnie jeden fragment. Ponowne wywołanie tych samych poleceń sprawdza ID i hashe oraz powinno wykazać zapis zera nowych punktów.
 
 ```sh
 node --env-file=.env.local --import tsx scripts/zusik-import-marta.ts --corpus=oferta --collection=zusik_test_nursery_20261122_full

@@ -73,7 +73,6 @@ async function main() {
   const model = env("QDRANT_EMBED_MODEL", DEFAULT_EMBED_MODEL);
   const headers = { "content-type": "application/json", "api-key": writeKey };
   const base = `${url}/collections/${encodeURIComponent(collection)}`;
-  const versionFilter = { must: [{ key: "corpusVersion", match: { value: version } }] };
 
   // 2. collection
   const existing = await fetch(base, { headers });
@@ -108,7 +107,7 @@ async function main() {
   }
 
   // 4. never silently change an imported version
-  const before = await readVersion(base, headers, versionFilter);
+  const before = await readVersion(base, headers, version);
   const local = new Map([...corpus.fragments.values()].map((f) => [f.logicalId, f.fragmentSha256]));
   const changed = [...before].filter(([id, hash]) => local.get(id) !== hash).map(([id]) => id);
   if (changed.length) {
@@ -150,7 +149,7 @@ async function main() {
   console.log(`${OP}: upserted ${points.length} new points in ${Date.now() - started} ms`);
 
   // 6. read back and compare
-  const after = await readVersion(base, headers, versionFilter);
+  const after = await readVersion(base, headers, version);
   const missing = [...local.keys()].filter((id) => after.get(id) !== local.get(id));
   const extra = [...after.keys()].filter((id) => !local.has(id));
   if (missing.length || extra.length) throw new Error(`read-back mismatch · missing/changed: ${missing.join(", ")} · extra: ${extra.join(", ")}`);
@@ -161,7 +160,8 @@ async function main() {
   console.log(`${OP}: OK · ${version} in ${collection}`);
 }
 
-async function readVersion(base: string, headers: Record<string, string>, filter: unknown): Promise<Map<string, string>> {
+async function readVersion(base: string, headers: Record<string, string>, version: string): Promise<Map<string, string>> {
+  const filter = { must: [{ key: "corpusVersion", match: { value: version } }] };
   const found = new Map<string, string>();
   let offset: string | null | undefined;
   do {
@@ -173,7 +173,11 @@ async function readVersion(base: string, headers: Record<string, string>, filter
     if (!res.ok) throw new Error(`scroll HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const body = (await res.json()) as ScrollResponse;
     for (const p of body.result?.points ?? []) {
-      if (p.payload?.logicalId && p.payload.fragmentSha256) found.set(p.payload.logicalId, p.payload.fragmentSha256);
+      const { logicalId, fragmentSha256 } = p.payload ?? {};
+      if (!logicalId || !fragmentSha256 || p.id !== pointId(version, logicalId) || found.has(logicalId)) {
+        throw new Error(`Invalid or duplicate point ID in ${version}: ${p.id}`);
+      }
+      found.set(logicalId, fragmentSha256);
     }
     offset = body.result?.next_page_offset;
   } while (offset);
