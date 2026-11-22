@@ -105,7 +105,7 @@ describe("walidacja", () => {
     const values = {
       ...initialValues(def, ctx), rodzic_pesel: "90051212349", dziecko_pesel: "26311000009", drugi_pesel: "44051401359",
       dom: "8", kod: "45-001", miejscowosc: "Opole", miejsce_urodzenia: "Opole", nip: "5250001003",
-      caly_okres: "Tak", rachunek: "PL12 3456 7890 1234 5678 9012 3456",
+      platnik: "ZUS", caly_okres: "Tak", rachunek: "PL12 3456 7890 1234 5678 9012 3456",
     };
     expect(validate(def, values)).toEqual({});
     const { done, total } = progress(def, values);

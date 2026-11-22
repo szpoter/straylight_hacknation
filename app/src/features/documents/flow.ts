@@ -3,10 +3,11 @@
  * (aktualna → szkic/wypełniony → zatwierdzony → wysłano → korekta). Czyste funkcje — testy w
  * tests/documents-flow.test.ts. Przekazanie potwierdza rodzic.
  */
+import { isValidIso } from "@/lib/rules/dates";
 import { OLA } from "@/lib/family/ola";
-import { HANDOFF_RECORDED, isHandoffEntry } from "@/lib/plan/status";
-import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/forms";
-import { formatLong } from "@/lib/demo/dates";
+import { HANDOFF_RECORDED, IN_PERSON_COMPLETED, SIMULATED_HANDOFF } from "@/lib/plan/status";
+import { CHANNEL_LABEL, type Channel, type FormDef, type FormField, type PrefillContext } from "@/lib/demo/form-fields";
+import { formatLong, todayInPoland } from "@/lib/demo/dates";
 import type { CaseEvent, CaseState } from "@/lib/demo/types";
 
 export type Values = Record<string, string>;
@@ -47,9 +48,11 @@ export function allFields(def: FormDef): FormField[] {
 
 /** Wartości startowe: najpierw zapisane przez rodzica, w pustych miejscach podstawione z planu. */
 export function initialValues(def: FormDef, ctx: PrefillContext, saved: Values = {}): Values {
+  // Starsze szkice trzymały imię i nazwisko razem, także gdy nowy druk ma osobne rubryki.
+  const draftContext = { ...ctx, parentName: saved.rodzic?.trim() || ctx.parentName, childName: saved.dziecko?.trim() || ctx.childName };
   const values: Values = {};
   for (const f of allFields(def)) {
-    const prefilled = f.prefill?.(ctx);
+    const prefilled = f.prefill?.(draftContext);
     if (prefilled) values[f.id] = prefilled;
   }
   return { ...values, ...saved };
@@ -103,7 +106,7 @@ export function validateField(field: FormField, raw: string | undefined): string
     case "account":
       return accountError(value);
     case "date":
-      return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? undefined : "Wpisz datę, np. 10.11.2026";
+      return isValidIso(value) ? undefined : "Wpisz datę, np. 10.11.2026";
     case "select":
     case "radio":
       return field.options && !field.options.includes(value) ? "Wybierz jedną z odpowiedzi" : undefined;
@@ -113,8 +116,8 @@ export function validateField(field: FormField, raw: string | undefined): string
 }
 
 /** Błędy widocznych pól (ukryte przez `showIf` nie blokują wniosku). */
-export function validate(def: FormDef, values: Values): Errors {
-  const errors: Errors = {};
+export function validate(def: FormDef, values: Values, today = todayInPoland()): Errors {
+  const errors = { ...def.validate?.(values, today) };
   for (const f of allFields(def)) {
     if (!isVisible(f, values)) continue;
     const error = validateField(f, values[f.id]);
@@ -126,7 +129,8 @@ export function validate(def: FormDef, values: Values): Errors {
 /** Ile wymaganych pól jest już poprawnie uzupełnionych. */
 export function progress(def: FormDef, values: Values): { done: number; total: number } {
   const required = allFields(def).filter((f) => f.required && isVisible(f, values));
-  return { done: required.filter((f) => !validateField(f, values[f.id])).length, total: required.length };
+  const errors = validate(def, values);
+  return { done: required.filter((f) => !errors[f.id]).length, total: required.length };
 }
 
 /** Wartość do ekranu „Sprawdź odpowiedzi”. */
@@ -163,13 +167,15 @@ export function canEdit(state: CaseState): boolean {
   return state === "aktualna" || state === "szkic" || state === "wypelniony" || state === "zatwierdzony" || state === "wezwanie";
 }
 
-/** Ręczny wpis o przekazaniu poza aplikacją. */
+/** Każde przekazanie i korekta mają osobny wpis w historii. */
 export function sendEvents(existing: CaseEvent[] = [], channel: Channel, recipient: string, today: string, correction = false): CaseEvent[] {
-  const history = existing.map(e => isHandoffEntry(e.title)
-    ? { ...e, title: "Poprzedni wpis o przekazaniu", detail: "Wpis dotyczący wcześniejszej wersji wniosku." }
-    : e);
-  return [...history, {
-    date: today, title: HANDOFF_RECORDED, author: "Ty",
-    detail: `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${CHANNEL_LABEL[channel].label}.`,
+  const delivery = CHANNEL_LABEL[channel];
+  const detail = `${correction ? "Korekta wniosku" : "Wniosek"} · ${recipient} · ${delivery.label}.`;
+  if (delivery.mode === "online") {
+    return [...existing, { date: today, title: SIMULATED_HANDOFF, author: "Demo", detail: `${detail} Przykładowe potwierdzenie: ${delivery.receipt}.`, simulatedReceipt: delivery.receipt }];
+  }
+  return [...existing, {
+    date: today, title: delivery.mode === "osobiscie" ? IN_PERSON_COMPLETED : HANDOFF_RECORDED,
+    author: "Ty", detail,
   }];
 }

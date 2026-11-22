@@ -30,6 +30,7 @@ export type FormDef = {
   letter?: (values: Record<string, string>, dateISO: string) => string[];
   buildOfficial?: (values: Record<string, string>, dateISO: string, fonts: ApplicationFonts) => Promise<Uint8Array>;
   validate?: (values: Record<string, string>, todayISO: string) => Record<string, string>;
+  recipientFor?: (values: Record<string, string>, channel: Channel) => string;
   validateChannel?: (values: Record<string, string>, channel: Channel) => Record<string, string>;
   bring?: string;
   sections: FormSection[];
@@ -39,16 +40,17 @@ type Delivery = { mode: "pdf" | "online" | "osobiscie"; label: string; hint: str
 
 export const CHANNEL_LABEL = {
   pue: { mode: "online", label: "eZUS", hint: "Skorzystaj z konta w portalu ZUS.", receipt: "Urzędowe poświadczenie przedłożenia (UPP)" },
+  edoreczenia: { mode: "online", label: "e-Doręczenia", hint: "Skorzystaj ze skrzynki do e-Doręczeń.", receipt: "Dowód wysłania w e-Doręczeniach" },
   mzus: { mode: "online", label: "mZUS", hint: "Skorzystaj z aplikacji mobilnej ZUS.", receipt: "Potwierdzenie złożenia wniosku w mZUS" },
   bank: { mode: "online", label: "Bankowość elektroniczna", hint: "Wybierz wniosek w banku obsługującym świadczenie.", receipt: "Potwierdzenie złożenia wniosku przez bank" },
-  empatia: { mode: "online", label: "Emp@tia", hint: "Skorzystaj z portalu świadczeń dla rodzin.", receipt: "Potwierdzenie złożenia wniosku przez Emp@tię" },
+  empatia: { mode: "online", label: "Emp@tia", hint: "Skorzystaj z portalu świadczeń dla rodzin.", receipt: "UPO w skrzynce Emp@tii" },
   govpl: { mode: "online", label: "Formularz na gov.pl", hint: "Otwórz usługę na portalu gov.pl.", receipt: "Potwierdzenie na skrzynce e-Doręczeń" },
-  mobywatel: { mode: "online", label: "mObywatel", hint: "Wybierz usługę w aplikacji mObywatel.", receipt: "Potwierdzenie zgłoszenia przez mObywatel" },
+  mobywatel: { mode: "online", label: "mObywatel", hint: "Wybierz usługę w aplikacji mObywatel.", receipt: "Potwierdzenie z mObywatela na skrzynce e-Doręczeń" },
   ikp: { mode: "online", label: "Internetowe Konto Pacjenta", hint: "Wybierz deklarację na koncie pacjenta.", receipt: "Zapis deklaracji w IKP" },
   usc: { mode: "osobiscie", label: "Osobiście w USC", hint: "Zabierz dowód osobisty lub paszport do urzędu stanu cywilnego." },
   "usc-papier": { mode: "pdf", label: "Papierowo w USC", hint: "Podpisz wydruk i przekaż go w urzędzie stanu cywilnego." },
   pracodawca: { mode: "pdf", label: "Do pracodawcy (papier)", hint: "Podpisz wydruk i przekaż go do kadr." },
-  email: { mode: "pdf", label: "E-mailem jako PDF", hint: "Przekaż dokument na adres uzgodniony z pracodawcą." },
+  email: { mode: "pdf", label: "E-mailem jako PDF", hint: "Wyślij podpisany dokument na adres uzgodniony z odbiorcą." },
   gmina: { mode: "pdf", label: "W gminie lub OPS", hint: "Złóż podpisany druk w jednostce wyznaczonej przez gminę." },
   poczta: { mode: "pdf", label: "Pocztą", hint: "Wyślij podpisany druk i wymagane załączniki do adresata." },
   przychodnia: { mode: "pdf", label: "W przychodni", hint: "Przekaż podpisaną deklarację wybranej przychodni." },
