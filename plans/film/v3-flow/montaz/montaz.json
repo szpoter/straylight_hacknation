@@ -1,0 +1,290 @@
+{
+  "shots": [
+    {
+      "id": 1,
+      "file": "../robocze/montaz-master/01/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 2,
+      "file": "../robocze/montaz-master/02/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 3,
+      "file": "../robocze/montaz-master/03/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 4,
+      "file": "../robocze/montaz-master/04/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 5,
+      "file": "../robocze/montaz-master/05/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 6,
+      "file": "../robocze/montaz-master/06/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 7,
+      "file": "../robocze/montaz-master/07/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 8,
+      "file": "../robocze/montaz-master/08/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 9,
+      "file": "../robocze/montaz-master/09/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 10,
+      "file": "../robocze/montaz-master/10/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 11,
+      "file": "../robocze/montaz-master/11/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 12,
+      "file": "../robocze/montaz-master/12/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 13,
+      "file": "../robocze/montaz-master/13/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 14,
+      "file": "../robocze/montaz-master/14/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 15,
+      "file": "../robocze/montaz-master/15/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 16,
+      "file": "../robocze/montaz-master/16/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 17,
+      "file": "../robocze/montaz-master/17/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 18,
+      "file": "../robocze/montaz-master/18/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          59
+        ]
+      ],
+      "blank": true
+    },
+    {
+      "id": 19,
+      "file": "../robocze/montaz-master/19/ruch.mp4",
+      "keys": [
+        [
+          0,
+          0
+        ],
+        [
+          52,
+          52
+        ]
+      ],
+      "blank": true
+    }
+  ],
+  "waveMask": "fala-1132.png"
+}

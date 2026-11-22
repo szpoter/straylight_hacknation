@@ -1,4 +1,4 @@
-// node sklad.mjs 720|1080 [wybrane/montaz.json] [output.mp4]
+// node sklad.mjs 720|1080 [montaz/montaz.json] [output.mp4]
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {constants, copyFileSync, writeFileSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync} from 'node:fs';
@@ -10,7 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const height = Number(process.argv[2]);
 assert([720,1080].includes(height), 'Podaj wysokość 720 albo 1080');
 const width = height * 16 / 9;
-const manifest = resolve(here, process.argv[3] ?? 'wybrane/montaz.json');
+const manifest = resolve(here, process.argv[3] ?? 'montaz/montaz.json');
 const out = resolve(here, process.argv[4] ?? `przewodnik-rodzica-B-${height}p.mp4`);
 const sheet = join(dirname(out), `arkusz-B-${height}p.jpg`);
 assert(!existsSync(out) && !existsSync(sheet), 'Wynik lub arkusz już istnieje');

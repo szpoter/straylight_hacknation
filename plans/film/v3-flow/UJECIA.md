@@ -46,18 +46,47 @@ Każdy wiersz to **Frames, 1 próba, do 10 kredytów**. Kolejność bloków daje
 | | 18 | f1020 → f1079 | Lower and rotate the hanging shoe until the entire sole lands 30 percent into the shot. Only then release the heel. Paweł pinches the short edge of the form and anchors the remaining stack with the opposite elbow. Leave the next sheet peeking from under the sleeve. |
 | | 19 | f1080 → f1132 | From the same sofa angle, Paweł pulls the pinched form. The next page slips from under his elbow, catches a second corner and sends the stack fanning across both laps. Marta reaches from below and just misses. End sharply on the supplied wave crest with both faces visible. Keep the centre clear for the mascot added in the edit. |
 
-## Próby i odbiór
 
-Pierwsza seria. Pobrane klipy noszą nazwy `surowe/NN-p1.mp4`. Ujęcie 11 otrzymało w Flow komunikat „Audio generation failed” i zwrot 10 kredytów. Pozostałe 18 klipów pobrano w oryginalnym 720p. Po każdym wyniku zapisać tu numer ujęcia i próby, nazwę pobranego pliku w `surowe/`, koszt, decyzję i konkretny powód. Obejrzeć przy 1× z miksem i klatka po klatce. Sprawdzić twarz względem ilustracji rodziny i obu nowych kadrów, ubranie, liczbę i zasłanianie palców, styk dłoni, sztywność rekwizytu i płaski styl. Po trzech nieudanych próbach danego ujęcia zatrzymać pracę nad nim.
+## Montaż końcowy
 
-W montażu kontrolować chwyt w kl. 65, „Chyba tak” przy 10,85 s (najbliższa kl. 326), biodro 508 i zatrzymanie kół 514, sygnał 606, „do jutra” przy okienku, teczkę 846 i but 1038. W 19 klik wypada na 1132, oryginalny Zusik wchodzi od 1133. Od 1140 do 1799 włącznie źródłem jest A w rozdzielczości montażu. Po odbiorze wszystkich prób obejrzeć całe B z miksem, osobno cięcia oraz styk 37,7–38 s, potem wyciszony obraz o szerokości 360 px. W raporcie dopisać URL projektu, faktyczny model, koszt i najmocniejsze oraz najsłabsze ujęcie.
+Na prośbę Juliana usunęliśmy z całej historii lokalne napisy, również z druków i wyświetlacza. Czyszczenie obrazu obejmuje pozorny nagłówek wygenerowany w 05 oraz słowo na ścianie w 08. Napisy w poradniku od klatki 1140 są częścią oryginalnej animacji.
 
-## Skład po wyborze prób
+W tabeli numer próby oznacza plik `surowe/NN-p1.mp4`. Każdy z 18 udanych wyników kosztował 10 kredytów. Odrzucone zlecenie 11 kosztowało 0 po zwrocie. Bilans całej serii wyniósł **19 zleceń, 18 pobranych filmów, 180 kredytów netto i 70 kredytów na koncie po serii**. Model wideo to Google Flow, Veo 3.1 Lite, Frames to Video. Ilustracje wejściowe przygotowano z pomocą ImageGen.
 
-W pliku `wybrane/montaz.json` zapisz tablicę `shots` w kolejności 01–19 oraz `waveMask` ze ścieżką do maski z rzeczywistej klatki kliku. Białe pola maski oznaczają widoczną falę papierów, czarne oznaczają tło i rodziców. Wszystkie ścieżki w tym pliku są względne wobec niego. Przykładowy wpis ujęcia 02 ma postać `{"id":2,"file":"../surowe/02-p1.mp4","keys":[[0,0],[5,18],[59,239]],"blank":true}`. Liczby źródłowe w przykładzie są ilustracyjne. Po wybraniu dubla zmierz je na materiale przeliczonym do 30 kl./s.
+| Ujęcie | Wykorzystany materiał | Decyzja montażowa |
+|---|---|---|
+| 01 | 01, próba 1 | Rodzice pochylają się nad Olą. Ich spojrzenia prowadzą do dłoni. |
+| 02 | 02, próba 1 | Pierwszy kontakt przypada na klatkę 65. Błysk migawki łączy chwyt z nieruchomą fotografią. |
+| 03 | 02 i 03, próby 1 | Odjazd od zdjęcia do tej samej fotografii na teczce. Ruch kamery złożono z dwóch klatek Flow po odrzuceniu przenikania postaci. |
+| 04 | 04, próba 1 | W szerokim planie widać ułożenie rąk na wózku i obrót Marty do Pawła. |
+| 05 | 05, próba 1 | Kartka wysuwa się z teczki. Oczyszczono pole nagłówka. |
+| 06 | 06, próba 1 | Krótka reakcja Pawła przypada na kwestię „Chyba tak”. |
+| 07 | 07, próba 1 | Marta pochyla się nad wózkiem, Paweł trzyma formularz w kadrze. |
+| 08 | 08, próba 1 | Powrót spojrzenia na Pawła. Oczyszczono ścianę za Martą. |
+| 09 | 09, próba 1 | Koła zatrzymują się przy Pawle. Sam kontakt wózka z biodrem jest słabo widoczny. |
+| 10 | 10, próba 1 | Detal dłoni, druku i zdjęcia dziecka na teczce. |
+| 11 | początek 12, próba 1 | Osobne zlecenie 11 zakończyło się błędem audio. Odcinek pokazuje kolejkę i podanie kartki. Brakuje gestu złapania spadającego arkusza przez Martę. |
+| 12 | dalszy ciąg 12, próba 1 | Podanie kartki prowadzi do zbliżenia tej samej pracownicy. Skrócono szeroki plan z drugą postacią przy okienku. |
+| 13 | 13, próba 1 | Ruch palca pracownicy prowadzi wzrok na odpowiednie pole druku. |
+| 14 | 14, próba 1 | Gest pracownicy i przekazanie kartki towarzyszą słowom „do jutra”. |
+| 15 | 15, próba 1 | Teczka dotyka kanapy w klatce 846. Rodzice siadają osobno. |
+| 16 | 16, próba 1 | Marta rozkłada kartki na kolanach. |
+| 17 | 17, próba 1 | Paweł zdejmuje but, teczka i kartki zostają na kanapie. |
+| 18 | 18, próba 1 | Opadnięcie buta przypada na klatkę 1038. |
+| 19 | 19, próba 1 | Cięcie poprzedza pojawienie się obcej maskotki w generacji. Fala zatrzymuje się na 1132, oryginalny Zusik wchodzi na 1133. Od 1140 rozpoczyna się obraz A. |
 
-Pierwsza liczba w parze to klatka montażu, druga to klatka pobranego klipu. Pierwsza para ustawia wejście, ostatnia wyjście, pośrednie wyrównują kontakt z efektem lub sylabą. Lokalnie kończymy w 59, a falę w 52. Ujęcie z czytelnym drukiem otrzymuje pole `titles` ze ścieżką do 60-klatkowej przezroczystej warstwy wideo 30 kl./s, np. ProRes 4444. Pozycję i perspektywę liter śledzimy na wybranym, już dopasowanym czasowo dublu. Przy zasłonięciu przez dłoń maskujemy odpowiednią część warstwy. Na klatkach 19/52–59 napisy również stoją. Oznaczenie `blank: true` jest dla ujęć bez czytelnego tekstu.
+## Odtworzenie eksportu
 
-W 05–06 śledzimy „URLOP” i „ZASIŁEK”, w 10 również „POTWIERDZENIE”, „Okres”, „Podstawa” i „Data wpływu”. Wyświetlacz w 11 zmienia A16 na A17 w klatce 6. W 12–14 tytuł druku, data „11.01.2027” i dopisek „do jutra” muszą podążać za drukiem, dopisek odsłaniamy pod stalówką. W 16–19 każdy widoczny nagłówek podąża za własną kartką. W pozostałych kadrach sprawdzamy widoczność druku i wyświetlacza na wybranej próbie.
+Polecenia uruchamia się w `plans/film/v3-flow`. W katalogu `surowe/` muszą być pobrane oryginały z projektu Flow. Skład korzysta z istniejących renderów A i miksu `../v3/media/miks.flac`. Skrypt Pythona wymaga NumPy, OpenCV i lokalnego FFmpeg.
 
-Uruchom `node sklad.mjs 720` z katalogu v3-flow. Po odbiorze uruchom `node sklad.mjs 1080`. Skrypt ignoruje dźwięk klipów, używa miksu v3 i porównuje piksele całego poradnika z A przed zapisem pliku. Arkusze mają pięć kolumn i sześć wierszy, po jednej klatce ze środka każdego ujęcia, od lewej do prawej.
+```sh
+python3 montaz/przygotuj.py
+node sklad.mjs 720 montaz/montaz.json
+node sklad.mjs 1080 montaz/montaz.json
+```
+
+Skrypt chroni istniejący eksport. Czwarty argument pozwala skierować film i arkusz do innego katalogu. Plik `montaz/montaz.json` zawiera 19 pozycji bez żadnej warstwy napisów. Maska `montaz/fala-1132.png` zachowuje ostrość papierów w chwili kliku. Ujęcia Flow mają natywne 1280 × 720. W eksporcie Full HD zostały przeskalowane filtrem Lanczos, a poradnik pochodzi z renderu A w 1920 × 1080. Każdy MP4 zawiera 1800 klatek przy 30 kl./s. Skład porównuje piksele wszystkich 660 klatek poradnika z A, włącznie z klatką 1799.
+
+Najczytelniejsze fragmenty to chwyt dłoni w 02, gest przy okienku w 13 i stuk teczki w 15. Poza ujęciem zastępczym 11 najsłabiej czyta się zatrzymanie wózka biodrem w 09. Na szerokości 360 px układ rodziny, dokumentów i Zusika jest czytelny. Drobny tekst ekranów aplikacji wymaga większego obrazu.
+
+Wersja do montażu to `przewodnik-rodzica-B-master-1080p.mov`, Apple ProRes 422 HQ z dźwiękiem PCM 48 kHz ze źródłowego miksu. Pliki MP4 wersji A i B mają identyczny ciąg pakietów AAC. Najdrobniejsze elementy ujęć Flow ogranicza rozdzielczość oryginałów. Odbiór poszczególnych prób wykonano na arkuszach oraz na wybranych klatkach gestów. Pełny ręczny przegląd każdej klatki wszystkich surowych dubli pozostaje niepotwierdzony.
