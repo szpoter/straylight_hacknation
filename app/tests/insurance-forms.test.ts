@@ -17,7 +17,7 @@ const template = asset("zam-2026-10-24.pdf");
 const fonts = { regular: asset("fonts/DejaVuSans.ttf"), bold: asset("fonts/DejaVuSans-Bold.ttf") };
 const options = { recipient: "Do pracodawcy", date: "2026-11-22" };
 const values = {
-  rodzic: "Łucja Nowak-Lis", identyfikator: "PESEL", rodzic_pesel: "90051212349", drugi_rodzic: "Michał Lis",
+  rodzic: "Łucja Nowak-Lis", identyfikator: "PESEL", rodzic_pesel: "90051212349", rodzic_data: "1990-05-12", drugi_rodzic: "Michał Lis",
   drugi_id: "PESEL", drugi_pesel: "44051401359", dziecko: "Róża Lis", dziecko_pesel: "26311000009",
   pesel_nadany: "Tak", data_urodzenia: "2026-11-10", miejsce_urodzenia: "Łódź", caly_okres: "Tak",
   od: "2026-11-10", liczba_dzieci: "1", pracodawca: "Drukarnia Łódź", platnik: "ZUS", nip: "5250001003",
@@ -113,11 +113,14 @@ it("checks the 21-day deadline with weekends and holidays, periods and sibling d
 });
 
 it("addresses direct ZUS delivery only to the benefit payer and e-mail only to the employer", () => {
-  for (const channel of zam.channels) expect(zam.validateChannel?.(values, channel)).toEqual({});
+  for (const channel of zam.channels.filter(c => c !== "email")) expect(zam.validateChannel?.(values, channel)).toEqual({});
+  expect(zam.validateChannel?.(values, "email")?.platnik).toMatch(/kopia.*podpisany wydruk/);
+  expect(zam.validateChannel?.({ ...values, platnik: "Pracodawca" }, "email")).toEqual({});
   for (const channel of ["pue", "zus", "edoreczenia"] as const) expect(zam.validateChannel?.({ ...values, platnik: "Pracodawca" }, channel)).toHaveProperty("platnik");
   expect(zam.recipientFor?.(values, "edoreczenia")).toContain(values.zus_ade);
   expect(zam.recipientFor?.(values, "email")).toBe("Drukarnia Łódź · kadry@example.test");
   expect(zam.recipientFor?.(values, "poczta")).toContain("Zakład Ubezpieczeń Społecznych · " + values.adres_pocztowy);
+  for (const channel of letter.channels) expect(letter.validateChannel?.(values, channel)).toEqual({});
   expect(letter.validateChannel?.({ ...values, email_kadr: "" }, "email")).toHaveProperty("email_kadr");
   expect(letter.recipientFor?.(values, "poczta")).toContain(values.pracodawca);
   expect(letter.channels).not.toContain("pue");
@@ -125,11 +128,36 @@ it("addresses direct ZUS delivery only to the benefit payer and e-mail only to t
 
 it("prints the employee's signed-letter layout with actual dates, address and attachments", async () => {
   expect(validate(letter, values, options.date)).toEqual({});
+  expect(validate(letter, { ...values, rodzic_data: "" }, options.date)).toHaveProperty("rodzic_data");
   expect(validate(letter, { ...values, wymaga_zgloszenia: "Nie" }, options.date)).toHaveProperty("wymaga_zgloszenia");
   const pages = await pdfText(await renderFormPdf(letter, values, options, fonts));
   expect(pages).toHaveLength(1);
   const content = pages[0].map(i => i.str).join(" ").replace(/\s+/g, " ");
   for (const expected of [values.rodzic, values.pracodawca, "22 listopada 2026", values.dziecko_pesel,
-    values.adres_dziecka, "10.11.2026", values.zalaczniki, "podpis wnioskodawcy"]) expect(content).toContain(expected);
+    values.adres_dziecka, "10.11.2026", "12.05.1990", "Dziecko własne (kod 11)", "brak (kod 0)", values.zalaczniki, "podpis wnioskodawcy"]) expect(content).toContain(expected);
   expect(letter.letter?.({ ...values, ten_sam_adres: "Tak" }, options.date).join(" ")).not.toContain(values.adres_dziecka);
+});
+
+it.each([
+  ["Dziecko własne", "11"], ["Dziecko przysposobione", "11"], ["Dziecko małżonka", "11"],
+  ["Wnuk lub wnuczka", "21"], ["Dziecko w rodzinie zastępczej", "21"],
+  ["Dziecko objęte opieką prawną", "21"], ["Dziecko w rodzinnym domu dziecka", "21"],
+])("includes the ZCNA kinship code for %s", (pokrewienstwo, code) => {
+  const v = { ...values, pokrewienstwo, rodzice_bez_ubezpieczenia: "Tak" };
+  expect(validate(letter, v, options.date)).toEqual({});
+  expect(letter.letter?.(v, options.date).join(" ")).toContain(pokrewienstwo + " (kod " + code + ")");
+  const errors = validate(letter, { ...v, rodzice_bez_ubezpieczenia: "Nie" }, options.date);
+  expect(Boolean(errors.rodzice_bez_ubezpieczenia)).toBe(pokrewienstwo === "Wnuk lub wnuczka");
+});
+
+it.each([
+  ["Orzeczenie dla dziecka poniżej 16 lat", "4"], ["Stopień lekki", "1"], ["Stopień umiarkowany", "2"], ["Stopień znaczny", "3"],
+])("uses the certificate type %s for a child with a disability ruling", (rodzaj_orzeczenia, code) => {
+  const v = { ...values, orzeczenie: "Dziecko ma orzeczenie o niepełnosprawności", rodzaj_orzeczenia };
+  expect(validate(letter, { ...v, rodzaj_orzeczenia: "" }, options.date)).toHaveProperty("rodzaj_orzeczenia");
+  const errors = validate(letter, v, options.date);
+  expect(Boolean(errors.rodzaj_orzeczenia)).toBe(code !== "4");
+  if (code !== "4") expect(validate(letter, { ...v, data_urodzenia: "2010-11-22" }, options.date)).toEqual({});
+  expect(letter.letter?.(v, options.date).join(" ")).toContain(rodzaj_orzeczenia + " (kod " + code + ")");
+  expect(letter.letter?.({ ...values, rodzaj_orzeczenia }, options.date).join(" ")).toContain("brak (kod 0)");
 });

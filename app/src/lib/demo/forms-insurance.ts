@@ -1,4 +1,4 @@
-import { formatShort, isValidIso } from "../rules/dates";
+import { addMonths, formatShort, isValidIso } from "../rules/dates";
 import { averagedDeadline, maternityEnd } from "../forms/maternity-period";
 import { birth, child, childPesel, employer, parent, parentPesel, payout, YES_NO, type Channel, type FormDef, type FormField } from "./form-fields";
 
@@ -12,6 +12,16 @@ const idType = (id: string, label: string): FormField => ({
 });
 const city = text("miejscowosc", "Miejscowość");
 const familyName = /\S+\s+\S+/;
+const grandchild = "Wnuk lub wnuczka";
+const kinshipCodes: Record<string, string> = {
+  "Dziecko własne": "11", "Dziecko małżonka": "11", "Dziecko przysposobione": "11",
+  "Dziecko w rodzinie zastępczej": "21", "Dziecko objęte opieką prawną": "21",
+  "Dziecko w rodzinnym domu dziecka": "21", [grandchild]: "21",
+};
+const hasCertificate = "Dziecko ma orzeczenie o niepełnosprawności";
+const certificateCodes: Record<string, string> = {
+  "Orzeczenie dla dziecka poniżej 16 lat": "4", "Stopień lekki": "1", "Stopień umiarkowany": "2", "Stopień znaczny": "3",
+};
 const zamAttachments = "Gdy zasiłek wypłaca pracodawca, dołącz skrócony odpis aktu urodzenia. Gdy płaci ZUS, pracodawca przekazuje Z-3, a ZUS pobiera polski akt z rejestru. W razie wezwania dostarcz odpis.";
 const deliveryFields = [
   text("email_kadr", "Adres e-mail uzgodniony z kadrami (dla wysyłki e-mailem)", false),
@@ -41,7 +51,11 @@ export const insuranceForms: Record<string, FormDef> = {
     name: "Wniosek o zasiłek macierzyński (ZAM)",
     fidelity: "Druk ZUS z 24.10.2026 r. dla pracownicy po porodzie w Polsce. Gdy płaci pracodawca, przekaż wniosek kadrom. Gdy płaci ZUS, możesz go złożyć za pośrednictwem kadr lub bezpośrednio w ZUS, także przez eZUS lub e-Doręczenia. " + zamAttachments,
     channels: [...workplace, "pue", "zus", "edoreczenia"], pdf: "official",
-    recipientFor: recipient, validateChannel: deliveryErrors,
+    recipientFor: recipient,
+    validateChannel(v, channel) {
+      if (channel === "email" && v.platnik === "ZUS") return { platnik: "E-mail do kadr może służyć jako kopia. Aby złożyć wniosek, przekaż kadrom własnoręcznie podpisany wydruk albo złóż podpisany ZAM bezpośrednio w ZUS, przez eZUS lub e-Doręczenia." };
+      return deliveryErrors(v, channel);
+    },
     buildOfficial: async (v, day, fonts) => (await import("../forms/maternity-zam")).buildMaternityZam(v, day, fonts),
     sections: [
       { id: "ty", title: "Twoje dane i płatnik składek", fields: [
@@ -52,7 +66,7 @@ export const insuranceForms: Record<string, FormDef> = {
         text("ulica", "Ulica (jeśli jest)", false), text("dom", "Numer domu"), text("lokal", "Numer lokalu (jeśli jest)", false),
         text("kod", "Kod pocztowy"), city, text("panstwo", "Państwo (jeśli adres jest za granicą)", false),
         employer, { ...text("nip", "NIP pracodawcy"), hint: "10 cyfr" },
-        { id: "platnik", label: "Kto wypłaca Ci zasiłek?", type: "radio", required: true, options: ["ZUS", "Pracodawca"], hint: "Sprawdź w kadrach. Zwykle płaci ZUS przy najwyżej 20 ubezpieczonych, a przy większej liczbie pracodawca." },
+        { id: "platnik", label: "Kto wypłaca Ci zasiłek?", type: "radio", required: true, options: ["ZUS", "Pracodawca"], hint: "Sprawdź w kadrach. Zwykle płaci ZUS przy najwyżej 20 ubezpieczonych. Jeśli płaci pracodawca, możesz użyć uzgodnionej poczty firmowej lub przekazać skan podpisanego wniosku. Jeśli płaci ZUS, e-mail do kadr służy jako kopia." },
         ...deliveryFields,
         { ...text("zus_ade", "Adres do e-Doręczeń oddziału ZUS (dla tej drogi wysyłki)", false), showIf: only("platnik", "ZUS"), hint: "Skopiuj adres oddziału ZUS z Bazy Adresów Elektronicznych. Wniosek podpisz elektronicznie." },
       ] },
@@ -102,19 +116,21 @@ export const insuranceForms: Record<string, FormDef> = {
 
   "ubezpieczenie-dziecka": {
     name: "Wniosek do pracodawcy o zgłoszenie dziecka do ubezpieczenia zdrowotnego",
-    fidelity: "Przekaż dane kadrom w ciągu 7 dni od nadania PESEL noworodkowi. Pracodawca zgłasza dziecko do ZUS na druku ZCNA. Wystarczy zgłoszenie przez jednego rodzica.",
+    fidelity: "Przekaż dane kadrom w ciągu 7 dni od powstania obowiązku zgłoszenia. Dla noworodka pacjent.gov.pl wskazuje 7 dni od nadania PESEL. Wystarczy zgłoszenie przez jedną uprawnioną osobę. Kadry mają 7 dni od otrzymania informacji na złożenie ZCNA. Przy papierowym ZCNA podpisz także jego blok VII. Zgłoszenie sprawdzisz w mZUS w sekcji „Ubezpieczenia i składki” lub w eZUS w panelu ubezpieczonego w danych o ubezpieczeniu zdrowotnym.",
     channels: [...workplace], pdf: "letter",
     recipientFor: (v, channel) => recipient({ ...v, platnik: "Pracodawca" }, channel), validateChannel: deliveryErrors,
     sections: [
-      { id: "ty", title: "Ubezpieczony rodzic i pracodawca", fields: [parent(), parentPesel, employer, city, ...deliveryFields] },
+      { id: "ty", title: "Twoje dane i pracodawca", fields: [parent(), parentPesel, date("rodzic_data", "Twoja data urodzenia"), employer, city, ...deliveryFields] },
       { id: "dziecko", title: "Dane do zgłoszenia", fields: [
         child, childPesel, birth,
-        { ...date("uprawnienie_od", "Data uzyskania prawa do ubezpieczenia"), prefill: c => c.birthDate, hint: "Dla dziecka rodzica ubezpieczonego w dniu porodu podaj dzień urodzenia." },
-        { id: "pokrewienstwo", label: "Pokrewieństwo lub podstawa opieki", type: "select", required: true, options: ["Dziecko własne", "Dziecko małżonka", "Dziecko przysposobione", "Dziecko w rodzinie zastępczej", "Dziecko objęte opieką prawną"], prefill: () => "Dziecko własne" },
+        { ...date("uprawnienie_od", "Data uzyskania uprawnień"), prefill: c => c.birthDate, hint: "Sprawdź z kadrami, od którego dnia dziecko spełnia warunki zgłoszenia." },
+        { id: "pokrewienstwo", label: "Pokrewieństwo lub podstawa opieki", type: "select", required: true, options: Object.keys(kinshipCodes), prefill: () => "Dziecko własne" },
+        { ...yesNo("rodzice_bez_ubezpieczenia", "Czy oboje rodzice spełniają warunki zgłoszenia wnuka przez dziadków?"), showIf: only("pokrewienstwo", grandchild), hint: "Żadne z rodziców nie może mieć obowiązkowego ani dobrowolnego ubezpieczenia zdrowotnego ani prawa do świadczeń na podstawie przepisów o koordynacji z tytułu pracy lub działalności na własny rachunek." },
         yesNo("gospodarstwo", "Czy dziecko pozostaje z Tobą we wspólnym gospodarstwie domowym?"),
         yesNo("ten_sam_adres", "Czy dziecko mieszka pod tym samym adresem co Ty?"),
         { id: "adres_dziecka", label: "Adres zamieszkania dziecka z kodem pocztowym", type: "textarea", required: true, showIf: only("ten_sam_adres", "Nie") },
-        { id: "orzeczenie", label: "Orzeczenie o niepełnosprawności dziecka", type: "select", required: true, options: ["Brak orzeczenia", "Dziecko ma orzeczenie o niepełnosprawności"] },
+        { id: "orzeczenie", label: "Orzeczenie o niepełnosprawności dziecka", type: "select", required: true, options: ["Brak orzeczenia", hasCertificate] },
+        { id: "rodzaj_orzeczenia", label: "Rodzaj ważnego orzeczenia", type: "select", required: true, options: Object.keys(certificateCodes), showIf: only("orzeczenie", hasCertificate) },
         yesNo("wymaga_zgloszenia", "Czy dziecko wymaga zgłoszenia (nie ma własnego tytułu do ubezpieczenia i nie jest już zgłoszone przez inną osobę)?"),
         { id: "zalaczniki", label: "Dołączane dokumenty (jeśli dołączasz)", type: "textarea", hint: "Wymień tylko dokumenty, które rzeczywiście przekazujesz kadrom." },
       ] },
@@ -123,6 +139,10 @@ export const insuranceForms: Record<string, FormDef> = {
       const errors: Record<string, string> = {};
       if (v.dziecko && !familyName.test(v.dziecko.trim())) errors.dziecko = "Wpisz imię i nazwisko dziecka.";
       if (v.data_urodzenia > today) errors.data_urodzenia = "Zgłoszenie dotyczy urodzonego dziecka.";
+      if (v.rodzic_data > today) errors.rodzic_data = "Podaj datę urodzenia osoby ubezpieczonej.";
+      if (v.orzeczenie === hasCertificate && ["1", "2", "3"].includes(certificateCodes[v.rodzaj_orzeczenia]) && isValidIso(v.data_urodzenia) && addMonths(v.data_urodzenia, 16 * 12) > today)
+        errors.rodzaj_orzeczenia = "Dla dziecka poniżej 16 lat wybierz orzeczenie bez stopnia niepełnosprawności.";
+      if (v.pokrewienstwo === grandchild && v.rodzice_bez_ubezpieczenia === "Nie") errors.rodzice_bez_ubezpieczenia = "Dziadkowie mogą zgłosić wnuka tylko wtedy, gdy oboje rodzice spełniają podane warunki.";
       if (v.wymaga_zgloszenia === "Nie") errors.wymaga_zgloszenia = "Dziecko już ubezpieczone nie potrzebuje kolejnego zgłoszenia.";
       if (v.uprawnienie_od && (v.uprawnienie_od < v.data_urodzenia || v.uprawnienie_od > today)) errors.uprawnienie_od = "Podaj datę między urodzeniem dziecka a dniem zgłoszenia.";
       return errors;
@@ -131,13 +151,13 @@ export const insuranceForms: Record<string, FormDef> = {
       const show = (value: string | undefined) => value || "……………………";
       const day = (value: string) => value ? formatShort(value) : show(value);
       return [
-        "Mój numer PESEL: " + show(v.rodzic_pesel?.replace(/[\s-]/g, "")) + ".",
+        "Moja data urodzenia: " + day(v.rodzic_data) + ". Mój numer PESEL: " + show(v.rodzic_pesel?.replace(/[\s-]/g, "")) + ".",
         "Proszę o zgłoszenie dziecka do ubezpieczenia zdrowotnego jako członka mojej rodziny od " + day(v.uprawnienie_od) + ".",
         "Dane dziecka\n" + show(v.dziecko) + ", ur. " + day(v.data_urodzenia) + ", PESEL " + show(v.dziecko_pesel?.replace(/[\s-]/g, "")) + ".",
         ...(v.wymaga_zgloszenia === "Tak" ? ["Oświadczam, że dziecko nie ma własnego tytułu do ubezpieczenia zdrowotnego i nie zostało zgłoszone do ubezpieczenia przez inną osobę."] : []),
-        "Pokrewieństwo lub podstawa opieki: " + show(v.pokrewienstwo) + ". Wspólne gospodarstwo domowe: " + show(v.gospodarstwo) + ".",
+        "Pokrewieństwo lub podstawa opieki: " + show(v.pokrewienstwo) + " (kod " + show(kinshipCodes[v.pokrewienstwo]) + "). Wspólne gospodarstwo domowe: " + show(v.gospodarstwo) + ".",
         "Adres zamieszkania dziecka: " + (v.ten_sam_adres === "Tak" ? "taki sam jak mój." : show(v.adres_dziecka) + "."),
-        "Orzeczenie o niepełnosprawności: " + show(v.orzeczenie) + ".",
+        "Orzeczenie o niepełnosprawności: " + (v.orzeczenie === "Brak orzeczenia" ? "brak (kod 0)" : show(v.rodzaj_orzeczenia) + " (kod " + show(certificateCodes[v.rodzaj_orzeczenia]) + ")") + ".",
         "Załączniki: " + (v.zalaczniki?.trim() || "brak") + ".",
       ];
     },
