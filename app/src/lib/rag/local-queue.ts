@@ -5,7 +5,7 @@ import type { Corpus, Fragment } from "./corpus";
 import { corpusNames, loadCorpus } from "./corpus-fs";
 import { corpusKeywords } from "./corpus-search";
 import { publicQuestion } from "./public-query";
-import { checkedTaskOutput, publicTaskInput, taskSpecs, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
+import { checkedTaskOutput, publicTaskInput, taskInstructions, taskSpecs, TYPED_CONTEXT_TOKENS, type ModelTaskKind, type PublicTaskInput } from "./model-tasks";
 import { modelForTask } from "../zusik/model-provider";
 
 /** Verify against shipped public material at the last boundary before persistence. */
@@ -81,8 +81,11 @@ export function publicTaskPrompt(raw: PublicTaskInput) {
     material.set(id, found[0]);
   }
   const candidates = input.candidates.map(id => ({ id, text: material.get(id)?.sourceText }));
-  return input.kind === "plan_public" ? JSON.stringify({ aspect: input.aspect, missing: input.missing, previousUnit: input.previousUnit, candidates })
+  const prompt = input.kind === "plan_public" ? JSON.stringify({ aspect: input.aspect, missing: input.missing, previousUnit: input.previousUnit, candidates })
     : JSON.stringify({ aspect: input.aspect, claim: material.get(input.claimUnit)?.sourceText, candidates });
+  // UTF-8 bytes conservatively bound byte-level tokens. Reserve space for template and output.
+  const bytes = Buffer.byteLength(taskInstructions[input.kind]) + Buffer.byteLength(prompt);
+  return bytes + taskSpecs[input.kind].tokens + 256 <= TYPED_CONTEXT_TOKENS ? prompt : null;
 }
 
 /** A supplementary call spends only the caller's remaining budget; all failures return control to the graph. */

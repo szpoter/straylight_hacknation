@@ -13,8 +13,8 @@ export const ASK_MAX_OUTPUT_TOKENS = 700;
 export const NO_BASIS_MESSAGE =
   "Nie znalazłem w tych źródłach podstawy, żeby na to odpowiedzieć. To nie znaczy, że takie prawo nie istnieje.";
 
-export { modelAnswerSchema, type ModelAnswer } from "./model-tasks";
-import { modelAnswerSchema, type ModelAnswer } from "./model-tasks";
+export { balanceJsonBrackets, modelAnswerSchema, parseModelAnswer, type ModelAnswer } from "./model-tasks";
+import { parseModelAnswer, type ModelAnswer } from "./model-tasks";
 
 export const SYSTEM_PROMPT = [
   "Jesteś Zusikiem, asystentem rodzica w Polsce.",
@@ -42,52 +42,6 @@ export function buildPrompt(corpus: Corpus, question: string, evidence: Fragment
     return `[ID: ${f.logicalId}] ${doc?.shortTitle ?? ""}, ${f.locator} · temat: ${f.context}\n"""${f.sourceText}"""`;
   });
   return `Pytanie rodzica:\n"""${question}"""\n\nFragmenty źródłowe:\n${blocks.join("\n\n")}\n\n${ANSWER_INSTRUCTION}`;
-}
-
-/**
- * Bielik sometimes emits unbalanced brackets in compact JSON (e.g. `]}}]}}`).
- * Outside string literals: drop closers that do not match the open bracket, append missing closers.
- * Content is never invented; Zod and the citation validator still check everything.
- */
-export function balanceJsonBrackets(json: string): string {
-  const stack: string[] = [];
-  let out = "";
-  let inString = false;
-  let escaped = false;
-  for (const ch of json) {
-    if (inString) {
-      out += ch;
-      if (escaped) escaped = false;
-      else if (ch === "\\") escaped = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-    if (ch === '"') inString = true;
-    else if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
-    else if (ch === "}" || ch === "]") {
-      if (stack[stack.length - 1] !== ch) continue;
-      stack.pop();
-    }
-    out += ch;
-  }
-  return inString ? out : out + stack.reverse().join("");
-}
-
-/** Bielik may wrap JSON in prose or code fences; take the outermost object. */
-export function parseModelAnswer(raw: string): ModelAnswer | null {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) return null;
-  const candidate = raw.slice(start, end + 1);
-  for (const text of [candidate, balanceJsonBrackets(candidate)]) {
-    try {
-      const parsed = modelAnswerSchema.safeParse(JSON.parse(text));
-      if (parsed.success) return parsed.data;
-    } catch {
-      // try the repaired variant
-    }
-  }
-  return null;
 }
 
 /** Typographic quote marks are equivalent for matching („Za życiem” vs "Za życiem"). */

@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import type { Pool } from "pg";
 import { loadCorpus } from "../src/lib/rag/corpus-fs";
 import { localCompletion, publicQueueEvidence, publicTaskPrompt, runPublicModelTask } from "../src/lib/rag/local-queue";
+import { taskGrammar } from "../src/lib/rag/model-tasks";
 import { publicQuestion } from "../src/lib/rag/public-query";
 import { localRagModel, modelForTask } from "../src/lib/zusik/model-provider";
 
@@ -56,6 +57,7 @@ it("checks structural outputs and evidence membership before returning the model
   try {
     for (const [raw,status] of [[JSON.stringify(good),"ok"],["{","invalid_output"],
       [JSON.stringify({...good,nextTool:"other"}),"invalid_output"],
+      [JSON.stringify({...good,nextTool:"prepareDraft"}),"invalid_output"],
       [JSON.stringify({...good,evidenceIds:["private"]}),"invalid_output"]] as const) {
       const client = {query:vi.fn(async () => ({rows:[{started:true,done:true,output:raw}]})),release:vi.fn()};
       const db={connect:async()=>client} as unknown as Pool;
@@ -77,4 +79,11 @@ it("exhausts a turn budget even when acquiring the Neon connection stalls", asyn
   await open.promise;
   expect(client.query).not.toHaveBeenCalled();
   expect(client.release).toHaveBeenCalledOnce();
+});
+
+it("constrains Ollama's grammar to the current public fragment IDs and missing fields", () => {
+  const schema = taskGrammar("plan_public", { candidates:[{id:"zlobek-odbiorca"}], missing:[] });
+  expect(schema.properties?.evidenceIds).toMatchObject({items:{enum:["zlobek-odbiorca"]}});
+  expect(schema.properties?.requiredFacts).toMatchObject({maxItems:0});
+  expect(taskGrammar("verify_claim", {candidates:[]}).properties?.evidenceIds).toMatchObject({maxItems:0});
 });
