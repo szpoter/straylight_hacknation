@@ -127,6 +127,7 @@
   justify-content: flex-end;
   gap: 8px;
   width: 100%;
+  padding-top: 24px;
   will-change: transform, opacity;
 }
 
@@ -181,9 +182,13 @@
 
 /* Plain: zawsze widoczne (także po przełączeniu z trybu liquid, który ustawia opacity w stylu) */
 .stage[data-mode="plain"] .dialog {
+  position: relative;
   opacity: 1 !important;
   animation: dialog-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+.stage[data-mode="plain"] .grid[inert] { display: none; }
+.stage[data-mode="plain"] .close { position: static; align-self: flex-end; }
 
 .close {
   position: absolute;
@@ -255,7 +260,11 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (max-width: 399px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 960px) {
   .title {
     font-size: var(--type-headline-size);
     line-height: 1;

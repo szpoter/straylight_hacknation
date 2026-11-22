@@ -32,7 +32,7 @@ export function CasePdf({ onBasis }: { onBasis?: (amount: string) => void }) {
 
   const candidates = basisCandidates(pages);
   return <div className="grid min-w-0 gap-3">
-    <label className="grid gap-1">Odczytaj dokument PDF na tym urządzeniu
+    <label className="grid min-w-0 grid-cols-1 gap-1">Odczytaj dokument PDF na tym urządzeniu
       <input type="file" accept=".pdf,application/pdf" className="max-w-full" onChange={event => void read(event.target.files?.[0])} />
     </label>
     <p role="status">{notice}</p>
