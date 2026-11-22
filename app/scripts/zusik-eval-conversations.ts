@@ -18,6 +18,10 @@ const cases: Trial[][] = [
    { question: "A jak lekarz ma to poświadczyć?", fragment: "uz-53-2",
      facts: [/zaświadczen/iu, /zwykł/iu], contextual: true }],
   [{ question: "W którym terminie ZUS odpowiada na reklamację hulajnogi?" }],
+  [{ question: "Czy na zwolnieniu wolno podejmować pracę zarobkową?", fragment: "uz-17-1",
+    facts: [/zarobkow/iu, /incydentaln/iu, /istotne okoliczności/iu] }],
+  [{ question: "Czy izolacja w warunkach domowych albo kwarantanna są traktowane tak jak niezdolność do pracy?",
+    fragment: "uz-6-1", facts: [/kwarantann/iu, /izolacj/iu, /domow/iu] }],
 ];
 type Receipt = { top: string[]; evidence: string[]; contextRequestId?: string; backend?: string; quoteReason?: string };
 

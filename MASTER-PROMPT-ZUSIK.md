@@ -72,7 +72,7 @@ Przykładowy zapis jednego pomiaru: identyfikator próby, SHA, identyfikator pop
 
 ## Etap 5 · Wydanie i powrót do przypadku rodzica
 
-Zacznij powtórkę z poprzedniego wydania od osobnej sesji ogólnej. Poniższy zestaw ćwiczy sześć tur przez rzeczywisty endpoint bez klucza operatora. Ocenia surowy wynik Qdrant, końcowy cytat, fakt oraz zachowanie przy braku podstawy. Pytania z tego pliku są teraz jawne, więc dla kolejnego wydania dobierz również nowy ukryty zestaw.
+Zacznij powtórkę z poprzedniego wydania od osobnej sesji ogólnej. Poniższy zestaw ćwiczy osiem tur przez rzeczywisty endpoint bez klucza operatora. Ocenia surowy wynik Qdrant, końcowy cytat, fakt oraz zachowanie przy braku podstawy. Pytania z tego pliku są teraz jawne, więc dla kolejnego wydania dobierz również nowy ukryty zestaw.
 
 ```sh
 cd app
