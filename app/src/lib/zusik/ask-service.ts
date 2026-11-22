@@ -3,6 +3,7 @@ import { listOpportunities } from "../plan/opportunities";
 import type { PublicTaskInput } from "../rag/model-tasks";
 import type { runPublicModelTask } from "../rag/local-queue";
 import { NO_BASIS_MESSAGE, validateAnswer, type GenerationResult, type ValidationReport } from "../rag/answer";
+import { checkCitedSources } from "../rag/source-check";
 import { corpusFollowUp } from "../rag/corpus-search";
 import { fetchOfficialEvidence, type discoverOfficialEvidence } from "../rag/official-fetch";
 import { nurseryIntent, runSectionTurn, schoolRecipientIntent } from "./turn-graph";
@@ -26,6 +27,7 @@ type Progress = (status: string) => void;
 export const UNAVAILABLE_MESSAGE = "Nie mogę teraz sprawdzić źródeł. Spróbuj ponownie za chwilę.";
 
 export interface AnswerDeps {
+  extraVerification?: boolean;
   deadlineMs?: number;
   publicTask?(input: PublicTaskInput, deadline: number): ReturnType<typeof runPublicModelTask>;
   readOfficial?: typeof fetchOfficialEvidence;
@@ -293,6 +295,21 @@ export async function answerQuestion(
 }
 
 export async function answerPublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
+  const result = await resolvePublicTurn(deps, text, history, onProgress, family);
+  const { answer, trace } = result;
+  const notes = [];
+  if (trace.modelId === "pllum" && trace.model !== "ok" && answer.citations.length)
+    notes.push("PLLuM nie wygenerował tej odpowiedzi. Pokazuję sprawdzone fragmenty źródeł.");
+  if (deps.extraVerification && answer.citations.length && deps.selectCorpus) {
+    onProgress?.("Porównuję cytaty z publikacjami urzędowymi…");
+    const corpora = [deps.selectCorpus("marta"), deps.selectCorpus("oferta"), deps.selectCorpus("publiczne")];
+    const count = await checkCitedSources(answer.citations, corpora, deps.deadlineMs ?? Date.now() + 3500);
+    notes.push(`Dodatkowa weryfikacja źródeł: ${count}/${answer.citations.length} potwierdzonych w publikacji urzędowej.`);
+  }
+  return notes.length ? { ...result, answer: { ...answer, message: [answer.message, ...notes].filter(Boolean).join(" ") } } : result;
+}
+
+async function resolvePublicTurn(deps: AnswerDeps, text: string, history: AskTurn[], onProgress?: Progress, family?: FamilyChatScope) {
   const previous = history.findLast(turn => turn.status !== "conversation" && !sourceIntent(turn.question));
   const section = schoolRecipientIntent(text, previous) ? "schoolRecipient" : nurseryIntent(text, previous);
   if (section && deps.selectCorpus) {

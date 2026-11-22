@@ -1,5 +1,6 @@
 "use client";
 
+import { getChatModelOptions } from "./model-selection";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { routeCaseQuestion } from "@/lib/zusik/v1/intent";
 import { chatStarters } from "@/lib/zusik/conversation";
@@ -168,7 +169,7 @@ export function ImportConversation() {
     const variantSubject = routed.input.intent === "hypothetical" ? routed.input.subjectId : undefined;
     const lastAssessment = view?.assessments.findLast(a => a.input.subjectId === variantSubject);
     const input = routed.input.intent === "hypothetical" && !routed.input.validAt && lastAssessment
-      ? { ...routed.input, validAt: lastAssessment.input.asOf } : routed.input;
+      ? { ...routed.input, validAt: lastAssessment.input.asOf } : routed.input.intent === "public_question" ? { ...routed.input, modelOptions: getChatModelOptions() } : routed.input;
     const key = id();
     sticky.current = true;
     setDraft(question);

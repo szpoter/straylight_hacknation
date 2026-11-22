@@ -1292,6 +1292,20 @@ components:
         publicTopic:
           type: string
           enum: [nursery_recipient]
+        modelOptions:
+          oneOf:
+          - type: object
+            additionalProperties: false
+            required: [model]
+            properties:
+              model: {const: bielik}
+              effort: {enum: [low, high]}
+              verification: {enum: [standard, extra]}
+          - type: object
+            additionalProperties: false
+            required: [model]
+            properties:
+              model: {const: pllum}
         publicQuestion:
           type: string
           minLength: 2
@@ -1389,7 +1403,7 @@ components:
             intent: {const: public_question}
         then:
           propertyNames:
-            enum: [intent, replyTo, publicQuestion]
+            enum: [intent, replyTo, publicQuestion, modelOptions]
       - if:
           properties:
             intent: {const: read_context}

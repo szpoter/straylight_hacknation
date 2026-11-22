@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { localCompletion, publicQueueEvidence } from "./local-queue";
+import { localCompletion, publicQueueEvidence, type LocalModel } from "./local-queue";
 import { chatModel, localRagModel } from "../zusik/model-provider";
 import { generateText, type LanguageModel } from "ai";
 import { classifySherlockError } from "../zusik/sherlock";
@@ -223,6 +223,8 @@ export interface AnswerModelSettings {
   baseURL: string;
   apiKey: string;
   model: string;
+  selectedModel?: "bielik" | "pllum";
+  reasoningEffort?: "low" | "high";
   languageModel?: LanguageModel;
   queue?: Pool;
   deadlineMs?: number;
@@ -247,7 +249,13 @@ export async function generateAnswer(
   const deadline = Math.min(started + ASK_MODEL_BUDGET_MS, settings.deadlineMs ?? Infinity);
   if (!Number.isFinite(deadline) || deadline <= started)
     return { status: "timeout", output: null, model: settings.model, ms: 0 };
-  const local = settings.queue && localRagModel();
+  const pllumOnly = settings.selectedModel === "pllum";
+  const effort = settings.selectedModel === "bielik" ? settings.reasoningEffort : undefined;
+  const hostedModel = effort ? "arklabsai/Bielik-11B-v3.1-Instruct" : settings.model;
+  let local: LocalModel | null = settings.queue ? localRagModel() : null;
+  if (pllumOnly) local = "pllum";
+  else if (effort) local = null;
+  else if (settings.selectedModel && local) local = settings.selectedModel;
   const prompt = buildPrompt(corpus, question, evidence);
   let attemptId: string | undefined;
   if (local && settings.queue && publicQueueEvidence(corpus, question, evidence)) {
@@ -257,16 +265,18 @@ export async function generateAnswer(
     const status = result.status === "ok" && !output ? "invalid_json" : result.status;
     const backend = "local-" + local;
     const ms = Date.now() - started;
-    const fallback = output ? undefined : Date.now() + MIN_RETRY_WINDOW_MS < deadline ? "hosted" : "source_only";
+    const fallback = output ? undefined : !pllumOnly && Date.now() + MIN_RETRY_WINDOW_MS < deadline ? "hosted" : "source_only";
     console.info(JSON.stringify({ event: "rag_model_attempt", attemptId, backend, status, fallback, ms }));
     if (output) return { status: "ok", output, model: local, backend, attemptId, ms };
     if (fallback === "source_only") return { status: "error", output: null, model: local, backend, attemptId, ms };
+  } else if (pllumOnly) {
+    return { status: "error", output: null, model: "pllum", backend: "local-pllum", ms: Date.now() - started };
   } else if (local) {
     console.info(JSON.stringify({ event: "rag_model_attempt", status: "outside_queue_allowlist", fallback: "hosted" }));
   }
   const backend = "hosted";
-  const model = settings.languageModel ?? chatModel(settings.baseURL, settings.apiKey, settings.model);
-  let last: GenerationResult = { status: "error", output: null, model: settings.model, backend, attemptId, ms: 0 };
+  const model = settings.languageModel ?? chatModel(settings.baseURL, settings.apiKey, hostedModel);
+  let last: GenerationResult = { status: "error", output: null, model: hostedModel, backend, attemptId, ms: 0 };
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return { ...last, status: "timeout", ms: Date.now() - started };
@@ -277,12 +287,13 @@ export async function generateAnswer(
         system: SYSTEM_PROMPT,
         prompt,
         temperature: 0.1,
-        maxOutputTokens: ASK_MAX_OUTPUT_TOKENS,
+        maxOutputTokens: effort === "high" ? 1400 : ASK_MAX_OUTPUT_TOKENS,
+        providerOptions: effort ? { sherlock: { reasoningEffort: effort } } : undefined,
         maxRetries: 0,
         abortSignal: AbortSignal.timeout(Math.min(ASK_TIMEOUT_MS, remaining)),
       });
       const output = parseModelAnswer(text);
-      last = { status: output ? "ok" : "invalid_json", output, model: settings.model, backend, attemptId, ms: Date.now() - started, finishReason };
+      last = { status: output ? "ok" : "invalid_json", output, model: hostedModel, backend, attemptId, ms: Date.now() - started, finishReason };
       if (output) {
         if (settings.queue) console.info(JSON.stringify({ event: "rag_model_attempt", attemptId, backend, status: "ok", ms: last.ms }));
         return last;
@@ -292,7 +303,7 @@ export async function generateAnswer(
       const status = classifySherlockError(error);
       console.error(JSON.stringify({ event: "ask_model_error", attempt, status, ms: Date.now() - started, error: (error as Error)?.name }));
       const mapped = status === "rate_limited" || status === "timeout" ? status : "error";
-      last = { status: mapped, output: null, model: settings.model, backend, attemptId, ms: Date.now() - started };
+      last = { status: mapped, output: null, model: hostedModel, backend, attemptId, ms: Date.now() - started };
       // A timeout used the budget; a 429 will not clear within this request.
       if (mapped === "timeout" || mapped === "rate_limited") return last;
     }

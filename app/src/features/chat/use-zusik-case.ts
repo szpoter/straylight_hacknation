@@ -1,5 +1,7 @@
 "use client";
 
+import { getChatModelOptions } from "./model-selection";
+import type { ChatModelOptions } from "@/lib/zusik/chat-model";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CaseName, FamilyChatScope } from "@/lib/zusik/conversation";
 import { ASK_STREAM, readAskStream } from "@/lib/zusik/ask-stream";
@@ -18,6 +20,7 @@ export type Phase = "restoring" | "ready" | "starting" | "saving" | "error";
 
 /** A question asked in this tab that is not (yet) in view.turns. */
 export type LocalAsk = {
+  modelOptions?: ChatModelOptions;
   requestId: string;
   question: string;
   state: "sending" | "lost" | "done";
@@ -220,7 +223,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
 
   /** Sends (or re-sends with the same requestId) a question to the knowledge base. */
   const send = useCallback(
-    async (requestId: string, question: string): Promise<AskOutcome> => {
+    async (requestId: string, question: string, modelOptions = getChatModelOptions()): Promise<AskOutcome> => {
       if (activeRequest.current || asking.current.has(requestId)) return { kind: "lost" };
       asking.current.add(requestId);
       const createdAt = new Date().toISOString();
@@ -228,7 +231,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
         setAsks((list) =>
           list.some((item) => item.requestId === requestId)
             ? list.map((item) => (item.requestId === requestId ? { ...item, ...patch } : item))
-            : [...list, { requestId, question, createdAt, state: "sending", ...patch }],
+            : [...list, { requestId, question, modelOptions, createdAt, state: "sending", ...patch }],
         );
       const drop = () => setAsks((list) => list.filter((item) => item.requestId !== requestId));
       upsert({ state: "sending" });
@@ -240,7 +243,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
         const response = await fetch("/api/zusik/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: ASK_STREAM },
-          body: JSON.stringify({ question, requestId, scenario, family: planId ? {planId, stopId} : undefined }),
+          body: JSON.stringify({ question, requestId, scenario, modelOptions, family: planId ? {planId, stopId} : undefined }),
           cache: "no-store",
           signal: controller.signal,
         });
@@ -316,7 +319,7 @@ export function useZusikCase(scenario: CaseName = "marta", sessionReady = true, 
   const retryAsk = useCallback(
     (requestId: string) => {
       const pending = asks.find((item) => item.requestId === requestId);
-      return pending ? send(requestId, pending.question) : Promise.resolve<AskOutcome>({ kind: "lost" });
+      return pending ? send(requestId, pending.question, pending.modelOptions) : Promise.resolve<AskOutcome>({ kind: "lost" });
     },
     [asks, send],
   );

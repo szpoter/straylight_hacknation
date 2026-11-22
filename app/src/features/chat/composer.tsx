@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useId, type ReactNode, type RefObject } from "react";
+import { ModelPicker } from "./model-picker";
 import s from "./zusik.module.css";
 
 type Props = {
@@ -59,16 +60,19 @@ export function Composer({ text, busy, notice, textareaRef, onText, onSend, onAt
           }}
         />
         <div className={s.composerBar}>
-          {fileControl}
-          {onAttach && <>
-            <input ref={fileInput} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={event=>{
-              const file=event.target.files?.[0];
-              if(file) onAttach(file);
-              event.target.value="";
-            }} />
-            <button type="button" className={s.iconButton} aria-label="Wybierz kopię aktu urodzenia" onClick={()=>fileInput.current?.click()}><PaperclipIcon /></button>
-            {attachment && <button type="button" className={s.secondaryButton} title={attachment.name} onClick={()=>onAttach(null)}>Usuń odpis</button>}
-          </>}
+          <div className={s.composerFiles}>
+            {fileControl}
+            {onAttach && <>
+              <input ref={fileInput} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={event=>{
+                const file=event.target.files?.[0];
+                if(file) onAttach(file);
+                event.target.value="";
+              }} />
+              <button type="button" className={s.iconButton} aria-label="Wybierz kopię aktu urodzenia" onClick={()=>fileInput.current?.click()}><PaperclipIcon /></button>
+              {attachment && <button type="button" className={s.secondaryButton} title={attachment.name} onClick={()=>onAttach(null)}>Usuń odpis</button>}
+            </>}
+          </div>
+          <ModelPicker />
           <button type="button" className={s.send} aria-label="Wyślij" disabled={!canSend} onClick={onSend}>
             <ArrowUpIcon />
           </button>
